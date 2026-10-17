@@ -2108,7 +2108,9 @@ su estado equivalente en la aplicación o el resultado «sin equivalencia». El 
    y **MUST NOT** duplicar la lista de nombres (regla invariable 13, punto 1).
 2. **`Entregado` → `Finalizado`.** `Entregado` no es uno de los 23. Su equivalente **SHALL** ser `Finalizado`
    (`docs/sdd/ENTRADA.md:1349`, `docs/sdd/ENTRADA.md:1385`), y la regla **SHALL** declarar que el `status_type`
-   destino es `Closed` y que `closed_time` no se toca (supuesto S-2, reversible: una línea del plan por ticket).
+   destino es `Closed` y que **cierra** el ticket: su `closed_time` se decide con la fecha de Zoho si el ticket la
+   tiene o, si no, con el instante de la migración, marcada como tal (RQ-TC-64; `decision/migracion-e207-e212`).
+   Esto sustituye al supuesto S-2 anterior («`closed_time` no se toca»).
 3. **`Pendiente` de servicio técnico → `En Proceso`.** Un ticket en `Pendiente` cuya clasificación **no** es
    «Soporte remoto» **SHALL** pasar a `En Proceso` con `statusTypeDestino = 'Open'` (D-10; supuesto S-3, el mismo que ya escribió
    `openspec/changes/archive/2026-10-01-tres-transiciones-cifra-anclada/proposal.md:116-121`). Una clasificación
@@ -2118,6 +2120,10 @@ su estado equivalente en la aplicación o el resultado «sin equivalencia». El 
 5. **Todo lo demás es «sin equivalencia».** Un estado que no es uno de los 23, que no es `Entregado` y que no es
    `Pendiente` **SHALL** devolver «sin equivalencia», con el estado de origen nombrado. La tabla **MUST NOT**
    adivinar un destino.
+
+**Sólo la regla que cierra toca `closed_time`.** De las cuatro reglas, únicamente `entregado-a-finalizado`
+(`statusTypeDestino === 'Closed'`) cierra el ticket y por tanto toca `closed_time`; la identidad y las dos de
+`Pendiente` **MUST NOT** tocarlo (S-4 de `fecha-cierre-migracion`).
 
 La comparación del estado **SHALL** ser por igualdad exacta con el registro: Zoho copia el estado verbatim
 (`packages/zoho-sync/src/db/mappers.ts:47`) y la normalización de mayúsculas o espacios sería una segunda
@@ -2146,7 +2152,7 @@ si alguno cae mal. Confirmado por el orquestador: se usa el predicado compartido
 - WHEN se pide su equivalente
 - THEN el estado destino es `Finalizado`
 - AND `statusTypeDestino` es `'Closed'` y la regla es `entregado-a-finalizado`
-- AND `closed_time` no se toca (lo respeta el ejecutor, RQ-ZS-17)
+- AND la regla cierra el ticket: su `closed_time` lo decide RQ-TC-64 (fecha de Zoho o instante de la migración, marcada) y lo escribe el ejecutor (RQ-ZS-17)
 
 #### Scenario: `Pendiente` de servicio va a `En Proceso`
 - GIVEN un ticket en `Pendiente` con clasificación «Reparación»
@@ -2188,6 +2194,12 @@ si alguno cae mal. Confirmado por el orquestador: se usa el predicado compartido
 - GIVEN el fichero nuevo del núcleo en `packages/shared`
 - WHEN se inspeccionan sus importaciones
 - THEN no importa acceso a base de datos, red, sistema de ficheros ni reloj
+
+#### Scenario: Sólo `Entregado` cierra; las otras reglas no tocan `closed_time`
+- GIVEN un ticket por cada regla: `Entregado`, un estado de identidad, `Pendiente` de servicio y `Pendiente` de soporte remoto
+- WHEN se pide su equivalente y su cierre (RQ-TC-64)
+- THEN sólo el de `Entregado` produce un cierre
+- AND los otros tres no producen cierre y su `closed_time` no se toca
 
 ### RQ-TC-41 · Plan por ticket: qué es «abierto», la fecha de corte como parámetro y lo que sólo se lista
 
@@ -3841,3 +3853,63 @@ deducción ni dejar teclear el código o el asunto (hoy: `CreateTicket.tsx:46`, 
 - GIVEN la vista previa del cliente y las pruebas de RQ-TC-61 y RQ-TC-62
 - WHEN se enfrentan decisión a decisión (prefijo, código, asunto)
 - THEN cada una nombra una línea del servidor que la impone y una prueba `.ts` que la fija
+
+### Requirement: RQ-TC-64 · El cierre de un «Entregado» migrado: fecha de Zoho si existe, si no el instante de la migración, con el origen marcado
+
+Fuente: `decision/migracion-e207-e212` (Gerencia; `openspec/config.yaml:4737-4770`, consecuencia (1) en
+`:4747-4751`). Supuestos reversibles de `fecha-cierre-migracion`: S-1 (el instante de la migración es uno por
+ejecución), S-2 (la marca es un dato del marcador, no una columna ni una etiqueta visible), S-3 (la fecha de Zoho se
+conserva tal cual) y S-4 (sólo la regla que cierra toca `closed_time`).
+
+El núcleo puro de la migración (el mismo fichero de RQ-TC-40 en `packages/shared`, sin base de datos, **sin reloj**
+y sin red; regla invariable 13, punto 1) **SHALL** exponer una función `cierreDeMigracion` que, dados la
+equivalencia ya calculada (RQ-TC-40), el `closed_time` actual del ticket en Zoho y el instante de la migración,
+devuelve el cierre que corresponde. El instante **SHALL** llegar como argumento: la función no lee el reloj. Su
+resultado **SHALL** ser exactamente uno de:
+
+1. **`null`**, cuando la equivalencia **no** cierra, es decir, cuando su `statusTypeDestino` no es `'Closed'`
+   (identidad, `pendiente-servicio-a-en-proceso`, `pendiente-soporte-se-conserva`). Un resultado `null` significa
+   «no tocar `closed_time`».
+2. **`{ closedTime, origen: 'zoho' }`**, cuando la equivalencia cierra y el `closed_time` de Zoho **no es nulo**:
+   `closedTime` es ese mismo instante, sin alterar (S-3).
+3. **`{ closedTime, origen: 'migracion' }`**, cuando la equivalencia cierra y el `closed_time` de Zoho **es nulo**:
+   `closedTime` es el instante de la migración recibido.
+
+La precedencia **MUST** ser: la fecha de Zoho, si existe, gana sobre el instante de la migración. `origen` toma
+**sólo** los dos valores `'zoho'` y `'migracion'`, y es el dato con que se marca el cierre (S-2). La función
+**MUST NOT** dar `origen: 'migracion'` cuando hay fecha de Zoho, ni `origen: 'zoho'` cuando no la hay.
+
+El **mismo** instante de migración **SHALL** aplicarse a todos los tickets de una misma ejecución con
+`aplicar=true` (S-1); el recuento de cierres por origen del informe (RQ-ZS-17) **SHALL** salir de esta misma función,
+no de una segunda implementación de la regla.
+
+#### Scenario: Con fecha de cierre de Zoho, se conserva y se marca `zoho`
+- GIVEN una equivalencia `entregado-a-finalizado` y un `closed_time` de Zoho `2026-08-14T15:30:00Z`
+- AND un instante de migración `2026-12-01T10:00:00-05:00`
+- WHEN se calcula el cierre
+- THEN el resultado es `{ closedTime: 2026-08-14T15:30:00Z, origen: 'zoho' }`
+- AND `closedTime` no es el instante de la migración
+
+#### Scenario: Sin fecha de Zoho, cierra con el instante de la migración, marcado
+- GIVEN una equivalencia `entregado-a-finalizado` y un `closed_time` de Zoho nulo
+- AND un instante de migración `2026-12-01T10:00:00-05:00`
+- WHEN se calcula el cierre
+- THEN el resultado es `{ closedTime: 2026-12-01T15:00:00Z, origen: 'migracion' }`
+
+#### Scenario: Una regla que no cierra devuelve `null`
+- GIVEN una equivalencia de identidad, otra `pendiente-servicio-a-en-proceso` y otra `pendiente-soporte-se-conserva`, cada una con y sin `closed_time` de Zoho
+- WHEN se calcula el cierre de cada una
+- THEN las seis combinaciones devuelven `null`
+- AND ninguna provoca escritura de `closed_time`
+
+#### Scenario: La precedencia es Zoho antes que migración
+- GIVEN dos tickets `entregado-a-finalizado` en la misma ejecución, uno con `closed_time` de Zoho y otro sin él
+- WHEN se calculan sus cierres con el mismo instante de migración
+- THEN el primero lleva su fecha de Zoho y `origen: 'zoho'`
+- AND el segundo lleva el instante de la migración y `origen: 'migracion'`
+- AND invertir la precedencia (preferir la migración cuando hay fecha de Zoho) pone roja una prueba
+
+#### Scenario: La función no lee el reloj
+- GIVEN dos llamadas con los mismos argumentos separadas en el tiempo
+- WHEN se comparan sus resultados
+- THEN son idénticos, porque el instante de la migración es un argumento y no se lee `Date.now()` ni `new Date()` dentro de la función
