@@ -39,46 +39,46 @@ Verify y archive abren intento propio (el informe que cada uno genera es sumando
 
 ## Lote 2 · Servidor y cliente (RQ-TC-67, RQ-TC-68; D-2, D-3, D-4, D-7, D-8)
 
-- [ ] 2.1 **Rojo.** Crear `apps/desk/server/routes/medicionGarantias.test.ts` con el arnés pg-mem (`instalarArnes`, `appWith`;
+- [x] 2.1 **Rojo.** Crear `apps/desk/server/routes/medicionGarantias.test.ts` con el arnés pg-mem (`instalarArnes`, `appWith`;
   molde `routes/garantiaProveedor.test.ts:1-58`): sin cookie → `401` (M-7); usuario sin cargo ni admin recibe éxito; admin y
   no admin reciben el MISMO cuerpo (fija que no hay segundo permiso, regla 1); el cuerpo es igual a `medirGarantias` sobre
   las mismas fichas (varios estados, una «no», una sin valor); `fichasReclamadas` no devuelve el «no» sembrado (M-1b);
   el `GET` no escribe. Ver el rojo: `npx vitest run apps/desk/server/routes/medicionGarantias.test.ts`.
-- [ ] 2.2 **Verde.** `fichasReclamadas(db)` al final de `apps/desk/server/db/garantiaProveedor.ts` (tras `:161`) con
+- [x] 2.2 **Verde.** `fichasReclamadas(db)` al final de `apps/desk/server/db/garantiaProveedor.ts` (tras `:161`) con
   `${COLUMNAS}` y `filas`, `WHERE reclama = true ORDER BY id`.
-- [ ] 2.3 **Verde.** Ruta `GET /api/medicion-garantia-proveedor` en `routes/garantiaProveedor.ts` justo antes del cierre (`:107`),
+- [x] 2.3 **Verde.** Ruta `GET /api/medicion-garantia-proveedor` en `routes/garantiaProveedor.ts` justo antes del cierre (`:107`),
   sólo `requireAuth`, `res.json(medirGarantias(...))`; nombres nuevos añadidos EN SITIO a los `import` de `:3-6` y `:9-12`.
-- [ ] 2.4 **Cliente (sin rojo previo: `.tsx` fuera de la red de pruebas, F0-00).** `getMedicionGarantias()` al final de
+- [x] 2.4 **Cliente (sin rojo previo: `.tsx` fuera de la red de pruebas, F0-00).** `getMedicionGarantias()` al final de
   `apps/desk/src/api/client.ts` (molde `:845`, `json<T>` de `:3`); crear `MedicionGarantias.tsx` (sólo pinta; «—» ante `null`;
   estado vacío en español; sin colores de alerta, escrituras, `reduce`, `filter`, `sort`, `toLowerCase` ni divisiones);
   en `Header.tsx` el `lazy`, el estado, el botón «Garantías» junto al de Equipos (`:143-145`) y el modal por `createPortal`.
   `App.tsx` NO se toca.
-- [ ] 2.5 **Refactor** y verde: `npx vitest run apps/desk/server/routes/medicionGarantias.test.ts`, `npm run typecheck`.
-- [ ] 2.6 **Regla de mutación 3.** En `apply-progress.md`, tabla C-1..C-8: cada decisión del `.tsx` frente a la línea de
+- [x] 2.5 **Refactor** y verde: `npx vitest run apps/desk/server/routes/medicionGarantias.test.ts`, `npm run typecheck`.
+- [x] 2.6 **Regla de mutación 3.** En `apply-progress.md`, tabla C-1..C-8: cada decisión del `.tsx` frente a la línea de
   servidor o shared que la impone, leída línea a línea; comprobar por lectura que el `.tsx` no calcula (criterio de éxito 5).
-- [ ] 2.7 **Cierre del lote 2.** Los cinco comandos de 1.6, cada código por separado. Medida del intento (estimación ~460):
+- [x] 2.7 **Cierre del lote 2.** Los cinco comandos de 1.6, cada código por separado. Medida del intento (estimación ~460):
   `git diff --shortstat --no-renames <partida>` + `wc -l` de lo nuevo sin trackear; si supera 720, se para y se parte.
 
 ## Cierre del cambio (regla de mutación 1, 3 y 4)
 
 Cada mutación: reproducirla, ver la prueba concreta en rojo, restaurar, volver a verde y registrar el resultado en `apply-progress.md`.
-- [ ] 3.1 **M-1a** quitar el `filter` de `reclama` en `medirGarantias` → rojo la prueba de la «no» en shared.
-- [ ] 3.2 **M-1b** quitar `WHERE reclama = true` → rojo la prueba de servidor del «no» sembrado (con M-1a viva).
-- [ ] 3.3 **M-2** contar abiertas/enviadas como recuperadas → rojo la `enviada` con recuperado 999.
-- [ ] 3.4 **M-3** sumar el reclamado de las rechazadas a `recuperado` → rojo rechazada 500/0 (`recuperado = 0`, `resultados.rechazada = 1`).
-- [ ] 3.5 **M-4** ficha sin valor como 0 sin incrementar `sinValorReclamado` → rojo `sinValorReclamado = 1`.
-- [ ] 3.6 **M-5** `UMBRAL_FALLA_REPETIDA` 2 → 1 → rojo la referencia con UNA ficha.
-- [ ] 3.7 **M-6** quitar `trim`/`toLowerCase` de `claveMedicion` → rojo `Acme`/` ACME ` en un grupo y una falla.
-- [ ] 3.8 **M-7** quitar `requireAuth` de la ruta → rojo el `401` sin cookie.
-- [ ] 3.9 **M-8** cociente sin la guarda de 0 → rojo `cociente: null` (no `NaN`).
-- [ ] 3.10 **Regla 1:** una sola guarda en la ruta, no hay par que mover; queda fijado por la prueba de igualdad admin/no admin. Anotar.
-- [ ] 3.11 **Regla 2: no aplica** (ninguna guarda nueva vigila un fichero de datos). Dejarlo dicho en `apply-progress.md`.
-- [ ] 3.12 **Barrido, regla 4.** `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` sobre todo el repo (incluidos `archive/`, `docs/sdd/` y
+- [x] 3.1 **M-1a** quitar el `filter` de `reclama` en `medirGarantias` → rojo la prueba de la «no» en shared.
+- [x] 3.2 **M-1b** quitar `WHERE reclama = true` → rojo la prueba de servidor del «no» sembrado (con M-1a viva).
+- [x] 3.3 **M-2** contar abiertas/enviadas como recuperadas → rojo la `enviada` con recuperado 999.
+- [x] 3.4 **M-3** sumar el reclamado de las rechazadas a `recuperado` → rojo rechazada 500/0 (`recuperado = 0`, `resultados.rechazada = 1`).
+- [x] 3.5 **M-4** ficha sin valor como 0 sin incrementar `sinValorReclamado` → rojo `sinValorReclamado = 1`.
+- [x] 3.6 **M-5** `UMBRAL_FALLA_REPETIDA` 2 → 1 → rojo la referencia con UNA ficha.
+- [x] 3.7 **M-6** quitar `trim`/`toLowerCase` de `claveMedicion` → rojo `Acme`/` ACME ` en un grupo y una falla.
+- [x] 3.8 **M-7** quitar `requireAuth` de la ruta → rojo el `401` sin cookie.
+- [x] 3.9 **M-8** cociente sin la guarda de 0 → rojo `cociente: null` (no `NaN`).
+- [x] 3.10 **Regla 1:** una sola guarda en la ruta, no hay par que mover; queda fijado por la prueba de igualdad admin/no admin. Anotar.
+- [x] 3.11 **Regla 2: no aplica** (ninguna guarda nueva vigila un fichero de datos). Dejarlo dicho en `apply-progress.md`.
+- [x] 3.12 **Barrido, regla 4.** `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` sobre todo el repo (incluidos `archive/`, `docs/sdd/` y
   `openspec/config.yaml`) para `Header.tsx`, `routes/garantiaProveedor.ts`, `db/garantiaProveedor.ts` e `index.ts`; comprobar CADA
   resultado contra el fichero (qué AFIRMA la frase, ambos extremos de los rangos) y un segundo pase de la forma abreviada en los
   ficheros que citan el módulo. Documentos fechados (`docs/sdd/Paquete_de_Despliegue_*`): caso B, con revisión. Si algo cae
   detrás de una inserción, reparar según A/B/C, nunca con `sed`.
-- [ ] 3.13 **Cierre final.** `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` y el detector de citas sobre
+- [x] 3.13 **Cierre final.** `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` y el detector de citas sobre
   `HEAD`, todos 0 y anotados; `git diff --stat` sin rutas fuera de las de `design.md` §7 (`App.tsx`, `app.ts`, `openspec/config.yaml`, `ENTRADA.md` intactos).
 
 ---

@@ -2,13 +2,13 @@ import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
   esOVI, puedeGestionarReclamacion, MENSAJE_SIN_CARGO_RECLAMACION, motivoPasoNoPermitido,
-  validarRespuesta, validarDatosFicha, validarPaso, type EstadoReclamacion,
+  validarRespuesta, validarDatosFicha, validarPaso, medirGarantias, type EstadoReclamacion,
 } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import {
   asociacionPorId, respuestaDeAsociacion, registrarRespuesta, reclamacionPorId, editarFicha, avanzarFicha,
-  garantiaDelTicket, ReclamacionYaRespondidaError,
+  garantiaDelTicket, fichasReclamadas, ReclamacionYaRespondidaError,
 } from '../db/garantiaProveedor'
 
 /**
@@ -103,5 +103,10 @@ export function registerGarantiaProveedorRoutes(app: Express, deps: { db: Querya
       res.status(409).json({ error: motivoPasoNoPermitido(actual?.estado, a) ?? 'La reclamación ya cambió de estado: recarga e inténtalo de nuevo' }); return
     }
     res.json(avanzada)
+  }))
+
+  // Medición por marca (RQ-TC-67, RQ-TC-68): cualquier usuario con sesión; es la única guarda y no hay par que ordenar.
+  app.get('/api/medicion-garantia-proveedor', requireAuth(db), asyncHandler(async (_req, res) => {
+    res.json(medirGarantias(await fichasReclamadas(db)))
   }))
 }

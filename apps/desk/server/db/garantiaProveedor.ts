@@ -159,3 +159,8 @@ export async function fichasSinResolverNiAvisar(db: Queryable): Promise<Garantia
     `SELECT ${COLUMNAS} FROM garantia_proveedor WHERE reclama = true AND estado <> 'resuelta' AND aviso_60_at IS NULL ORDER BY id`,
   )).rows)
 }
+
+/** Todas las fichas «sí», por `id`: la entrada de `medirGarantias` (RQ-TC-67). Un «no» no es ficha y no se lee. */
+export async function fichasReclamadas(db: Queryable): Promise<GarantiaProveedor[]> {
+  return filas((await db.query(`SELECT ${COLUMNAS} FROM garantia_proveedor WHERE reclama = true ORDER BY id`)).rows)
+}

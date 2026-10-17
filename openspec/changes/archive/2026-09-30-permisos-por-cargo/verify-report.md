@@ -103,7 +103,7 @@ Las casillas de `proposal.md:148-153` siguen sin marcar: ver SUGGESTION 1.
 |---|---|---|
 | `TransitionPanel.tsx:57` oculta la Liberación sin el cargo | `ticketService.ts:129-130` (área) y `:131` (cargo `cargoQueFaltaParaTransicion`, 403) | Correcta; probada por `cp:102`, `:112`, `:120`, `:132` |
 | El selector de `UsersAdmin.tsx` ofrece los siete y «Sin cargo» | `auth/routes.ts:70-71` (alta) y `:99-100` (edición): `cargoPermisoDelCuerpo`, 422 | Correcta; `cp:46`, `:58` |
-| Sólo un admin ve la consola | `requireAdmin` en `auth/routes.ts:51`, `:55`, `:76`; cliente `Header.tsx:146` (`user.isAdmin`) | Correcta; `cp:68` |
+| Sólo un admin ve la consola | `requireAdmin` en `auth/routes.ts:51`, `:55`, `:76`; cliente `Header.tsx:146` en `ea9cb82` (`user.isAdmin`) | Correcta; `cp:68` |
 Las tres líneas están donde las cita la tabla del apply. Toda decisión del cliente tiene línea de servidor probada: comodidad legítima (regla 13, punto 3).
 
 ### Coherencia con el diseño

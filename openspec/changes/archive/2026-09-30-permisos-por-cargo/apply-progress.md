@@ -119,7 +119,7 @@ Modo: strict TDD, `hybrid`. Tareas hechas: 3.1-3.10 (Lote 3 completo; 3.1-3.3 so
 | Decisión del cliente | Línea del servidor que la impone | Prueba |
 |---|---|---|
 | `TransitionPanel.tsx:57` oculta la transición si falta el área o el cargo | 403 de área `ticketService.ts:129-130`; 403 de cargo `ticketService.ts:131` | `permisos.test.ts:41-66` (matriz, compuesta en `:64`); `cargoPermiso.test.ts:102` (S9), `:112` (S10), `:120` (S11), `:132` (S17) → comodidad legítima (punto 3) |
-| Sólo un administrador ve la consola (el selector va dentro) | `requireAdmin` en `auth/routes.ts:51` (listar), `:55` (alta), `:76` (edición); el cliente lo decide en `Header.tsx:146` y `Configuracion.tsx:82` (`isAdmin` desde `App.tsx:175`) | 403 a no admin: `cargoPermiso.test.ts:68` (S6) |
+| Sólo un administrador ve la consola (el selector va dentro) | `requireAdmin` en `auth/routes.ts:51` (listar), `:55` (alta), `:76` (edición); el cliente lo decide en `Header.tsx:146` en `ea9cb82` y `Configuracion.tsx:82` (`isAdmin` desde `App.tsx:175`) | 403 a no admin: `cargoPermiso.test.ts:68` (S6) |
 | El selector ofrece los siete cargos y «Sin cargo» | 422 de `cargoPermisoDelCuerpo`: alta `auth/routes.ts:70-71`, edición `:99-100` | `cargoPermiso.test.ts:46` (alta), `:58` (edición, no escribe), `:82` (S7) |
 | «Sin cargo» se manda como `''` | `cargoPermisoDelCuerpo('')` → `null`: alta `auth/routes.ts:70`, edición `:99` (sólo si el campo viene) | `cargoPermiso.test.ts:82` |
 | La edición manda siempre `cargoPermiso` | mismo 422 de `auth/routes.ts:99-100`; el selector sólo emite un valor de `CARGOS` o `''` | `cargoPermiso.test.ts:58` |
