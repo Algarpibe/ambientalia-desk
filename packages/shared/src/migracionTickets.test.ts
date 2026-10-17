@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 import {
   ID_TRANSICION_MIGRACION, NOMBRE_TRANSICION_MIGRACION, ACTOR_MIGRACION,
-  equivalenciaDeEstado, planDeTicket, esperaRemisionDeEntrada, resumenDeMigracion,
+  equivalenciaDeEstado, planDeTicket, esperaRemisionDeEntrada, resumenDeMigracion, cierreDeMigracion, cierresDeMigracion,
   type TicketParaMigrar,
 } from './migracionTickets'
 import { ESTADOS } from './estados'
@@ -226,3 +226,62 @@ describe('resumenDeMigracion (RQ-TC-41)', () => {
     expect(() => resumenDeMigracion(lista)).not.toThrow()
   })
 })
+
+/**
+ * fecha-cierre-migracion (F1F-01), RQ-TC-64 · la fecha de cierre de «Entregado» en la migración y su marca de origen.
+ * Va al final del fichero para no desplazar ninguna línea citada.
+ */
+describe('cierreDeMigracion (RQ-TC-64)', () => {
+  const INSTANTE = new Date('2026-12-02T15:00:00.000Z')
+  const ZOHO = '2026-08-01T00:00:00.000Z'
+  const eq = (estado: string, cls: string | null = 'Reparación') => equivalenciaDeEstado(estado, cls)!
+
+  it('«Entregado» con fecha de Zoho la conserva y se marca de origen zoho', () => {
+    expect(cierreDeMigracion(eq('Entregado'), ZOHO, INSTANTE)).toEqual({ closedTime: ZOHO, origen: 'zoho' })
+  })
+
+  it('«Entregado» sin fecha de Zoho recibe el instante de la migración, de origen migracion', () => {
+    expect(cierreDeMigracion(eq('Entregado'), null, INSTANTE)).toEqual({ closedTime: INSTANTE.toISOString(), origen: 'migracion' })
+  })
+
+  it('precedencia: con fecha de Zoho y con instante, gana Zoho', () => {
+    expect(cierreDeMigracion(eq('Entregado'), ZOHO, INSTANTE)?.closedTime).toBe(ZOHO)
+    expect(cierreDeMigracion(eq('Entregado'), ZOHO, INSTANTE)?.origen).toBe('zoho')
+  })
+
+  it('las otras tres reglas no cierran: null, con y sin fecha de Zoho (S-4)', () => {
+    const otras = [eq('Pendiente'), eq('Pendiente', 'Soporte Remoto'), eq('En Proceso')]
+    expect(otras.map((e) => e.regla)).toEqual(['pendiente-servicio-a-en-proceso', 'pendiente-soporte-se-conserva', 'identidad'])
+    for (const e of otras) {
+      expect(cierreDeMigracion(e, null, INSTANTE)).toBeNull()
+      expect(cierreDeMigracion(e, ZOHO, INSTANTE)).toBeNull()
+    }
+  })
+
+  it('un instante inválido lanza RangeError, también para las reglas que no cierran', () => {
+    expect(() => cierreDeMigracion(eq('Entregado'), null, new Date('x'))).toThrow(RangeError)
+  })
+})
+
+describe('cierresDeMigracion (RQ-TC-64)', () => {
+  const planes = (ts: TicketParaMigrar[]) => ts.map((t) => planDeTicket(t, CORTE))
+
+  it('cuenta sólo planes migrar cuya regla cierra, separando fecha de Zoho y fecha de migración', () => {
+    const r = cierresDeMigracion(planes([
+      tk({ status: 'Entregado', closedTime: '2026-08-01T00:00:00.000Z' }),
+      tk({ status: 'Entregado', closedTime: null }),
+      tk({ status: 'Entregado' }), // sin `closedTime` (fixture previo): se trata como null
+      tk({ status: 'Pendiente' }), tk({ status: 'En Proceso' }),
+    ]))
+    expect(r).toEqual({ conFechaDeZoho: 1, conFechaDeMigracion: 2 })
+  })
+
+  it('ignora sin-equivalencia, ya-gobernado y tras-el-corte aunque sean «Entregado»', () => {
+    const r = cierresDeMigracion(planes([
+      tk({ status: 'Estado raro' }), tk({ status: 'Entregado', managedByApp: true, closedTime: ZOHO_FECHA }),
+      tk({ status: 'Entregado', createdTime: DESPUES }),
+    ]))
+    expect(r).toEqual({ conFechaDeZoho: 0, conFechaDeMigracion: 0 })
+  })
+})
+const ZOHO_FECHA = '2026-08-01T00:00:00.000Z'

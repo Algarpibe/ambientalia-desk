@@ -45,7 +45,7 @@ export interface TicketParaMigrar {
   statusType: string | null
   classification: string | null
   managedByApp: boolean
-  createdTime: string | null
+  createdTime: string | null; closedTime?: string | null
 }
 
 export type AccionMigracion = 'migrar' | 'ya-gobernado' | 'tras-el-corte' | 'sin-equivalencia'
@@ -108,6 +108,35 @@ export function resumenDeMigracion(planes: readonly PlanTicket[]): ResumenMigrac
       else r.porEstado.push({ origen: t.status, destino: eq.destino, regla: eq.regla, cambiaEstado: eq.destino !== t.status, tickets: 1 })
       if (t.status === 'Pendiente') r.pendientes.push({ numero: t.number, clasificacion: t.classification, destino: eq.destino })
     }
+  }
+  return r
+}
+
+/**
+ * fecha-cierre-migracion (F1F-01), RQ-TC-64 · la fecha de cierre que la migración le deja a un «Entregado» y su origen.
+ * Va al final del fichero para no desplazar ninguna línea citada. Sin reloj: el instante lo inyecta el ejecutor.
+ */
+export type OrigenCierre = 'zoho' | 'migracion'
+export interface CierreMigracion { closedTime: string; origen: OrigenCierre }
+
+/** `null` si la regla no cierra (`statusTypeDestino !== 'Closed'`, S-4). Zoho gana si trae fecha (S-3). `instante` inválido lanza `RangeError`. */
+export function cierreDeMigracion(eq: Equivalencia, closedTimeZoho: string | null, instante: Date): CierreMigracion | null {
+  if (Number.isNaN(instante.getTime())) throw new RangeError('El instante de la migración no es una fecha válida')
+  if (eq.statusTypeDestino !== 'Closed') return null
+  return closedTimeZoho !== null
+    ? { closedTime: closedTimeZoho, origen: 'zoho' }
+    : { closedTime: instante.toISOString(), origen: 'migracion' }
+}
+
+export interface CierresMigracion { conFechaDeZoho: number; conFechaDeMigracion: number }
+
+/** Sólo cuenta los planes `migrar` cuya regla cierra (D-5). Un `closedTime` ausente cuenta como `null`. */
+export function cierresDeMigracion(planes: readonly PlanTicket[]): CierresMigracion {
+  const r: CierresMigracion = { conFechaDeZoho: 0, conFechaDeMigracion: 0 }
+  for (const { ticket: t, accion, equivalencia: eq } of planes) {
+    if (accion !== 'migrar' || !eq || eq.statusTypeDestino !== 'Closed') continue
+    if ((t.closedTime ?? null) !== null) r.conFechaDeZoho++
+    else r.conFechaDeMigracion++
   }
   return r
 }

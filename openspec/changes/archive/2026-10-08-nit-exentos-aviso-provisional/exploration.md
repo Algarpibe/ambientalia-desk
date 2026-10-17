@@ -60,7 +60,7 @@ con «(contrastado)». Lo que no se verificó lleva la palabra «hipótesis».
    conviene leer primero los provisionales sin enlazar y salir si no hay ninguno.
 7. **Specs vivas.** `openspec/specs/tickets-core/spec.md`: RQ-TC-30 (`openspec/specs/tickets-core/spec.md:1577`, contrastado) fija
    el `409` y dice que ningún NIT genérico queda exento; el último identificador usado es RQ-TC-56
-   (`openspec/specs/tickets-core/spec.md:3309`, contrastado). `openspec/specs/derivacion-avisos/spec.md`: el último es RQ-AV-20
+   (`openspec/specs/tickets-core/spec.md:3309` en `164d322`, contrastado). `openspec/specs/derivacion-avisos/spec.md`: el último es RQ-AV-20
    (`openspec/specs/derivacion-avisos/spec.md:901`, contrastado). Las dos capacidades ya están en `openspec/config.yaml` →
    `capabilities`.
 8. **Regla 13: no hace falta tocar `apps/desk/src`.** El cliente no decide nada sobre el NIT: lo envía sin tocar

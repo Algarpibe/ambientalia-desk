@@ -21,7 +21,7 @@ A F1F-02 le falta la copia semanal de Drive y la prueba mensual de restauración
 - Subida en streaming, cifrada con el mismo esquema que la nocturna (`apps/desk/server/respaldo/cifrado.ts:12`, `DESKR1`, AES-256-GCM), sin escribir en disco.
 - Índice de lo ya copiado y retención de 12 meses que nunca borra la última copia de un documento vivo.
 - Interruptor propio que nace cerrado, programador semanal, aviso por correo si falla (nunca lanza), `DEPLOY.md` y líneas para `.env.example`.
-- Requisito nuevo en el delta de `zoho-sync`, junto a RQ-ZS-20 (`openspec/specs/zoho-sync/spec.md:1117`).
+- Requisito nuevo en el delta de `zoho-sync`, junto a RQ-ZS-20 (`openspec/specs/zoho-sync/spec.md:1117` en `164d322`).
 
 ### Fuera
 - Encender el interruptor, elegir proveedor (`p55c-proveedor-copia`, cuesta dinero), crear la credencial de Drive, configurar el bloqueo de borrado y la prueba mensual de restauración.

@@ -11,7 +11,7 @@
 -- cambia el estado: «Entregado» pasa a «Finalizado» (status_type «Closed») y «Pendiente» de servicio pasa a
 -- «En Proceso» (status_type «Open»). Por cada ticket deja una fila marcador en desk.ticket_transitions con
 -- transition_id = 'migracion_f1f01_abiertos' y, en "values", lo que habia antes: estado_previo,
--- status_type_previo y managed_by_app_previo (mas estado_destino, regla, corte y ejecutado_por).
+-- status_type_previo y managed_by_app_previo (y, en entregado-a-finalizado, closed_time_previo, closed_time_destino y cierre_origen; mas estado_destino, regla, corte y ejecutado_por).
 -- ESTE fichero trae las lecturas de antes y de despues (solo SELECT) y la REVERSION, comentada.
 --
 -- REQUISITOS, de PERSONA (ninguno lo comprueba el codigo):
@@ -62,7 +62,7 @@ SELECT count(*) AS gobernados_sin_marcador
 --   · identidad y pendiente-soporte-se-conserva: no cambiaron el estado, restauran SOLO managed_by_app.
 -- Despues borra los marcadores de esos mismos tickets. Un ticket con una transicion POSTERIOR al marcador (alguien
 -- lo movio desde la aplicacion) NO se revierte ni pierde su marcador: el SELECT inicial (y el mismo, repetido tras el
--- COMMIT) los lista para decision de una persona. No toca closed_time ni modified_time (la migracion tampoco).
+-- COMMIT) los lista para decision de una persona. Solo entregado-a-finalizado restaura closed_time desde closed_time_previo; no toca modified_time (la migracion tampoco).
 -- OJO: al revertir, managed_by_app vuelve a false en los tickets que lo tenian asi, y el sincronizador vuelve a
 -- sobrescribirlos con lo que diga Zoho en su siguiente pasada. Si habia filas con managed_by_app_previo = true, vuelven a true.
 -- Hipotesis: la sintaxis UPDATE ... FROM, "values"->>'clave' y max(id) ... GROUP BY esta probada sobre pg-mem (que rechaza un alias en el UPDATE, por eso la tabla va sin alias y la columna como desk.tickets.id), no sobre PostgreSQL de produccion;
@@ -73,7 +73,7 @@ SELECT count(*) AS gobernados_sin_marcador
 -- REV    AND m.id NOT IN (SELECT max(id) FROM desk.ticket_transitions GROUP BY ticket_id) ORDER BY t.number;
 -- REV BEGIN;
 -- REV UPDATE desk.tickets SET status = m."values"->>'estado_previo', status_type = m."values"->>'status_type_previo',
--- REV        managed_by_app = (m."values"->>'managed_by_app_previo')::boolean, updated_at = now()
+-- REV        closed_time = (m."values"->>'closed_time_previo')::timestamptz, managed_by_app = (m."values"->>'managed_by_app_previo')::boolean, updated_at = now()
 -- REV   FROM desk.ticket_transitions m
 -- REV  WHERE m.ticket_id = desk.tickets.id AND m.transition_id = 'migracion_f1f01_abiertos' AND m."values"->>'regla' = 'entregado-a-finalizado'
 -- REV    AND m.id IN (SELECT max(id) FROM desk.ticket_transitions GROUP BY ticket_id);

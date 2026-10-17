@@ -21,7 +21,7 @@ Cerrar un ticket o cambiarle el estado en Zoho no genera conversación, así que
 ### Dentro
 - `syncRecent` pasa a pedir «modificados desde la marca de agua» por `/tickets/search` (`modifiedTimeRange`, orden por `modifiedTime`, paginado).
 - Caída al comportamiento de hoy, con error explícito en el log, si la búsqueda falla o no hay marca de agua.
-- Requisito nuevo en el delta de `zoho-sync` (el último vivo es RQ-ZS-21, `openspec/specs/zoho-sync/spec.md:1156`).
+- Requisito nuevo en el delta de `zoho-sync` (el último vivo es RQ-ZS-21, `openspec/specs/zoho-sync/spec.md:1156` en `164d322`).
 - Barrido de citas de `sync.ts` al cierre (regla de mutación 4).
 
 ### Fuera

@@ -2,7 +2,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { APP_TICKET_NUMBER_BASE } from '@ambientalia/zoho-sync/db/migrate'
 import {
   ACTOR_MIGRACION, ID_TRANSICION_MIGRACION, NOMBRE_TRANSICION_MIGRACION, esperaRemisionDeEntrada, motivoSinRemisionVigente,
-  planDeTicket, resumenDeMigracion, type PlanTicket, type ResumenMigracion,
+  planDeTicket, resumenDeMigracion, cierreDeMigracion, cierresDeMigracion, type CierresMigracion, type PlanTicket, type ResumenMigracion,
 } from '@ambientalia/shared'
 import { enTransaccion } from './transaccion'
 import { vigenciaDeRemisiones } from './remisiones'
@@ -22,7 +22,7 @@ export interface InformeMigracion extends Omit<ResumenMigracion, 'masAltoAMarcar
   negativa: { motivo: 'estados-sin-equivalencia'; estados: string[] } | null
   sinRemisionVigente: { numero: number; estado: string }[]
   numeracion: { masAltoAMarcar: number | null; base: number; arrastra: boolean }
-  avisos: string[]
+  avisos: string[]; cierres: CierresMigracion
 }
 
 const iso = (v: unknown): string | null => (v == null ? null : new Date(v as string | Date).toISOString())
@@ -30,11 +30,11 @@ const iso = (v: unknown): string | null => (v == null ? null : new Date(v as str
 /** «Abierto» (S-4): el mismo predicado que el tablero (`packages/zoho-sync/src/db/repo.ts:151`). Lectura única, sin `NOT EXISTS` ni `TRIM`. */
 async function leerPlanes(q: Queryable, corte: Date): Promise<PlanTicket[]> {
   const r = await q.query(
-    "SELECT id, number, status, status_type, classification, managed_by_app, created_time FROM tickets WHERE (status_type <> 'Closed' OR status_type IS NULL) ORDER BY number",
+    "SELECT id, number, status, status_type, classification, managed_by_app, created_time, closed_time FROM tickets WHERE (status_type <> 'Closed' OR status_type IS NULL) ORDER BY number",
   )
   return (r.rows as Array<Record<string, unknown>>).map((f) => planDeTicket({
     id: String(f.id), number: Number(f.number), status: String(f.status), statusType: (f.status_type as string | null) ?? null,
-    classification: (f.classification as string | null) ?? null, managedByApp: f.managed_by_app === true, createdTime: iso(f.created_time),
+    classification: (f.classification as string | null) ?? null, managedByApp: f.managed_by_app === true, createdTime: iso(f.created_time), closedTime: iso(f.closed_time),
   }, corte))
 }
 
@@ -55,24 +55,24 @@ async function prepararInforme(q: Queryable, corte: Date, aplicar: boolean): Pro
   const informe: InformeMigracion = {
     corte: corte.toISOString(), aplicar, aplicado: false,
     negativa: resumen.sinEquivalencia.length > 0 ? { motivo: 'estados-sin-equivalencia', estados: resumen.sinEquivalencia.map((s) => s.estado) } : null,
-    ...resumen, sinRemisionVigente, numeracion: { masAltoAMarcar, base: APP_TICKET_NUMBER_BASE, arrastra }, avisos,
+    ...resumen, sinRemisionVigente, numeracion: { masAltoAMarcar, base: APP_TICKET_NUMBER_BASE, arrastra }, avisos, cierres: cierresDeMigracion(planes),
   }
   return { informe, aMigrar }
 }
 
 export async function migrarTicketsAbiertos(
-  db: Queryable, opts: { corte: Date; aplicar?: boolean; actor: string },
+  db: Queryable, opts: { corte: Date; aplicar?: boolean; actor: string; ahora?: Date },
 ): Promise<InformeMigracion> {
-  const aplicar = opts.aplicar === true
+  const aplicar = opts.aplicar === true, ahora = opts.ahora ?? new Date()
   if (!aplicar) return (await prepararInforme(db, opts.corte, false)).informe
   return enTransaccion(db, async (q) => {
     const { informe, aMigrar } = await prepararInforme(q, opts.corte, true)
     if (informe.negativa) return informe // la negativa va ANTES del primer INSERT (diseño §7, guarda 4)
     for (const { ticket: t, equivalencia: eq } of aMigrar) {
-      if (!eq) continue
+      if (!eq) continue; const cierre = cierreDeMigracion(eq, t.closedTime ?? null, ahora)
       const valores = {
         estado_previo: t.status, estado_destino: eq.destino, status_type_previo: t.statusType, managed_by_app_previo: t.managedByApp,
-        regla: eq.regla, corte: opts.corte.toISOString(), ejecutado_por: opts.actor,
+        regla: eq.regla, corte: opts.corte.toISOString(), ejecutado_por: opts.actor, ...(cierre && { closed_time_previo: t.closedTime ?? null, closed_time_destino: cierre.closedTime, cierre_origen: cierre.origen }),
       }
       // D-6: en identidad `to_status` va NULL (un valor reiniciaría el reloj de `entradasActuales`); el destino va en `values`.
       await q.query(
@@ -82,10 +82,10 @@ export async function migrarTicketsAbiertos(
       )
       // D-4 y D-5: `source` y `modified_time` NO se tocan; `updated_at` sí. D-10: `status_type` sólo si la regla lo cambia.
       const r = await q.query(
-        `UPDATE tickets SET status = $2, status_type = COALESCE($3::text, status_type),
+        `UPDATE tickets SET status = $2, status_type = COALESCE($3::text, status_type), closed_time = COALESCE($4::timestamptz, closed_time),
                 managed_by_app = true, updated_at = now()
           WHERE id = $1 AND managed_by_app = false RETURNING id`,
-        [t.id, eq.destino, eq.statusTypeDestino],
+        [t.id, eq.destino, eq.statusTypeDestino, cierre?.closedTime ?? null],
       )
       if (r.rows.length === 0) throw new MigracionAdelantadaError(t.number)
     }
