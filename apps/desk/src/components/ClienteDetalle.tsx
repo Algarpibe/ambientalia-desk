@@ -120,12 +120,12 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
     for (const t of tickets) { const k = t.channel || 'Otro'; m.set(k, (m.get(k) ?? 0) + 1) }
     return [...m.entries()].map(([label, value]) => ({ label, value }))
   }, [tickets])
+  // La media la calcula el servidor (`resolucionPromedioMs`, shared; sin el cierre de la migración, RQ-TC-69). Aquí sólo se formatea.
   const resolucion = useMemo(() => {
-    const cer = tickets.filter((t) => t.statusType === CLOSED && t.createdAt && t.closedAt)
-    if (!cer.length) return '00:00'
-    const ms = cer.reduce((s, t) => s + (new Date(t.closedAt!).getTime() - new Date(t.createdAt!).getTime()), 0) / cer.length
+    const ms = data?.resolucionPromedioMs ?? null
+    if (ms === null) return '00:00'
     return `${Math.floor(ms / 3600000)}:${String(Math.floor((ms % 3600000) / 60000)).padStart(2, '0')}`
-  }, [tickets])
+  }, [data])
 
   if (loading && !data) return <div className="flex-1 p-6 text-[13px] text-slate-400">Cargando…</div>
   if (!data) return <div className="flex-1 p-6 text-[13px] text-slate-400">No encontrado.</div>

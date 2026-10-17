@@ -26,10 +26,10 @@ fecha de la migración en una cifra, y uno el marcador:
 
 | Lector | Cifra | Cómo entra la migración |
 |---|---|---|
-| `apps/desk/server/analisis.ts:26` → `packages/shared/src/analisis.ts:59-68` | finalizados, tendencia, tiempo promedio, cumplimiento | `fecha_finalizacion_st ?? closed_time` cae al `closed_time` de la migración |
-| `apps/desk/src/components/ClienteDetalle.tsx:123-128` | «Tiempo de resolución» de la ficha de cliente | resta `closedAt − createdAt` **en el `.tsx`**, con `closed_time` en crudo (`apps/desk/server/db/directory.ts:21-30`) |
-| `apps/desk/server/db/informeContrato.ts:34` | fecha de ejecución de cada subOV y % ejecutado | la primera transición a «Finalizado» puede ser el marcador, con `performed_at` = migración |
-| `apps/desk/server/indicadores.ts:76-84` → `packages/shared/src/indicadores.ts:134` | atributo `reentrante` de los nueve indicadores | el marcador cuenta como paso del historial y vuelve `reentrante` falso donde era «sin dato» |
+| `apps/desk/server/analisis.ts:26` en `73bd52f` → `packages/shared/src/analisis.ts:59-68` | finalizados, tendencia, tiempo promedio, cumplimiento | `fecha_finalizacion_st ?? closed_time` cae al `closed_time` de la migración |
+| `apps/desk/src/components/ClienteDetalle.tsx:123-128` en `73bd52f` | «Tiempo de resolución» de la ficha de cliente | resta `closedAt − createdAt` **en el `.tsx`**, con `closed_time` en crudo (`apps/desk/server/db/directory.ts:21-30`) |
+| `apps/desk/server/db/informeContrato.ts:34` en `73bd52f` | fecha de ejecución de cada subOV y % ejecutado | la primera transición a «Finalizado» puede ser el marcador, con `performed_at` = migración |
+| `apps/desk/server/indicadores.ts:76-84` en `73bd52f` → `packages/shared/src/indicadores.ts:134` | atributo `reentrante` de los nueve indicadores | el marcador cuenta como paso del historial y vuelve `reentrante` falso donde era «sin dato» |
 
 No la meten (verificado): los nueve indicadores en sus valores (no leen `closed_time`; el marcador no lleva claves de hito), la
 comparación con Zoho, la cola del taller, el tiempo en tarjeta y el SLA (`apps/desk/server/db/sla.ts:78-102`: los estados con SLA

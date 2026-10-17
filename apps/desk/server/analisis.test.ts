@@ -28,17 +28,17 @@ describe('getAnalisisRowsCached', () => {
 
     // 1ª llamada: consulta la BD
     const r1 = await getAnalisisRowsCached(fakeDb, 1000)
-    expect(fakeDb.query).toHaveBeenCalledTimes(1)
+    expect(fakeDb.query).toHaveBeenCalledTimes(2) // filas y marcadores de la migración (RQ-TC-69)
     expect(r1).toHaveLength(1)
 
     // 2ª llamada dentro del TTL: NO consulta de nuevo (caché), mismas filas
     const r2 = await getAnalisisRowsCached(fakeDb, 1000 + 60_000)
-    expect(fakeDb.query).toHaveBeenCalledTimes(1)
+    expect(fakeDb.query).toHaveBeenCalledTimes(2)
     expect(r2).toBe(r1)
 
     // 3ª llamada pasado el TTL: refetch
     const r3 = await getAnalisisRowsCached(fakeDb, 1000 + 6 * 60_000)
-    expect(fakeDb.query).toHaveBeenCalledTimes(2)
+    expect(fakeDb.query).toHaveBeenCalledTimes(4)
     expect(r3).toHaveLength(1)
   })
 })

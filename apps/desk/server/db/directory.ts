@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { ContactLite, AccountLite, ContactDetail, AccountDetail, TicketLite } from '@ambientalia/shared'
+import { resolucionPromedioMs, type ContactLite, type AccountLite, type ContactDetail, type AccountDetail, type TicketLite } from '@ambientalia/shared'; import { cierresPuestosPorMigracion } from './cierresDeMigracion'
 
 export async function getContacts(db: Queryable): Promise<ContactLite[]> {
   const r = await db.query(
@@ -36,13 +36,13 @@ export async function getContactDetail(db: Queryable, id: string): Promise<Conta
   const row = (r.rows as any[])[0]
   if (!row) return null
   const raw = parseRaw(row.raw)
-  return {
+  return conResolucion(db, {
     id: row.id, name: `${row.first_name ?? ''} ${row.last_name ?? ''}`.trim() || row.email || '—',
     email: row.email ?? null, phone: row.phone ?? null, mobile: row.mobile ?? null,
     company: row.company ?? null, companyId: row.account_id ?? null,
     owner: raw.owner?.name ?? null, createdAt: raw.createdTime ?? row.created_at ?? null,
     tickets: await ticketsLite(db, 'contact_id', id),
-  }
+  })
 }
 
 export async function getAccountDetail(db: Queryable, id: string): Promise<AccountDetail | null> {
@@ -55,10 +55,15 @@ export async function getAccountDetail(db: Queryable, id: string): Promise<Accou
     id: x.id, name: `${x.first_name ?? ''} ${x.last_name ?? ''}`.trim() || x.email || '—',
     company: row.name ?? null, companyId: id, email: x.email ?? null, phone: x.phone || x.mobile || null,
   }))
-  return {
+  return conResolucion(db, {
     id: row.id, name: row.name ?? '', nit: row.nit ?? null, email: row.email ?? null, phone: row.phone ?? null,
     city: row.city ?? null, address: row.address ?? null, website: row.website ?? null,
     owner: raw.owner?.name ?? null, createdAt: raw.createdTime ?? row.created_at ?? null,
     tickets: await ticketsLite(db, 'account_id', id), contacts,
-  }
+  })
+}
+
+/** La media de resolución de la ficha la calcula el servidor (`resolucionPromedioMs`, shared), sin el cierre de la migración (RQ-TC-69). */
+async function conResolucion<T extends { tickets: TicketLite[] }>(db: Queryable, detalle: T): Promise<T & { resolucionPromedioMs: number | null }> {
+  return { ...detalle, resolucionPromedioMs: resolucionPromedioMs(detalle.tickets, await cierresPuestosPorMigracion(db)) }
 }

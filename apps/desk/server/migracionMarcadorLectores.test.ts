@@ -51,12 +51,12 @@ describe('lectores de ticket_transitions frente al marcador de la migración', (
     expect(await usosDeUsuario(db, 'u-x')).toBe(0)
   })
 
-  it('apps/desk/server/indicadores.ts:76 · el marcador entra como un paso del historial y vuelve «reentrante» falso donde antes era «sin dato»', async () => {
+  it('apps/desk/server/indicadores.ts:76 · el marcador NO es un paso del historial y «reentrante» sigue «sin dato» (RQ-TC-69, S-5; antes lo volvía falso)', async () => {
     const e = await leerEntradasIndicadores(db, { desde: null, hasta: null })
-    expect(e.historial.get('z1')?.map((p) => p.transitionId)).toEqual([ID_TRANSICION_MIGRACION])
+    expect(e.historial.get('z1')).toBeUndefined()
     const fila = tablaIndicadores(e).find((f) => f.ticketId === 'z1')!
-    // Sin marcador sería `null` (`packages/shared/src/indicadores.ts:134`, historial vacío). Se comporta raro: bandeja.
-    expect([...new Set(fila.indicadores.map((i) => i.reentrante))]).toEqual([false])
+    // Historial vacío da `null` (`packages/shared/src/indicadores.ts:134`): el salto del marcador en `apps/desk/server/indicadores.ts:81` lo consigue.
+    expect([...new Set(fila.indicadores.map((i) => i.reentrante))]).toEqual([null])
   })
 
   it('apps/desk/server/db/historial.ts:137 y apps/desk/server/db/conversacion.ts:140 · lo enseñan como «Transición» con «—» de llegada y las claves de values en crudo', async () => {

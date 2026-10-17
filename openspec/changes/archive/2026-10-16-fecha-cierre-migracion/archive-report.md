@@ -90,7 +90,7 @@ que cierra toca `closed_time` · S-5 `closedTime` entra en `TicketParaMigrar` en
 |---|---|---|
 | P-1 | Pasada en seco en producción (E-211) y lectura de `cierres` antes de aplicar | superadministrador, con Gerencia |
 | P-2 | Nombrar al suplente del 12/12 (`DEPLOY.md:693`) | Gerencia |
-| P-3 | H-1: ¿se excluyen de Análisis (`apps/desk/server/analisis.ts:26`) y del «Tiempo promedio de operación» de la ficha de cliente (`apps/desk/src/components/ClienteDetalle.tsx:124-126`) los cierres con `cierre_origen: 'migracion'`? | Gerencia |
+| P-3 | H-1: ¿se excluyen de Análisis (`apps/desk/server/analisis.ts:26` en `73bd52f`) y del «Tiempo promedio de operación» de la ficha de cliente (`apps/desk/src/components/ClienteDetalle.tsx:124-126` en `73bd52f`) los cierres con `cierre_origen: 'migracion'`? | Gerencia |
 
 ## Para Supervisión (ficheros que esta rama no toca)
 

@@ -115,7 +115,7 @@ Prueba: `apps/desk/server/migracionMarcadorLectores.test.ts` (5 pruebas; **todas
 | Lector (ruta:línea) | Trata el marcador como… | Qué ve el usuario |
 |---|---|---|
 | `apps/desk/server/db/sla.ts:88` | Entrada de estado SÓLO si `to_status` coincide con el actual: identidad (NULL) no cuenta (D-6); «Entregado»/«Pendiente» sí, con la fecha de la migración | Alarma: el reloj de un «Pendiente»→«En Proceso» arranca el día de la migración, no el de Zoho (bandeja B5) |
-| `apps/desk/server/db/informeContrato.ts:34` | Fecha de finalización si `to_status = 'Finalizado'` (sólo «Entregado»); no ejercitado sobre pg-mem (exige tablas de Books): lectura del código | La fecha de ejecución de una subOV «Entregado» es la de la migración (bandeja B1, ya conocida del diseño §12) |
+| `apps/desk/server/db/informeContrato.ts:34` en `73bd52f` | Fecha de finalización si `to_status = 'Finalizado'` (sólo «Entregado»); no ejercitado sobre pg-mem (exige tablas de Books): lectura del código | La fecha de ejecución de una subOV «Entregado» es la de la migración (bandeja B1, ya conocida del diseño §12) |
 | `apps/desk/server/indicadores.ts:76` | Un paso más del historial; ninguna clave de `values` es un hito | `reentrante` pasa de `null` («sin dato», `packages/shared/src/indicadores.ts:134`) a `false` en los tickets migrados sin otra historia (bandeja B2) |
 | `apps/desk/server/db/fechasTicket.ts:28` | No: filtra por `transition_id` | Nada |
 | `apps/desk/server/db/primerDerivado.ts:26` | No: busca `derivado_a` en `values`; el marcador no la lleva | Nada |
@@ -172,7 +172,7 @@ El servidor decide `aplicar` (`true`/`false`, otro valor `400`), `corte`, la neg
 
 ### Para la bandeja (sin numerar: a numerar por el orquestador)
 
-- B1. El informe de contrato toma como fecha de ejecución la primera fila con `to_status = 'Finalizado'` (`apps/desk/server/db/informeContrato.ts:34`): un «Entregado» migrado muestra la fecha de la migración. ¿Se acepta?
+- B1. El informe de contrato toma como fecha de ejecución la primera fila con `to_status = 'Finalizado'` (`apps/desk/server/db/informeContrato.ts:34` en `73bd52f`): un «Entregado» migrado muestra la fecha de la migración. ¿Se acepta?
 - B2. Los tickets migrados sin otra historia dejan de tener `reentrante = null` y pasan a `false` (`packages/shared/src/indicadores.ts:134`, historial no vacío). ¿Se acepta o se excluye el marcador de ese conteo?
 - B3. El historial y el hilo del ticket enseñan el marcador con etiquetas en crudo, entre ellas «Managed by app previo» y «Status type previo» (`apps/desk/server/db/ticketFuentes.ts:82`, `etiquetaCampo`). ¿Se añaden etiquetas propias en español o se oculta el marcador de esas dos vistas?
 - B4. La hoja de vida del equipo lista el marcador como una etapa (`apps/desk/server/db/equipos.ts:275`). ¿Se deja como traza visible (diseño §12) o se filtra?
@@ -239,7 +239,7 @@ Once preguntas, sin número de bandeja. Fusionadas: la que halló el diseño (in
 | N4 | ¿Debe apagarse la sincronización de tickets en el corte? Hoy no hay interruptor | Gerencia | La ejecución; si sí, una fila nueva | Fila del §5 si se decide; si no, punto abierto del Anexo D |
 | N5 | Los estados sin equivalencia que enseñe la pasada en seco: ¿a qué estado va cada uno? | Gerencia | Que `aplicar=true` deje de responder `409` | Punto abierto del Anexo D, tras la pasada en seco |
 | N6 | Los abiertos sin remisión de entrada vigente: ¿se les crea, o se quedan a la espera? | Gerencia | La ejecución | Punto abierto del Anexo D |
-| N7 | El informe de contrato toma como fecha de ejecución la primera fila con `to_status = 'Finalizado'` (`apps/desk/server/db/informeContrato.ts:34`): un «Entregado» migrado muestra la fecha de la migración. ¿Se acepta? | Gerencia | Un informe de contrato correcto para esos tickets | Punto abierto del Anexo D |
+| N7 | El informe de contrato toma como fecha de ejecución la primera fila con `to_status = 'Finalizado'` (`apps/desk/server/db/informeContrato.ts:34` en `73bd52f`): un «Entregado» migrado muestra la fecha de la migración. ¿Se acepta? | Gerencia | Un informe de contrato correcto para esos tickets | Punto abierto del Anexo D |
 | N8 | Los migrados sin otra historia pasan de `reentrante = null` a `false` (`packages/shared/src/indicadores.ts:134`). ¿Se acepta o se excluye el marcador de ese conteo? | Gerencia | Indicadores sin cambio de lectura | Punto abierto del Anexo D |
 | N9 | El historial y el hilo enseñan el marcador con etiquetas en crudo (`apps/desk/server/db/ticketFuentes.ts:82`, `etiquetaCampo`): «Status type previo», «Managed by app previo». ¿Etiquetas en español o ocultar el marcador? | Gerencia | Una vista presentable del historial | Punto abierto del Anexo D |
 | N10 | La hoja de vida del equipo lista el marcador como una etapa (`apps/desk/server/db/equipos.ts:275`). ¿Se deja como traza o se filtra? | Gerencia | La hoja de vida sin ruido | Punto abierto del Anexo D |
