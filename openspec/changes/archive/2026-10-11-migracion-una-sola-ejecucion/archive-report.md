@@ -36,7 +36,7 @@ Hecha por el orquestador con PostgreSQL 17.5 real (binario embebido, fuera del r
 - **Procedimiento en `DEPLOY.md`**, §14 (`DEPLOY.md:663-693`), y un puntero dentro de `DEPLOY.md:356`. Dice quién abre el interruptor y
   lanza la ejecución (Gerencia; suplente POR NOMBRAR) y el orden: copia previa, abrir el interruptor, una sola ejecución, comprobar y
   volver a cerrarlo.
-- **RQ-ZS-23** en `openspec/specs/zoho-sync/spec.md:1368`.
+- **RQ-ZS-23** en `openspec/specs/zoho-sync/spec.md:1368` en `164d322`.
 - **Ningún fichero de producto cambia:** ni el ejecutor, ni la ruta, ni el interruptor, ni el esquema. No hay permiso nuevo.
 
 ## Hallazgo declarado y NO construido

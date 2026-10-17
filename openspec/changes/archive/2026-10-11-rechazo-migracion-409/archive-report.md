@@ -29,7 +29,7 @@ declara `cierra: no` y F1F-01 sigue en curso.
   `motivo: 'otra-ejecucion'`, y no trae informe. No pueden coincidir: la negativa se decide antes del primer `INSERT`
   (`apps/desk/server/db/migracionTicketsAbiertos.ts:70`) y el rechazo sólo salta al escribir.
 - **`DEPLOY.md:688-691`**, en sitio: describe el `409` y cómo distinguirlo. **RQ-ZS-23 modificado** en
-  `openspec/specs/zoho-sync/spec.md:1368`, con cuatro escenarios nuevos.
+  `openspec/specs/zoho-sync/spec.md:1368` en `164d322`, con cuatro escenarios nuevos.
 - **Lo que NO cambia:** el `INSERT`, el `UPDATE` y su `WHERE`, la transacción, el interruptor, el manejador central
   (`apps/desk/server/app.ts`) y el `409` de la negativa. No hay esquema, variables ni permiso nuevo.
 

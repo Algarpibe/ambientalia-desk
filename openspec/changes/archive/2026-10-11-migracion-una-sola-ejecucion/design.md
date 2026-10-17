@@ -77,7 +77,7 @@ El caso 3 no caza ninguna de las tres y se dice: fija la frontera «posterior»,
 
 ### D-5 · Delta de especificación
 
-RQ-ZS-23 se fusiona **al final** de `openspec/specs/zoho-sync/spec.md`, detrás de RQ-ZS-22 (`openspec/specs/zoho-sync/spec.md:1275`), sin tocar nada anterior. No se crea capacidad: R-2 no aplica.
+RQ-ZS-23 se fusiona **al final** de `openspec/specs/zoho-sync/spec.md`, detrás de RQ-ZS-22 (`openspec/specs/zoho-sync/spec.md:1275` en `164d322`), sin tocar nada anterior. No se crea capacidad: R-2 no aplica.
 
 ### D-6 · Reglas
 

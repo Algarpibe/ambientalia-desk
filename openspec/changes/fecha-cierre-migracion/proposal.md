@@ -21,7 +21,7 @@ Gerencia decidió (`decision/migracion-e207-e212`, `openspec/config.yaml:4737-47
 Hueco actual, medido:
 - La conversión existe: `packages/shared/src/migracionTickets.ts:36` (destino `Finalizado`, regla `entregado-a-finalizado`, `statusTypeDestino: 'Closed'`).
 - El ejecutor escribe marcador (`apps/desk/server/db/migracionTicketsAbiertos.ts:73-82`) y `UPDATE` (`:84-89`) sin `closed_time`; un `grep closed_time` en ese fichero y en `migracionTickets.ts` da 0.
-- La spec lo fija hoy al revés: `openspec/specs/tickets-core/spec.md:2111` («`closed_time` no se toca», supuesto S-2 de aquel cambio) y `openspec/specs/zoho-sync/spec.md:851`, `:915`, `:935`, `:1040`, `:1081-1083`. La decisión de Gerencia sustituye ese supuesto.
+- La spec lo fija hoy al revés: `openspec/specs/tickets-core/spec.md:2111` en `164d322` («`closed_time` no se toca», supuesto S-2 de aquel cambio) y `openspec/specs/zoho-sync/spec.md:851` en `164d322`, `:915`, `:935`, `:1040`, `:1081-1083`. La decisión de Gerencia sustituye ese supuesto.
 
 Resultado: un «Entregado» migrado queda `Closed` con `closed_time` NULL.
 
@@ -31,7 +31,7 @@ Resultado: un «Entregado» migrado queda `Closed` con `closed_time` NULL.
 1. **Regla pura** al final de `packages/shared/src/migracionTickets.ts` (regla 13; al final para no desplazar líneas citadas): p. ej. `cierreDeMigracion(equivalencia, closedTimeZoho, instanteMigracion) → { closedTime, origen: 'zoho' | 'migracion' } | null` (`null` si `statusTypeDestino !== 'Closed'`).
 2. **Ejecutor**: leer `closed_time`, aplicar la regla, escribirlo en el `UPDATE` sólo cuando la regla cierra, y dejar en `values` del marcador `cierre_origen` y `closed_time_previo`. Sin columna nueva, sin `ALTER`, sin variable en `DEPLOY.md`.
 3. **Informe en seco**: cuántos cierres llevan fecha de Zoho y cuántos la de la migración, para que Gerencia lo vea antes de aplicar.
-4. **Reversión SQL** (`docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql:58-92`, RQ-ZS-18 en `openspec/specs/zoho-sync/spec.md:1023`): restaurar `closed_time` desde `closed_time_previo` en la regla `entregado-a-finalizado`; el comentario de `:65` («No toca closed_time») se corrige.
+4. **Reversión SQL** (`docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql:58-92`, RQ-ZS-18 en `openspec/specs/zoho-sync/spec.md:1023` en `164d322`): restaurar `closed_time` desde `closed_time_previo` en la regla `entregado-a-finalizado`; el comentario de `:65` («No toca closed_time») se corrige.
 5. **Pruebas que se invierten**: `apps/desk/server/db/migracionTicketsF1F01.test.ts:93` y `:188-191` (la reversión ya no deja `closed_time` intacto) y `apps/desk/server/db/migracionTicketsAbiertos.test.ts:85` (el ejecutor ya no conserva `closed_time` en el «Entregado»). Esta última no estaba en la medición de partida.
 
 ### Fuera

@@ -76,7 +76,7 @@ Por script (`fusiona.mjs`, fuera del repositorio), bloque a bloque, con comproba
 | Capacidad | Bloques | Líneas antes → después | git (+/−) |
 |---|---|---|---|
 | `permissions` | RQ-PM-20, RQ-PM-21, RQ-PM-23 | 853 → 892 | 59 / 20 |
-| `tickets-core` | RQ-TC-24, 27, 28, 29, 35, 36, 37, 38 y RQ-TC-56 (nuevo, al final, desde `openspec/specs/tickets-core/spec.md:3309`) | 3.207 → 3.370 | 263 / 100 |
+| `tickets-core` | RQ-TC-24, 27, 28, 29, 35, 36, 37, 38 y RQ-TC-56 (nuevo, al final, desde `openspec/specs/tickets-core/spec.md:3309` en `164d322`) | 3.207 → 3.370 | 263 / 100 |
 | `transitions-st` | RQ-TS-20, RQ-TS-21 | 2.531 → 2.573 | 57 / 15 |
 | `zoho-sync` | RQ-ZS-01 | 1.366 → 1.366 | 5 / 5 |
 
