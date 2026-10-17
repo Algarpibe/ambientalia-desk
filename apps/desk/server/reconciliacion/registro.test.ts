@@ -215,10 +215,10 @@ describe('registro · RQ-RC-11 y RQ-RC-12 sobre la R01.4 real y los proposals re
     expect(numeradorSobre(configReal(), r14Real()).cifras.find((x) => x.startsWith('denominador'))).toBe('denominador: 78 tandas del §C de la R01.4')
   })
 
-  it('11f/05g · «en curso» son exactamente OCHO, con F0-04 y sin F1B-08 (cerrada por archivo), y F0-04 no cuenta por commit', () => {
+  it('11f/05g · «en curso» son exactamente SIETE, sin F0-04 ni F1B-08 (cerradas por archivo; F0-04 por decision/e013b-copia-pruebas), y F0-04 no cuenta por commit', () => {
     const c = numeradorSobre(configReal(), r14Real())
-    expect(tandas(c, 'en curso, aparte y sin sumar')).toEqual(['F0-04', 'F1B-04', 'F1B-09', 'F1B-13', 'F1C-05', 'F1F-01', 'F1F-02', 'F1F-05'])
-    expect(tandas(c, 'cerradas por commit declarado')).not.toContain('F0-04')
+    expect(tandas(c, 'en curso, aparte y sin sumar')).toEqual(['F1B-04', 'F1B-09', 'F1B-13', 'F1C-05', 'F1F-01', 'F1F-02', 'F1F-05'])
+    expect(tandas(c, 'cerradas por commit declarado')).not.toContain('F0-04'); expect(tandas(c, 'cerradas por archivo')).toContain('F0-04')
   })
 
   it('una cabecera de F0-01..03 fuera de `archive/` no las mete «en curso»: las cuenta el commit (P1 sobre ficheros reales)', () => {

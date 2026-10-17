@@ -19,15 +19,15 @@ archive. Cada intento se asienta sólo con TODOS sus códigos en 0.
 
 ## 3. Archive
 
-- [ ] 3.1 Medir antes de aplicar la parte revisable (`archive-report.md`, las líneas de `registro.test.ts` y
+- [x] 3.1 Medir antes de aplicar la parte revisable (`archive-report.md`, las líneas de `registro.test.ts` y
   `RECONCILIACION.md`); si supera 800, parar.
-- [ ] 3.2 Mover la carpeta a `openspec/changes/archive/2026-10-17-cierre-f0-04-por-dictamen/`.
-- [ ] 3.3 Correr `apps/desk/server/reconciliacion/registro.test.ts` y ANOTAR el rojo esperado en `:220` (F0-04 ya no
+- [x] 3.2 Mover la carpeta a `openspec/changes/archive/2026-10-17-cierre-f0-04-por-dictamen/`.
+- [x] 3.3 Correr `apps/desk/server/reconciliacion/registro.test.ts` y ANOTAR el rojo esperado en `:220` (F0-04 ya no
   está «en curso»).
-- [ ] 3.4 Corregir en sitio `registro.test.ts:218-221` (SIETE, sin F0-04, y F0-04 por archivo), sin mover líneas; verde.
-- [ ] 3.5 Regenerar `docs/sdd/RECONCILIACION.md`: F0-04 en «cerradas por archivo» (hipótesis: 22 por archivo, 7 en curso).
-- [ ] 3.6 Barrido de la regla de mutación 4 sobre `registro.test.ts`.
-- [ ] 3.7 Cuatro códigos con código 0; `git show --numstat` del commit de archivo con sólo este cambio.
+- [x] 3.4 Corregir en sitio `registro.test.ts:218-221` (SIETE, sin F0-04, y F0-04 por archivo), sin mover líneas; verde.
+- [x] 3.5 Regenerar `docs/sdd/RECONCILIACION.md`: F0-04 en «cerradas por archivo» (hipótesis: 22 por archivo, 7 en curso).
+- [x] 3.6 Barrido de la regla de mutación 4 sobre `registro.test.ts`.
+- [x] 3.7 Cuatro códigos con código 0; `git show --numstat` del commit de archivo con sólo este cambio.
 
 ## Tareas de personas — fuera del recuento
 
