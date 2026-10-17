@@ -18,7 +18,7 @@ Datos de partida (medidos): la ficha es `packages/zoho-sync/src/db/schema.sql:72
 
 ## ADDED Requirements
 
-### RQ-TC-65 · Medición por fabricante: lo reclamado frente a lo recuperado, calculada sólo en `shared`
+### Requirement: RQ-TC-65 · Medición por fabricante: lo reclamado frente a lo recuperado, calculada sólo en `shared`
 
 El sistema **SHALL** calcular la medición por fabricante con **una única función pura** en `packages/shared`
 (regla invariable 13, puntos 1 y 3). La agrupación, la normalización y las sumas **MUST** vivir sólo ahí: ni el servidor
@@ -99,7 +99,7 @@ importes son pesos, sin conversión (SUPUESTO S-3, hipótesis heredada de la fic
 - WHEN se calcula la medición
 - THEN el resultado no tiene fabricantes ni fallas repetidas y no lanza error
 
-### RQ-TC-66 · Piezas con fallas repetidas, calculadas sólo en `shared`
+### Requirement: RQ-TC-66 · Piezas con fallas repetidas, calculadas sólo en `shared`
 
 La misma función pura de `shared` **SHALL** devolver las piezas con fallas repetidas. La regla es un **SUPUESTO S-2,
 reversible** (se revierte añadiendo el modelo del ticket a la clave, una ventana de N meses, o cambiando el umbral):
@@ -147,7 +147,7 @@ aparecer. El resultado sólo se muestra: no escribe en ninguna taxonomía (nota 
 - WHEN se calcula la medición
 - THEN no hay falla repetida
 
-### RQ-TC-67 · Lectura de la medición: `GET` de servidor con sesión y sin más permiso
+### Requirement: RQ-TC-67 · Lectura de la medición: `GET` de servidor con sesión y sin más permiso
 
 El servidor **SHALL** exponer un `GET` nuevo que sirve la medición de RQ-TC-65 y RQ-TC-66. La ruta **SHALL** pasar
 sólo por `requireAuth` y **MUST NOT** exigir ningún permiso, cargo ni rol adicional (SUPUESTO S-4, reversible: se revierte
@@ -186,7 +186,7 @@ hay otra guarda. La respuesta es la misma para todo usuario con sesión.
 - WHEN se llama al `GET`
 - THEN ninguna ficha ni respuesta cambia
 
-### RQ-TC-68 · Vista de sólo lectura de la medición, para todo usuario con sesión
+### Requirement: RQ-TC-68 · Vista de sólo lectura de la medición, para todo usuario con sesión
 
 El cliente **SHALL** ofrecer una vista nueva, accesible desde `apps/desk/src/components/Header.tsx`, que muestre lo que
 sirve el `GET` de RQ-TC-67: por fabricante, lo reclamado, lo recuperado, el cociente (o «no disponible»), el número de
