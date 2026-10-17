@@ -80,7 +80,7 @@ export const CLASIFICACION_EN_ESPERA = {
   // Entra por `facturado` y sale por `habilitado_para_entrega`, las dos de Comercial: Servicio
   // Técnico no puede moverla. El Anexo B.1 del maestro también la lista bajo Comercial.
   'Liberación Comercial': 'interna',
-  // Entra por `facturado`/similar y su única salida es `habilitar_servicio` (`transitions.ts:178`),
+  // Entra por `remision_confirmada`, sin botón (`transitions.ts:150`), y su única salida es `habilitar_servicio` (`transitions.ts:178`),
   // área Comercial: Servicio Técnico no puede moverla. Mismo criterio que `Liberación Comercial`, dos
   // filas arriba — el tercero del que depende es otra área de la casa, no alguien de fuera.
   'Remisión creada': 'interna',
@@ -142,7 +142,7 @@ export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
  * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay DOCE
  * estados con una sola transición de salida —entre ellos `Ingresado` y `Ticket creado`, que son
  * trabajo corriente y no esperan a nadie—. Y cruzarla con `en_espera`, que es el intento fino,
- * tampoco: da SEIS, con `Liberación Comercial` y `Remisión creada` dentro. Por eso la prueba de
+ * tampoco: da OCHO, con `Liberación Comercial`, `Remisión creada` y los dos `Por Entregar` dentro. Por eso la prueba de
  * coherencia de `estados.test.ts` sólo comprueba que los cuatro son estados DECLARADOS, y no intenta
  * derivarlos.
  *

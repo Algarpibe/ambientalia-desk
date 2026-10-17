@@ -64,7 +64,7 @@ export interface Transition {
 // Helpers para declarar campos de forma compacta.
 /**
  * El comentario de la etapa. NUNCA obligatorio, y por eso no admite parámetro: contar lo que se hizo
- * es lo que da valor al historial, pero exigirlo en las 32 etapas lo convierte en un peaje que se paga
+ * es lo que da valor al historial, pero exigirlo en todas las etapas lo convierte en un peaje que se paga
  * escribiendo «ok» —y entonces el historial dice menos que si estuviera vacío—.
  *
  * Sin parámetro a propósito: mientras no se pueda declarar obligatorio, el asterisco de la pantalla no
@@ -297,7 +297,7 @@ export const TRANSITIONS: Transition[] = TRANSICIONES_BASE.map((t) => ({
   fields: [...t.fields, derivacion(DERIVACION_POR_DEFECTO[t.id])],
 }))
 
-/** Transiciones disponibles para un ticket según su estado actual. */
+/** Sólo el catálogo de servicio, sin llamador de producción: el servidor resuelve por el registro de flujos. Para pruebas (E-227). */
 export function transitionsForStatus(status: string): Transition[] {
   return TRANSITIONS.filter((t) => t.from.includes(status))
 }
@@ -345,7 +345,7 @@ export function areasSiguientes(estado: string, transiciones: readonly Transitio
  * `Notificado`, con la misma forma que el resto: sólo `comment()` y `derivacion()` (s3).
  *
  * Área: las seis son `Servicio Técnico` por equivalencia (supuesto s2, ninguna fuente accesible la
- * contradice). Campos: sólo `comment()` — ninguna fuente da otro campo de negocio (RQ-EN-07).
+ * contradice). Campos: `comment()` y `derivacion()`; `liberacion` añade el certificado de fábrica (`:360`) (RQ-EN-07).
  */
 export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
   { id: 'ingreso_equipo_nuevo', name: 'Ingreso equipo nuevo', from: ['Ingresado'], to: 'En Proceso', area: 'Servicio Técnico',

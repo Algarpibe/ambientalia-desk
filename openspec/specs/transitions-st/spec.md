@@ -1357,14 +1357,14 @@ propósito, sin una decisión de Gerencia que lo pida.
 
 #### Scenario: La fecha derivada sin fuente inválida es escalón C, y no altera la escalera A-B-C-D
 
-**Garantía estructural documentada, no escenario con test de ejecución pendiente.** De las 34
+**Garantía estructural documentada, no escenario con test de ejecución pendiente.** De las 31
 transiciones declaradas en `packages/shared/src/transitions.ts`, sólo `habilitar_servicio`
 (`:178-189`) declara `cfOrdenVenta` — el campo que activa la guarda de unicidad de OV, escalón D — y
 esa misma entrada no declara ninguna de las tres fechas derivadas; y la única transición que declara
 fechas derivadas junto a otros campos propios, `ingreso_a_servicio` (`:190-191`, declara `Fecha
 creación ticket` y `Fecha Remisión Entrada`), no declara `cfOrdenVenta`. El GIVEN de abajo — una
 fecha derivada inválida sin fuente Y una orden de venta ya asociada a otro ticket, en la MISMA
-petición — no es alcanzable hoy con ninguna de las 34 transiciones reales: no existe una que declare
+petición — no es alcanzable hoy con ninguna de las 31 transiciones reales: no existe una que declare
 los dos campos a la vez.
 
 La garantía queda sostenida por inspección de código y por la prueba de mutación de posición (regla
@@ -1382,7 +1382,7 @@ en rojo y revertido por los casos `P-a`/`P-b` de
 > **Nota — esta enmienda no cierra la puerta a la cobertura de ejecución.** Si en el futuro una
 > transición real llega a declarar a la vez un campo de fecha derivada y `cfOrdenVenta`, el GIVEN de
 > arriba pasa a ser alcanzable con datos reales y el requisito vuelve a exigir un test de integración
-> que lo ejercite exactamente — esta nota documenta que hoy (34 transiciones, ninguna combina los dos
+> que lo ejercite exactamente — esta nota documenta que hoy (31 transiciones, ninguna combina los dos
 > campos) la garantía es estructural, no que quede eximida para siempre.
 
 ### 3.9 · Dos cuentas mal en el docblock de la derivación · **destino F1B-06**

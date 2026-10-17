@@ -513,7 +513,7 @@ de aquí.
 
 ## 5 · Fuera de alcance de esta spec
 
-- **Las 34 transiciones, el grafo y los once campos reentrantes** → `transitions-st`. Aquí sólo está la
+- **Las 31 transiciones de servicio, el grafo y los once campos reentrantes** → `transitions-st`. Aquí sólo está la
   fila que cada transición escribe (RQ-TZ-01) y la regla que de ella se deriva (RQ-TZ-03).
 - **El alta del ticket y el contenido de la foto de creación** → `tickets-core` RQ-TC-06. Aquí sólo
   está cómo se lee (RQ-TZ-02, RQ-TZ-07).

@@ -729,7 +729,7 @@ entrada arrastraba la cifra vieja.
 
 ## 6 · Fuera de alcance de esta spec
 
-- **El grafo de estados, las 34 transiciones y qué área ejecuta cada una** → `transitions-st`. Aquí
+- **El grafo de estados, las 31 transiciones de servicio y qué área ejecuta cada una** → `transitions-st`. Aquí
   sólo está que `areasSiguientes` se deriva de él (RQ-AV-04).
 - **El modelo de roles y áreas, las sesiones, y qué significa «administrador»** → `permissions`. Aquí
   sólo están las tres cosas que el aviso consulta: las áreas del usuario (RQ-AV-05), la casilla

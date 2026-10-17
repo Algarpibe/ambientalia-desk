@@ -287,9 +287,9 @@ describe('las 31 transiciones, ejecutadas contra el servidor', () => {
 })
 
 /**
- * F1B-06 — LAS CINCO TRANSICIONES DE `TRANSITIONS_EQUIPO_NUEVO`, EJECUTADAS CONTRA EL SERVIDOR.
+ * F1B-06 — LAS SEIS TRANSICIONES DE `TRANSITIONS_EQUIPO_NUEVO`, EJECUTADAS CONTRA EL SERVIDOR.
  *
- * Mismo molde que el barrido de las 31 de arriba, escrita a mano y NO derivada — con cinco casos la
+ * Mismo molde que el barrido de las 31 de arriba, escrita a mano y NO derivada — con seis casos la
  * derivación no aporta la segunda opinión que sí aporta con 31, y el guardián de huérfanas es el que
  * cuida que ninguna quede sin caso.
  *
@@ -308,7 +308,7 @@ const CASOS_EQUIPO_NUEVO: Record<string, { desde: string[]; a: string }> = {
   rechazo_verificacion: { desde: ['Verificación'], a: 'Notificado' },
 }
 
-describe('las cinco transiciones de Equipo nuevo, ejecutadas contra el servidor (F1B-06)', () => {
+describe('las seis transiciones de Equipo nuevo, ejecutadas contra el servidor (F1B-06)', () => {
   it('ninguna transición del catálogo EN se queda sin caso, y ningún caso sobra', () => {
     const conCaso = new Set(Object.keys(CASOS_EQUIPO_NUEVO))
     const huerfanas = TRANSITIONS_EQUIPO_NUEVO.filter((t) => !conCaso.has(t.id)).map((t) => t.id)
