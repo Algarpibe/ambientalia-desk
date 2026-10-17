@@ -285,3 +285,12 @@ describe('cierresDeMigracion (RQ-TC-64)', () => {
   })
 })
 const ZOHO_FECHA = '2026-08-01T00:00:00.000Z'
+
+describe('cierreDeMigracion · la guarda del instante (RQ-TC-64)', () => {
+  // La prueba previa usa «Entregado» sin fecha de Zoho, y ahí `toISOString()` lanza el mismo RangeError aunque falte
+  // la guarda. Estos dos caminos no llegan a `toISOString()`: sólo la guarda los hace lanzar.
+  it('un instante inválido lanza RangeError con una regla que no cierra y con fecha de Zoho', () => {
+    expect(() => cierreDeMigracion(equivalenciaDeEstado('Pendiente', 'Reparación')!, null, new Date('x'))).toThrow(RangeError)
+    expect(() => cierreDeMigracion(equivalenciaDeEstado('Entregado', 'Reparación')!, ZOHO_FECHA, new Date('x'))).toThrow(RangeError)
+  })
+})
