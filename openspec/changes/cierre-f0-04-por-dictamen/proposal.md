@@ -35,7 +35,7 @@ retirado)»:
 |---|---|---|
 | Pruebas del motor donde F0-00 detectó huecos | Hecho | Matriz área × transición contra el servidor (`apps/desk/server/permisos.test.ts:41`); las transiciones ejecutadas con su estado destino y su traza (`apps/desk/server/transicionesEjecucion.test.ts:188`); `Finalizado` único terminal (`packages/shared/src/invariantesGrafo.test.ts:62`, `:177`) |
 | Staging sobre la VPS con PostgreSQL | **Retirado por dictamen** | `decision/e013b-copia-pruebas`, consecuencia (1) (`openspec/config.yaml:1697-1700`); tachado en `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:128` |
-| CI con `test`, `typecheck` y `lint` | Hecho | `.github/workflows/ci.yml:27`, `:41`, `:45`, en cada `push` y `pull_request` a `main` (`:2-6`) |
+| CI con `test`, `typecheck` y `lint` | Hecho | `.github/workflows/ci.yml:27`, `:41`, `:45` (`test:coverage`), en cada `push` y `pull_request` a `main` (`:2-6`) |
 
 `openspec/changes/F0-04/proposal.md:16` declaraba exactamente eso: «dos de los tres contenidos de su fila están
 verificados; falta constancia de staging». **No queda nada de la fila sin hacer salvo la pieza retirada.**
@@ -45,7 +45,7 @@ verificados; falta constancia de staging». **No queda nada de la fila sin hacer
 Dos razones, las dos medidas:
 
 1. **Mover `openspec/changes/F0-04/` rompería citas que esta tanda no puede reparar.** Hay citas a
-   `openspec/changes/F0-04/proposal.md` en quince ficheros del repositorio, cinco de ellas en `openspec/config.yaml`
+   `openspec/changes/F0-04/proposal.md` en dieciocho ficheros de `badce5a`, cuatro de ellas en `openspec/config.yaml`
    —entre ellas la propia decisión—, que es fichero de Supervisión. Archivar la carpeta cambia su ruta.
 2. **El barrido ya resuelve el caso sin tocar la carpeta vieja.** Una tanda con algún `proposal.md` archivado y
    `cierra: si` entra en «cerradas por archivo» y sale de «en curso», aunque exista otra cabecera suya sin archivar
