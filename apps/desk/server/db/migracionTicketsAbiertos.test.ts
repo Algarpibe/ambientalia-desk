@@ -42,7 +42,7 @@ function espiar(antes?: (sql: string, params: unknown[]) => Promise<void> | void
 }
 const verbos = (sqls: string[]) => sqls.map((s) => s.split(' ')[0].toUpperCase())
 const escrituras = (sqls: string[]) => sqls.filter((s) => /^(INSERT|UPDATE|DELETE)/i.test(s))
-const aplicar = (d: Queryable, extra: { aplicar?: boolean; corte?: Date } = {}) => migrarTicketsAbiertos(d, { corte: CORTE, actor: 'Admin', ...extra })
+const aplicar = (d: Queryable, extra: { aplicar?: boolean; corte?: Date; ahora?: Date } = {}) => migrarTicketsAbiertos(d, { corte: CORTE, actor: 'Admin', ...extra })
 
 describe('seco', () => {
   it('con aplicar ausente y con false: ni BEGIN ni escrituras, filas idénticas y el informe trae todos sus campos', async () => {
@@ -53,7 +53,7 @@ describe('seco', () => {
       const inf = await aplicar(espia, extra)
       expect(verbos(sqls)).not.toContain('BEGIN')
       expect(escrituras(sqls)).toEqual([])
-      expect(Object.keys(inf).sort()).toEqual(['abiertos', 'aplicado', 'aplicar', 'avisos', 'corte', 'migrables', 'negativa', 'numeracion', 'pendientes', 'porEstado', 'sinEquivalencia', 'sinRemisionVigente', 'trasElCorte', 'yaGobernados'])
+      expect(Object.keys(inf).sort()).toEqual(['abiertos', 'aplicado', 'aplicar', 'avisos', 'cierres', 'corte', 'migrables', 'negativa', 'numeracion', 'pendientes', 'porEstado', 'sinEquivalencia', 'sinRemisionVigente', 'trasElCorte', 'yaGobernados'])
       expect(inf).toMatchObject({ aplicar: false, aplicado: false, abiertos: 2, migrables: 2, negativa: null, corte: '2026-12-01T05:00:00.000Z' })
     }
     expect(await foto()).toEqual(antes)
@@ -183,5 +183,61 @@ describe('el resto del informe y los fallos', () => {
     await expect(aplicar(espia, { aplicar: true })).rejects.toThrow('fallo forzado')
     expect(verbos(sqls).at(-1)).toBe('ROLLBACK')
     expect(verbos(sqls)).not.toContain('COMMIT')
+  })
+})
+
+/**
+ * fecha-cierre-migracion (F1F-01), `zoho-sync` RQ-ZS-17 · la fecha de cierre de «Entregado» y su marca de origen en el marcador.
+ * Va al final del fichero para no desplazar ninguna línea citada. `ahora` se inyecta: el instante es uno por ejecución.
+ */
+describe('fecha de cierre de «Entregado» (RQ-ZS-17)', () => {
+  const AHORA = new Date('2026-12-02T15:00:00.000Z')
+  const ZOHO = '2026-08-01T00:00:00.000Z'
+  const marca = async (id: string) => json(((await db.query('SELECT "values" FROM ticket_transitions WHERE ticket_id = $1', [id])).rows[0] as { values: unknown }).values)
+  const cierreDe = async (id: string) => iso(((await db.query('SELECT closed_time FROM tickets WHERE id = $1', [id])).rows[0] as { closed_time: Date | null }).closed_time)
+  const iso = (d: Date | null) => (d === null ? null : d.toISOString())
+
+  it('un «Entregado» sin closed_time queda con el instante de la ejecución y el marcador dice migracion', async () => {
+    await tk('t1', 4100, 'Entregado')
+    await aplicar(db, { aplicar: true, ahora: AHORA })
+    expect(await cierreDe('t1')).toBe(AHORA.toISOString())
+    expect(await marca('t1')).toMatchObject({ cierre_origen: 'migracion', closed_time_previo: null, closed_time_destino: AHORA.toISOString() })
+  })
+
+  it('un «Entregado» con closed_time lo conserva y el marcador dice zoho, con el valor previo', async () => {
+    await tk('t1', 4100, 'Entregado', { closed: ZOHO })
+    await aplicar(db, { aplicar: true, ahora: AHORA })
+    expect(await cierreDe('t1')).toBe(ZOHO)
+    expect(await marca('t1')).toMatchObject({ cierre_origen: 'zoho', closed_time_previo: ZOHO, closed_time_destino: ZOHO })
+  })
+
+  it('todos los cierres de una ejecución comparten el mismo instante', async () => {
+    await tk('t1', 4100, 'Entregado'); await tk('t2', 4200, 'Entregado'); await tk('t3', 4300, 'Entregado')
+    await aplicar(db, { aplicar: true, ahora: AHORA })
+    expect([await cierreDe('t1'), await cierreDe('t2'), await cierreDe('t3')]).toEqual(Array(3).fill(AHORA.toISOString()))
+  })
+
+  it('un «Pendiente» y una identidad no tocan closed_time y su marcador no lleva las tres claves nuevas (S-4)', async () => {
+    await tk('p1', 4100, 'Pendiente', { cls: 'Reparación', closed: ZOHO }); await tk('i1', 4200, 'En Proceso')
+    await aplicar(db, { aplicar: true, ahora: AHORA })
+    expect([await cierreDe('p1'), await cierreDe('i1')]).toEqual([ZOHO, null])
+    for (const id of ['p1', 'i1']) {
+      const v = await marca(id)
+      expect(Object.keys(v)).not.toContain('cierre_origen')
+      expect(Object.keys(v)).not.toContain('closed_time_previo')
+      expect(Object.keys(v)).not.toContain('closed_time_destino')
+    }
+  })
+
+  it('en seco, informe.cierres cuenta las dos ramas, no se escribe nada y el informe es igual al aplicar', async () => {
+    await tk('t1', 4100, 'Entregado', { closed: ZOHO }); await tk('t2', 4200, 'Entregado'); await tk('t3', 4300, 'En Proceso')
+    const antes = await foto()
+    const { espia, sqls } = espiar()
+    const seco = await aplicar(espia, { ahora: AHORA })
+    expect(escrituras(sqls)).toEqual([])
+    expect(seco.cierres).toEqual({ conFechaDeZoho: 1, conFechaDeMigracion: 1 })
+    expect(await foto()).toEqual(antes)
+    const real = await aplicar(db, { aplicar: true, ahora: AHORA })
+    expect(real.cierres).toEqual(seco.cierres)
   })
 })

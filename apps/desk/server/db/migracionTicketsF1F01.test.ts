@@ -90,7 +90,7 @@ async function migrarYMoverDosDespues(): Promise<void> {
 }
 
 describe('Migracion_Tickets_Abiertos_F1F-01.sql (pg-mem, por sentencias)', () => {
-  it('(a) la reversión restaura status, status_type y managed_by_app de lo que el marcador recuerda, y deja intactos closed_time y los tickets sin revertir', async () => {
+  it('(a) la reversión restaura status, status_type y managed_by_app de lo que el marcador recuerda, restaura closed_time, y deja intactos los tickets sin revertir', async () => {
     const antes = await fotoTickets()
     await migrarYMoverDosDespues()
     const migrado = await fotoTickets()
@@ -185,11 +185,54 @@ describe('Migracion_Tickets_Abiertos_F1F-01.sql (pg-mem, por sentencias)', () =>
     for (const u of updates) expect(u, 'filtra por el marcador y por su última transición').toMatch(new RegExp(`'${ID_TRANSICION_MIGRACION}'[\\s\\S]*max\\(id\\)`))
   })
 
-  it('(i) no toca closed_time ni modified_time, ni lleva metacomandos ni secretos', () => {
+  it('(i) no toca modified_time, restaura closed_time sólo en entregado-a-finalizado, ni lleva metacomandos ni secretos', () => {
     const texto = leerScript()
     const rev = reversion().join(';\n')
-    expect(rev).not.toMatch(/closed_time|modified_time/i)
+    expect(rev).not.toMatch(/modified_time/i); expect(reversion().filter((u) => /closed_time/i.test(u)).map((u) => u.includes("'entregado-a-finalizado'"))).toEqual([true])
     expect(texto).not.toMatch(/^\\/m)
     expect(texto).not.toMatch(/password|secret|token|postgres(ql)?:\/\//i)
+  })
+})
+
+/**
+ * fecha-cierre-migracion (F1F-01), `zoho-sync` RQ-ZS-18 · la reversión restaura `closed_time` desde `closed_time_previo`, sólo en la regla
+ * que lo escribe. Va al final del fichero para no desplazar ninguna línea citada.
+ */
+describe('reversión de closed_time (RQ-ZS-18)', () => {
+  const migrar = () => migrarTicketsAbiertos(ejecutor, { corte: CORTE, aplicar: true, actor: 'Admin', ahora: new Date('2026-12-02T15:00:00Z') })
+  const cierres = async () => (await pool.query('SELECT id, closed_time FROM desk.tickets ORDER BY id')).rows
+
+  it('la restauración de closed_time aparece en UNA sola sentencia: la de entregado-a-finalizado, desde closed_time_previo', () => {
+    const conCierre = reversion().filter((u) => /closed_time/i.test(u))
+    expect(conCierre).toHaveLength(1)
+    expect(conCierre[0]).toContain("'entregado-a-finalizado'")
+    expect(conCierre[0]).toContain('closed_time_previo')
+  })
+
+  it('«e2» (sin fecha de Zoho) cierra con la fecha de la migración y la reversión lo devuelve a NULL; «e1» recupera la suya', async () => {
+    await migrar()
+    const migrado = await cierres()
+    expect(migrado.find((t) => t.id === 'e2')!.closed_time).not.toBeNull()
+    await sql(reversion())
+    const despues = await cierres()
+    expect(despues.find((t) => t.id === 'e2')!.closed_time).toBeNull()
+    expect(despues.find((t) => t.id === 'e1')).toEqual({ id: 'e1', closed_time: new Date('2026-09-15T00:00:00Z') })
+  })
+
+  it('la reversión no toca closed_time en las reglas que no cierran', async () => {
+    await tk('p4', 4210, 'Pendiente', { cls: 'Servicio Técnico', closed: '2026-07-01T00:00:00Z' })
+    await tk('i3', 4310, 'En Proceso', { closed: '2026-07-02T00:00:00Z' })
+    await migrar()
+    const migrado = (await cierres()).filter((t) => ['p4', 'i3'].includes(String(t.id)))
+    await sql(reversion())
+    expect((await cierres()).filter((t) => ['p4', 'i3'].includes(String(t.id)))).toEqual(migrado)
+  })
+
+  it('repetir la reversión no cambia nada', async () => {
+    await migrar()
+    await sql(reversion())
+    const una = await fotoTickets()
+    await sql(reversion())
+    expect(await fotoTickets()).toEqual(una)
   })
 })
