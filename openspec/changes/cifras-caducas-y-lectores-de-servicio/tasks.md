@@ -28,7 +28,7 @@ Toda edición en un fichero existente sustituye texto en la misma línea física
 
 ## Cierre del cambio
 
-- [ ] 3.1 Regla de mutación 4: barrido de citas a cada fichero tocado; `wc -l` igual en todos los existentes.
+- [x] 3.1 Regla de mutación 4: barrido de citas a cada fichero tocado; `wc -l` igual en todos los existentes.
 - [x] 3.2 `verify-report.md` contra spec, diseño y tareas.
 - [ ] 3.3 Archive: fusión del delta por script en `openspec/specs/trazas/spec.md` (bloque idéntico al delta, mismo número
   de líneas), `archive-report.md`; parte revisable medida ANTES; `git show --numstat` sólo del cambio;
