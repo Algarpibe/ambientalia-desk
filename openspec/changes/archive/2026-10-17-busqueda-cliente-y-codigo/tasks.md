@@ -24,9 +24,9 @@ un fichero existente (diseño D2).
 
 ## Cierre del cambio
 
-- [ ] 3.1 Regla de mutación 4: `wc -l` igual en los ficheros tocados, así que ninguna cita se desplaza.
-- [ ] 3.2 `verify-report.md` contra spec, diseño y tareas.
-- [ ] 3.3 Archive: fusión del delta por script (RQ-VT-11 en sitio, mismo número de líneas; RQ-VT-17 al final),
+- [x] 3.1 Regla de mutación 4: `wc -l` igual en los ficheros tocados, así que ninguna cita se desplaza.
+- [x] 3.2 `verify-report.md` contra spec, diseño y tareas.
+- [x] 3.3 Archive: fusión del delta por script (RQ-VT-11 en sitio, mismo número de líneas; RQ-VT-17 al final),
   `archive-report.md`; parte revisable medida ANTES; `git show --numstat` sólo del cambio; `RECONCILIACION.md` en la rama.
 
 ## Tareas de personas — archivar NO las da por hechas
