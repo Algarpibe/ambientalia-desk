@@ -25,8 +25,8 @@ mapa pequeño y falla con un mensaje que dice qué número espera.
 
 `estados.ts`, `transitions.ts` (con más de doscientas citas), `ticketService.ts` y las specs vivas se editan
 **sustituyendo texto en la misma línea física**. Las pruebas nuevas van en un fichero nuevo,
-`packages/shared/src/comentariosVigilados.test.ts`. El delta de RQ-TZ-01 conserva las diecinueve líneas del bloque
-vivo (`openspec/specs/trazas/spec.md:38-56`) y no lleva nota «Previously», que añadiría líneas al fusionar.
+`packages/shared/src/comentariosVigilados.test.ts`. El delta de RQ-TZ-01 conserva las dieciocho líneas del bloque
+vivo (`openspec/specs/trazas/spec.md:38-55`) y no lleva nota «Previously», que añadiría líneas al fusionar.
 El texto anterior del punto de cobertura era: «La cobertura SHALL ser de las 34 transiciones, ejercitando todos los
 `from` de cada una —36 ejecuciones, porque `habilitar_servicio` tiene tres—», con las citas `:105-117` y `:272-285`.
 
