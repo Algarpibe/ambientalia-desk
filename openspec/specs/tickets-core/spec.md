@@ -1750,7 +1750,7 @@ Books (los ids de ambos orígenes no coinciden: RQ-TC-30). Esta resolución **MU
 
 ## 6 · Fuera de alcance de esta spec
 
-- **El grafo de estados, las 34 transiciones y las dos entradas que no se cruzan** → `transitions-st`.
+- **El grafo de estados, las 31 transiciones de servicio y las dos entradas que no se cruzan** → `transitions-st`.
   Aquí sólo está de dónde arranca el ticket (RQ-TC-07).
 - **Quién puede crear, el modelo de roles, sesiones y contraseñas** → `permissions`. Aquí sólo está
   que el alta exige sesión y no gatea por área (RQ-TC-05).

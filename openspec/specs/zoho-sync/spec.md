@@ -786,7 +786,7 @@ la capa de servicio de `apps/desk/server` (RQ-TC-34), por decisión de Gerencia 
 
 ## 7 · Fuera de alcance de esta spec
 
-- **El grafo de estados, las 34 transiciones y las dos entradas que no se cruzan** → `transitions-st`
+- **El grafo de estados, las 31 transiciones de servicio y las dos entradas que no se cruzan** → `transitions-st`
   (RQ-TS-02). Aquí sólo está por qué el sync necesita esa regla (RQ-ZS-02).
 - **El ticket, su identidad, el prefijo `app-` y por qué `managed_by_app` no sirve para saber dónde
   nació** → `tickets-core` (RQ-TC-01). Aquí sólo está que esa columna es la frontera de **escritura**

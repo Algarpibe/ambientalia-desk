@@ -749,7 +749,7 @@ describe (`design:222-229`). No están en ninguna tanda del §5 del plan.
 
 ## 7 · Fuera de alcance de esta spec
 
-- **El grafo de estados, las 34 transiciones, los dos pasos sin botón como declaración y la regla de
+- **El grafo de estados, las 31 transiciones de servicio, los dos pasos sin botón como declaración y la regla de
   las dos entradas que no se cruzan** → `transitions-st` (RQ-TS-02, RQ-TS-03, RQ-TS-05). Aquí sólo
   está desde dónde se invoca el paso y con qué recuento (RQ-RE-11).
 - **El ticket, su identidad, sus campos y la primera puerta de la orden de venta** → `tickets-core`

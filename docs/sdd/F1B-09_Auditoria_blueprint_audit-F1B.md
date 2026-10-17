@@ -299,13 +299,13 @@ comentario no es una aserción).
 
 | Dónde | Qué dice | Qué es cierto hoy |
 |---|---|---|
-| `packages/shared/src/estados.ts:144-145` | Cruzar «salida única» con `en_espera` «da SEIS» | Da **ocho**: desde `por-entregar-es-espera` entran también `Por Entregar` y `Por Entregar / Sin facturar`. El «DOCE» de la línea anterior sigue siendo correcto |
-| `packages/shared/src/estados.ts:83` | `Remisión creada` «entra por `facturado`/similar» | Entra por la transición sin botón `remision_confirmada` (`packages/shared/src/transitions.ts:150`) |
-| `apps/desk/server/services/ticketService.ts:238` | «en las otras 43 transiciones» | Son **40**: la unión tiene 41 desde F1C-09 |
-| `packages/shared/src/transitions.ts:67` | «las 32 etapas» | Son 31 |
-| `packages/shared/src/transitions.ts:348` | Equipo nuevo: «Campos: sólo `comment()`» | `liberacion` declara además el certificado de fábrica (`packages/shared/src/transitions.ts:360`) |
-| `openspec/specs/trazas/spec.md:51` | La cobertura SHALL ser «de las 34 transiciones» | Es un requisito vivo con la cifra anterior a F1C-09 |
-| `openspec/specs/remisiones/spec.md:752`, `openspec/specs/tickets-core/spec.md:1672` en `6344b4a`, `openspec/specs/zoho-sync/spec.md:789`, `openspec/specs/derivacion-avisos/spec.md:732`, `openspec/specs/transitions-st/spec.md:1343` en `6344b4a` | «las 34 transiciones», en presente | 31 en servicio, 41 en la unión |
+| `packages/shared/src/estados.ts:144-145` en `3187e42` | Cruzar «salida única» con `en_espera` «da SEIS» | Da **ocho**: desde `por-entregar-es-espera` entran también `Por Entregar` y `Por Entregar / Sin facturar`. El «DOCE» de la línea anterior sigue siendo correcto · *Cerrado por `cifras-caducas-y-lectores-de-servicio` (F1B-09).* |
+| `packages/shared/src/estados.ts:83` en `3187e42` | `Remisión creada` «entra por `facturado`/similar» | Entra por la transición sin botón `remision_confirmada` (`packages/shared/src/transitions.ts:150`) · *Cerrado por `cifras-caducas-y-lectores-de-servicio` (F1B-09).* |
+| `apps/desk/server/services/ticketService.ts:238` en `3187e42` | «en las otras 43 transiciones» | Son **40**: la unión tiene 41 desde F1C-09 · *Cerrado por `cifras-caducas-y-lectores-de-servicio` (F1B-09).* |
+| `packages/shared/src/transitions.ts:67` en `3187e42` | «las 32 etapas» | Son 31 · *Cerrado por `cifras-caducas-y-lectores-de-servicio` (F1B-09).* |
+| `packages/shared/src/transitions.ts:348` en `3187e42` | Equipo nuevo: «Campos: sólo `comment()`» | `liberacion` declara además el certificado de fábrica (`packages/shared/src/transitions.ts:360`) · *Cerrado por `cifras-caducas-y-lectores-de-servicio` (F1B-09).* |
+| `openspec/specs/trazas/spec.md:51` en `3187e42` | La cobertura SHALL ser «de las 34 transiciones» | Es un requisito vivo con la cifra anterior a F1C-09 · *Cerrado por `cifras-caducas-y-lectores-de-servicio` (F1B-09).* |
+| `openspec/specs/remisiones/spec.md:752` en `3187e42`, `openspec/specs/tickets-core/spec.md:1672` en `6344b4a`, `openspec/specs/zoho-sync/spec.md:789` en `3187e42`, `openspec/specs/derivacion-avisos/spec.md:732` en `3187e42`, `openspec/specs/transitions-st/spec.md:1343` en `6344b4a` | «las 34 transiciones», en presente | 31 en servicio, 41 en la unión · *Cerrado por `cifras-caducas-y-lectores-de-servicio` (F1B-09).* |
 | `CLAUDE.md`, «Pruebas de interfaz» | «Los 39 ficheros `.tsx` (6.329 líneas)» | **49** ficheros y **7.556** líneas (`find apps/desk/src -name "*.tsx"`). La decisión no cambia; la cifra sí |
 | `CLAUDE.md`, fila del `clientId` | La búsqueda de «mantenedor» en el código «da **0**» | Da **93** apariciones, 39 fuera de pruebas. El campo existe (`packages/shared/src/equipoComercial.ts:14`); lo que no existe es la guarda: `ticketService.ts` no lo nombra |
 | `CLAUDE.md`, cierre de IV-1 | La línea 2 de `boardView.ts` «importa `ESTADOS_EN_ESPERA` de `@ambientalia/shared`» | Importa `esEstadoEnEspera` de `./enEspera` (`apps/desk/src/lib/boardView.ts:2`). El fondo se mantiene: sigue leyendo el registro |
