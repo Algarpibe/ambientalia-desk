@@ -4789,6 +4789,87 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (corrige F1B-13 antes de fusionar)"
+  - clave: "decision/suplente-12-12"
+    fecha: "2026-10-17"
+    pregunta: |
+      El suplente del 12/12 para la migración de tickets abiertos (F1F-01), que `decision/migracion-e207-e212` (7)
+      dejó pendiente: `DEPLOY.md` «no nombra al suplente».
+    respuesta_textual: |
+      «No se nombra suplente por ahora. La mudanza la hago yo; si ese día no puedo, se aplaza a la primera fecha en que pueda hacerla con el mismo procedimiento, y nadie más abre el interruptor.»
+    consecuencias: |
+      (1) CIERRA la consecuencia (7) de `decision/migracion-e207-e212`: no hay suplente, y no es un hueco sino lo decidido.
+      (2) Si Gerencia no puede el 12/12, la migración SE APLAZA a la primera fecha en que pueda, con el mismo procedimiento
+      de `DEPLOY.md`; nadie más enciende el interruptor de la migración. No se construye nada.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/suplente-12-12) · cierra la consecuencia (7) de decision/migracion-e207-e212"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+  - clave: "decision/f1b08-cierre-sin-capturas"
+    fecha: "2026-10-17"
+    pregunta: |
+      ¿Llegaron capturas de las vistas de Zoho? El plazo venció el 16/10; sin ellas, la propia regla de Gerencia cierra
+      F1B-08 con lo construido.
+    respuesta_textual: |
+      «No llegó ninguna captura. F1B-08 se cierra con lo construido. Se añade a F1F-03 que cada persona anote cualquier vista, columna o filtro de Zoho Desk que eche en falta, y lo que salga se corrige antes del 09/12.»
+    consecuencias: |
+      (1) F1B-08 queda TERMINADA EN CONTENIDO con lo construido. Contenido NUEVO de F1F-03: cada persona anota toda vista,
+      columna o filtro de Zoho Desk que eche en falta; lo que salga se corrige antes del 09/12.
+      (2) ⚠️ EL CIERRE NO SE REGISTRA TODAVÍA EN EL AVANCE, Y SE DICE A PROPÓSITO. El mecanismo existente,
+      `cierres_declarados_por_commit`, no admite este caso: (a) su propio comentario lo limita a «tandas terminadas ANTES
+      de la convención de `openspec/changes/archive/`», y F1B-08 tiene cambios archivados con `cierra: no`; (b) la
+      decisión no tiene un commit que cierre la tanda, sólo la decisión; y (c) RQ-RC-10
+      (`openspec/specs/reconciliacion/spec.md:287`) y la prueba 10e (`apps/desk/server/reconciliacion/registro.test.ts:196`)
+      fijan EXACTAMENTE nueve entradas sobre el `config.yaml` real, así que añadir una pone la suite en rojo. Forzarlo sería
+      cambiar una spec y una prueba sin ficha (R-5). Las dos vías legítimas, sin decidir: un cambio archivado con
+      `tanda: F1B-08` y `cierra: si` que declare el cierre (cuenta «por archivo»), o un cambio del barrido que amplíe
+      RQ-RC-10 a cierres por decisión. Hasta entonces F1B-08 sigue «en curso» en `docs/sdd/RECONCILIACION.md`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b08-cierre-sin-capturas) · añade contenido a F1F-03"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-03 (contenido nuevo: anotar lo que falte de Zoho Desk, corregir antes del 09/12) · pendiente: vía de registro del cierre de F1B-08"
+  - clave: "decision/f1f03-criterio-aceptacion"
+    fecha: "2026-10-17"
+    pregunta: |
+      Criterio de aceptación de F1F-03 (aceptación con servicios reales, antes del 14/12).
+    respuesta_textual: |
+      Cuatro servicios, MT, CG, HV y SR, del 16/11 al 04/12. Un servicio queda superado si llega a «Finalizado» sin tocar la base a mano, sin registrarlo en Zoho, con remisión, etiqueta y documentos, con todas las transiciones con traza y reflejado en los nueve indicadores. Lo que falle se corrige antes del 09/12 o se acepta por escrito. Y, de `decision/f1b08-cierre-sin-capturas`: cada persona anota cualquier vista, columna o filtro de Zoho Desk que eche en falta, y lo que salga se corrige antes del 09/12.
+    nota_de_fuente: |
+      El texto verbatim de Gerencia no está en el repositorio: se recoge con la forma con que llega en el encargo de la
+      sesión del 17/10, sin reinterpretarlo y sin comillas de cita literal. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) Fija el criterio de F1F-03: cuatro servicios reales (MT, CG, HV, SR), del 16/11 al 04/12, y lo que falle se corrige
+      antes del 09/12 o se acepta por escrito.
+      (2) ⚠️ TAL CUAL HOY ES INCUMPLIBLE EN TRES PUNTOS, que se anotan sin reinterpretar el criterio:
+      (a) el servicio SR no lleva remisión ni etiqueta, así que «con remisión, etiqueta y documentos» no se puede cumplir
+      para el SR;
+      (b) la salida se hace en n8n hasta 2027 (decisión del 14/10 sobre la hoja, según el encargo; hipótesis: no está
+      localizada en `openspec/config.yaml` de `HEAD`), así que «sin registrarlo en Zoho» y «con remisión» dependen de un
+      flujo que no es de la aplicación;
+      (c) el indicador 55 (satisfacción) no se calcula en la aplicación en esas semanas: la encuesta va a mano
+      (`decision/encuesta-entre-corte-e-independencia`), así que «reflejado en los nueve indicadores» no se cumple para él.
+      Cómo se trata cada uno lo decide Gerencia: o se acepta por escrito, o se corrige el criterio.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f03-criterio-aceptacion) · recoge el añadido de decision/f1b08-cierre-sin-capturas"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-03 (criterio de aceptación)"
+  - clave: "decision/h1-fechas-migrados"
+    fecha: "2026-10-17"
+    pregunta: |
+      H-1 (`docs/sdd/TRASPASO_2026-10-08.md`, sección final del 2026-10-17): Análisis y el «Tiempo promedio de operación» de
+      la ficha de cliente leen `closed_time`, y los cierres con fecha de la migración entrarían como cierres reales.
+      ¿Se excluyen los de `cierre_origen: 'migracion'`?
+    respuesta_textual: |
+      «Los tickets migrados cuentan en Análisis con sus fechas originales de Zoho: creación, transiciones y cierre. La fecha de la migración queda sólo como marca, y no entra en ningún indicador.»
+    consecuencias: |
+      (1) La fecha de cierre que puso la migración, y la transición marcador de la migración, NO entran en ninguna cifra ni
+      indicador. La fecha se conserva en la base: E-207 (`decision/migracion-e207-e212`, (1)) sigue en pie.
+      (2) Las fechas originales de Zoho (creación, transiciones y cierre de Zoho) sí cuentan.
+      (3) Contenido de F1F-01 (`cierra: no`): lo construye el cambio de H-1, con el criterio en `packages/shared` o en el
+      servidor (regla invariable 13).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/h1-fechas-migrados) · responde H-1 de docs/sdd/TRASPASO_2026-10-08.md"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-01 (H-1: excluir de las cifras la fecha de la migración)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
