@@ -274,7 +274,7 @@ Archivos: `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, `apps/desk/server/db
 **Bloque documental final** (sólo en `apply-progress.md`; no se escribe en `docs/sdd/ENTRADA.md` ni en `openspec/config.yaml`)
 - [x] 3.12 Redactar, sin número y marcadas «a numerar por el orquestador», las **siete** preguntas para la bandeja: las seis de la
   propuesta (`proposal.md`, «Preguntas para la bandeja») y la que halló el diseño: el informe de contrato toma la
-  primera fila con `to_status = 'Finalizado'` (`apps/desk/server/db/informeContrato.ts:34`), así que un «Entregado» migrado
+  primera fila con `to_status = 'Finalizado'` (`apps/desk/server/db/informeContrato.ts:34` en `73bd52f`), así que un «Entregado» migrado
   muestra la fecha de la migración como su fecha de finalización. Añadir las del barrido 2.3 que quedaron sin resolver.
 - [x] 3.13 Redactar las notas «para el paquete de despliegue»: sin esquema (`packages/zoho-sync/src/db/schema.sql` no figura en
   `git diff --stat <partida lote 1>`) y sin variable de entorno nueva, **medido** con un `grep` de `process.env` sobre

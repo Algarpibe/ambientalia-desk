@@ -1,7 +1,7 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { creadasDelLote, saldoPorLote } from '@ambientalia/zoho-sync/books/subOV'
 import {
-  diaEnZona, diasEntre, estadoContrato, estadoSubOV, porcentaje, trimestresDelContrato, INFORME_NO_DISPONIBLE,
+  diaEnZona, diasEntre, estadoContrato, estadoSubOV, porcentaje, trimestresDelContrato, INFORME_NO_DISPONIBLE, llegadaQueCuenta,
   type Contrato, type DiaCivil, type InformeContrato, type ServicioDelInforme, type SubOVDelInforme,
 } from '@ambientalia/shared'
 
@@ -31,8 +31,8 @@ export async function informeContrato(db: Queryable, contrato: Contrato, hoy: Di
     `SELECT id, number, status, equipo, serial, tipo_servicio FROM tickets WHERE id IN (${VIGENTES})`)).rows as TicketFila[]).map((t) => [String(t.id), t]))
   const primera = new Map<string, Date>()
   for (const f of (await db.query(
-    `SELECT ticket_id, performed_at FROM ticket_transitions WHERE to_status = 'Finalizado' AND ticket_id IN (${VIGENTES})`)).rows as Array<{ ticket_id: string; performed_at: unknown }>) {
-    const at = f.performed_at instanceof Date ? f.performed_at : new Date(String(f.performed_at))
+    `SELECT ticket_id, transition_id, values, performed_at FROM ticket_transitions WHERE to_status = 'Finalizado' AND ticket_id IN (${VIGENTES})`)).rows as Array<{ ticket_id: string; transition_id: string | null; values: unknown; performed_at: unknown }>) {
+    const cuenta = llegadaQueCuenta({ transitionId: f.transition_id, performedAt: (f.performed_at instanceof Date ? f.performed_at : new Date(String(f.performed_at))).toISOString(), values: typeof f.values === 'string' ? JSON.parse(f.values) : f.values }); if (cuenta === null) continue; const at = new Date(cuenta) // RQ-TC-69, S-3
     const antes = primera.get(String(f.ticket_id))
     if (!antes || at.getTime() < antes.getTime()) primera.set(String(f.ticket_id), at)
   }

@@ -64,7 +64,7 @@ Regla en `shared`, ejecutor que la consume, marca en el JSON del marcador ya exi
 
 ## Hallazgo H-1 — sin corregir aquí
 
-Dos lectores de `closed_time`: `apps/desk/server/analisis.ts:26` (`fecha_finalizacion_st ?? closed_time`, que alimenta finalizados y días en `packages/shared/src/analisis.ts:59-63`) y la ficha de cliente (`apps/desk/server/db/directory.ts:28` → `apps/desk/src/components/ClienteDetalle.tsx:124-126`). Hoy un migrado sin fecha no cuenta; tras el cambio contará como cerrado el día de la migración, salvo que tenga `fecha_finalizacion_st` (hipótesis: no se sabe cuántos la tienen). `apps/desk/server/indicadores.ts:16` lee `fecha_finalizacion_st`: sin efecto. **Pregunta abierta para Gerencia:** ¿se excluyen de Análisis y de la ficha las fechas con `cierre_origen: 'migracion'`?
+Dos lectores de `closed_time`: `apps/desk/server/analisis.ts:26` en `73bd52f` (`fecha_finalizacion_st ?? closed_time`, que alimenta finalizados y días en `packages/shared/src/analisis.ts:59-63`) y la ficha de cliente (`apps/desk/server/db/directory.ts:28` → `apps/desk/src/components/ClienteDetalle.tsx:124-126` en `73bd52f`). Hoy un migrado sin fecha no cuenta; tras el cambio contará como cerrado el día de la migración, salvo que tenga `fecha_finalizacion_st` (hipótesis: no se sabe cuántos la tienen). `apps/desk/server/indicadores.ts:16` lee `fecha_finalizacion_st`: sin efecto. **Pregunta abierta para Gerencia:** ¿se excluyen de Análisis y de la ficha las fechas con `cierre_origen: 'migracion'`?
 
 ## Reglas de mutación para apply
 

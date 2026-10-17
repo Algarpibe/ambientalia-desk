@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { calcularIndicadores, diaEnZona, sumarDias, type DiaCivil, type EtiquetaHito, type Indicador, type PasoDelHistorial, type TicketParaIndicadores } from '@ambientalia/shared'
+import { calcularIndicadores, esPasoDeMigracion, diaEnZona, sumarDias, type DiaCivil, type EtiquetaHito, type Indicador, type PasoDelHistorial, type TicketParaIndicadores } from '@ambientalia/shared'
 import { comoDiaCivil, listarCierres } from './db/calendarioCierres'
 
 // Lectura de los indicadores (F1F-05, RQ-KP-13 y -14): SOLO lectura, cuatro consultas pase lo que pase con el número de tickets.
@@ -78,7 +78,7 @@ export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivi
   const historial = new Map<string, PasoDelHistorial[]>()
   for (const r of rh.rows) {
     const id = String(r.ticket_id)
-    if (!vistos.has(id)) continue
+    if (!vistos.has(id) || esPasoDeMigracion(r.transition_id)) continue // RQ-TC-69, S-5: el marcador de la migración no es un paso
     const paso: PasoDelHistorial = { transitionId: String(r.transition_id ?? ''), performedAt: iso(r.performed_at) ?? '', values: objeto(r.values) }
     historial.set(id, [...(historial.get(id) ?? []), paso])
   }

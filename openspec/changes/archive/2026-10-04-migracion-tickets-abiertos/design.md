@@ -224,7 +224,7 @@ esos marcadores. El filtro por `"values"->>'regla'` (y la restauración de `stat
 
 - Hipótesis sin comprobar: que ningún otro lector de `ticket_transitions` trate el marcador como una entrada de
   estado. Medidos dos: `apps/desk/server/db/sla.ts:88-95` (cubierto por D-6) y
-  `apps/desk/server/db/informeContrato.ts:34`, que toma la primera fila con `to_status = 'Finalizado'`: para un
+  `apps/desk/server/db/informeContrato.ts:34` en `73bd52f`, que toma la primera fila con `to_status = 'Finalizado'`: para un
   «Entregado» migrado, la fecha de finalización del informe de contrato será la de la migración. Va a la bandeja
   con la pregunta 1 de la propuesta.
 - El marcador se ve en el historial del ticket como «Transición: Migración de ticket abierto…»
