@@ -67,7 +67,7 @@ Ninguna cita al estilo `fichero.ts:N` se desfasa. Sin `\ No newline` ni cambios 
 ### SUGGESTIONs
 - **S-1** El escenario «La función no lee el reloj» se cubre por regex de fuente (S:76) y por instante inyectado; no hay una prueba de dos llamadas idénticas separadas en el tiempo. Suficiente, anotado.
 - **S-2** El cast `::timestamptz` sobre `NULL` sólo se ejercita en pg-mem; la integración `migracionConcurrente` está skipped (sin base real). Probar en la copia previa antes de aplicar en producción (hipótesis declarada en apply-progress).
-- **S-3** La 4.7 (medida del intento de apply) la marcó la orquestación: el registro del intento dice **302** líneas (`git diff --shortstat --no-renames 5d8eb10 6444b92`: +263 −39), que incluyen `tasks.md` y `apply-progress.md`; el código y sus pruebas son 229 (+208 −21). Bajo el tope de 800.
+- **S-3** La 4.7 (medida del intento de apply) la marcó la orquestación: el registro del intento dice **302** líneas (`git diff --shortstat --no-renames 37c282f 6444b92`: +263 −39), que incluyen `tasks.md` y `apply-progress.md`; el código y sus pruebas son 229 (+208 −21). Bajo el tope de 800.
 
 ## TDD (apply-progress)
 Rojo y verde por lote documentados y plausibles: lote 1 (7 rojas por `ReferenceError`, luego 38/38), lote 2 (5 rojas, 18/18), lote 3 (4 rojas, 14/14). Cuatro mutaciones del apply (precedencia, filtro, regla 2 quitada, restauración doble) coinciden con mi reproducción de las clases (a) y (b). Sin discrepancias.
