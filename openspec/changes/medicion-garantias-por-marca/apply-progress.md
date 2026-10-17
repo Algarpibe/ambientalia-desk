@@ -107,7 +107,7 @@ Qué desplazó este cambio: `routes/garantiaProveedor.ts` (imports editados EN S
 |---|---|
 | `DEPLOY.md:490` `db/garantiaProveedor.ts:144`; `docs/sdd/Paquete_de_Despliegue_2026-10-06.md:161-162`; `…2026-10-09.md:138,307,356-357,500,815`; `…2026-10-09b.md:164`; `Preguntas_Gerencia_2026-10-09.md:152` | intacta (todas ≤ `:161` en `db` y ≤ `:106` en `routes`: líneas que no se movieron) |
 | `openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/verify-report.md:53,69,70,72,159,161,166` | intacta (mismas razones) |
-| `docs/sdd/F1A-05…:111` y las citas `shared/src/index.ts:3…42` de archive (todas ≤ `:42`) | intacta (el export nuevo es `:45`, tras la última línea citada) |
+| `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:111` y las citas `shared/src/index.ts:3…42` de archive (todas ≤ `:42`) | intacta (el export nuevo es `:45`, tras la última línea citada) |
 | `openspec/changes/medicion-garantias-por-marca/design.md:26,63,134`, `proposal.md:25,36,72,84`, `spec.md:155` | intacta |
 | `design.md:27` (`routes/garantiaProveedor.ts:107` en `ea9cb82`, el cierre ANTES del cambio) | caso B: describe el punto de inserción previo. ANCLADA en `ea9cb82` por el orquestador |
 | `openspec/changes/archive/2026-09-30-permisos-por-cargo/apply-progress.md:122` y `verify-report.md:106` -> `Header.tsx:146` en `ea9cb82` («el cliente lo decide en…», `user.isAdmin`) | caso B: era `{user.isAdmin && (` antes del cambio; hoy es la línea 153. ANCLADAS en `ea9cb82` por el orquestador, sin renumerar |
