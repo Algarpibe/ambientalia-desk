@@ -22,13 +22,13 @@ describe('registro de estados', () => {
    * mover `Solicitado` de interna a externa deja las cuentas 5/6/9/1 intactas y cambia lo que la
    * vista promete al usuario. Con la lista escrita, ese movimiento da rojo.
    */
-  it('externa son exactamente estos cinco: el tercero es quien no somos nosotros', () => {
+  it('externa son exactamente estos seis: el tercero es quien no somos nosotros (Pendiente desde E-226)', () => {
     expect(estadosCon('externa')).toEqual([
       'En Espera de Repuestos',
       'Servicio externo',
       'Notificación cliente',
       'Por Entregar',
-      'Por Entregar / Sin facturar',
+      'Por Entregar / Sin facturar', 'Pendiente',
     ])
   })
 
@@ -43,7 +43,7 @@ describe('registro de estados', () => {
     ])
   })
 
-  it('ninguna son exactamente estos nueve: el ticket está en manos de quien lo tiene', () => {
+  it('ninguna son exactamente estos once: el ticket está en manos de quien lo tiene (dos desde E-226)', () => {
     expect(estadosCon('ninguna')).toEqual([
       'Ingresado',
       'Rev./Diagnostico',
@@ -53,30 +53,30 @@ describe('registro de estados', () => {
       'Por Facturar',
       'Finalizado',
       STATUS_OV_ASIGNADA,
-      STATUS_TICKET_CREADO,
+      STATUS_TICKET_CREADO, 'Verificación', 'Solicitud Soporte',
     ])
   })
 
   /**
-   * `sin_clasificar` es VALOR VÁLIDO, no un hueco. `Pendiente` está pendiente de que Servicio Técnico
-   * diga qué significa exactamente; hasta entonces se declara como lo que es. Un registro que
-   * obligara a clasificarlo forzaría a inventar la respuesta, y la vista enseñaría una promesa que
-   * nadie ha hecho.
+   * `sin_clasificar` es VALOR VÁLIDO, no un hueco: un estado nuevo que nadie haya clasificado se declara
+   * como lo que es. Desde E-226 (`decision/e226-espera-y-areas-equipo-nuevo`, 17/10) no lo lleva ninguno:
+   * `Pendiente` es espera externa, y `Verificación` y `Solicitud Soporte` no esperan a nadie —la segunda
+   * por supuesto del analista: es cola propia—.
    */
-  it('sin_clasificar es valor válido, y hoy lo llevan Pendiente, Verificación y Solicitud Soporte', () => {
-    expect(estadosCon('sin_clasificar')).toEqual(['Pendiente', 'Verificación', 'Solicitud Soporte'])
-    expect(enEsperaDe('Pendiente')).toBe('sin_clasificar'); expect(enEsperaDe('Solicitud Soporte')).toBe('sin_clasificar')
-    expect(enEsperaDe('Verificación')).toBe('sin_clasificar')
+  it('sin_clasificar sigue siendo valor válido, y desde E-226 no lo lleva ningún estado', () => {
+    const valido: EnEspera = 'sin_clasificar'; expect(estadosCon(valido)).toEqual([])
+    expect(enEsperaDe('Pendiente')).toBe('externa'); expect(enEsperaDe('Solicitud Soporte')).toBe('ninguna')
+    expect(enEsperaDe('Verificación')).toBe('ninguna')
   })
 
-  it('5 + 6 + 9 + 3 = 23, y no hay ningún estado fuera de las cuatro clases', () => {
+  it('6 + 6 + 11 + 0 = 23, y no hay ningún estado fuera de las cuatro clases', () => {
     const total = estadosCon('externa').length + estadosCon('interna').length
       + estadosCon('ninguna').length + estadosCon('sin_clasificar').length
     expect(total).toBe(ESTADOS.length)
   })
 
   /**
-   * Las ONCE de la vista son externa + interna. Es lo único que `ESTADOS_EN_ESPERA` significa: son
+   * Las DOCE de la vista son externa + interna. Es lo único que `ESTADOS_EN_ESPERA` significa: son
    * las que el tablero enseña bajo «En espera».
    *
    * ⚠️ El reloj del SLA NO lee esta lista. Para en los tres BODEGAJES de M1.10, que son periodos
@@ -84,9 +84,9 @@ describe('registro de estados', () => {
    *
    * El array se fija LEYENDO la salida real del filtro (`estados.ts:120`), no reordenando el
    * registro para que cuadre de memoria: `Por Entregar` y `Por Entregar / Sin facturar` caen EN
-   * MEDIO —dentro del bloque `externa`—, no al final de las nueve que había antes.
+   * MEDIO —dentro del bloque `externa`—, no al final de las nueve que había antes; `Pendiente`, al final (E-226).
    */
-  it('las once en espera de la vista son externa + interna', () => {
+  it('las doce en espera de la vista son externa + interna', () => {
     expect(ESTADOS_EN_ESPERA).toEqual([
       'En Espera de Repuestos',
       'Servicio externo',
@@ -98,7 +98,7 @@ describe('registro de estados', () => {
       'En espera de SKU inventario',
       'Solicitado',
       'Liberación Comercial',
-      STATUS_REMISION_CREADA,
+      STATUS_REMISION_CREADA, 'Pendiente',
     ])
   })
 
@@ -218,8 +218,8 @@ function estadosCon(clase: EnEspera): string[] {
  * los 21 de servicio conservan el orden (alias `e01…e21` del mapa sin regenerar).
  */
 describe('Solicitud Soporte (RQ-SR-03)', () => {
-  it('su clase de espera es sin_clasificar (S-2)', () => {
-    expect(CLASIFICACION_EN_ESPERA['Solicitud Soporte']).toBe('sin_clasificar')
+  it('su clase de espera es ninguna: es cola propia (E-226, supuesto del analista)', () => {
+    expect(CLASIFICACION_EN_ESPERA['Solicitud Soporte']).toBe('ninguna')
   })
 
   it('ESTADOS_SERVICIO baja a 20 desde F1C-09, en el mismo orden, y no contiene Solicitud Soporte ni Pendiente', () => {

@@ -89,4 +89,12 @@ describe('comentarios vigilados (E-228, E-227)', () => {
     expect(llamadores('transitionsForStatus')).toEqual([])
     expect(llamadores('transitionById')).toEqual([])
   })
+
+  it('(f) E-226: la cifra de la vista en estados.ts y su cita en sla.test.ts son las del código', () => {
+    const n = ESTADOS_EN_ESPERA.length, fuente = leer('./estados.ts')
+    expect(fuente, `estados.ts:21 debe decir «${n} estados — LO QUE DECLARA»`).toContain(`${n} estados — LO QUE DECLARA`)
+    expect(fuente, `estados.ts:28 debe decir «La vista muestra las ${palabra(n).toLowerCase()}.»`).toContain(`La vista muestra las ${palabra(n).toLowerCase()}.`)
+    expect(fuente, `estados.ts:115 debe decir «Las ${palabra(n)} que la vista»`).toContain(`Las ${palabra(n)} que la vista`)
+    expect(leer('./sla.test.ts'), 'sla.test.ts cita la frase de estados.ts:28').toContain(`La vista muestra las ${palabra(n).toLowerCase()}.`)
+  })
 })
