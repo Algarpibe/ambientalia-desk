@@ -25,7 +25,7 @@ un fichero existente salvo al final de `cierreEnCifras.ts` (diseño D1, D2, D3, 
 
 - [x] 3.1 Regla de mutación 4: barrido de citas de los ficheros tocados.
 - [x] 3.2 `verify-report.md` contra spec, diseño y tareas.
-- [ ] 3.3 Archive: RQ-TC-70 al final de `openspec/specs/tickets-core/spec.md` por script, `archive-report.md`; parte
+- [x] 3.3 Archive: RQ-TC-70 al final de `openspec/specs/tickets-core/spec.md` por script, `archive-report.md`; parte
   revisable medida ANTES; `git show --numstat` sólo del cambio; `RECONCILIACION.md` en la rama.
 
 ## Tareas de personas — archivar NO las da por hechas
