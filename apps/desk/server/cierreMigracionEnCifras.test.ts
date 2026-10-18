@@ -65,13 +65,13 @@ describe('ficha de cliente (RQ-TC-69)', () => {
     await db.query("INSERT INTO contacts (id, first_name, account_id) VALUES ('ct-1', 'Ana', 'acc-1')")
     await ticket('normal', '2026-11-01T12:00:00Z', { account: 'acc-1', contact: 'ct-1' })
     await ticket('m', MIGRACION, { account: 'acc-1', contact: 'ct-1' }); await marcador('m', 'migracion', MIGRACION)
-    expect((await getAccountDetail(db, 'acc-1'))!.resolucionPromedioMs).toBe(2 * 3600000)
-    expect((await getContactDetail(db, 'ct-1'))!.resolucionPromedioMs).toBe(2 * 3600000)
+    expect((await getAccountDetail(db, 'acc-1', new Date('2027-01-31T00:00:00Z')))!.resolucionPromedioMs).toBe(2 * 3600000)
+    expect((await getContactDetail(db, 'ct-1', new Date('2027-01-31T00:00:00Z')))!.resolucionPromedioMs).toBe(2 * 3600000)
   })
   it('sin ningún cierre que cuente, null', async () => {
     await db.query("INSERT INTO accounts (id, name) VALUES ('acc-2', 'Otro')")
     await ticket('m', MIGRACION, { account: 'acc-2' }); await marcador('m', 'migracion', MIGRACION)
-    expect((await getAccountDetail(db, 'acc-2'))!.resolucionPromedioMs).toBeNull()
+    expect((await getAccountDetail(db, 'acc-2', new Date('2027-01-31T00:00:00Z')))!.resolucionPromedioMs).toBeNull()
   })
 })
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { ContactDetail, AccountDetail, TicketLite } from '@ambientalia/shared'
+import { MESES_VENTANA_RESOLUCION, type ContactDetail, type AccountDetail, type TicketLite } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { useResizable } from '../hooks/useResizable'
 import { fetchContactDetail, fetchAccountDetail } from '../api/client'
@@ -72,7 +72,7 @@ function TicketRow({ t, company, onClick }: { t: TicketLite; company: string | n
   )
 }
 function Tiempo({ label, value }: { label: string; value: string }) {
-  return <div className="mb-3"><div className="flex justify-between text-[12px] text-slate-600"><span>{label}</span><span className="font-bold">{value}</span></div><div className="h-1 bg-slate-100 rounded mt-1"><div className="h-1 bg-blue-400 rounded" style={{ width: value === '00:00' ? '0%' : '60%' }} /></div></div>
+  return <div className="mb-3"><div className="flex justify-between text-[12px] text-slate-600"><span>{label}</span><span className="font-bold">{value}</span></div><div className="h-1 bg-slate-100 rounded mt-1"><div className="h-1 bg-blue-400 rounded" style={{ width: value === 'Sin datos' ? '0%' : '60%' }} /></div></div>
 }
 function Donut({ data }: { data: { label: string; value: number }[] }) {
   const total = data.reduce((s, d) => s + d.value, 0) || 1
@@ -120,10 +120,10 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
     for (const t of tickets) { const k = t.channel || 'Otro'; m.set(k, (m.get(k) ?? 0) + 1) }
     return [...m.entries()].map(([label, value]) => ({ label, value }))
   }, [tickets])
-  // La media la calcula el servidor (`resolucionPromedioMs`, shared; sin el cierre de la migración, RQ-TC-69). Aquí sólo se formatea.
+  // La media la calcula el servidor (`resolucionPromedioMs`, shared; sin el cierre de la migración y de los últimos 6 meses, RQ-TC-69/70). Aquí sólo se formatea.
   const resolucion = useMemo(() => {
     const ms = data?.resolucionPromedioMs ?? null
-    if (ms === null) return '00:00'
+    if (ms === null) return 'Sin datos'
     return `${Math.floor(ms / 3600000)}:${String(Math.floor((ms % 3600000) / 60000)).padStart(2, '0')}`
   }, [data])
 
@@ -189,9 +189,9 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
                   {tickets.length ? <Donut data={canal} /> : <div className="text-[13px] text-slate-400">Sin datos.</div>}
                 </section>
                 <section className="bg-white border border-slate-200 rounded-md p-4">
-                  <div className="text-[13px] font-bold text-slate-700 mb-3">Tiempo promedio de operación <span className="text-[11px] text-slate-400 font-normal">Últimos 6 meses</span></div>
-                  <Tiempo label="Tiempo de primera respuesta" value="00:00" />
-                  <Tiempo label="Tiempo de respuesta" value="00:00" />
+                  <div className="text-[13px] font-bold text-slate-700 mb-3">Tiempo promedio de operación <span className="text-[11px] text-slate-400 font-normal">Últimos {MESES_VENTANA_RESOLUCION} meses</span></div>
+                  <Tiempo label="Tiempo de primera respuesta" value="Sin datos" />
+                  <Tiempo label="Tiempo de respuesta" value="Sin datos" />
                   <Tiempo label="Tiempo de resolución" value={resolucion} />
                 </section>
               </div>

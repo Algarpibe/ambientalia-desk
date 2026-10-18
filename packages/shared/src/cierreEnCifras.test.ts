@@ -64,10 +64,10 @@ describe('resolucionPromedioMs', () => {
       t('m', '2026-01-01T00:00:00Z', MIGRACION),
       t('abierto', '2026-11-01T00:00:00Z', null, 'Open'),
     ]
-    expect(resolucionPromedioMs(tickets, new Map([['m', MIGRACION]]))).toBe(3 * 3600000)
+    expect(resolucionPromedioMs(tickets, new Map([['m', MIGRACION]]), new Date('2027-01-31T00:00:00Z'))).toBe(3 * 3600000)
   })
   it('sin ningún cierre que cuente, null', () => {
-    expect(resolucionPromedioMs([t('m', '2026-01-01T00:00:00Z', MIGRACION)], new Map([['m', MIGRACION]]))).toBeNull()
-    expect(resolucionPromedioMs([], new Map())).toBeNull()
+    expect(resolucionPromedioMs([t('m', '2026-01-01T00:00:00Z', MIGRACION)], new Map([['m', MIGRACION]]), new Date('2027-01-31T00:00:00Z'))).toBeNull()
+    expect(resolucionPromedioMs([], new Map(), new Date('2027-01-31T00:00:00Z'))).toBeNull()
   })
 })

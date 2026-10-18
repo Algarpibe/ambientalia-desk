@@ -31,7 +31,7 @@ async function ticketsLite(db: Queryable, col: 'contact_id' | 'account_id', id: 
 
 function parseRaw(raw: unknown): any { return typeof raw === 'string' ? JSON.parse(raw) : (raw ?? {}) }
 
-export async function getContactDetail(db: Queryable, id: string): Promise<ContactDetail | null> {
+export async function getContactDetail(db: Queryable, id: string, ahora: Date = new Date()): Promise<ContactDetail | null> {
   const r = await db.query('SELECT c.*, a.name AS company FROM contacts c LEFT JOIN accounts a ON c.account_id=a.id WHERE c.id=$1', [id])
   const row = (r.rows as any[])[0]
   if (!row) return null
@@ -42,10 +42,10 @@ export async function getContactDetail(db: Queryable, id: string): Promise<Conta
     company: row.company ?? null, companyId: row.account_id ?? null,
     owner: raw.owner?.name ?? null, createdAt: raw.createdTime ?? row.created_at ?? null,
     tickets: await ticketsLite(db, 'contact_id', id),
-  })
+  }, ahora)
 }
 
-export async function getAccountDetail(db: Queryable, id: string): Promise<AccountDetail | null> {
+export async function getAccountDetail(db: Queryable, id: string, ahora: Date = new Date()): Promise<AccountDetail | null> {
   const r = await db.query('SELECT * FROM accounts WHERE id=$1', [id])
   const row = (r.rows as any[])[0]
   if (!row) return null
@@ -60,10 +60,10 @@ export async function getAccountDetail(db: Queryable, id: string): Promise<Accou
     city: row.city ?? null, address: row.address ?? null, website: row.website ?? null,
     owner: raw.owner?.name ?? null, createdAt: raw.createdTime ?? row.created_at ?? null,
     tickets: await ticketsLite(db, 'account_id', id), contacts,
-  })
+  }, ahora)
 }
 
-/** La media de resolución de la ficha la calcula el servidor (`resolucionPromedioMs`, shared), sin el cierre de la migración (RQ-TC-69). */
-async function conResolucion<T extends { tickets: TicketLite[] }>(db: Queryable, detalle: T): Promise<T & { resolucionPromedioMs: number | null }> {
-  return { ...detalle, resolucionPromedioMs: resolucionPromedioMs(detalle.tickets, await cierresPuestosPorMigracion(db)) }
+/** La media de resolución la calcula el servidor (`resolucionPromedioMs`, shared): sin el cierre de la migración (RQ-TC-69) y sólo de los últimos 6 meses (RQ-TC-70). */
+async function conResolucion<T extends { tickets: TicketLite[] }>(db: Queryable, detalle: T, ahora: Date): Promise<T & { resolucionPromedioMs: number | null }> {
+  return { ...detalle, resolucionPromedioMs: resolucionPromedioMs(detalle.tickets, await cierresPuestosPorMigracion(db), ahora) }
 }
