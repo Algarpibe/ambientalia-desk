@@ -4,9 +4,9 @@ Un intento, techo 800, partida `a9052a2`.
 
 ## Rojo antes del verde
 
-- `a9052a2` (planificación): 6 pruebas en rojo — cinco de `ventanaResolucion.test.ts` (la ventana no existía) y las de
+- `a9052a2` (planificación): 6 pruebas en rojo — cuatro de `ventanaResolucion.test.ts` (la ventana no existía) y las dos de
   `fichaClienteVentana.test.ts` (cuenta/contacto con `ahora` fijo; cuenta sin cierres en la ventana, `null`); 1 de
-  caracterización en verde. Vistas en rojo otra vez antes de tocar código.
+  caracterización en verde (la del cierre de la migración, de `ventanaResolucion.test.ts`; W2 del verify, corregido en sitio). Vistas en rojo otra vez antes de tocar código.
 - Lote 1 (D1, D2, D4): las siete pasan a verde y las existentes de `cierreEnCifras.test.ts` y
   `cierreMigracionEnCifras.test.ts` siguen verdes con `ahora` fijo. 22 de 22 en los cuatro ficheros de prueba.
 
