@@ -26,7 +26,7 @@ archivo). Un intento sólo se asienta si test, typecheck, lint y el detector de 
 
 ## Intento 3 · Verify
 
-- [ ] 3.1 `verify-report.md` contra `RQ-TS-41`, este `tasks.md` y la evidencia TDD del intento 2.
+- [x] 3.1 `verify-report.md` contra `RQ-TS-41`, este `tasks.md` y la evidencia TDD del intento 2.
 
 ## Intento 4 · Archive
 
