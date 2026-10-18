@@ -5009,6 +5009,23 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (regla de trabajo)"
 
+  - clave: "decision/f1c01-area-anulado"
+    fecha: "2026-10-18"
+    pregunta: |
+      ¿Qué área ejecuta «Anulado» en cada flujo: en servicio técnico desde los estados donde hoy se usa Rechazo, en equipo
+      nuevo y en soporte remoto? Desde las dos esperas externas ya estaba decidido: Comercial.
+    respuesta_textual: |
+      «Comercial en todos: en servicio técnico desde los estados donde hoy se usa Rechazo, en equipo nuevo y en soporte remoto.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 18/10 y se recoge tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) Desde las dos esperas externas ya era Comercial (`decision/c3-salida-esperas`).
+      (2) El cargo lo resuelve `decision/c10-permisos-cargo`.
+      (3) Desbloquea F1C-01.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c01-area-anulado)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1C-01"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
