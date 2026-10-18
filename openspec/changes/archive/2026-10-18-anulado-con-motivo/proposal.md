@@ -100,7 +100,7 @@ Con `Anulado` pasa a 21.
 | S-7 | El anulado sigue contando como creado en Análisis: se creó | La condición de `creados` |
 | S-8 | Anular no da el testigo: `areasSiguientes` ignora las transiciones a `Anulado`, así que no cambian los avisos por área, el traspaso ni quién puede reasignar (RQ-PM-27). Sin esto, Comercial recibiría un aviso y ganaría la reasignación en once estados de los tres flujos | La condición de `areasSiguientes` (`transitions.ts:330`) |
 | S-9 | La anulación de servicio hereda la casilla «Derivado a», como todas las de servicio (`transitions.ts:297`); las de equipo nuevo y soporte remoto no la llevan | Excluirla en `TRANSICIONES_BASE` |
-| S-10 | `rechazo_garantia` (`Notificación a Compras` → `Notificación Comercial`) no se anula: es un rechazo de garantía, no un abandono | La lista de ids de la consulta de candidatos (`docs/sdd/Consulta_Candidatos_Anulado_2026-10-18.sql:28`) |
+| S-10 | `rechazo_garantia` (`Notificación a Compras` → `Notificación Comercial`) no se anula: es un rechazo de garantía, no un abandono | Añadir `Notificación a Compras` al `from` de `anulacion` (`packages/shared/src/transitions.ts`) y `rechazo_garantia` a la lista de la consulta de candidatos (`docs/sdd/Consulta_Candidatos_Anulado_2026-10-18.sql:28`) |
 
 ## 5. Partición (el cambio no cabe en un intento de 800)
 
