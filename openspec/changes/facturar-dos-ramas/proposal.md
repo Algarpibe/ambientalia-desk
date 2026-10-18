@@ -128,6 +128,7 @@ facturacion_avisada_para date` (sin calificar, `tickets` es de `DESK_TABLES`). S
 | S-8 | La fecha de factura no tiene que ser pasada ni futura (como SP-1 de F1C-05) | Una condición más en la guarda |
 | S-9 | Los tickets que ya volvieron a `Por Facturar` por el ciclo antes de este cambio se quedan donde están: no se mueven (datos de producción). Pueden cerrar por `facturado_cierre`, que ya existe | Una migración de persona, con consulta previa |
 | S-10 | «Su antigüedad se mide» se cumple con lo que ya hay —el historial fecha la entrada al estado— y con la alarma; un indicador propio no está decidido | Una fila nueva cuando Gerencia fije el indicador |
+| S-12 | El cliente pide siempre vacíos «Número de factura» y «Fecha De Factura», en cualquier transición, aunque el ticket ya traiga una fecha de factura de Zoho: son los de la factura que se registra ahora (`design.md` D7) | La condición de `TransitionPanel.tsx:33` |
 | S-11 | El aviso es sólo de bandeja, sin correo, como el de reclamaciones (RQ-AV-19): no nace ningún escritor externo ni interruptor | Añadirlo al lote de `dispararAvisos`, con su interruptor |
 
 ## 6. Partición (el cambio no cabe en un intento de 800)
