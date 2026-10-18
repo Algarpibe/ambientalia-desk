@@ -21,10 +21,10 @@ import {
  */
 describe('tabla de reentrancia', () => {
   /**
-   * El guardia de `TRANSITIONS` —cualquier catálogo del registro tiene el suyo—: tres ciclos, ni uno
-   * más. Un cuarto componente fuertemente conexo es un ciclo nuevo que nadie ha visto.
+   * El guardia de `TRANSITIONS` —cualquier catálogo del registro tiene el suyo—: dos ciclos (tres hasta F1C-02), ni uno
+   * más. Un tercer componente fuertemente conexo es un ciclo nuevo que nadie ha visto.
    */
-  it('el grafo tiene exactamente tres ciclos, y son estos', () => {
+  it('el grafo tiene exactamente dos ciclos, y son estos', () => {
     expect(tablaDeReentrancia().map((c) => c.estados)).toEqual([
       // C2 — diagnóstico / cotización / repuestos / servicio externo. Ocho estados (sin Pendiente desde F1C-09).
       [
@@ -34,20 +34,20 @@ describe('tabla de reentrancia', () => {
       ],
       // C3 — devolución a corrección.
       ['Rev./Diagnostico', 'Notificado'],
-      // C1 — ciclo de facturación.
-      ['Por Facturar', 'Por Entregar / Sin facturar'],
+      // C1 — el ciclo de facturación ya no existe: F1C-02 (RQ-TS-43) lo partió en dos ramas que no vuelven.
+      // Hasta entonces era ['Por Facturar', 'Por Entregar / Sin facturar'].
     ])
   })
 
-  /** C1 — ciclo de facturación: `Por Facturar` ⇄ `Por Entregar / Sin facturar`. Dos reentrantes (F1C-05). */
-  it('C1 · ciclo de facturación: dos transiciones reentrantes con fecha', () => {
-    const c1 = componenteQueContiene('Por Facturar')!
-    expect(c1.estados).toEqual(['Por Facturar', 'Por Entregar / Sin facturar'])
-    expect(c1.transiciones).toEqual([
-      { id: 'liberacion_sin_factura', from: 'Por Facturar', to: 'Por Entregar / Sin facturar', campos: ['Fecha prevista de facturación'] }, { id: 'entrega_sin_factura', from: 'Por Entregar / Sin facturar', to: 'Por Facturar', campos: ['Fecha Remisión de Salida'] },
-    ])
-    // La liberación escribe la fecha prevista de facturación y es obligatoria, así que una segunda pasada por el
-    // ciclo la pisa siempre (la columna guarda el último valor; la traza, todos). Antes de F1C-05 era la casilla.
+  /** C1 — era `Por Facturar` ⇄ `Por Entregar / Sin facturar`, con dos reentrantes (F1C-05). F1C-02 lo cerró (C4). */
+  it('C1 · el ciclo de facturación ya no existe: ningún componente contiene los estados de cierre', () => {
+    expect(componenteQueContiene('Por Facturar')).toBeUndefined()
+    expect(componenteQueContiene('Por Entregar / Sin facturar')).toBeUndefined()
+    expect(componenteQueContiene('Pendiente de facturar')).toBeUndefined()
+    expect(componenteQueContiene('Liberación Comercial')).toBeUndefined()
+    expect(transitionById('entrega_sin_factura')!.to).toBe('Pendiente de facturar')
+    // La liberación sigue escribiendo la fecha prevista, obligatoria, pero ya no hay segunda pasada que la pise: la
+    // rama sin factura acaba en `Pendiente de facturar` y de ahí sólo se sale a `Finalizado`.
     expect(transitionById('liberacion_sin_factura')!.fields.find((f) => f.kind === 'date')).toMatchObject({ label: 'Fecha prevista de facturación', required: true })
   })
 
@@ -80,19 +80,19 @@ describe('tabla de reentrancia', () => {
     expect(c3.transiciones).toEqual([])
   })
 
-  it('diez casos en total: 2 de C1 + 8 de C2 + 0 de C3', () => {
-    expect(tablaDeReentrancia().flatMap((c) => c.transiciones)).toHaveLength(10)
+  it('ocho casos en total: 8 de C2 + 0 de C3 (diez hasta F1C-02, con 2 de C1)', () => {
+    expect(tablaDeReentrancia().flatMap((c) => c.transiciones)).toHaveLength(8)
   })
 
   /**
-   * Once campos, NUEVE obligatorios. `cfDate` es `required = true` por omisión
+   * Nueve campos, SIETE obligatorios (once y nueve hasta F1C-02). `cfDate` es `required = true` por omisión
    * (`transitions.ts:75-76`), y en un campo obligatorio la segunda pasada por el ciclo no *puede*
    * dejar el valor anterior: pisa siempre. Los dos opcionales son los de `aprobacion`.
    */
-  it('once campos de fecha reentrantes, de los que nueve son obligatorios', () => {
-    expect(camposFechaReentrantes()).toHaveLength(11)
+  it('nueve campos de fecha reentrantes, de los que siete son obligatorios', () => {
+    expect(camposFechaReentrantes()).toHaveLength(9)
     const obligatorios = camposFechaReentrantesObligatorios()
-    expect(obligatorios).toHaveLength(9)
+    expect(obligatorios).toHaveLength(7)
     expect(camposFechaReentrantes().filter((c) => !obligatorios.includes(c))).toEqual([
       'Fecha Orden de Compra Final',
       'Fecha Orden de Venta Final',
@@ -163,17 +163,17 @@ describe('cruce de la reentrancia con los indicadores de G.6', () => {
     }
   })
 
-  it('cinco indicadores afectados, y CUATRO sin dueño', () => {
+  it('cuatro indicadores afectados, y los CUATRO sin dueño (cinco hasta F1C-02, con la 47)', () => {
     const columnas = INDICADORES_G6.flatMap((i) => i.columnas)
-    expect(columnas).toEqual([47, 50, 53, 57, 58])
+    expect(columnas).toEqual([50, 53, 57, 58])
     const sinDuenio = INDICADORES_G6.filter((i) => i.alcance === null).flatMap((i) => i.columnas)
     expect(sinDuenio).toEqual([50, 53, 57, 58])
   })
 
-  it('el único con dueño es la columna 47, y su dueño es C4', () => {
+  it('ya no hay ninguno con dueño: la columna 47 era de C4, y F1C-02 la cerró al quitar el ciclo', () => {
     const conDuenio = INDICADORES_G6.filter((i) => i.alcance !== null)
     expect(conDuenio).toEqual([
-      { columnas: [47], nombre: 'Tiempo permanencia', campos: ['Fecha Remisión de Salida'], alcance: 'C4' },
+      // era { columnas: [47], nombre: 'Tiempo permanencia', campos: ['Fecha Remisión de Salida'], alcance: 'C4' }
     ])
   })
 })

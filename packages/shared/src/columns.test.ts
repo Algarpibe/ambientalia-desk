@@ -7,7 +7,7 @@ describe('columns', () => {
       'ov_asignada', 'ticket_creado', 'solicitud_soporte', 'remision_creada', 'ingresado', 'revision', 'notificado',
       'proceso', 'verificacion', 'solicitado', 'espera_repuestos', 'espera_sku', 'notif_compras', 'continuacion',
       'servicio_externo', 'pendiente', 'notif_cliente', 'notif_comercial', 'comercial',
-      'por_facturar', 'entregar_sin_facturar', 'por_entregar', 'otros',
+      'por_facturar', 'entregar_sin_facturar', 'por_entregar', 'pendiente_facturar', 'otros',
     ])
   })
 
@@ -43,8 +43,8 @@ describe('columns', () => {
 const COLUMNA_ANTES: Record<string, string> = {"En Espera de Repuestos":"espera_repuestos","Servicio externo":"servicio_externo","Notificación cliente":"notif_cliente","Por Entregar":"por_entregar","Por Entregar / Sin facturar":"entregar_sin_facturar","Notificación a Compras":"notif_compras","Notificación Comercial":"notif_comercial","En espera de SKU inventario":"espera_sku","Solicitado":"solicitado","Liberación Comercial":"comercial","Remisión creada":"remision_creada","Ingresado":"ingresado","Rev./Diagnostico":"revision","Notificado":"notificado","En Proceso":"proceso","Continuación del proceso":"continuacion","Por Facturar":"por_facturar","Finalizado":"otros","OV asignada":"ov_asignada","Ticket creado":"ticket_creado","Pendiente":"pendiente","Verificación":"otros","Solicitud Soporte":"otros"}
 
 describe('columna propia de Verificación y Solicitud Soporte (decision/e225-columna-propia-dos-estados)', () => {
-  it('(a) la tabla tiene por claves exactamente ESTADOS menos Anulado (F1C-01: nació después de la medición), en los dos sentidos', () => { expect(Object.keys(COLUMNA_ANTES).sort()).toEqual(ESTADOS.filter((e) => e !== 'Anulado').sort()) })
-  it('(b) sólo esos dos estados cambian de columna', () => { expect(ESTADOS.filter((e) => e !== 'Anulado').filter((e) => columnForStatus(e) !== COLUMNA_ANTES[e]).sort()).toEqual(['Solicitud Soporte', 'Verificación']) })
+  it('(a) la tabla tiene por claves exactamente ESTADOS menos Anulado y Pendiente de facturar (F1C-01 y F1C-02: nacieron después de la medición), en los dos sentidos', () => { expect(Object.keys(COLUMNA_ANTES).sort()).toEqual(ESTADOS.filter((e) => e !== 'Anulado' && e !== 'Pendiente de facturar').sort()) })
+  it('(b) sólo esos dos estados cambian de columna', () => { expect(ESTADOS.filter((e) => e !== 'Anulado' && e !== 'Pendiente de facturar').filter((e) => columnForStatus(e) !== COLUMNA_ANTES[e]).sort()).toEqual(['Solicitud Soporte', 'Verificación']) })
   it('(c) sus columnas son verificacion y solicitud_soporte, con ese único estado cada una', () => {
     expect(columnForStatus('Verificación')).toBe('verificacion')
     expect(columnForStatus('Solicitud Soporte')).toBe('solicitud_soporte')

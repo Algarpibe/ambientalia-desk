@@ -19,7 +19,8 @@ stateDiagram-v2
     state "En Proceso ←diagnostico" as e15
     state "Por Facturar" as e17
     state "Finalizado" as e18
-    state "Anulado" as e21
+    state "Pendiente de facturar" as e21
+    state "Anulado" as e22
     e15 --> e17 : finalización de servicio [frontera] [ST]
     e07 --> e17 : Rechazo [frontera] [C][ST]
     e03 --> e17 : Rechazo [frontera] [C]
@@ -27,12 +28,13 @@ stateDiagram-v2
     e17 --> e10 : Facturado [C]
     e17 --> e18 : facturado y cierre de TK [C]
     e17 --> e05 : Liberación sin factura [C]
-    e05 --> e17 : Entrega al cliente sin factura [ST]
+    e05 --> e21 : Entrega al cliente sin factura [ST]
     e04 --> e18 : Entrega al cliente [ST]
     e10 --> e04 : Habilitado para entrega [C]
-    e01 --> e21 : Anulación [frontera] [C]
-    e02 --> e21 : Anulación [frontera] [C]
-    e13 --> e21 : Anulación [frontera] [C]
-    e07 --> e21 : Anulación [frontera] [C]
-    e03 --> e21 : Anulación [frontera] [C]
+    e01 --> e22 : Anulación [frontera] [C]
+    e02 --> e22 : Anulación [frontera] [C]
+    e13 --> e22 : Anulación [frontera] [C]
+    e07 --> e22 : Anulación [frontera] [C]
+    e03 --> e22 : Anulación [frontera] [C]
+    e21 --> e18 : Facturar [C]
 ```

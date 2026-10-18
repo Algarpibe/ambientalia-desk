@@ -105,7 +105,7 @@ describe('C1 · «Liberación sin factura»: motivo y fecha obligatorios, sin ca
 /**
  * LAS 31 TRANSICIONES, EJECUTADAS CONTRA EL SERVIDOR (§5 del proposal F0-04).
  *
- * QUÉ HABÍA Y QUÉ FALTABA. La matriz de `permisos.test.ts` (§4) ya barre las 31 contra el servidor,
+ * QUÉ HABÍA Y QUÉ FALTABA. La matriz de `permisos.test.ts` (§4) ya barre las 33 contra el servidor,
  * pero sólo mira el CÓDIGO HTTP: comprueba quién puede pulsar el botón, no adónde lleva. Nadie
  * comprobaba que el ticket acabe en el estado declarado ni que quede constancia de la etapa. La
  * traza sólo se verificaba en UNA transición (`remisiones.test.ts:387`), y M1.10 `[DECIDIDO — R08]`
@@ -114,7 +114,7 @@ describe('C1 · «Liberación sin factura»: motivo y fecha obligatorios, sin ca
  * ⚠️ CUIDADO CON EL MONTAJE, que es lo que demostró la matriz de permisos: con el ticket en un
  * estado de origen INVÁLIDO el servidor contesta 409 (`ticketService.ts:86`) y la prueba no
  * comprueba nada de lo que cree comprobar. Por eso cada caso declara su origen y se ejercitan TODOS
- * los `from` de cada transición —`habilitar_servicio` tiene tres—: 31 transiciones, 33 ejecuciones.
+ * los `from` de cada transición —`habilitar_servicio` tiene tres—: 33 transiciones, 39 ejecuciones.
  *
  * ⚠️ POR QUÉ HAY UNA TABLA ESCRITA A MANO Y NO SÓLO UN BARRIDO DERIVADO DEL GRAFO. Un barrido
  * derivado se adapta solo a lo que `transitions.ts` diga, así que un `to` cambiado por descuido
@@ -129,8 +129,8 @@ describe('C1 · «Liberación sin factura»: motivo y fecha obligatorios, sin ca
  * tabla de reentrancia, el registro de estados y la matriz de permisos —§§1-4, escritas antes en
  * esta misma tanda— ya habían nombrado 13 por el camino.
  *
- * Pero MENCIONAR NO ES CUBRIR: `reentrancia.test.ts` nombra diez ids sin ejecutar ninguno, y las 31
- * que barre `permisos.test.ts` sólo se comprueban por su código HTTP. Por eso las 31 tienen caso
+ * Pero MENCIONAR NO ES CUBRIR: `reentrancia.test.ts` nombra diez ids sin ejecutar ninguno, y las 33
+ * que barre `permisos.test.ts` sólo se comprueban por su código HTTP. Por eso las 33 tienen caso
  * aquí y no sólo las 9 que quedaban sueltas: la cobertura que §5 pide es la ejecutada. El guardián
  * de más abajo compara la tabla con el grafo, así que una transición nueva de cualquier catálogo se
  * pone roja el día que llegue sin caso.
@@ -150,7 +150,7 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   // vuelta escribe «Fecha Remisión de Salida», que es el campo reentrante de la columna 47. La ida
   // es además la que lleva el checkbox obligatorio del defecto C1, arriba.
   liberacion_sin_factura: { desde: ['Por Facturar'], a: 'Por Entregar / Sin facturar' },
-  entrega_sin_factura: { desde: ['Por Entregar / Sin facturar'], a: 'Por Facturar' },
+  entrega_sin_factura: { desde: ['Por Entregar / Sin facturar'], a: 'Pendiente de facturar' }, // F1C-02 (RQ-TS-42): ya no vuelve a Por Facturar
 
   // ── 3 · EL RESTO, en el orden del grafo ──────────────────────────────────────────────────────
   // Las tres formas de entrar: los dos nombres de la fase inicial —el de Zoho y el de la app— y la
@@ -182,10 +182,10 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   diagnostico_complementario: { desde: ['En Proceso'], a: 'Continuación del proceso' },
   entrega_al_cliente: { desde: ['Por Entregar'], a: 'Finalizado' },
   habilitado_para_entrega: { desde: ['Liberación Comercial'], a: 'Por Entregar' },
-  notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' }, anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' }, // F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
+  notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' }, anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' }, facturar: { desde: ['Pendiente de facturar'], a: 'Finalizado' }, // F1C-02 (RQ-TS-42): «Facturar». F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
 }
 
-describe('las 32 transiciones, ejecutadas contra el servidor', () => {
+describe('las 33 transiciones, ejecutadas contra el servidor', () => {
   /**
    * EL GUARDIÁN DE COBERTURA: el conjunto de huérfanas tiene que estar VACÍO.
    *
@@ -235,7 +235,7 @@ describe('las 32 transiciones, ejecutadas contra el servidor', () => {
   })
 
   /**
-   * EL BARRIDO: las 33 ejecuciones, cada una desde un origen VÁLIDO, contra el servidor de verdad.
+   * EL BARRIDO: las 39 ejecuciones, cada una desde un origen VÁLIDO, contra el servidor de verdad.
    *
    * Se comprueban las tres cosas de un tirón y en una sola comparación —código HTTP, estado final
    * del ticket y fila de `ticket_transitions`— porque separarlas multiplicaría por tres las bases
@@ -247,7 +247,7 @@ describe('las 32 transiciones, ejecutadas contra el servidor', () => {
    * lo que la decisión dice. Se afirma que hay UNA fila —ni cero ni dos— con su id, sus dos
    * extremos, su área y su actor.
    */
-  it('las 32 salen de su origen, llegan a su destino y dejan traza', async () => {
+  it('las 33 salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
     const { app } = appWith()
 
@@ -280,16 +280,16 @@ describe('las 32 transiciones, ejecutadas contra el servidor', () => {
     }
 
     expect(observado).toEqual(esperado)
-    // Y que el barrido no se haya quedado corto: 32 transiciones y 38 ejecuciones, porque
+    // Y que el barrido no se haya quedado corto: 33 transiciones y 39 ejecuciones, porque
     // `habilitar_servicio` sale de tres estados y `anulacion` de cinco. Un barrido sobre un grafo vacío también daría verde.
-    expect(n, 'ejecuciones del barrido').toBe(38)
+    expect(n, 'ejecuciones del barrido').toBe(39)
   }, 60_000)
 })
 
 /**
  * F1B-06 — LAS SEIS TRANSICIONES DE `TRANSITIONS_EQUIPO_NUEVO`, EJECUTADAS CONTRA EL SERVIDOR.
  *
- * Mismo molde que el barrido de las 31 de arriba, escrita a mano y NO derivada — con seis casos la
+ * Mismo molde que el barrido de las 33 de arriba, escrita a mano y NO derivada — con seis casos la
  * derivación no aporta la segunda opinión que sí aporta con 31, y el guardián de huérfanas es el que
  * cuida que ninguna quede sin caso.
  *

@@ -12,9 +12,9 @@ import {
  * CLASIFICACIÓN, que es decisión de Gerencia y no se deriva de nada.
  */
 describe('registro de estados', () => {
-  it('declara 24 estados, sin repetidos', () => {
-    expect(ESTADOS).toHaveLength(24)
-    expect(new Set(ESTADOS).size).toBe(24)
+  it('declara 25 estados, sin repetidos', () => {
+    expect(ESTADOS).toHaveLength(25)
+    expect(new Set(ESTADOS).size).toBe(25)
   })
 
   /**
@@ -43,7 +43,7 @@ describe('registro de estados', () => {
     ])
   })
 
-  it('ninguna son exactamente estos doce: el ticket está en manos de quien lo tiene (dos desde E-226, y Anulado desde F1C-01)', () => {
+  it('ninguna son exactamente estos trece: el ticket está en manos de quien lo tiene (dos desde E-226, Anulado desde F1C-01 y Pendiente de facturar desde F1C-02)', () => {
     expect(estadosCon('ninguna')).toEqual([
       'Ingresado',
       'Rev./Diagnostico',
@@ -53,7 +53,7 @@ describe('registro de estados', () => {
       'Por Facturar',
       'Finalizado',
       STATUS_OV_ASIGNADA,
-      STATUS_TICKET_CREADO, 'Anulado', 'Verificación', 'Solicitud Soporte',
+      STATUS_TICKET_CREADO, 'Pendiente de facturar', 'Anulado', 'Verificación', 'Solicitud Soporte',
     ])
   })
 
@@ -139,12 +139,12 @@ describe('estados sin salida (M1.3.4)', () => {
   /**
    * LA LECCIÓN DE MÉTODO, en prueba: «salida única» NO es proxy de nada.
    *
-   * Diez estados tienen una sola transición de salida (doce hasta F1C-01: `Anulado` da una segunda salida a `En Espera de Repuestos` y a `Servicio externo`). Entre ellos `Ingresado` y `Ticket creado`, que
+   * Once estados tienen una sola transición de salida (diez hasta F1C-02, que añade `Pendiente de facturar`; doce hasta F1C-01: `Anulado` da una segunda salida a `En Espera de Repuestos` y a `Servicio externo`). Entre ellos `Ingresado` y `Ticket creado`, que
    * son fases de trabajo corriente y no esperas de nadie. Quien intente derivar `sin_salida` contando
-   * salidas se lleva estos diez, y no cuatro.
+   * salidas se lleva estos once, y no cuatro.
    */
-  it('diez estados tienen una sola salida, así que contar salidas no clasifica nada', () => {
-    expect(conUnaSolaSalida()).toHaveLength(10)
+  it('once estados tienen una sola salida, así que contar salidas no clasifica nada', () => {
+    expect(conUnaSolaSalida()).toHaveLength(11)
     expect(conUnaSolaSalida()).toContain('Ingresado')
     expect(conUnaSolaSalida()).toContain('Ticket creado')
   })
@@ -222,8 +222,8 @@ describe('Solicitud Soporte (RQ-SR-03)', () => {
     expect(CLASIFICACION_EN_ESPERA['Solicitud Soporte']).toBe('ninguna')
   })
 
-  it('ESTADOS_SERVICIO queda en 21 (20 desde F1C-09 más Anulado), en el mismo orden, y no contiene Solicitud Soporte ni Pendiente', () => {
-    expect(ESTADOS_SERVICIO).toHaveLength(21)
+  it('ESTADOS_SERVICIO queda en 22 (20 desde F1C-09, más Anulado y Pendiente de facturar), en el mismo orden, y no contiene Solicitud Soporte ni Pendiente', () => {
+    expect(ESTADOS_SERVICIO).toHaveLength(22)
     expect(ESTADOS_SERVICIO.includes('Solicitud Soporte' as never) || ESTADOS_SERVICIO.includes('Pendiente' as never)).toBe(false)
     expect(ESTADOS_SERVICIO).toEqual(ESTADOS.filter((e) => e !== 'Verificación' && e !== 'Solicitud Soporte' && e !== 'Pendiente'))
     expect(ESTADOS[ESTADOS.length - 1]).toBe('Solicitud Soporte')

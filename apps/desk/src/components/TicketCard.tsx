@@ -17,7 +17,7 @@ const statusColorMap: Record<string, { bg: string, text: string }> = {
     'En Proceso': { bg: 'bg-[#EBF8FF]', text: 'text-[#3182CE]' },
     'Notificación cliente': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
     'Por Facturar': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
-    'Por Entregar / Sin facturar': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
+    'Por Entregar / Sin facturar': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' }, 'Pendiente de facturar': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' }, // F1C-02: como Por Facturar
     'Por Entregar': { bg: 'bg-[#EBF8FF]', text: 'text-[#3182CE]' },
     'En Espera de Repuestos': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
 };

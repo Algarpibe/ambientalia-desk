@@ -30,7 +30,7 @@ export const COLUMNS: Column[] = [
   { id: 'comercial', label: 'Liberación Comercial', statuses: ['Liberación Comercial'] },
   { id: 'por_facturar', label: 'Por Facturar', statuses: ['Por Facturar'] },
   { id: 'entregar_sin_facturar', label: 'Por Entregar / Sin facturar', statuses: ['Por Entregar / Sin facturar'] },
-  { id: 'por_entregar', label: 'Por Entregar', statuses: ['Por Entregar'] },
+  { id: 'por_entregar', label: 'Por Entregar', statuses: ['Por Entregar'] }, { id: 'pendiente_facturar', label: 'Pendiente de facturar', statuses: ['Pendiente de facturar'] }, // F1C-02: rama sin factura, ya entregado
   { id: 'otros', label: 'Otros', statuses: [] },
 ]
 

@@ -35,7 +35,7 @@ describe('C9 · los tres bodegajes de M1.10', () => {
    * 1 · LA TABLA DE M1.10, COMO DATO.
    *
    * Va declarada y no derivada por la misma razón que `SLA_HORAS_POR_ESTADO` (`sla.ts:32`) y
-   * `ESTADOS_SIN_SALIDA` (`estados.ts:151`): de las 31 transiciones no se deduce que la espera del
+   * `ESTADOS_SIN_SALIDA` (`estados.ts:151`): de las 33 transiciones no se deduce que la espera del
    * cliente empiece en la remisión de entrada y no en la fecha de creación. Es una decisión de
    * negocio, y la R08 es quien la firma.
    */
@@ -108,9 +108,9 @@ describe('C9 · los tres bodegajes de M1.10', () => {
    * transición dentro de un ciclo, el rojo tiene que salir junto al campo, no a tres ficheros de
    * distancia.
    */
-  it('5 · el campo nuevo no entra en los once reentrantes: su transición no está en ningún ciclo', () => {
+  it('5 · el campo nuevo no entra en los nueve reentrantes (once hasta F1C-02): su transición no está en ningún ciclo', () => {
     expect(camposFechaReentrantes()).not.toContain(CAMPO_AVISO_CLIENTE)
-    expect(camposFechaReentrantes()).toHaveLength(11)
+    expect(camposFechaReentrantes()).toHaveLength(9)
   })
 
   /**

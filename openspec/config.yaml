@@ -107,7 +107,7 @@ capabilities:
     status_at_start: "as-built parcial"
 
   - name: transitions-st
-    covers: "Las 32 transiciones y 21 estados del flujo de servicio técnico (transitions.ts, transitionExec.ts)"
+    covers: "Las 33 transiciones y 22 estados del flujo de servicio técnico (transitions.ts, transitionExec.ts)"
     status_at_start: "as-built completo"
 
   - name: transitions-equipo-nuevo
@@ -1358,26 +1358,26 @@ cifras_ancladas:
       la de la vista. `Pendiente` sigue `sin_clasificar` y ya tiene regla provisional escrita: el
       reloj CORRE, hasta que Servicio Técnico diga qué espera. Desde F1C-09 `Pendiente` es de soporte remoto.
   - id: pasos_del_mapa
-    maestro: "40 — decisión de F1C-01 (Anulado); la R08.4 (M1.3.7) sigue diciendo 35 pasos y queda desactualizada hasta que Gerencia pegue la corrección (P-3)"
-    codigo: "aristas del diagrama completo de mapaBlueprint.ts: las 32 transiciones con botón (habilitar_servicio sale de tres estados y anulacion de cinco) + las 2 sin botón de estadoPorRemision.ts — 40 desde F1C-01, 35 desde F1C-09, eran 38"
+    maestro: "41 — decisión de F1C-02 (Pendiente de facturar; 40 con F1C-01, Anulado); la R08.4 (M1.3.7) sigue diciendo 35 pasos y queda desactualizada hasta que Gerencia pegue la corrección (P-3)"
+    codigo: "aristas del diagrama completo de mapaBlueprint.ts: las 33 transiciones con botón (habilitar_servicio sale de tres estados y anulacion de cinco) + las 2 sin botón de estadoPorRemision.ts — 41 desde F1C-02, 40 desde F1C-01, 35 desde F1C-09, eran 38"
     divergencia: >
-      LA R08.4 QUEDA DESACTUALIZADA desde F1C-01: el código cuenta 40 aristas y la R08.4 dice 35 pasos, hasta P-3. ERROR si el código difiere de este registro.
+      LA R08.4 QUEDA DESACTUALIZADA desde F1C-01: el código cuenta 41 aristas (40 hasta F1C-02) y la R08.4 dice 35 pasos, hasta P-3. ERROR si el código difiere de este registro.
       La R08.2 aventuró que el mapa cuenta CAMINOS y no transiciones, y la R08.4 lo confirma; lo vigila
       cifrasAncladas.test.ts, que lee este registro y lo compara con el diagrama generado.
   - id: transiciones
-    maestro: "32 — decisión de F1C-01 (Anulado); la R08.4 sigue diciendo 31 hasta que Gerencia pegue la corrección (P-3)"
+    maestro: "33 — decisión de F1C-02 (Facturar; 32 con F1C-01, Anulado); la R08.4 sigue diciendo 31 hasta que Gerencia pegue la corrección (P-3)"
     codigo: "cuenta de transiciones en packages/shared/src/transitions.ts"
     divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
   - id: estados
-    maestro: "21 — decisión de F1C-01 (Anulado); la R08.4 sigue diciendo 20 hasta que Gerencia pegue la corrección (P-3)"
-    codigo: "cuenta de estados de servicio en packages/shared/src/estados.ts (ESTADOS_SERVICIO, 21 desde F1C-01, 20 desde F1C-09; antes, claves de CLASIFICACION_EN_ESPERA)"
+    maestro: "22 — decisión de F1C-02 (Pendiente de facturar; 21 con F1C-01, Anulado); la R08.4 sigue diciendo 20 hasta que Gerencia pegue la corrección (P-3)"
+    codigo: "cuenta de estados de servicio en packages/shared/src/estados.ts (ESTADOS_SERVICIO, 22 desde F1C-02, 21 desde F1C-01, 20 desde F1C-09; antes, claves de CLASIFICACION_EN_ESPERA)"
     divergencia: >
       ERROR si difiere. No hay criterio alternativo que lo justifique.
       AVISO DE MOVIMIENTO PREVISTO POR DECISIÓN, no por error — anotado el 2026-09-24. Tres
       respuestas de Gerencia del 23 y 24/09 añaden estados nuevos, y al construirse esta cifra
-      se mueve (21 desde F1C-01 con `Anulado`, 20 antes, 21 hasta F1C-09) sin que nadie se haya equivocado: `Anulado` (`decision/c2-anulado`,
+      se mueve (22 desde F1C-02 con `Pendiente de facturar`, 21 desde F1C-01 con `Anulado`, 20 antes, 21 hasta F1C-09) sin que nadie se haya equivocado: `Anulado` (`decision/c2-anulado`,
       F1C-01, ya construido), `Pendiente de facturar` como estado de la rama sin factura (`decision/c4-dos-ramas`,
-      F1C-02) y `Control de calidad` entre `En Proceso` y `Por Facturar` (`decision/c6-qa-liberacion`,
+      F1C-02, ya construido) y `Control de calidad` entre `En Proceso` y `Por Facturar` (`decision/c6-qa-liberacion`,
       F1C-07). NO hay estado `Facturado`: `c4` lo declara atributo del ticket, en `fecha_factura`.
       Y la señal de tablero «esperando aprobación del cliente» de `decision/anexo-3-alerta` NO es
       un estado: es marca de vista, y no cuenta aquí.

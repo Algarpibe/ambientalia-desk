@@ -71,7 +71,7 @@ export interface Transition {
  * puede mentir y el motor no necesita una guarda aparte que lo compruebe.
  */
 const comment = (): TransitionField =>
-  ({ key: 'comment', label: 'Comentario', kind: 'comment', required: false, target: 'comment' }); import { camposAnulacion, ESTADO_ANULADO } from './anulacion' // va aquí y no arriba: un import nuevo desplazaría las citas del fichero (regla de mutación 4)
+  ({ key: 'comment', label: 'Comentario', kind: 'comment', required: false, target: 'comment' }); import { camposAnulacion, ESTADO_ANULADO } from './anulacion'; import { CLAVE_NUMERO_FACTURA, CLAVE_FECHA_FACTURA } from './facturar' // va aquí y no arriba: un import nuevo desplazaría las citas del fichero (regla de mutación 4)
 const cfDate = (label: string, required = true): TransitionField =>
   ({ key: label, label, kind: 'date', required, target: 'customField' })
 const cfText = (label: string, required = true): TransitionField =>
@@ -245,7 +245,7 @@ const TRANSICIONES_BASE: Transition[] = [
     fields: [comment()] },
   { id: 'liberacion_sin_factura', name: 'Liberación sin factura', from: ['Por Facturar'], to: 'Por Entregar / Sin facturar', area: 'Comercial',
     fields: [comment(), { key: 'Motivo de liberación sin factura', label: 'Motivo', kind: 'select', required: true, target: 'customField', options: ['Fecha de corte de facturación del cliente', 'Servicio incluido en contrato con facturación periódica', 'Autorización excepcional de Dirección Comercial'] }, cfDate('Fecha prevista de facturación'), cfText('Texto de la autorización', false)] },
-  { id: 'entrega_sin_factura', name: 'Entrega al cliente sin factura', from: ['Por Entregar / Sin facturar'], to: 'Por Facturar', area: 'Servicio Técnico',
+  { id: 'entrega_sin_factura', name: 'Entrega al cliente sin factura', from: ['Por Entregar / Sin facturar'], to: 'Pendiente de facturar', area: 'Servicio Técnico',
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
   { id: 'entrega_al_cliente', name: 'Entrega al cliente', from: ['Por Entregar'], to: 'Finalizado', area: 'Servicio Técnico',
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
@@ -259,17 +259,17 @@ const TRANSICIONES_BASE: Transition[] = [
   { id: 'habilitado_para_entrega', name: 'Habilitado para entrega', from: ['Liberación Comercial'], to: 'Por Entregar', area: 'Comercial',
     fields: [comment(), cfDate('Fecha de aviso al cliente')] },
   { id: 'notif_recotizacion', name: 'Notificación re cotización', from: ['Continuación del proceso'], to: 'Notificación Comercial', area: 'Comercial',
-    fields: [comment()] }, { id: 'anulacion', name: 'Anulación', from: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], to: 'Anulado', area: 'Comercial', fields: [comment(), ...camposAnulacion()] },
+    fields: [comment()] }, { id: 'anulacion', name: 'Anulación', from: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], to: 'Anulado', area: 'Comercial', fields: [comment(), ...camposAnulacion()] }, { id: 'facturar', name: 'Facturar', from: ['Pendiente de facturar'], to: 'Finalizado', area: 'Comercial', fields: [comment(), cfText(CLAVE_NUMERO_FACTURA), cfDate(CLAVE_FECHA_FACTURA)] }, // F1C-02 (RQ-TS-42): la salida única de Pendiente de facturar; en esta línea para no desplazar citas (regla de mutación 4)
 ]
 
 /**
  * Etapas que ya saben a quién le pasan el trabajo, para proponerlo en la casilla de derivación.
  *
  * Solo caben aquí las que cambian el trabajo de manos de forma predecible. Heredar al derivado
- * anterior —lo que hacen las otras 26— lo dejaría justo en manos de quien deja de tocarle.
+ * anterior —lo que hacen las otras 28— lo dejaría justo en manos de quien deja de tocarle.
  *
  * Es un mapa y no un campo suelto en cada entrada porque proponer es la EXCEPCIÓN: en una lista de
- * cinco entradas se ve de un vistazo cuáles pisan lo heredado, y en 31 declaraciones no.
+ * cinco entradas se ve de un vistazo cuáles pisan lo heredado, y en 33 declaraciones no.
  */
 const DERIVACION_POR_DEFECTO: Record<string, DerivacionPorDefecto> = {
   // Rev./Diagnostico → Notificado: escalar una revisión es subirla al inmediato superior. En Proceso → Solicitado: al encargado de inventario, que es ese mismo cargo.
@@ -286,11 +286,11 @@ const DERIVACION_POR_DEFECTO: Record<string, DerivacionPorDefecto> = {
  *
  * Se añade aquí y no una a una porque el usuario la quiere en todas: si en «Habilitar Servicio» se
  * deja vacía, tiene que poder rellenarse más adelante, y «Revisión diagnóstico» ni siquiera es una
- * transición —es un estado al que se llega por `ingreso_a_servicio`—. Repetirla en las 31 entradas
+ * transición —es un estado al que se llega por `ingreso_a_servicio`—. Repetirla en las 33 entradas
  * garantizaría olvidarla en la 32.ª.
  *
  * Va la ÚLTIMA para no colarse entre los campos de negocio del formulario. Si algún día una etapa no
- * debe ofrecerla, la salida es un `Set` de excepciones aquí, nunca volver a las 31 copias.
+ * debe ofrecerla, la salida es un `Set` de excepciones aquí, nunca volver a las 33 copias.
  */
 export const TRANSITIONS: Transition[] = TRANSICIONES_BASE.map((t) => ({
   ...t,

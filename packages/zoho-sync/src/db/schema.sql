@@ -830,3 +830,7 @@ ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_embalaje_por text;
 -- marca anti-duplicado del aviso de etiqueta no generada. NULL-ables y SIN relleno. AL FINAL para no desplazar citas. CALIFICADAS public.
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS enviado_por_id text;
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS aviso_sin_etiqueta_at timestamptz;
+-- facturar-dos-ramas (F1C-02, RQ-AV-23): la marca de la alarma de facturacion vencida, que guarda la fecha prevista ya
+-- avisada (una sola vez por ticket y fecha). La escribe solo el servicio de la alarma. Fuera de TICKET_COLS para que el
+-- sincronizador no la pise. NULL-able y SIN relleno. AL FINAL para no desplazar citas. SIN calificar: tickets es de DESK_TABLES.
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS facturacion_avisada_para date;

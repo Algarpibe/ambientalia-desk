@@ -8,7 +8,7 @@ import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
 // `valoresValidos` vive en el arnés: esta matriz y la de ejecución (`transicionesEjecucion.test.ts`)
-// barren las mismas 31 transiciones, y dos copias del derivador de valores habrían divergido en la
+// barren las mismas 33 transiciones, y dos copias del derivador de valores habrían divergido en la
 // primera etapa con un `kind` nuevo.
 import { db, instalarArnes, appWith, userCookie, valoresValidos } from './testing/appHarness'
 
@@ -40,7 +40,7 @@ instalarArnes()
  */
 describe('matriz área × transición, contra el servidor', () => {
   for (const area of AREAS) {
-    it(`las 31 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
+    it(`las 33 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
       const cookie = await userCookie([area])
       const { app } = appWith()
 
@@ -69,25 +69,25 @@ describe('matriz área × transición, contra el servidor', () => {
   /**
    * EL TOTAL, escrito a mano, porque es lo único que la derivación no puede vigilarse a sí misma.
    *
-   * 32 transiciones × 3 áreas = 96 casos. Las 25 de área simple prohíben a 2 áreas cada una y las 7
-   * compartidas a 1: 25×2 + 7×1 = 57 prohibidos, y 39 permitidos. Si mañana una transición pasa de
+   * 33 transiciones × 3 áreas = 99 casos. Las 26 de área simple prohíben a 2 áreas cada una y las 7
+   * compartidas a 1: 26×2 + 7×1 = 59 prohibidos, y 40 permitidos. Si mañana una transición pasa de
    * simple a compartida —que es exactamente lo que F1C-05 va a tocar—, estos números se mueven y hay
    * que moverlos a propósito.
    */
-  it('la matriz son 96 casos: 57 prohibidos y 39 permitidos', () => {
+  it('la matriz son 99 casos: 59 prohibidos y 40 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
-    expect(casos).toHaveLength(96)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(57)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(39)
+    expect(casos).toHaveLength(99)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(59)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(40)
   })
 
   /**
-   * Y el admin, que es la otra mitad de `canExecuteTransition`: pasa por las 31 sin mirar el área.
+   * Y el admin, que es la otra mitad de `canExecuteTransition`: pasa por las 33 sin mirar el área.
    * Va contra el servidor por lo mismo que la matriz — el `isAdmin` que decide es el de la sesión,
    * no el del argumento.
    */
-  it('un administrador pasa por las 31 sin que su área importe', async () => {
-    // Su rol NO cubre ninguna transición: lo único que le abre las 31 es ser administrador.
+  it('un administrador pasa por las 33 sin que su área importe', async () => {
+    // Su rol NO cubre ninguna transición: lo único que le abre las 33 es ser administrador.
     const u = await createUser(db, { email: 'jefa@x.co', name: 'Jefa', passwordHash: await hashPassword('password123'), isAdmin: true })
     const cookie = `sid=${await createSession(db, u.id)}`
     const { app } = appWith()
@@ -346,14 +346,14 @@ describe('cargo · la compuesta contra el área (puro)', () => {
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 
-  it('con la compuesta y sin cargo, la matriz son 96 casos: 58 prohibidos y 38 permitidos', () => {
+  it('con la compuesta y sin cargo, la matriz son 99 casos: 60 prohibidos y 39 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => puedeEjecutarTransicion({ areas: [a], isAdmin: false, cargoPermiso: null }, t)))
-    expect(casos).toHaveLength(96)
-    expect(casos.filter((p) => !p)).toHaveLength(58)
-    expect(casos.filter((p) => p)).toHaveLength(38)
+    expect(casos).toHaveLength(99)
+    expect(casos.filter((p) => !p)).toHaveLength(60)
+    expect(casos.filter((p) => p)).toHaveLength(39)
   })
 
-  it('cargo × área × transición: 864 casos, ninguno concede lo que el área niega (S17)', () => {
+  it('cargo × área × transición: 891 casos, ninguno concede lo que el área niega (S17)', () => {
     const cargos = [...CARGOS, null]
     let casos = 0
     for (const t of TRANSITIONS) {
@@ -365,7 +365,7 @@ describe('cargo · la compuesta contra el área (puro)', () => {
         }
       }
     }
-    expect(casos).toBe(864) // 32 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
+    expect(casos).toBe(891) // 33 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
   })
 
   it('con Director Comercial la compuesta coincide con el área en las 93 celdas', () => {
@@ -443,7 +443,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
     expect((await ejecutar(app, cookie, 'rc-rv', 'rechazo_revision')).status).toBe(200)
   }, 60_000)
 
-  it('el barrido de cargo sube a 864 y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
+  it('el barrido de cargo sube a 891 y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
     let casos = 0
     const difieren: Array<{ transicion: string; area: string }> = []
     for (const t of TRANSITIONS) {
@@ -455,7 +455,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
         }
       }
     }
-    expect(casos).toBe(864)
+    expect(casos).toBe(891)
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 })

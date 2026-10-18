@@ -64,5 +64,5 @@ export const FASE_POR_ESTADO = {
   'Liberación Comercial': 'cierre',
   'Por Entregar': 'cierre',
   'Por Entregar / Sin facturar': 'cierre',
-  'Finalizado': 'cierre', 'Anulado': 'cierre', // F1C-01: el otro estado terminal, en la fase de cierre
+  'Finalizado': 'cierre', 'Anulado': 'cierre', 'Pendiente de facturar': 'cierre', // F1C-01: el otro estado terminal, en la fase de cierre
 } satisfies Record<EstadoServicio, FaseId>

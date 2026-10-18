@@ -76,7 +76,7 @@ export interface IndicadorG6 {
  * C9. Meterlas confundiría las dos averías, que se arreglan en sitios distintos.
  */
 export const INDICADORES_G6: IndicadorG6[] = [
-  { columnas: [47], nombre: 'Tiempo permanencia', campos: ['Fecha Remisión de Salida'], alcance: 'C4' },
+  // col. 47, «Tiempo permanencia» (Fecha Remisión de Salida, alcance C4): sale con F1C-02, que quitó el ciclo de cierre (RQ-TS-43)
   { columnas: [50, 53], nombre: 'Tiempo de servicio', campos: ['Fecha Orden De Venta', 'Fecha Recepción de repuestos'], alcance: null },
   { columnas: [57], nombre: 'Tiempo de cotización', campos: ['Fecha de Cotización'], alcance: null },
   { columnas: [58], nombre: 'Tiempo de orden de compra', campos: ['Fecha Orden de Compra', 'Fecha de Cotización'], alcance: null },

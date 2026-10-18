@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
-  TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
+  TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA, type Transition,
 } from './transitions'
-import { ESTADOS, ESTADOS_SERVICIO, ESTADOS_SOLO_EQUIPO_NUEVO, ESTADOS_SOLO_SOPORTE_REMOTO } from './estados'
-import { camposFechaReentrantes } from './reentrancia'; import { estadoInicialDelAlta, transicionesDelTicket } from './flujos'; import { CLASIFICACIONES } from './ticketCreate'; import { CLAVE_CERTIFICADO_FABRICA } from './gasPatron'
+import { ESTADOS, ESTADOS_SERVICIO, ESTADOS_SOLO_EQUIPO_NUEVO, ESTADOS_SOLO_SOPORTE_REMOTO, CLASIFICACION_EN_ESPERA, ESTADOS_SIN_SALIDA } from './estados'
+import { camposFechaReentrantes, componentesFuertementeConexos } from './reentrancia'; import { FASE_POR_ESTADO } from './fasesBlueprint'; import { CLAVE_NUMERO_FACTURA, CLAVE_FECHA_FACTURA } from './facturar'; import { estadoInicialDelAlta, transicionesDelTicket } from './flujos'; import { CLASIFICACIONES } from './ticketCreate'; import { CLAVE_CERTIFICADO_FABRICA } from './gasPatron'
 
 /**
  * LOS SIETE INVARIANTES DEL GRAFO (§2 del proposal F0-04).
@@ -47,10 +47,10 @@ describe('invariantes del grafo de transiciones', () => {
    * Vale menos que los demás y por eso va acompañado: un número solo no dice QUÉ se perdió. Va con
    * el conjunto de ids, que sí lo dice.
    */
-  it('2 · 32 transiciones sobre 21 estados', () => {
-    expect(TRANSITIONS).toHaveLength(32)
-    expect(ESTADOS_SERVICIO).toHaveLength(21)
-    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(32)
+  it('2 · 33 transiciones sobre 22 estados', () => {
+    expect(TRANSITIONS).toHaveLength(33)
+    expect(ESTADOS_SERVICIO).toHaveLength(22)
+    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(33)
   })
 
   /**
@@ -129,12 +129,12 @@ describe('invariantes del grafo de transiciones', () => {
   /**
    * INVARIANTE 6 — la lista de campos de fecha reentrantes no crece sin declararlo.
    *
-   * Los once (diez hasta F1C-05) son la entrada de F1C-02, F1C-06, C9 y la spec `kpis`: cada uno es un campo que una
+   * Los nueve (once hasta F1C-02, diez hasta F1C-05) son la entrada de F1C-02, F1C-06, C9 y la spec `kpis`: cada uno es un campo que una
    * segunda pasada por su ciclo vuelve a escribir. La tabla completa —componente por componente y
    * cruzada con G.6— está en `reentrancia.test.ts`; aquí va sólo el conjunto, que es lo que no puede
    * crecer en silencio.
    */
-  it('6 · los campos de fecha reentrantes son exactamente estos once', () => {
+  it('6 · los campos de fecha reentrantes son exactamente estos nueve', () => {
     expect(camposFechaReentrantes()).toEqual([
       'Fecha Recepción de repuestos',
       'Fecha Orden de Compra',
@@ -145,7 +145,7 @@ describe('invariantes del grafo de transiciones', () => {
       'Fecha solicitud SKU',
       'Fecha Salida Servicio externo',
       'Fecha Entrada de servicio externo',
-      'Fecha prevista de facturación', 'Fecha Remisión de Salida',
+      // 'Fecha prevista de facturación' y 'Fecha Remisión de Salida' salieron con F1C-02: el ciclo de cierre ya no existe (RQ-TS-43)
     ])
   })
 })
@@ -169,9 +169,9 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect([...derivados].sort()).toEqual([...ESTADOS].sort())
   })
 
-  it('la unión tiene 44 entradas (32 + 7 + 5), con ids únicos', () => {
-    expect(UNION).toHaveLength(44)
-    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(44)
+  it('la unión tiene 45 entradas (33 + 7 + 5), con ids únicos', () => {
+    expect(UNION).toHaveLength(45)
+    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(45)
   })
 
   it('3 · sin salida en la unión es exactamente Finalizado y Anulado (F1C-01)', () => {
@@ -325,5 +325,48 @@ describe('F1C-09 · tres transiciones retiradas y el diagnóstico complementario
   it('Pendiente ya no es estado de servicio y sólo lo declara soporte remoto', () => {
     expect((ESTADOS_SERVICIO as readonly string[]).includes('Pendiente')).toBe(false)
     expect((ESTADOS_SOLO_SOPORTE_REMOTO as readonly string[]).includes('Pendiente')).toBe(true)
+  })
+})
+
+/**
+ * facturar-dos-ramas (F1C-02) · las dos ramas de cierre (RQ-TS-42, RQ-TS-43; `design.md` D4).
+ *
+ * El ciclo `Por Facturar` ⇄ `Por Entregar / Sin facturar` desaparece: la rama sin factura acaba en `Pendiente de
+ * facturar`, de donde sólo se sale a `Finalizado`. Los cinco estados de cierre van escritos aquí a propósito: el
+ * invariante tiene que fallar si un catálogo vuelve a enlazarlos en ciclo, y eso se comprueba ensuciando el CATÁLOGO
+ * en memoria (regla de mutación 2), no tocando la prueba.
+ */
+const ESTADOS_DE_CIERRE = ['Por Facturar', 'Liberación Comercial', 'Por Entregar', 'Por Entregar / Sin facturar', 'Pendiente de facturar']
+const cicloEnElCierre = (ts: Transition[]) => componentesFuertementeConexos(ts).filter((c) => c.some((e) => ESTADOS_DE_CIERRE.includes(e)))
+const salidasDe = (ts: Transition[], estado: string) => ts.filter((t) => t.from.includes(estado))
+
+describe('las dos ramas de cierre (F1C-02)', () => {
+  it('RQ-TS-42 · el catálogo declara el estado, la rama sin factura y «Facturar»', () => {
+    expect(TRANSITIONS.find((t) => t.id === 'entrega_sin_factura')!.to).toBe('Pendiente de facturar')
+    const f = TRANSITIONS.find((t) => t.id === 'facturar')!
+    expect([f.name, f.from, f.to, f.area]).toEqual(['Facturar', ['Pendiente de facturar'], 'Finalizado', 'Comercial'])
+    const campo = (k: string) => f.fields.find((x) => x.key === k)
+    expect([campo(CLAVE_NUMERO_FACTURA)?.kind, campo(CLAVE_NUMERO_FACTURA)?.required]).toEqual(['text', true])
+    expect([campo(CLAVE_FECHA_FACTURA)?.kind, campo(CLAVE_FECHA_FACTURA)?.required]).toEqual(['date', true])
+    expect((CLASIFICACION_EN_ESPERA as Record<string, string>)['Pendiente de facturar']).toBe('ninguna')
+    expect((FASE_POR_ESTADO as Record<string, string>)['Pendiente de facturar']).toBe('cierre')
+    expect((ESTADOS_SERVICIO as readonly string[]).includes('Pendiente de facturar')).toBe(true)
+    expect((ESTADOS_SIN_SALIDA as readonly string[]).includes('Pendiente de facturar')).toBe(false)
+  })
+
+  it('RQ-TS-43 · ningún ciclo del grafo toca un estado de cierre', () => {
+    expect(cicloEnElCierre(TRANSITIONS)).toEqual([])
+  })
+
+  it('RQ-TS-43 · de Pendiente de facturar sólo se sale con «Facturar», a Finalizado', () => {
+    expect(salidasDe(TRANSITIONS, 'Pendiente de facturar').map((t) => [t.id, t.to])).toEqual([['facturar', 'Finalizado']])
+  })
+
+  it('RQ-TS-43 · mutación: un catálogo que vuelve a cerrar el ciclo lo pone en rojo', () => {
+    const devuelta = TRANSITIONS.map((t) => (t.id === 'entrega_sin_factura' ? { ...t, to: 'Por Facturar' } : t))
+    expect(cicloEnElCierre(devuelta)).not.toEqual([])
+    const atras = [...TRANSITIONS, { ...TRANSITIONS.find((t) => t.id === 'facturar')!, id: 'reabrir', to: 'Por Facturar' }]
+    expect(cicloEnElCierre(atras)).not.toEqual([])
+    expect(salidasDe(atras, 'Pendiente de facturar').map((t) => t.to)).not.toEqual(['Finalizado'])
   })
 })
