@@ -85,7 +85,7 @@ fechaPrevista < hoy` (comparación de cadenas `AAAA-MM-DD`, S-4). Vive en `packa
 **Candidatos.** `ticketsPendientesDeFacturarSinAvisar(db)`: `SELECT id, number, fecha_prevista_facturacion FROM tickets
 WHERE status = 'Pendiente de facturar' AND fecha_prevista_facturacion IS NOT NULL AND (facturacion_avisada_para IS NULL
 OR facturacion_avisada_para <> fecha_prevista_facturacion)`. Sin `IS DISTINCT FROM`, que pg-mem no garantiza. La fecha se
-normaliza con `diaEnZona` (`fechasDerivadas.ts:63`).
+normaliza con `comoDiaCivil` (`calendarioCierres.ts:18`), no con `diaEnZona`: una columna `date` llega como `Date` a medianoche UTC y en Bogotá sería el día anterior (`fechasDerivadas.ts:58`). Visto al aplicar.
 
 **Marca y avisos en una transacción** (`enTransaccion`), en este orden: destinatarios (Director Comercial por
 `cargo_permiso`; si no, área Comercial; si no, `warn` y `false` sin marcar, S-7) → `UPDATE tickets SET

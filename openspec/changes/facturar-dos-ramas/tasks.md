@@ -30,15 +30,15 @@ Las referencias D* son de `design.md`. Las cifras se leen del rojo, no se estima
 
 ## Lote 2 — la alarma (intento 4)
 
-- [ ] 2.1 ROJO: `facturacionVencida` en `facturar.test.ts` (S-4: el mismo día no, el siguiente sí, sin fecha no).
-- [ ] 2.2 VERDE: la regla en `facturar.ts`.
-- [ ] 2.3 ROJO: migración — `migrate.test.ts` cuenta la `ALTER` nueva; `repo.test.ts` exige que
+- [x] 2.1 ROJO: `facturacionVencida` en `facturar.test.ts` (S-4: el mismo día no, el siguiente sí, sin fecha no).
+- [x] 2.2 VERDE: la regla en `facturar.ts`.
+- [x] 2.3 ROJO: migración — `migrate.test.ts` cuenta la `ALTER` nueva; `repo.test.ts` exige que
       `facturacion_avisada_para` no esté en `TICKET_COLS`.
-- [ ] 2.4 VERDE: la `ALTER` al final de `schema.sql`.
-- [ ] 2.5 ROJO: `apps/desk/server/services/avisoFacturacionVencida.test.ts` — los ocho escenarios de RQ-AV-23.
-- [ ] 2.6 VERDE: `db/facturacionVencida.ts` y `services/avisoFacturacionVencida.ts` (D6).
-- [ ] 2.7 Pasada: `index.ts:15` y `:88`, en sus líneas.
-- [ ] 2.8 Mutaciones del lote (D9, fila 4) reproducidas y anotadas.
+- [x] 2.4 VERDE: la `ALTER` al final de `schema.sql`.
+- [x] 2.5 ROJO: `apps/desk/server/services/avisoFacturacionVencida.test.ts` — los ocho escenarios de RQ-AV-23.
+- [x] 2.6 VERDE: `db/facturacionVencida.ts` y `services/avisoFacturacionVencida.ts` (D6).
+- [x] 2.7 Pasada: `index.ts:15` y `:88`, en sus líneas.
+- [x] 2.8 Mutaciones del lote (D9, fila 4) reproducidas y anotadas.
 
 ## Cierre
 

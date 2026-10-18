@@ -549,3 +549,19 @@ describe('liberacion-sin-factura-motivo-fecha · motivo y fecha sobreviven al sy
     expect({ subject: r.subject, liberacion_motivo: r.liberacion_motivo, dia, managed_by_app: r.managed_by_app }).toEqual({ subject: 'Asunto de Zoho v2', liberacion_motivo: 'Fecha de corte de facturación del cliente', dia: '2026-10-04', managed_by_app: false })
   })
 })
+
+/**
+ * facturar-dos-ramas (F1C-02, RQ-AV-23): la marca de la alarma de facturación es de la APLICACIÓN. Vive en una columna
+ * propia de `tickets`, fuera de `TICKET_COLS`, para que el sincronizador no la reescriba, y fuera de `PROMOTED_COLUMNS`,
+ * porque ninguna transición la escribe: la pone sólo el servicio de la alarma.
+ */
+describe('facturar-dos-ramas · la marca de la alarma sobrevive al sync', () => {
+  it('facturacion_avisada_para existe en tickets, fuera de TICKET_COLS y de PROMOTED_COLUMNS', async () => {
+    await db.query("INSERT INTO tickets (id, number, subject, status) VALUES ('t-fav', 1, 's', 'Pendiente de facturar')")
+    await db.query("UPDATE tickets SET facturacion_avisada_para = '2027-01-10' WHERE id = 't-fav'")
+    const r = (await db.query("SELECT facturacion_avisada_para AS m FROM tickets WHERE id = 't-fav'")).rows[0]
+    expect(new Date(r.m).toISOString().slice(0, 10)).toBe('2027-01-10')
+    expect(TICKET_COLS as readonly string[]).not.toContain('facturacion_avisada_para')
+    expect(PROMOTED_COLUMNS.map((p) => p.col)).not.toContain('facturacion_avisada_para')
+  })
+})

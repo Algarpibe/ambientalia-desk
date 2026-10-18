@@ -56,3 +56,43 @@ Citas a las líneas cuyo CONTENIDO cambió, leídas una a una:
   línea antes de este cambio. Desfase previo, caso B; se anota.
 - `estados.ts:99`, `:142-145`, `columns.ts:33`, `TicketCard.tsx:20`, `TransitionPanel.tsx:32-36`, `reentrancia.ts:78-83`:
   las frases que las citan siguen siendo ciertas de esas líneas. Caso A.
+
+## Lote 2 — la alarma (intento 4). Base: `8167a80`
+
+| Tarea | Rojo visto | Verde |
+|---|---|---|
+| 2.1 / 2.2 `facturacionVencida` (shared) | `(0 , facturacionVencida) is not a function` ×3 | 12/12 |
+| 2.3 / 2.4 migración | `ALTER TABLE en schema.sql: expected 66 to be 67`; recuento de sentencias; `Column "facturacion_avisada_para" not found` | `migrate` y `repo` 208/208 tras la `ALTER` al final de `schema.sql` y los tres ordinales «por el final» desplazados uno |
+| 2.5 / 2.6 `avisoFacturacionVencida.test.ts` | `Cannot find module './avisoFacturacionVencida'` | 12/12, y 15/15 con las pruebas por capa |
+| 2.7 pasada | — | `index.ts:15` (import) y `:88` (eslabón detrás de reclamaciones), en sus líneas |
+
+**Dos hallazgos al aplicar.**
+
+1. **Un `;` dentro de un comentario de `schema.sql` parte la sentencia.** `schemaStatements` trocea por `;`
+   (`packages/zoho-sync/src/db/migrate.ts:20`), y `migrate` traga el error de cada sentencia con un `console.error` y sigue
+   (`:29-34`). La primera versión del comentario llevaba «…de la alarma; fuera de…»: la `ALTER` se descartó en silencio y
+   sólo lo enseñó la prueba de recuento. En producción habría arrancado sin la columna. Se quitó el `;`. Es un riesgo
+   general del fichero, no de esta tanda: se anota para la bandeja.
+2. **Una columna `date` no se puede leer con `diaEnZona`** (la leería como instante de medianoche UTC: en Bogotá, el día
+   anterior) **ni castear con `::text`** (pg-mem: `cannot cast type date to text`). Se usa `comoDiaCivil`
+   (`apps/desk/server/db/calendarioCierres.ts:18-23`), que ya documentaba las dos cosas. `design.md` D6 corregido.
+
+**Destinatario.** El cargo de la alarma es el literal «Director Comercial» y no se lee de `EXCEPCIONES_POR_CARGO`: vaciar
+esa tabla (su comentario dice que «devuelve la matriz de área») no debe dejar la alarma sin destino.
+
+## Mutaciones del lote 2 (D9, fila 4), reproducidas a mano y restauradas desde copia
+
+| # | Mutación | Rojo |
+|---|---|---|
+| M8 | vence el mismo día (`<=` por `<`) | 2 de 24 |
+| M9 | la consulta de candidatos sin filtro de estado | **sobrevivía** (24/24); 1 de 15 con la prueba por capa |
+| M9b | el `UPDATE` de la marca sin filtro de estado | **sobrevivía**; 1 de 15 con la prueba de carrera |
+| M10 | la consulta de candidatos no mira la marca | **sobrevivía**; 1 de 15 con la prueba por capa |
+| M10b | el `UPDATE` no exige marca distinta | **sobrevivía**; 1 de 15 con la prueba de carrera |
+| M11 | marca aunque no haya destinatarios | 1 de 24 |
+| M12 | la marca entra en `TICKET_COLS` | `repo.test.ts` 1 de 44 |
+
+Las cuatro supervivientes eran defensa en profundidad: cada capa tapaba a la otra, y la prueba de extremo a extremo no
+podía distinguir que faltara una. Las tres pruebas de «las dos capas, por separado» se escribieron DESPUÉS del código, y su
+rojo es el de la mutación, no uno previo: se declara así. Fijan la carrera que el `UPDATE` cierra: alguien factura, o
+corre otra pasada, entre la lectura y la marca.

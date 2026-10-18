@@ -1,5 +1,6 @@
 import type { Transition } from './transitions'
 import { esFechaCalendarioReal } from './fechasDerivadas'
+import type { DiaCivil } from './calendarioLaboral'
 
 /**
  * facturar-dos-ramas (F1C-02) · «Facturar», la salida de `Pendiente de facturar` a `Finalizado` (`decision/c4-dos-ramas`:
@@ -32,4 +33,15 @@ export function erroresFacturar(t: Pick<Transition, 'fields'>, valores: unknown)
 /** S-12: el número y la fecha de factura son los de la factura que se registra AHORA; el cliente no los hereda del ticket. */
 export function seRegistraEnCadaFactura(clave: string): boolean {
   return clave === CLAVE_NUMERO_FACTURA || clave === CLAVE_FECHA_FACTURA
+}
+
+/**
+ * La alarma de facturación (RQ-AV-23, `decision/anexo-33-checkbox`: «Si esa fecha pasa y el ticket sigue en Pendiente de
+ * facturar, el sistema avisa al Director Comercial»). Pura: decide si la fecha prevista ya pasó, en día civil (S-4).
+ * El mismo día de la fecha todavía no ha pasado; el siguiente, sí. Sin fecha —el histórico anterior al 09/09, que no se
+ * reescribe— no vence nunca. Las dos fechas son `AAAA-MM-DD`, así que su orden de cadena es el del calendario.
+ * No es una alarma de SLA: no mide horas desde la entrada al estado, y por eso no vive en `SLA_HORAS_POR_ESTADO`.
+ */
+export function facturacionVencida(fechaPrevista: DiaCivil | null, hoy: DiaCivil): boolean {
+  return fechaPrevista !== null && fechaPrevista < hoy
 }

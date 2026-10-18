@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CLAVE_NUMERO_FACTURA, CLAVE_FECHA_FACTURA, erroresFacturar, seRegistraEnCadaFactura } from './facturar'
+import { CLAVE_NUMERO_FACTURA, CLAVE_FECHA_FACTURA, erroresFacturar, seRegistraEnCadaFactura, facturacionVencida } from './facturar'
 import type { Transition } from './transitions'
 
 /**
@@ -60,5 +60,20 @@ describe('seRegistraEnCadaFactura (S-12)', () => {
     expect(seRegistraEnCadaFactura(CLAVE_FECHA_FACTURA)).toBe(true)
     expect(seRegistraEnCadaFactura('Fecha Remisión de Salida')).toBe(false)
     expect(seRegistraEnCadaFactura('fecha de factura')).toBe(false)
+  })
+})
+
+describe('facturacionVencida (RQ-AV-23, S-4): vence el día SIGUIENTE a la fecha prevista, en día civil', () => {
+  it('el día anterior y el mismo día todavía no; el siguiente sí', () => {
+    expect(facturacionVencida('2027-01-10', '2027-01-09')).toBe(false)
+    expect(facturacionVencida('2027-01-10', '2027-01-10')).toBe(false)
+    expect(facturacionVencida('2027-01-10', '2027-01-11')).toBe(true)
+  })
+  it('cruza meses y años por el orden de la fecha civil', () => {
+    expect(facturacionVencida('2026-12-31', '2027-01-01')).toBe(true)
+    expect(facturacionVencida('2027-02-28', '2027-03-01')).toBe(true)
+  })
+  it('sin fecha prevista no vence nunca (las liberaciones del histórico no la tienen)', () => {
+    expect(facturacionVencida(null, '2099-01-01')).toBe(false)
   })
 })
