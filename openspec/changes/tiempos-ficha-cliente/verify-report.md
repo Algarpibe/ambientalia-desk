@@ -10,7 +10,7 @@ Verificado sobre `f42dc72` (partida `ac2d4ef`, planificación `a9052a2`), en el 
 | `npm test` | 0 · 288 ficheros pasan (3 omitidos), 4.799 pruebas pasan (11 omitidas) |
 | `npm run typecheck` | 0 |
 | `npm run lint` | 0 · 0 errores, 165 avisos (el tope de partida) |
-| detector de citas `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` | 0 · 13 abreviadas rotas informativas (la línea base; ninguna de los ficheros tocados) |
+| detector de citas `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` | 0 · 13 abreviadas rotas informativas (no bloquean; la línea base de citas está vacía; ninguna de los ficheros tocados) |
 
 ## 2. Escenario → prueba (RQ-TC-70, 7 escenarios; todos con prueba que pasó en tiempo de ejecución salvo los declarados de persona)
 
