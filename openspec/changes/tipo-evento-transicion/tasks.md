@@ -6,26 +6,26 @@ hacen sobre una copia en el directorio temporal de la sesión y se restauran cop
 
 ## Lote 1 — packages/shared: el tipo cerrado en los catálogos (intento 3)
 
-- [ ] 1.1 Línea base (D6): `npm run typecheck` en verde; `npx tsc -p packages/shared/tsconfig.json --noEmit` con los dos
+- [x] 1.1 Línea base (D6): `npm run typecheck` en verde; `npx tsc -p packages/shared/tsconfig.json --noEmit` con los dos
       errores ajenos (`fasesBlueprint.test.ts:33`, `reasignacion.test.ts:60`), vueltos a medir; `wc -l` de `transitions.ts`.
-- [ ] 1.2 ROJO: `packages/shared/src/tipoEvento.test.ts` (D3) — tabla de 47 filas escrita a mano, recuentos 21/14/9/3,
+- [x] 1.2 ROJO: `packages/shared/src/tipoEvento.test.ts` (D3) — tabla de 47 filas escrita a mano, recuentos 21/14/9/3,
       barrido, un ejemplo por tipo y RQ-TS-45 (`null`, `undefined`, `''`). Rojo por módulo inexistente.
-- [ ] 1.3 `packages/shared/src/tipoEvento.ts` (D1), `export * from './tipoEvento'` al final de `packages/shared/src/index.ts`
+- [x] 1.3 `packages/shared/src/tipoEvento.ts` (D1), `export * from './tipoEvento'` al final de `packages/shared/src/index.ts`
       y `tipoEvento` obligatorio en `transitions.ts:60` (tipo en línea, comentario final corto). ROJO por valores
       (`undefined`) y `tsc` con un error por entrada sin tipo y por literal de D4: es M1 natural; anotar el número.
-- [ ] 1.4 VERDE: los 47 valores en su línea (`transitions.ts:150-151` con `satisfies Omit<Transition, 'fields'>`, 32 de servicio,
+- [x] 1.4 VERDE: los 47 valores en su línea (`transitions.ts:150-151` con `satisfies Omit<Transition, 'fields'>`, 32 de servicio,
       7 de equipo nuevo, 5 de soporte remoto) y los seis literales de D4 (`mapaBlueprint.test.ts:200`, `:294`; `sla.test.ts:9`;
       `avisoArea.test.ts:48`; `transitionExec.test.ts:294`, `:303`). Los dos `tsc` vuelven a la línea base.
-- [ ] 1.5 Guarda de D2: `wc -l` de `transitions.ts` idéntico; `git diff --numstat -- packages/shared/src/transitions.ts` = `47 47`;
+- [x] 1.5 Guarda de D2: `wc -l` de `transitions.ts` idéntico; `git diff --numstat -- packages/shared/src/transitions.ts` = `47 47`;
       anclas de `comentariosVigilados.test.ts` (`transitions.ts:348`, `:300`) intactas y su prueba en verde.
-- [ ] 1.6 Mutaciones (D6): M1 (quitar `tipoEvento` de `aprobacion`, `transitions.ts:202`, y de `:150`) y M2 (`'Logístico'`) rojas
+- [x] 1.6 Mutaciones (D6): M1 (quitar `tipoEvento` de `aprobacion`, `transitions.ts:202`, y de `:150`) y M2 (`'Logístico'`) rojas
       por `npm run typecheck` y `npx tsc -p packages/shared/tsconfig.json --noEmit` (línea base más uno; confirma la hipótesis de
       que el primero ve `transitions.ts`); M2b (`'Logístico' as never`) con `tsc` verde y `npx vitest run packages/shared/src/tipoEvento.test.ts`
       rojo; M3 (`aprobacion` a Operativo) rojo en esa misma prueba. Cada fichero restaurado y comprobado con `git diff --numstat`.
-- [ ] 1.7 Paquete del cliente (D9): `npm run build` antes (base `index-C7NdRWwC.js`, 418.292 bytes) y después; anotar la diferencia.
-- [ ] 1.8 Los cuatro códigos en una cadena: `npx vitest run`, `npm run typecheck`, `npx eslint .` (base 0 errores / 165 avisos) y,
+- [x] 1.7 Paquete del cliente (D9): `npm run build` antes (base `index-C7NdRWwC.js`, 418.292 bytes) y después; anotar la diferencia.
+- [x] 1.8 Los cuatro códigos en una cadena: `npx vitest run`, `npm run typecheck`, `npx eslint .` (base 0 errores / 165 avisos) y,
       tras el commit, `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` en 0.
-- [ ] 1.9 `apply-progress.md` del lote 1 (rojos con salida, mutaciones, medida del intento) y commit.
+- [x] 1.9 `apply-progress.md` del lote 1 (rojos con salida, mutaciones, medida del intento) y commit.
 
 ## Lote 2 — servidor: el historial expone el tipo (intento 4)
 

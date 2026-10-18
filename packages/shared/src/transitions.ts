@@ -57,7 +57,7 @@ export interface Transition {
   name: string
   from: string[]
   to: string
-  area: string
+  area: string; tipoEvento: import('./tipoEvento').TipoEvento // F1C-04: obligatorio; en esta línea para no desplazar citas (regla de mutación 4)
   fields: TransitionField[]
 }
 
@@ -147,8 +147,8 @@ export const STATUS_REMISION_CREADA = 'Remisión creada'
  * La transición que dispara el desenlace de n8n, y su inversa al anular. NO están en `TRANSITIONS`
  * porque ahí solo va lo que la interfaz ofrece como botón: éstas las aplica el servidor solo.
  */
-export const TRANSICION_REMISION_CONFIRMADA = { id: 'remision_confirmada', name: 'Remisión creada', from: [STATUS_TICKET_CREADO], to: STATUS_REMISION_CREADA, area: 'Servicio Técnico' }
-export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Remisión anulada', from: [STATUS_REMISION_CREADA], to: STATUS_TICKET_CREADO, area: 'Servicio Técnico' }
+export const TRANSICION_REMISION_CONFIRMADA = { id: 'remision_confirmada', name: 'Remisión creada', from: [STATUS_TICKET_CREADO], to: STATUS_REMISION_CREADA, area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico' } satisfies Omit<Transition, 'fields'>
+export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Remisión anulada', from: [STATUS_REMISION_CREADA], to: STATUS_TICKET_CREADO, area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico' } satisfies Omit<Transition, 'fields'>
 
 /**
  * Si en este estado todavía tiene sentido ofrecer "Crear remisión".
@@ -175,7 +175,7 @@ const TRANSICIONES_BASE: Transition[] = [
   // un ticket nacido en la app siempre lo trae —la creación exige equipo— pero uno venido de Zoho
   // llega sin él, y es el dato que ata el ticket a su equipo. Los campos que el ticket ya tenga se
   // enseñan bloqueados, no se vuelven a pedir.
-  { id: 'habilitar_servicio', name: 'Habilitar Servicio', from: [STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA], to: 'Ingresado', area: 'Comercial',
+  { id: 'habilitar_servicio', name: 'Habilitar Servicio', from: [STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA], to: 'Ingresado', area: 'Comercial', tipoEvento: 'Operativo',
     // Sin `Fecha de Cotización` ni `Fecha Orden de Compra`: en esta etapa no aportan —la cotización y
     // la compra pueden no existir todavía, igual que la orden de venta— y las dos tienen su propia
     // etapa más adelante, así que no se pierde el dato: la cotización se captura en las dos
@@ -187,67 +187,67 @@ const TRANSICIONES_BASE: Transition[] = [
     // que se cierra: el campo va BLOQUEADO porque lo rellena la OV elegida, y una OV de Books puede
     // no traer fecha. Exigiéndola, quien cayera en ese caso no podría ni avanzar ni corregirlo.
     fields: [comment(), cfOrdenVenta('Orden de Venta', 'Fecha Orden De Venta'), cfText('Serial'), cfDate('Fecha Orden De Venta', false), cfCheck('Cumple condiciones comerciales')] },
-  { id: 'ingreso_a_servicio', name: 'Ingreso a Servicio', from: ['Ingresado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico',
+  { id: 'ingreso_a_servicio', name: 'Ingreso a Servicio', from: ['Ingresado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfText('Código Servicio'), cfDate('Fecha creación ticket'), cfDate('Fecha Remisión Entrada')] },
-  { id: 'escalado_a_revision', name: 'Escalado a Revisión', from: ['Rev./Diagnostico'], to: 'Notificado', area: 'Servicio Técnico',
+  { id: 'escalado_a_revision', name: 'Escalado a Revisión', from: ['Rev./Diagnostico'], to: 'Notificado', area: 'Servicio Técnico', tipoEvento: 'Decisional',
     fields: [comment(), priority(), cfNum('Días de entrega')] },
-  { id: 'devolucion_a_correccion', name: 'Devolución a corrección', from: ['Notificado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico',
+  { id: 'devolucion_a_correccion', name: 'Devolución a corrección', from: ['Notificado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico', tipoEvento: 'Decisional',
     fields: [comment(), priority()] },
-  { id: 'llegada_repuestos', name: 'Llegada de repuestos', from: ['En Espera de Repuestos'], to: 'En Proceso', area: 'Comercial / Compras',
+  { id: 'llegada_repuestos', name: 'Llegada de repuestos', from: ['En Espera de Repuestos'], to: 'En Proceso', area: 'Comercial / Compras', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha Recepción de repuestos')] },
-  { id: 'aprobacion_y_repuestos', name: 'Aprobación y S. Repuestos', from: ['Notificación cliente'], to: 'En Espera de Repuestos', area: 'Comercial / Compras',
+  { id: 'aprobacion_y_repuestos', name: 'Aprobación y S. Repuestos', from: ['Notificación cliente'], to: 'En Espera de Repuestos', area: 'Comercial / Compras', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha Orden de Compra'), cfDate('Fecha Orden De Venta'), cfOvAdicional()] },
-  { id: 'solicitud_repuestos', name: 'Solicitud repuestos', from: ['En Proceso'], to: 'Solicitado', area: 'Servicio Técnico',
+  { id: 'solicitud_repuestos', name: 'Solicitud repuestos', from: ['En Proceso'], to: 'Solicitado', area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico',
     fields: [comment()] },
-  { id: 'aprobacion', name: 'Aprobación', from: ['Notificación cliente'], to: 'En Proceso', area: 'Comercial',
+  { id: 'aprobacion', name: 'Aprobación', from: ['Notificación cliente'], to: 'En Proceso', area: 'Comercial', tipoEvento: 'Decisional',
     fields: [comment(), cfDate('Fecha Orden de Compra Final', false), cfDate('Fecha Orden de Venta Final', false), cfOvAdicional('Fecha Orden de Venta Final', false)] },
-  { id: 'entrega_repuestos', name: 'Entrega de Repuestos', from: ['Solicitado'], to: 'En Proceso', area: 'Servicio Técnico',
+  { id: 'entrega_repuestos', name: 'Entrega de Repuestos', from: ['Solicitado'], to: 'En Proceso', area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico',
     fields: [comment()] },
   // Retirada por F1C-09 (E-103, E-140): «Marcar como pendiente» ya no existe en servicio; «Pendiente» sólo vive en soporte remoto.
   // Esta línea y la anterior hacen de relleno a propósito: borrarlas desplazaría las citas que apuntan más abajo.
-  { id: 'notif_por_garantia', name: 'Notificación por garantía', from: ['Notificación a Compras'], to: 'En Espera de Repuestos', area: 'Comercial / Compras',
+  { id: 'notif_por_garantia', name: 'Notificación por garantía', from: ['Notificación a Compras'], to: 'En Espera de Repuestos', area: 'Comercial / Compras', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha Notificación por garantía')] },
-  { id: 'notif_cliente_comercial', name: 'Notificación cliente', from: ['Notificación Comercial'], to: 'Notificación cliente', area: 'Comercial',
+  { id: 'notif_cliente_comercial', name: 'Notificación cliente', from: ['Notificación Comercial'], to: 'Notificación cliente', area: 'Comercial', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha de Cotización')] },
-  { id: 'notif_cliente_sku', name: 'Notificación cliente (SKU)', from: ['En espera de SKU inventario'], to: 'Notificación cliente', area: 'Comercial',
+  { id: 'notif_cliente_sku', name: 'Notificación cliente (SKU)', from: ['En espera de SKU inventario'], to: 'Notificación cliente', area: 'Comercial', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha de Cotización')] },
-  { id: 'rechazo_garantia', name: 'Rechazo de garantía', from: ['Notificación a Compras'], to: 'Notificación Comercial', area: 'Comercial / Compras',
+  { id: 'rechazo_garantia', name: 'Rechazo de garantía', from: ['Notificación a Compras'], to: 'Notificación Comercial', area: 'Comercial / Compras', tipoEvento: 'Decisional',
     fields: [comment()] },
-  { id: 'solicitud_sku', name: 'Solicitud SKU', from: ['Notificación Comercial'], to: 'En espera de SKU inventario', area: 'Comercial / Compras',
+  { id: 'solicitud_sku', name: 'Solicitud SKU', from: ['Notificación Comercial'], to: 'En espera de SKU inventario', area: 'Comercial / Compras', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha solicitud SKU')] },
-  { id: 'reporte_por_garantia', name: 'Reporte por garantía', from: ['Notificado'], to: 'Notificación a Compras', area: 'Servicio Técnico',
+  { id: 'reporte_por_garantia', name: 'Reporte por garantía', from: ['Notificado'], to: 'Notificación a Compras', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha Revisión Informe')] },
-  { id: 'escalado_a_comercial', name: 'Escalado a comercial', from: ['Notificado'], to: 'Notificación Comercial', area: 'Servicio Técnico',
+  { id: 'escalado_a_comercial', name: 'Escalado a comercial', from: ['Notificado'], to: 'Notificación Comercial', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfNum('Días de entrega'), cfDate('Fecha Revisión Informe')] },
-  { id: 'finalizacion_servicio', name: 'finalización de servicio', from: ['En Proceso'], to: 'Por Facturar', area: 'Servicio Técnico',
+  { id: 'finalizacion_servicio', name: 'finalización de servicio', from: ['En Proceso'], to: 'Por Facturar', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha Finalización ST'), cfCheck('Equipo y/o partes listas para entrega al cliente?'), cfCheck('Archivo de trazabilidad Actualizado?'), cfCheck('Documentacion Almacenada en el Drive?'), cfCheck('H. V Actualizada?')] },
-  { id: 'cal_sensores_proceso', name: 'Calibración de sensores ext.', from: ['En Proceso'], to: 'Servicio externo', area: 'Servicio Técnico',
+  { id: 'cal_sensores_proceso', name: 'Calibración de sensores ext.', from: ['En Proceso'], to: 'Servicio externo', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha Salida Servicio externo')] },
-  { id: 'cal_sensores_revision', name: 'Calibración de sensores ext.', from: ['Rev./Diagnostico'], to: 'Servicio externo', area: 'Servicio Técnico',
+  { id: 'cal_sensores_revision', name: 'Calibración de sensores ext.', from: ['Rev./Diagnostico'], to: 'Servicio externo', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha Salida Servicio externo')] },
-  { id: 'retorno_servicio_externo', name: 'Retorno de servicios externos', from: ['Servicio externo'], to: 'En Proceso', area: 'Servicio Técnico',
+  { id: 'retorno_servicio_externo', name: 'Retorno de servicios externos', from: ['Servicio externo'], to: 'En Proceso', area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha Entrada de servicio externo'), cfText('Conformidad')] },
   // Retirada por F1C-09 (E-106, E-140): «Servicio externo» desde Pendiente; el estado Pendiente dejó de ser de servicio.
   // «Servicio externo» queda como ida y vuelta por la calibración de sensores y el retorno de servicios externos.
   // Retirada por F1C-09 (E-106, E-140): «Servicio externo» desde Notificado, por la misma razón que la anterior.
   // Notificado conserva sus tres salidas: devolución a corrección, reporte por garantía y escalado a comercial.
-  { id: 'rechazo_comercial', name: 'Rechazo', from: ['Notificación Comercial'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico',
+  { id: 'rechazo_comercial', name: 'Rechazo', from: ['Notificación Comercial'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico', tipoEvento: 'Decisional',
     fields: [comment()] },
-  { id: 'rechazo_cliente', name: 'Rechazo', from: ['Notificación cliente'], to: 'Por Facturar', area: 'Comercial',
+  { id: 'rechazo_cliente', name: 'Rechazo', from: ['Notificación cliente'], to: 'Por Facturar', area: 'Comercial', tipoEvento: 'Decisional',
     fields: [comment()] },
-  { id: 'rechazo_revision', name: 'Rechazo', from: ['Rev./Diagnostico'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico',
+  { id: 'rechazo_revision', name: 'Rechazo', from: ['Rev./Diagnostico'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico', tipoEvento: 'Decisional',
     fields: [comment()] },
-  { id: 'facturado', name: 'Facturado', from: ['Por Facturar'], to: 'Liberación Comercial', area: 'Comercial',
+  { id: 'facturado', name: 'Facturado', from: ['Por Facturar'], to: 'Liberación Comercial', area: 'Comercial', tipoEvento: 'Administrativo',
     fields: [comment(), cfDate('Fecha De Factura')] },
-  { id: 'facturado_cierre', name: 'facturado y cierre de TK', from: ['Por Facturar'], to: 'Finalizado', area: 'Comercial',
+  { id: 'facturado_cierre', name: 'facturado y cierre de TK', from: ['Por Facturar'], to: 'Finalizado', area: 'Comercial', tipoEvento: 'Administrativo',
     fields: [comment(), cfDate('Fecha De Factura')] },
-  { id: 'diagnostico_complementario', name: 'Diagnóstico complementario', from: ['En Proceso'], to: 'Continuación del proceso', area: 'Servicio Técnico',
+  { id: 'diagnostico_complementario', name: 'Diagnóstico complementario', from: ['En Proceso'], to: 'Continuación del proceso', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment()] },
-  { id: 'liberacion_sin_factura', name: 'Liberación sin factura', from: ['Por Facturar'], to: 'Por Entregar / Sin facturar', area: 'Comercial',
+  { id: 'liberacion_sin_factura', name: 'Liberación sin factura', from: ['Por Facturar'], to: 'Por Entregar / Sin facturar', area: 'Comercial', tipoEvento: 'Decisional',
     fields: [comment(), { key: 'Motivo de liberación sin factura', label: 'Motivo', kind: 'select', required: true, target: 'customField', options: ['Fecha de corte de facturación del cliente', 'Servicio incluido en contrato con facturación periódica', 'Autorización excepcional de Dirección Comercial'] }, cfDate('Fecha prevista de facturación'), cfText('Texto de la autorización', false)] },
-  { id: 'entrega_sin_factura', name: 'Entrega al cliente sin factura', from: ['Por Entregar / Sin facturar'], to: 'Pendiente de facturar', area: 'Servicio Técnico',
+  { id: 'entrega_sin_factura', name: 'Entrega al cliente sin factura', from: ['Por Entregar / Sin facturar'], to: 'Pendiente de facturar', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
-  { id: 'entrega_al_cliente', name: 'Entrega al cliente', from: ['Por Entregar'], to: 'Finalizado', area: 'Servicio Técnico',
+  { id: 'entrega_al_cliente', name: 'Entrega al cliente', from: ['Por Entregar'], to: 'Finalizado', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
   // La fecha del aviso es el hito que ABRE el bodegaje de salida (M1.10, `R08.1.md:1700`), y hasta C9
   // no existía: la columna 51 lo aproximaba con la hora del último cambio de estado, que atribuye al
@@ -256,10 +256,10 @@ const TRANSICIONES_BASE: Transition[] = [
   // OBLIGATORIA, y ése es el precio que paga Comercial: opcional, el bodegaje de salida no valdría
   // cero —sería INCALCULABLE para siempre, porque nadie vuelve a pasar por esta etapa—, que es la
   // avería de la columna 42 documentada en `reentrancia.test.ts:118-140`.
-  { id: 'habilitado_para_entrega', name: 'Habilitado para entrega', from: ['Liberación Comercial'], to: 'Por Entregar', area: 'Comercial',
+  { id: 'habilitado_para_entrega', name: 'Habilitado para entrega', from: ['Liberación Comercial'], to: 'Por Entregar', area: 'Comercial', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha de aviso al cliente')] },
-  { id: 'notif_recotizacion', name: 'Notificación re cotización', from: ['Continuación del proceso'], to: 'Notificación Comercial', area: 'Comercial',
-    fields: [comment()] }, { id: 'anulacion', name: 'Anulación', from: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], to: 'Anulado', area: 'Comercial', fields: [comment(), ...camposAnulacion()] }, { id: 'facturar', name: 'Facturar', from: ['Pendiente de facturar'], to: 'Finalizado', area: 'Comercial', fields: [comment(), cfText(CLAVE_NUMERO_FACTURA), cfDate(CLAVE_FECHA_FACTURA)] }, // F1C-02 (RQ-TS-42): la salida única de Pendiente de facturar; en esta línea para no desplazar citas (regla de mutación 4)
+  { id: 'notif_recotizacion', name: 'Notificación re cotización', from: ['Continuación del proceso'], to: 'Notificación Comercial', area: 'Comercial', tipoEvento: 'Operativo',
+    fields: [comment()] }, { id: 'anulacion', name: 'Anulación', from: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], to: 'Anulado', area: 'Comercial', tipoEvento: 'Decisional', fields: [comment(), ...camposAnulacion()] }, { id: 'facturar', name: 'Facturar', from: ['Pendiente de facturar'], to: 'Finalizado', area: 'Comercial', tipoEvento: 'Administrativo', fields: [comment(), cfText(CLAVE_NUMERO_FACTURA), cfDate(CLAVE_FECHA_FACTURA)] }, // F1C-02 (RQ-TS-42): la salida única de Pendiente de facturar; en esta línea para no desplazar citas (regla de mutación 4)
 ]
 
 /**
@@ -348,18 +348,18 @@ export function areasSiguientes(estado: string, transiciones: readonly Transitio
  * facturación al cliente, y `liberacion` es la liberación técnica tras el control. Campos: `comment()` y `derivacion()`; `liberacion` añade el certificado de fábrica (`:360`) (RQ-EN-07). La séptima, `anulacion_equipo_nuevo` (F1C-01), es `Comercial` y añade el motivo y su detalle (`decision/f1c01-area-anulado`).
  */
 export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
-  { id: 'ingreso_equipo_nuevo', name: 'Ingreso equipo nuevo', from: ['Ingresado'], to: 'En Proceso', area: 'Servicio Técnico',
+  { id: 'ingreso_equipo_nuevo', name: 'Ingreso equipo nuevo', from: ['Ingresado'], to: 'En Proceso', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), derivacion()] },
-  { id: 'producto_no_conforme', name: 'Producto no conforme', from: ['En Proceso'], to: 'Notificado', area: 'Servicio Técnico',
+  { id: 'producto_no_conforme', name: 'Producto no conforme', from: ['En Proceso'], to: 'Notificado', area: 'Servicio Técnico', tipoEvento: 'Decisional',
     fields: [comment(), derivacion()] },
-  { id: 'analisis_y_acciones', name: 'Análisis y acciones', from: ['Notificado'], to: 'Ingresado', area: 'Servicio Técnico',
+  { id: 'analisis_y_acciones', name: 'Análisis y acciones', from: ['Notificado'], to: 'Ingresado', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), derivacion()] },
-  { id: 'verificacion', name: 'Verificación', from: ['En Proceso'], to: 'Verificación', area: 'Servicio Técnico',
+  { id: 'verificacion', name: 'Verificación', from: ['En Proceso'], to: 'Verificación', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), derivacion()] },
-  { id: 'liberacion', name: 'Liberación', from: ['En Proceso', 'Verificación'], to: 'Finalizado', area: 'Servicio Técnico',
+  { id: 'liberacion', name: 'Liberación', from: ['En Proceso', 'Verificación'], to: 'Finalizado', area: 'Servicio Técnico', tipoEvento: 'Decisional',
     fields: [comment(), { key: 'certificado_fabrica', label: 'Número del certificado de fábrica', kind: 'text', required: false, target: 'customField' }, derivacion()] },
-  { id: 'rechazo_verificacion', name: 'Rechazo de verificación', from: ['Verificación'], to: 'Notificado', area: 'Servicio Técnico',
-    fields: [comment(), derivacion()] }, { id: 'anulacion_equipo_nuevo', name: 'Anulación', from: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], to: 'Anulado', area: 'Comercial', fields: [comment(), ...camposAnulacion()] },
+  { id: 'rechazo_verificacion', name: 'Rechazo de verificación', from: ['Verificación'], to: 'Notificado', area: 'Servicio Técnico', tipoEvento: 'Decisional',
+    fields: [comment(), derivacion()] }, { id: 'anulacion_equipo_nuevo', name: 'Anulación', from: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], to: 'Anulado', area: 'Comercial', tipoEvento: 'Decisional', fields: [comment(), ...camposAnulacion()] },
 ]
 
 /**
@@ -386,12 +386,12 @@ function cfOvAdicional(campoFecha?: string, required = false): TransitionField {
  * El id de `soporte_pendiente` NO reutiliza `marcar_pendiente` (`:206`, retirada por F1C-09): buscar por id da un único catálogo (S-8).
  */
 export const TRANSITIONS_SOPORTE_REMOTO: Transition[] = [
-  { id: 'asignacion_soporte', name: 'Asignación', from: ['Solicitud Soporte'], to: 'En Proceso', area: 'Servicio Técnico',
+  { id: 'asignacion_soporte', name: 'Asignación', from: ['Solicitud Soporte'], to: 'En Proceso', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), derivacion()] },
-  { id: 'ejecutar_soporte', name: 'Ejecutar', from: ['En Proceso'], to: 'Finalizado', area: 'Servicio Técnico',
+  { id: 'ejecutar_soporte', name: 'Ejecutar', from: ['En Proceso'], to: 'Finalizado', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), derivacion()] },
-  { id: 'soporte_pendiente', name: 'Soporte pendiente', from: ['En Proceso'], to: 'Pendiente', area: 'Servicio Técnico',
+  { id: 'soporte_pendiente', name: 'Soporte pendiente', from: ['En Proceso'], to: 'Pendiente', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), derivacion()] },
-  { id: 'continuacion_soporte', name: 'Continuación soporte', from: ['Pendiente'], to: 'En Proceso', area: 'Servicio Técnico',
-    fields: [comment(), derivacion()] }, { id: 'anulacion_soporte', name: 'Anulación', from: ['En Proceso', 'Pendiente'], to: 'Anulado', area: 'Comercial', fields: [comment(), ...camposAnulacion()] },
+  { id: 'continuacion_soporte', name: 'Continuación soporte', from: ['Pendiente'], to: 'En Proceso', area: 'Servicio Técnico', tipoEvento: 'Operativo',
+    fields: [comment(), derivacion()] }, { id: 'anulacion_soporte', name: 'Anulación', from: ['En Proceso', 'Pendiente'], to: 'Anulado', area: 'Comercial', tipoEvento: 'Decisional', fields: [comment(), ...camposAnulacion()] },
 ]
