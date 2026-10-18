@@ -750,3 +750,25 @@ y no llama a Zoho.
   vale por la primera fila; lo que existe en Desk pero fuera del periodo se cuenta aparte; el periodo va por `desde` y `hasta`; una celda
   de indicador ilegible se cuenta y se lista; los listados salen completos, sin paginar. Gerencia puede corregir cualquiera durante
   **una semana desde la publicación de la lista**; lo no corregido queda aceptado.
+
+## 15. `DECISIONALES_POR_CARGO`: el interruptor de las Decisionales por cargo (F1C-05, `decision/f1c05-decisionales-por-cargo`)
+
+**Qué enciende:** con `DECISIONALES_POR_CARGO=true` en el servicio App, las transiciones Decisionales —salvo «Liberación sin
+factura», que sigue siendo sólo del Director Comercial— las ejecutan únicamente el Director o el Coordinador del área de la
+decisión: en Servicio Técnico, Director Técnico y Coordinador Técnico, y el Especialista técnico mientras ningún usuario
+activo tenga el cargo Coordinador Técnico; en Comercial, Director Comercial y Coordinador Comercial. Quien no tenga el cargo
+recibe `403` y deja de ver el botón (`packages/zoho-sync/src/config.ts:124`, `apps/desk/server/services/ticketService.ts:131`,
+`apps/desk/server/routes/permisosDecisionales.ts:16`). Apagada —ausente o con cualquier otro valor— todo funciona como antes.
+**Qué se rompe si se pone mal:** encendida sin haber asignado antes el «cargo de permiso» de cada persona en la consola de
+usuarios, sólo los administradores pueden ejecutar Decisionales (aprobar, rechazar, escalar a revisión, liberar, anular…) y el
+taller y Comercial se quedan parados en esos pasos; encendida antes de tiempo, contradice la decisión de Gerencia.
+
+**No se enciende antes del 14/12/2026**; Gerencia la ha previsto para enero. Antes de encenderla, el administrador asigna
+el cargo de permiso al Director Técnico, al Especialista técnico, al Director Comercial y a la Coordinadora Comercial; al
+nombrar un Coordinador Técnico, basta asignarle el cargo y el Especialista deja de poder, sin redesplegar. Cada cambio de la
+variable pide un redespliegue. Las líneas que hay que añadir al fichero de ejemplo de entorno, tal cual:
+
+> ```
+> # DECISIONALES_POR_CARGO: con `true`, las transiciones Decisionales sólo las ejecutan el Director o el Coordinador de su área (y el Especialista técnico con el Coordinador Técnico vacante); no encender antes del 14/12/2026 ni sin asignar antes los cargos de permiso. Ausente o con otro valor, todo como antes.
+> DECISIONALES_POR_CARGO=
+> ```

@@ -18,19 +18,19 @@ comprueba; nunca `git checkout` ni `git stash`.
 
 ## Lote 2 — servidor, ruta, cliente y DEPLOY.md (intento 4)
 
-- [ ] 2.1 ROJO: `apps/desk/server/decisionalesPorCargo.test.ts` (D6): la caracterización apagada (verde: anotar), los
+- [x] 2.1 ROJO: `apps/desk/server/decisionalesPorCargo.test.ts` (D6): la caracterización apagada (verde: anotar), los
       escenarios de RQ-PM-30 y los de la ruta de RQ-PM-31. Rojo por `403` ausente y `404` de la ruta.
-- [ ] 2.2 VERDE servidor: `services/decisionales.ts`, la guarda en `ticketService.ts:131` y los imports en `:6`/`:7` (D3);
+- [x] 2.2 VERDE servidor: `services/decisionales.ts`, la guarda en `ticketService.ts:131` y los imports en `:6`/`:7` (D3);
       `appHarness.ts:46`/`:49`.
-- [ ] 2.3 VERDE ruta: `routes/permisosDecisionales.ts` y su registro en `app.ts:60` (D3).
-- [ ] 2.4 Cliente (D4): `getContextoDecisionales` al final de `api/client.ts`; `TransitionPanel.tsx:3`, `:8`, `:55`, `:57`.
+- [x] 2.3 VERDE ruta: `routes/permisosDecisionales.ts` y su registro en `app.ts:61` (D3).
+- [x] 2.4 Cliente (D4): `getContextoDecisionales` al final de `api/client.ts`; `TransitionPanel.tsx:3`, `:8`, `:55`, `:57`.
       Sin prueba (`.tsx` fuera de la red, F0-00); lo cubre `npm run typecheck` y la tabla de la regla 13.
-- [ ] 2.5 `DEPLOY.md` §15 al final (D5).
-- [ ] 2.6 Mutaciones M2, M3, M4a, M4b, M7a, M7b, M7c y M8 contra la prueba del servidor: todas rojas y restauradas.
-- [ ] 2.7 Guarda de D9: `git diff --numstat` con inserciones = borrados en `ticketService.ts`, `app.ts`, `appHarness.ts` y
+- [x] 2.5 `DEPLOY.md` §15 al final (D5).
+- [x] 2.6 Mutaciones M2, M3, M4a, M4b, M7a, M7b, M7c y M8 contra la prueba del servidor: todas rojas y restauradas.
+- [x] 2.7 Guarda de D9: `git diff --numstat` con inserciones = borrados en `ticketService.ts`, `app.ts`, `appHarness.ts` y
       `TransitionPanel.tsx`; barrido de citas `config.ts:12[0-9]`.
-- [ ] 2.8 Paquete del cliente: `npm run build` (base `index-a-eCb2uc.js`, 419.482 bytes) y diferencia.
-- [ ] 2.9 Los cuatro códigos, `apply-progress.md` del lote 2 con la tabla de la regla 13 cerrada línea a línea, y commit; medida.
+- [x] 2.8 Paquete del cliente: `npm run build` (base `index-a-eCb2uc.js`, 419.482 bytes) y diferencia.
+- [x] 2.9 Los cuatro códigos, `apply-progress.md` del lote 2 con la tabla de la regla 13 cerrada línea a línea, y commit; medida.
 
 ## Cierre
 

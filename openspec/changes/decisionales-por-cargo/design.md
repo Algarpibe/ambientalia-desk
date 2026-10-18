@@ -57,7 +57,7 @@ Mensaje: `La transición "<nombre>" es Decisional: sólo la ejecutan los cargos 
   (`:131`), y antes de la prioridad, la OVI, la verificación y todo `422`.
 - `apps/desk/server/routes/permisosDecisionales.ts` (nuevo): `GET /api/permisos/decisionales` con `requireAuth(db)` y
   `asyncHandler`, que responde `contextoDecisionales(db, config.decisionalesPorCargo)`. Se registra al final de la línea de
-  registros de `app.ts:60`.
+  registros de `app.ts:61`.
 - `testing/appHarness.ts:46` y `:49`: `decisionalesPorCargo` en el tipo de `overrides` y `false` por defecto, en sus líneas.
 
 ## D4 · El cliente

@@ -906,3 +906,8 @@ export async function compararConExportacion(file: File, periodo: { desde?: stri
 export function getMedicionGarantias(): Promise<import('@ambientalia/shared').MedicionGarantiasConNumeros> {
   return fetch('/api/medicion-garantia-proveedor', { credentials: 'include' }).then((r) => json<import('@ambientalia/shared').MedicionGarantiasConNumeros>(r))
 }
+
+/** El contexto de las Decisionales por cargo (F1C-05, RQ-PM-31): lo decide el servidor; el panel sólo filtra con él. */
+export function getContextoDecisionales(): Promise<import('@ambientalia/shared').ContextoDecisionales> {
+  return fetch('/api/permisos/decisionales', { credentials: 'include' }).then((r) => json<import('@ambientalia/shared').ContextoDecisionales>(r))
+}
