@@ -74,7 +74,7 @@ a mano**, una por línea, agrupadas por catálogo; **nunca** calculada desde el 
 1. **Catálogo → tabla:** para cada transición de los tres catálogos y los dos pasos, `TABLA[t.id]` es `t.tipoEvento`.
 2. **Tabla → resolutor:** para cada fila, `tipoEventoDeTransicion(id)` devuelve su tipo (todo id de la tabla resuelve).
 3. **Cardinalidad:** 47 claves en la tabla y 47 ids distintos en catálogos más pasos.
-4. **Recuentos, calculados desde el catálogo:** total 21 / 14 / 9 / 3; servicio 14 / 9 / 7 / 3; equipo nuevo
+4. **Recuentos, calculados desde el catálogo:** total 16 / 14 / 13 / 4; servicio 9 / 9 / 11 / 4; equipo nuevo
    Operativo 3 y Decisional 4; soporte remoto Operativo 4 y Decisional 1; pasos Compras / Logístico 2.
 5. **Barrido en ejecución:** todo `tipoEvento` está en `TIPOS_EVENTO`; y `TIPOS_EVENTO` es exactamente la tupla, en orden.
 6. **Un ejemplo por tipo:** `habilitar_servicio`, `aprobacion`, `solicitud_sku`, `facturar`.
@@ -200,4 +200,4 @@ además unos 25 bytes en la respuesta JSON.
 
 ## Preguntas abiertas
 
-Ninguna bloquea. La validación de la tabla por Gerencia es tarea de persona (`proposal.md` §10).
+Ninguna bloquea. La validación de la tabla por Gerencia está hecha: `decision/f1c04-tabla-tipos-validada`, del 18/10.

@@ -221,9 +221,9 @@ const TRANSICIONES_BASE: Transition[] = [
     fields: [comment(), cfNum('Días de entrega'), cfDate('Fecha Revisión Informe')] },
   { id: 'finalizacion_servicio', name: 'finalización de servicio', from: ['En Proceso'], to: 'Por Facturar', area: 'Servicio Técnico', tipoEvento: 'Operativo',
     fields: [comment(), cfDate('Fecha Finalización ST'), cfCheck('Equipo y/o partes listas para entrega al cliente?'), cfCheck('Archivo de trazabilidad Actualizado?'), cfCheck('Documentacion Almacenada en el Drive?'), cfCheck('H. V Actualizada?')] },
-  { id: 'cal_sensores_proceso', name: 'Calibración de sensores ext.', from: ['En Proceso'], to: 'Servicio externo', area: 'Servicio Técnico', tipoEvento: 'Operativo',
+  { id: 'cal_sensores_proceso', name: 'Calibración de sensores ext.', from: ['En Proceso'], to: 'Servicio externo', area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha Salida Servicio externo')] },
-  { id: 'cal_sensores_revision', name: 'Calibración de sensores ext.', from: ['Rev./Diagnostico'], to: 'Servicio externo', area: 'Servicio Técnico', tipoEvento: 'Operativo',
+  { id: 'cal_sensores_revision', name: 'Calibración de sensores ext.', from: ['Rev./Diagnostico'], to: 'Servicio externo', area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha Salida Servicio externo')] },
   { id: 'retorno_servicio_externo', name: 'Retorno de servicios externos', from: ['Servicio externo'], to: 'En Proceso', area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha Entrada de servicio externo'), cfText('Conformidad')] },
@@ -245,9 +245,9 @@ const TRANSICIONES_BASE: Transition[] = [
     fields: [comment()] },
   { id: 'liberacion_sin_factura', name: 'Liberación sin factura', from: ['Por Facturar'], to: 'Por Entregar / Sin facturar', area: 'Comercial', tipoEvento: 'Decisional',
     fields: [comment(), { key: 'Motivo de liberación sin factura', label: 'Motivo', kind: 'select', required: true, target: 'customField', options: ['Fecha de corte de facturación del cliente', 'Servicio incluido en contrato con facturación periódica', 'Autorización excepcional de Dirección Comercial'] }, cfDate('Fecha prevista de facturación'), cfText('Texto de la autorización', false)] },
-  { id: 'entrega_sin_factura', name: 'Entrega al cliente sin factura', from: ['Por Entregar / Sin facturar'], to: 'Pendiente de facturar', area: 'Servicio Técnico', tipoEvento: 'Operativo',
+  { id: 'entrega_sin_factura', name: 'Entrega al cliente sin factura', from: ['Por Entregar / Sin facturar'], to: 'Pendiente de facturar', area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
-  { id: 'entrega_al_cliente', name: 'Entrega al cliente', from: ['Por Entregar'], to: 'Finalizado', area: 'Servicio Técnico', tipoEvento: 'Operativo',
+  { id: 'entrega_al_cliente', name: 'Entrega al cliente', from: ['Por Entregar'], to: 'Finalizado', area: 'Servicio Técnico', tipoEvento: 'Compras / Logístico',
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
   // La fecha del aviso es el hito que ABRE el bodegaje de salida (M1.10, `R08.1.md:1700`), y hasta C9
   // no existía: la columna 51 lo aproximaba con la hora del último cambio de estado, que atribuye al
@@ -256,7 +256,7 @@ const TRANSICIONES_BASE: Transition[] = [
   // OBLIGATORIA, y ése es el precio que paga Comercial: opcional, el bodegaje de salida no valdría
   // cero —sería INCALCULABLE para siempre, porque nadie vuelve a pasar por esta etapa—, que es la
   // avería de la columna 42 documentada en `reentrancia.test.ts:118-140`.
-  { id: 'habilitado_para_entrega', name: 'Habilitado para entrega', from: ['Liberación Comercial'], to: 'Por Entregar', area: 'Comercial', tipoEvento: 'Operativo',
+  { id: 'habilitado_para_entrega', name: 'Habilitado para entrega', from: ['Liberación Comercial'], to: 'Por Entregar', area: 'Comercial', tipoEvento: 'Administrativo',
     fields: [comment(), cfDate('Fecha de aviso al cliente')] },
   { id: 'notif_recotizacion', name: 'Notificación re cotización', from: ['Continuación del proceso'], to: 'Notificación Comercial', area: 'Comercial', tipoEvento: 'Operativo',
     fields: [comment()] }, { id: 'anulacion', name: 'Anulación', from: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], to: 'Anulado', area: 'Comercial', tipoEvento: 'Decisional', fields: [comment(), ...camposAnulacion()] }, { id: 'facturar', name: 'Facturar', from: ['Pendiente de facturar'], to: 'Finalizado', area: 'Comercial', tipoEvento: 'Administrativo', fields: [comment(), cfText(CLAVE_NUMERO_FACTURA), cfDate(CLAVE_FECHA_FACTURA)] }, // F1C-02 (RQ-TS-42): la salida única de Pendiente de facturar; en esta línea para no desplazar citas (regla de mutación 4)

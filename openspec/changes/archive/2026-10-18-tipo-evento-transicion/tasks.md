@@ -53,10 +53,9 @@ Archivar no las da por hechas.
 
 | Tarea | Dueño | Destino | Dónde queda escrita |
 |---|---|---|---|
-| Validar la tabla de 47 tipos | Gerencia | Antes de la parte de Decisionales de F1C-05 | `proposal.md` §10 y el parte del corte |
 | Actualizar M1.3 (`R08.4.md:1656`) y M1.8 (`R08.4.md:1932`) | Supervisión → Gerencia | Expediente de la revisión siguiente del maestro | `archive-report.md` |
 | Pruebas en la app: nada visible (sólo API), sin entrada en la lista acumulada | Gerencia | Al final, con el resto | `proposal.md` §4.5 |
-| Lista semanal de supuestos S-1 a S-8 | Supervisión | Publicación semanal, con plazo de una semana | `proposal.md` §9 |
+| Lista semanal de supuestos S-3 a S-7 (S-1 y S-2 decididos y S-8 retirado el 18/10, `decision/f1c04-tabla-tipos-validada`) | Supervisión | Publicación semanal, con plazo de una semana | `proposal.md` §9 |
 
 ## Review Workload Forecast
 

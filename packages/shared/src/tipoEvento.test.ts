@@ -14,10 +14,10 @@ const SERVICIO: Record<string, TipoEvento> = {
   llegada_repuestos: C, aprobacion_y_repuestos: C, solicitud_repuestos: C, aprobacion: D,
   entrega_repuestos: C, notif_por_garantia: O, notif_cliente_comercial: O, notif_cliente_sku: C,
   rechazo_garantia: D, solicitud_sku: C, reporte_por_garantia: O, escalado_a_comercial: O,
-  finalizacion_servicio: O, cal_sensores_proceso: O, cal_sensores_revision: O, retorno_servicio_externo: C,
+  finalizacion_servicio: O, cal_sensores_proceso: C, cal_sensores_revision: C, retorno_servicio_externo: C,
   rechazo_comercial: D, rechazo_cliente: D, rechazo_revision: D, facturado: A,
-  facturado_cierre: A, diagnostico_complementario: O, liberacion_sin_factura: D, entrega_sin_factura: O,
-  entrega_al_cliente: O, habilitado_para_entrega: O, notif_recotizacion: O, anulacion: D,
+  facturado_cierre: A, diagnostico_complementario: O, liberacion_sin_factura: D, entrega_sin_factura: C,
+  entrega_al_cliente: C, habilitado_para_entrega: A, notif_recotizacion: O, anulacion: D,
   facturar: A,
 }
 const EQUIPO_NUEVO: Record<string, TipoEvento> = {
@@ -46,9 +46,9 @@ describe('RQ-TS-44 · cada transición lleva un tipo de evento de la lista cerra
     expect([Object.keys(SERVICIO).length, Object.keys(EQUIPO_NUEVO).length, Object.keys(SOPORTE_REMOTO).length, Object.keys(PASOS).length]).toEqual([33, 7, 5, 2])
     expect([TRANSITIONS.length, TRANSITIONS_EQUIPO_NUEVO.length, TRANSITIONS_SOPORTE_REMOTO.length]).toEqual([33, 7, 5])
   })
-  it('recuentos 21 / 14 / 9 / 3 en total y por catálogo', () => {
-    expect(TIPOS_EVENTO.map((t) => cuenta(TODAS, t))).toEqual([21, 14, 9, 3])
-    expect(TIPOS_EVENTO.map((t) => cuenta(TRANSITIONS, t))).toEqual([14, 9, 7, 3])
+  it('recuentos 16 / 14 / 13 / 4 en total y por catálogo', () => {
+    expect(TIPOS_EVENTO.map((t) => cuenta(TODAS, t))).toEqual([16, 14, 13, 4])
+    expect(TIPOS_EVENTO.map((t) => cuenta(TRANSITIONS, t))).toEqual([9, 9, 11, 4])
     expect([cuenta(TRANSITIONS_EQUIPO_NUEVO, O), cuenta(TRANSITIONS_EQUIPO_NUEVO, D)]).toEqual([3, 4])
     expect([cuenta(TRANSITIONS_SOPORTE_REMOTO, O), cuenta(TRANSITIONS_SOPORTE_REMOTO, D)]).toEqual([4, 1])
     expect(cuenta([TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA], C)).toBe(2)

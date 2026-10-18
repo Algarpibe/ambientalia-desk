@@ -3,8 +3,8 @@
 **Qué parte de F1C-04 cubre y qué deja fuera:** cubre la fila entera, «C5 tipo de evento en cada transición»
 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:102`): las 47 transiciones (33 de servicio, 7 de equipo nuevo,
 5 de soporte remoto y los 2 pasos del servidor) llevan un solo tipo de una lista cerrada, y el historial lo expone derivado
-del catálogo. Deja fuera, como tareas de persona, la validación de la tabla por Gerencia, el texto del maestro y la lista
-semanal de supuestos. El análisis de M7.3 y los Decisionales de F1C-05 son filas propias.
+del catálogo. Deja fuera, como tareas de persona, el texto del maestro y la lista semanal de supuestos (la validación de Gerencia
+llegó el 18/10, `decision/f1c04-tabla-tipos-validada`). El análisis de M7.3 y los Decisionales de F1C-05 son filas propias.
 
 ## Qué quedó construido
 
@@ -23,8 +23,8 @@ semanal de supuestos. El análisis de M7.3 y los Decisionales de F1C-05 son fila
   (`R08.4.md:1665`, `:3026`).
 - **Sin interfaz:** ningún fichero de `apps/desk/src` cambia; en la aplicación no se ve nada.
 
-**Recuento de la tabla:** servicio Operativo 14 · Decisional 9 · Compras / Logístico 7 · Administrativo 3; las 47,
-21 · 14 · 9 · 3. Nueve conflictos en los que la lista del 01/10 se impone a la hoja del 16/02 (S-3).
+**Recuento de la tabla:** servicio Operativo 9 · Decisional 9 · Compras / Logístico 11 · Administrativo 4; las 47,
+16 · 14 · 13 · 4, con las cinco correcciones de `decision/f1c04-tabla-tipos-validada`. Nueve conflictos en los que la lista del 01/10 se impone a la hoja del 16/02 (S-3).
 
 ## Specs vivas
 
@@ -81,8 +81,7 @@ sólo encontró esas tres.
 
 | Tarea | Dueño | Destino |
 |---|---|---|
-| Validar la tabla de 47 tipos (`R08.4.md:1664`, `:1911`, `:5764`) | Gerencia | Antes de los Decisionales de F1C-05 |
-| Revisar los supuestos S-1 a S-8 (`proposal.md` §9) | Gerencia, por la lista semanal | Una semana de plazo |
+| Revisar los supuestos S-3 a S-7 (`proposal.md` §9); S-1 y S-2 decididos y S-8 retirado el 18/10 por `decision/f1c04-tabla-tipos-validada` | Gerencia, por la lista semanal | Una semana de plazo |
 | Actualizar M1.3 (`R08.4.md:1656`) y M1.8 (`R08.4.md:1932`) | Supervisión → Gerencia | Expediente de la revisión siguiente |
 | Pruebas en la app | — | No hay nada visible: el tipo sólo viaja en la respuesta del historial |
 
@@ -90,10 +89,10 @@ sólo encontró esas tres.
 
 1. **Maestro:** M1.3 (`R08.4.md:1656`) y M1.8 (`R08.4.md:1932`) dicen que las transiciones no llevan tipo de evento.
    Desde esta tanda lo llevan las 47, de cuatro tipos, y el historial lo expone. M7.3 (`:3026`) pasa de «se vuelve
-   calculable cuando se aplique» a «calculable». Pendiente de la validación de la tabla (`:1664`).
+   calculable cuando se aplique» a «calculable». Tabla validada por Gerencia el 18/10 (`:1664`; `decision/f1c04-tabla-tipos-validada`).
 2. **`decision/c5-tipo-evento`:** su consecuencia 1 dice «las 34 transiciones» (`openspec/config.yaml:1874`). Hoy son 45
    más 2 pasos; es cifra de su fecha.
 3. **Specs hermanas:** `transitions-equipo-nuevo` (`:24-26`) y `transitions-soporte-remoto` (`:38-40`) enumeran los campos
    de `Transition` sin `tipoEvento`. Que lo recoja el próximo cambio que toque cada capacidad.
-4. **Bandeja:** F1C-04 cerrada por archivo; la tabla queda pendiente de validación y los supuestos S-1 a S-8 van a la
+4. **Bandeja:** F1C-04 cerrada por archivo; tabla validada el 18/10 (S-1 y S-2 decididos, S-8 retirado el 18/10: la validación de Gerencia es `decision/f1c04-tabla-tipos-validada`); S-3 a S-7 van a la
    lista semanal.

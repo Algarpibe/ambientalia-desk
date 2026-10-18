@@ -2838,15 +2838,15 @@ pertenece a `TIPOS_EVENTO`, para cazar lo que una conversión forzada dejaría p
 **Tabla normativa** (47 filas: 33 de servicio, 7 de equipo nuevo, 5 de soporte remoto y 2 pasos del servidor). La prueba
 fijada **SHALL** reproducirla fila a fila. Fuente: **L** = lista de actos del maestro (`R08.4.md:1658-1661`, `:1903-1908`);
 **H** = hoja `DF-servicio-tecnico-160226.xlsx`, columna `TIPO_EVENTO`; **N** = Notion «Flujo equipo-nuevo» (03/02/2026);
-**S** = supuesto reversible de la propuesta (S-1 anulaciones, S-2 trabajo de soporte remoto). Si L nombra el acto sin
+**S** = supuesto de la propuesta (S-1 anulaciones, S-2 trabajo de soporte remoto), decidido por Gerencia el 18/10; **G** = corrección de Gerencia del 18/10. Si L nombra el acto sin
 ambigüedad, L gana sobre H (S-3); «L sobre H» marca los nueve conflictos.
 
 *Servicio (33):*
 
 | id | Tipo | Fuente | id | Tipo | Fuente |
 |---|---|---|---|---|---|
-| `habilitar_servicio` | Operativo | H | `cal_sensores_proceso` | Operativo | H |
-| `ingreso_a_servicio` | Operativo | H + L | `cal_sensores_revision` | Operativo | H |
+| `habilitar_servicio` | Operativo | H | `cal_sensores_proceso` | Compras / Logístico | G |
+| `ingreso_a_servicio` | Operativo | H + L | `cal_sensores_revision` | Compras / Logístico | G |
 | `escalado_a_revision` | Decisional | L sobre H | `retorno_servicio_externo` | Compras / Logístico | L sobre H |
 | `devolucion_a_correccion` | Decisional | H | `rechazo_comercial` | Decisional | H + L |
 | `llegada_repuestos` | Compras / Logístico | H + L | `rechazo_cliente` | Decisional | H + L |
@@ -2855,9 +2855,9 @@ ambigüedad, L gana sobre H (S-3); «L sobre H» marca los nueve conflictos.
 | `aprobacion` | Decisional | L sobre H | `facturado_cierre` | Administrativo | L sobre H |
 | `entrega_repuestos` | Compras / Logístico | H + L | `diagnostico_complementario` | Operativo | H + L |
 | `notif_por_garantia` | Operativo | H | `liberacion_sin_factura` | Decisional | L sobre H |
-| `notif_cliente_comercial` | Operativo | H | `entrega_sin_factura` | Operativo | H |
-| `notif_cliente_sku` | Compras / Logístico | H + L | `entrega_al_cliente` | Operativo | H |
-| `rechazo_garantia` | Decisional | L sobre H | `habilitado_para_entrega` | Operativo | H |
+| `notif_cliente_comercial` | Operativo | H | `entrega_sin_factura` | Compras / Logístico | G |
+| `notif_cliente_sku` | Compras / Logístico | H + L | `entrega_al_cliente` | Compras / Logístico | G |
+| `rechazo_garantia` | Decisional | L sobre H | `habilitado_para_entrega` | Administrativo | G |
 | `solicitud_sku` | Compras / Logístico | L sobre H | `notif_recotizacion` | Operativo | H |
 | `reporte_por_garantia` | Operativo | H | `anulacion` | Decisional | S-1 |
 | `escalado_a_comercial` | Operativo | H | `facturar` | Administrativo | L |
@@ -2875,15 +2875,15 @@ ambigüedad, L gana sobre H (S-3); «L sobre H» marca los nueve conflictos.
 | `rechazo_verificacion` | Decisional | L + N | `remision_confirmada` | Compras / Logístico | L |
 | `anulacion_equipo_nuevo` | Decisional | S-1 | `remision_retirada` | Compras / Logístico | L |
 
-**Recuentos.** Servicio: Operativo 14 · Decisional 9 · Compras / Logístico 7 · Administrativo 3 = 33. Total de las 47:
-Operativo 21 · Decisional 14 · Compras / Logístico 9 · Administrativo 3.
+**Recuentos.** Servicio: Operativo 9 · Decisional 9 · Compras / Logístico 11 · Administrativo 4 = 33. Total de las 47:
+Operativo 16 · Decisional 14 · Compras / Logístico 13 · Administrativo 4.
 
 **Nota — «Creación de informe» queda fuera.** No es una transición (ninguna lo es: `R08.4.md:1663`, `:1932`); sus tres actos
 (Elaboración, Emisión, Validación) se aplican en F1E (`openspec/config.yaml:1872`, `:1876`). Este requisito no los toca ni
 los comprueba.
 
-**Nota — la validación de Gerencia.** M1.3 pide validar la tabla antes de aplicarla (`R08.4.md:1664`); la tanda la deja
-construida e inerte (S-8 de la propuesta) y la validación es tarea de persona, no de este requisito.
+**Nota — la validación de Gerencia.** M1.3 pide validar la tabla antes de aplicarla (`R08.4.md:1664`); Gerencia la validó el 18/10 con
+cinco correcciones, las filas **G** (`decision/f1c04-tabla-tipos-validada`); el S-8 de la propuesta queda retirado.
 
 #### Scenario: toda transición de todo catálogo tiene un tipo de la lista — ROJO
 - GIVEN `TRANSITIONS`, `TRANSITIONS_EQUIPO_NUEVO`, `TRANSITIONS_SOPORTE_REMOTO` y los dos pasos del servidor
@@ -2893,7 +2893,7 @@ construida e inerte (S-8 de la propuesta) y la validación es tarea de persona, 
 #### Scenario: la tabla fijada coincide exactamente con la tabla normativa — ROJO
 - GIVEN la tabla de este requisito
 - WHEN la prueba compara cada id con el `tipoEvento` de su entrada
-- THEN las 47 filas coinciden, el recuento es 21 / 14 / 9 / 3, y cambiar el tipo de una sola transición por otra categoría
+- THEN las 47 filas coinciden, el recuento es 16 / 14 / 13 / 4, y cambiar el tipo de una sola transición por otra categoría
   la pone en rojo (mutación)
 
 #### Scenario: una transición sin tipo no compila — ROJO

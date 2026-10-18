@@ -46,7 +46,7 @@ tres actos (Elaboración, Emisión, Validación) se aplican en F1E (`openspec/co
 
 **Fuentes.** **L** = lista de actos por tipo (`R08.4.md:1658-1661`, `:1903-1908`) y su taxonomía de partida (`:1917-1930`).
 **H** = `docs/analisis-tickets/DF-servicio-tecnico-160226.xlsx`, columna `TIPO_EVENTO`, leída con la fusión del 17/02.
-**N** = página de Notion «Flujo equipo-nuevo» (03/02/2026). **S** = supuesto. Las hojas de equipo nuevo y soporte remoto
+**N** = página de Notion «Flujo equipo-nuevo» (03/02/2026). **S** = supuesto. **G** = corrección de Gerencia del 18/10 (`decision/f1c04-tabla-tipos-validada`). Las hojas de equipo nuevo y soporte remoto
 traen la columna vacía. **Precedencia (S-3):** L gana cuando nombra el acto sin ambigüedad; H decide cuando L no lo nombra
 o nombra dos actos de tipos distintos.
 
@@ -54,8 +54,8 @@ o nombra dos actos de tipos distintos.
 
 | # | id (línea) | Tipo | Fuente | # | id (línea) | Tipo | Fuente |
 |---|---|---|---|---|---|---|---|
-| 1 | `habilitar_servicio` (:178) | Operativo | H | 18 | `cal_sensores_proceso` (:224) | Operativo | H (L nombra dos) |
-| 2 | `ingreso_a_servicio` (:190) | Operativo | H + L | 19 | `cal_sensores_revision` (:226) | Operativo | H (L nombra dos) |
+| 1 | `habilitar_servicio` (:178) | Operativo | H | 18 | `cal_sensores_proceso` (:224) | Compras / Logístico | G (H Operativo; L nombra dos) |
+| 2 | `ingreso_a_servicio` (:190) | Operativo | H + L | 19 | `cal_sensores_revision` (:226) | Compras / Logístico | G (H Operativo; L nombra dos) |
 | 3 | `escalado_a_revision` (:192) | Decisional | **L sobre H** | 20 | `retorno_servicio_externo` (:228) | Compras / Logístico | **L sobre H** |
 | 4 | `devolucion_a_correccion` (:194) | Decisional | H | 21 | `rechazo_comercial` (:234) | Decisional | H + L |
 | 5 | `llegada_repuestos` (:196) | Compras / Logístico | H + L | 22 | `rechazo_cliente` (:236) | Decisional | H + L |
@@ -64,15 +64,15 @@ o nombra dos actos de tipos distintos.
 | 8 | `aprobacion` (:202) | Decisional | **L sobre H** | 25 | `facturado_cierre` (:242) | Administrativo | **L sobre H** |
 | 9 | `entrega_repuestos` (:204) | Compras / Logístico | H + L | 26 | `diagnostico_complementario` (:244) | Operativo | H + L |
 | 10 | `notif_por_garantia` (:208) | Operativo | H | 27 | `liberacion_sin_factura` (:246) | Decisional | **L sobre H** |
-| 11 | `notif_cliente_comercial` (:210) | Operativo | H | 28 | `entrega_sin_factura` (:248) | Operativo | H |
-| 12 | `notif_cliente_sku` (:212) | Compras / Logístico | H + L | 29 | `entrega_al_cliente` (:250) | Operativo | H |
-| 13 | `rechazo_garantia` (:214) | Decisional | **L sobre H** | 30 | `habilitado_para_entrega` (:259) | Operativo | H (L nombra el estado) |
+| 11 | `notif_cliente_comercial` (:210) | Operativo | H | 28 | `entrega_sin_factura` (:248) | Compras / Logístico | G (H Operativo) |
+| 12 | `notif_cliente_sku` (:212) | Compras / Logístico | H + L | 29 | `entrega_al_cliente` (:250) | Compras / Logístico | G (H Operativo) |
+| 13 | `rechazo_garantia` (:214) | Decisional | **L sobre H** | 30 | `habilitado_para_entrega` (:259) | Administrativo | G (H Operativo; L nombra el estado) |
 | 14 | `solicitud_sku` (:216) | Compras / Logístico | **L sobre H** | 31 | `notif_recotizacion` (:261) | Operativo | H |
 | 15 | `reporte_por_garantia` (:218) | Operativo | H | 32 | `anulacion` (:262) | Decisional | **S-1** |
 | 16 | `escalado_a_comercial` (:220) | Operativo | H | 33 | `facturar` (:262) | Administrativo | L |
 | 17 | `finalizacion_servicio` (:222) | Operativo | H (L nombra un estado) | | | | |
 
-Servicio: Operativo 14 · Decisional 9 · Compras / Logístico 7 · Administrativo 3 = 33. **Nueve conflictos L sobre H**
+Servicio: Operativo 9 · Decisional 9 · Compras / Logístico 11 · Administrativo 4 = 33. **Nueve conflictos L sobre H**
 (filas 3, 7, 8, 13, 14, 20, 24, 25 y 27); el de la fila 3 es el que el propio maestro nombra (`R08.4.md:1913`).
 
 **Equipo nuevo** (`transitions.ts:350-363`): `ingreso_equipo_nuevo` (:351), `analisis_y_acciones` (:355) y
@@ -83,7 +83,7 @@ Servicio: Operativo 14 · Decisional 9 · Compras / Logístico 7 · Administrati
 **Pasos del servidor** (`transitions.ts:150-151`): `remision_confirmada` y `remision_retirada` → Compras / Logístico
 (L «remisiones», `R08.4.md:1660`).
 
-**Total, 47:** Operativo 21 · Decisional 14 · Compras / Logístico 9 · Administrativo 3.
+**Total, 47:** Operativo 16 · Decisional 14 · Compras / Logístico 13 · Administrativo 4, con las cinco correcciones **G**.
 
 **Ids de traza fuera de todo catálogo → sin tipo (`null`, S-4):** la fila de creación (`packages/zoho-sync/src/db/repo.ts:428-436`),
 los marcadores de migración (`packages/shared/src/migracionTickets.ts:14`; `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql:46-48`)
@@ -178,20 +178,19 @@ Medidos con `git diff --shortstat --no-renames` contra el commit de partida más
 
 | # | Supuesto | Qué se decidió | Alternativa | Cómo se revierte |
 |---|---|---|---|---|
-| S-1 | Las tres «Anulación» | Decisional (C2 es posterior a las hojas; L no la nombra). Con F1C-05, anular quedaría en Director o Coordinador Comercial | Administrativo | Su valor en las tres entradas y en la tabla fijada |
-| S-2 | Las cuatro de trabajo de soporte remoto | Operativo (sin fuente) | Otro tipo por transición | Ídem |
+| S-1 | Las tres «Anulación» | **Decidido el 18/10 por `decision/f1c04-tabla-tipos-validada`.** Decisional (C2 es posterior a las hojas; L no la nombra). Con F1C-05, anular quedaría en Director o Coordinador Comercial | Administrativo | Su valor en las tres entradas y en la tabla fijada |
+| S-2 | Las cuatro de trabajo de soporte remoto | **Decidido el 18/10 por `decision/f1c04-tabla-tipos-validada`.** Operativo (sin fuente) | Otro tipo por transición | Ídem |
 | S-3 | Precedencia | L sobre H cuando L nombra el acto; H si no lo nombra o nombra dos (9 conflictos, 5 lecturas) | H siempre | Las 9 filas afectadas |
 | S-4 | Ids fuera de catálogo | Sin tipo (`null`); la hoja daba «Enviar» como Operativo manual | Un tipo fijo para la creación | El resolutor |
 | S-5 | Equipo nuevo | Se toma de Notion del 03/02 (área «sugerida», no verificada) | Validación directa de Gerencia | Las 7 entradas |
 | S-6 | Dónde vive el tipo | Se deriva al leer: corregir un tipo reclasifica el historial (`R08.4.md:1665`) | Columna en la traza | Columna y migración aditivas |
 | S-7 | Exposición | Dato del evento del historial, sin pintarlo | Pintarlo en `HistoriaPanel.tsx` | Un cambio de interfaz |
-| S-8 | «Antes de aplicarse» (`R08.4.md:1664`) | Se lee como «antes de que algo la consuma»: se construye inerte | Esperar la validación para construir | Ninguno: nada la consume hasta M7.3 y F1C-05 |
+| S-8 | «Antes de aplicarse» (`R08.4.md:1664`) | **Retirado el 18/10: la validación de Gerencia es `decision/f1c04-tabla-tipos-validada`**, hecha antes de fusionar la tabla. Decía: se lee como «antes de que algo la consuma», se construye inerte | — | — |
 
 ## 10. Tareas de persona (no se cuentan como tareas; regla del ciclo 1)
 
 | Tarea | Dueño | Destino | Dónde queda escrita |
 |---|---|---|---|
-| Validar la tabla de §3 (`R08.4.md:1664`, `:1911`, `:5764`). La tanda la deja construida e inerte; la validación tiene que existir antes de que F1C-05 restrinja permisos con ella | Gerencia | Antes de la parte de Decisionales de F1C-05 | Esta propuesta y el parte del corte |
 | Actualizar M1.3 (`R08.4.md:1656`) y M1.8 (`R08.4.md:1932`): se entrega como texto para Supervisión, no se aplica al `.docx` | Supervisión → Gerencia | Expediente de la revisión siguiente del maestro | `archive-report.md` de este cambio |
 
 Archivar no las da por hechas.
@@ -201,8 +200,8 @@ Archivar no las da por hechas.
 | Riesgo | Prob. | Mitigación |
 |---|---|---|
 | Gerencia corrige tipos de la tabla después de construida | Media | Un valor por línea y la tabla fijada: corregir es cambiar dos sitios; el historial se reclasifica solo (S-6) |
-| S-8 se lee como contradicción con `R08.4.md:1664` | Baja | Nada consume el tipo; se publica en la lista semanal con plazo |
-| S-1 entrega «anular» a Director o Coordinador cuando F1C-05 aplique Decisionales | Media | Se anota en la tarea de validación; F1C-05 no lo restringe sin ella |
+| S-8 se lee como contradicción con `R08.4.md:1664` | Baja | **Retirado el 18/10 con S-8:** Gerencia validó la tabla antes de fusionarla (`decision/f1c04-tabla-tipos-validada`) |
+| S-1 entrega «anular» a Director o Coordinador cuando F1C-05 aplique Decisionales | Media | **Decidido el 18/10** (`decision/f1c04-tabla-tipos-validada`): con F1C-05, anular queda para el Director o el Coordinador Comercial |
 | Grafía: el maestro escribe «Compras / Logístico» (`R08.4.md:1660`, `:1906`) y «Compras/Logístico» (`:3026`, `:5764`) | Baja | Se fija la de M1.3 y M1.8; la tupla cerrada impide la otra |
 | `npm run typecheck` no ve los literales de `packages/shared` | Media | M1 corre también `tsc -p packages/shared/tsconfig.json` con la línea base de 2 errores |
 | Un campo nuevo desplaza citas de `transitions.ts` | Baja | Mismas líneas físicas; `comentariosVigilados.test.ts` y barrido de la regla de mutación 4 en el cierre |
