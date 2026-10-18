@@ -1831,7 +1831,7 @@ decisiones_de_gerencia:
       ¿A dónde sale cada una de las cuatro esperas —a Por Facturar cobrando el diagnóstico, o a Anulado— y con qué caducidad?
     respuesta_textual: |
       «Las cuatro esperas no se tratan igual: dos esperan a terceros y dos a nosotros.
-      En espera de repuestos y Servicio externo (proveedor y laboratorio externo): tienen dos salidas y decide Comercial en cada caso, porque cobrar o no el diagnóstico depende del cliente y de quién falló. O se cobra el diagnóstico → Por Facturar, o se anula → Anulado, con motivo repuesto no disponible o sin solución técnica.
+      En espera de repuestos y Servicio externo (proveedor y laboratorio externo): tienen dos salidas y decide Comercial en cada caso, porque cobrar o no el diagnóstico depende del cliente y de quién falló. O se cobra el diagnóstico → Por Facturar, o se anula → Anulado, con motivo, por ejemplo, repuesto no disponible o sin solución técnica [«por ejemplo» añadido el 18/10/2026, decision/f1c01-motivos-esperas].
       Solicitado (nuestro almacén): no se abandona. Si no hay pieza, vuelve a En espera de repuestos para pedirla fuera.
       En espera de SKU (trámite nuestro): no se abandona ni se anula. Si se retrasa, se avisa a Comercial para que cree el SKU.
       Caducidad: nunca ejecuta sola una salida. En las externas sugiere la salida a Comercial; en las internas escala al área responsable. El plazo de cada una se fija con datos: lo que hoy tarda el 90 % de los tickets en ese estado, medido en el historial. Se conserva la vía de escape manual con traza acordada el 27/08.»
@@ -1840,7 +1840,7 @@ decisiones_de_gerencia:
       (2) LA LISTA DE LAS CUATRO NO ESTABA EN DUDA y sigue sin estarlo: `ESTADOS_SIN_SALIDA` (`packages/shared/src/estados.ts:151`) las declara, con el discriminador escrito. Esta respuesta fija el DESTINO, que era lo que faltaba.
       (3) «LA CADUCIDAD NUNCA EJECUTA SOLA UNA SALIDA» es la decisión de diseño que evita el peor fallo posible: un ticket anulado por un temporizador. La caducidad sugiere o escala; decide una persona.
       (4) EL PLAZO SE FIJA CON DATOS, NO POR CRITERIO: percentil 90 del historial por estado. Es una MEDICIÓN CONTRA PRODUCCIÓN que nadie ha hecho y que esta supervisión no puede hacer —sólo ve ficheros—. Sin ella, F1C-03 se construye con plazos inventados. Tarea de persona.
-      (5) DEPENDE DE `c2-anulado` (mismo día): «Anulado con motivo repuesto no disponible o sin solución técnica» son dos de los cinco motivos que allí se fijaron. Las dos van juntas, y F1C-01 (S40) va antes que F1C-03 (S42), que es el orden correcto.
+      (5) DEPENDE DE `c2-anulado` (mismo día): «Anulado con motivo repuesto no disponible o sin solución técnica» son dos de los cinco motivos que allí se fijaron. Las dos van juntas, y F1C-01 (S40) va antes que F1C-03 (S42), que es el orden correcto. Son ejemplos, no una lista cerrada (decision/f1c01-motivos-esperas).
     registro: "docs/sdd/ENTRADA.md → E-044 · plan §4.5, fila decision/c3-salida-esperas · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 31)"
     maestro_pasaje: "Anexo D nº 31"
     maestro_revision: "R08.4"
@@ -5026,6 +5026,25 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1C-01"
+
+  - clave: "decision/f1c01-motivos-esperas"
+    fecha: "2026-10-18"
+    pregunta: |
+      Desde las dos esperas externas (`En Espera de Repuestos` y `Servicio externo`), ¿valen los cinco motivos de anulación o
+      sólo los dos que nombra `decision/c3-salida-esperas`? ¿Se anula `rechazo_garantia`?
+    respuesta_textual: |
+      «Desde las dos esperas externas valen los cinco motivos. La frase de c3-salida-esperas nombraba los motivos habituales, no una lista cerrada: corrige su registro para que diga «por ejemplo». En esas dos esperas, «Repuesto no disponible» y «Sin solución técnica» se muestran primero en la lista, sólo como comodidad de pantalla. Las cifras caducas de «31 transiciones», a la bandeja. Que rechazo_garantia no se pueda anular, escrito como S-10.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 18/10, respuesta de Gerencia al veredicto del analista, y se recoge tal cual.
+    consecuencias: |
+      (1) No hay restricción de motivo por origen: desde cualquier estado de anulación valen los cinco, y el servidor no cambia.
+      (2) El orden es presentación: la lista la sigue imponiendo el servidor (regla invariable 13); el cliente sólo la ordena.
+      (3) S-10: `rechazo_garantia` (`Notificación a Compras` → `Notificación Comercial`) no se anula: es un rechazo de garantía,
+      no un abandono. Queda escrito en §4 de `proposal.md` y en el `archive-report.md` de `anulado-con-motivo`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c01-motivos-esperas) · decision/c3-salida-esperas (aclaración en su misma línea)"
+    maestro_pasaje: "Anexo D nº 31 (aclara decision/c3-salida-esperas)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1C-01 (orden de motivos, cierra: no)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
