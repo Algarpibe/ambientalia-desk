@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   ESTADO_ANULADO, CLAVE_MOTIVO_ANULACION, CLAVE_DETALLE_ANULACION, MOTIVOS_ANULACION, MOTIVO_QUE_EXIGE_DETALLE,
-  camposAnulacion, erroresAnulacion, esAnulado,
+  camposAnulacion, erroresAnulacion, esAnulado, motivosAnulacionOrdenados,
 } from './anulacion'
 import { ESTADOS, ESTADOS_SERVICIO, ESTADOS_EN_ESPERA, ESTADOS_SIN_SALIDA, enEsperaDe } from './estados'
 import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, type Transition } from './transitions'
@@ -182,5 +182,38 @@ describe('las tres transiciones reales (D3)', () => {
     expect(TRANSITIONS.find((x) => x.id === 'anulacion')!.from).not.toContain('Solicitado')
     expect(TRANSITIONS.find((x) => x.id === 'anulacion')!.from).not.toContain('En espera de SKU inventario')
     expect(TRANSITIONS_SOPORTE_REMOTO.find((x) => x.id === 'anulacion_soporte')!.from).not.toContain('Solicitud Soporte')
+  })
+})
+
+/**
+ * orden-motivos-anulacion (F1C-01) · el orden del desplegable del motivo según el estado de origen
+ * (`decision/f1c01-motivos-esperas`). Es presentación: la pertenencia la sigue validando `erroresAnulacion`.
+ */
+describe('motivosAnulacionOrdenados', () => {
+  const [M1, M2, M3, M4, M5] = MOTIVOS_ANULACION
+  const ESPERAS = ['En Espera de Repuestos', 'Servicio externo']
+  const OTROS = ['Notificación cliente', 'Rev./Diagnostico', 'Notificación Comercial', 'Ingresado', '']
+  it.each(ESPERAS)('en %s van primero «Repuesto no disponible» y «Sin solución técnica», y «Otro» el último', (e) => {
+    expect(motivosAnulacionOrdenados(e)).toEqual([M3, M2, M1, M4, M5])
+  })
+  it.each(OTROS)('en %j el orden es el base', (e) => {
+    expect(motivosAnulacionOrdenados(e)).toEqual([...MOTIVOS_ANULACION])
+  })
+  it.each([...ESPERAS, ...OTROS])('en %j son exactamente los cinco motivos', (e) => {
+    expect([...motivosAnulacionOrdenados(e)].sort()).toEqual([...MOTIVOS_ANULACION].sort())
+  })
+  it.each([...ESPERAS, ...OTROS])('en %j «Otro» queda el último', (e) => {
+    const r = motivosAnulacionOrdenados(e)
+    expect(r[r.length - 1]).toBe(MOTIVO_QUE_EXIGE_DETALLE)
+  })
+  it.each([ESPERAS[0], OTROS[0]])('mutar el resultado en %j no altera MOTIVOS_ANULACION', (e) => {
+    const r = motivosAnulacionOrdenados(e)
+    r.reverse()
+    r.push('x')
+    expect([...MOTIVOS_ANULACION]).toEqual([M1, M2, M3, M4, M5])
+  })
+  it('las dos esperas están en el from de la transición `anulacion`', () => {
+    const from = TRANSITIONS.find((x) => x.id === 'anulacion')!.from
+    for (const e of ESPERAS) expect(from).toContain(e)
   })
 })
