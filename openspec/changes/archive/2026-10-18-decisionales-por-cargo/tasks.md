@@ -34,7 +34,7 @@ comprueba; nunca `git checkout` ni `git stash`.
 
 ## Cierre
 
-- [ ] 3.1 verify (intento 5) y archive (intento 6) con la regla del archivo; RECONCILIACION.md regenerado en la rama.
+- [x] 3.1 verify (intento 5) y archive (intento 6) con la regla del archivo; RECONCILIACION.md regenerado en la rama.
 
 ## Tareas de persona (no cuentan; regla del ciclo 1)
 

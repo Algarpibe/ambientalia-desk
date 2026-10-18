@@ -1,3 +1,21 @@
+```yaml
+schema: gentle-ai.verify-result/v1
+evidence_revision: sha256:195eb888671d883f89b05060ca53bf42388d6c912308c91f9fc9881c94017ba1
+verdict: pass_with_warnings
+blockers: 0
+critical_findings: 0
+requirements: 4/4
+scenarios: 15/15
+test_command: npx vitest run
+test_exit_code: 0
+test_output_hash: sha256:34d8e5167f804881b9c9289beb15a284deaaba248847b259ad13ed4ea101b15c
+build_command: npm run typecheck
+build_exit_code: 0
+build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e721545e547
+```
+
+<!-- evidence_revision = sha256 del SHA completo de 0f7c19b (0f7c19b59318a1923f4f97d46e5401c061e811c7); las dos huellas, de las salidas de npx vitest run y npm run typecheck del cierre del lote 2 sobre ese commit (añadido en el intento de archivo). -->
+
 # Informe de verificación — `decisionales-por-cargo` (F1C-05, `cierra: no`)
 
 Rama `decisionales-por-cargo`, HEAD `0f7c19b`, base `7ff08c8`. Modo `strict_tdd`. Árbol de trabajo limpio al empezar y al
