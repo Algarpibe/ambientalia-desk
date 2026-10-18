@@ -5045,6 +5045,28 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "Anexo D nº 31 (aclara decision/c3-salida-esperas)"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1C-01 (orden de motivos, cierra: no)"
+
+  - clave: "decision/f1c04-tabla-tipos-validada"
+    fecha: "2026-10-18"
+    pregunta: |
+      ¿Valida Gerencia la tabla transición → tipo de evento de F1C-04 (`tipo-evento-transicion`) antes de aplicarla, como
+      pide el maestro?
+    respuesta_textual: |
+      «Valido la tabla de tipos con estas correcciones: habilitado_para_entrega → Administrativo; entrega_al_cliente y entrega_sin_factura → Compras / Logístico; cal_sensores_proceso y cal_sensores_revision → Compras / Logístico. Se quedan como están: finalizacion_servicio (Operativo: es el técnico terminando el trabajo; lo administrativo es facturar), las tres «Anulación» (Decisional, sabiendo que con F1C-05 sólo las ejecutarán el Director o el Coordinador Comercial) y las cuatro de soporte remoto (Operativo). El resto, validado tal cual. Retira el supuesto S-8: la validación es esta, hecha antes de aplicar la tabla. Con las correcciones aplicadas y los códigos en verde, fusiona.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 18/10 y se recoge tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) Cumple «La tabla de transiciones con su tipo la valida Gerencia antes de aplicarse» (`R08.4.md:1664`; y `:5764`,
+      «Gerencia valida la tabla antes de aplicarla en F1C-04»): la validación es esta, anterior a la fusión de la tabla.
+      (2) Cuentas de las 47 transiciones con las cinco correcciones: 16 Operativo · 14 Decisional · 13 Compras / Logístico ·
+      4 Administrativo = 47.
+      (3) S-1 (las tres «Anulación», Decisional) y S-2 (las cuatro de soporte remoto, Operativo) de `tipo-evento-transicion`
+      pasan de supuesto a decisión. S-8 queda retirado.
+      (4) Con F1C-05, las tres «Anulación» quedan para el Director o el Coordinador Comercial.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c04-tabla-tipos-validada)"
+    maestro_pasaje: "M1.3 C5 y M1.8 · Anexo D nº 35"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1C-04 (correcciones antes de fusionar)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
