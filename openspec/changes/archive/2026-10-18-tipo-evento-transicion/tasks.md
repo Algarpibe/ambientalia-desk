@@ -40,8 +40,8 @@ hacen sobre una copia en el directorio temporal de la sesión y se restauran cop
 
 ## Cierre
 
-- [ ] 3.1 Verify (intento 5): criterios de éxito de la propuesta contra el código, M1-M6 reproducidas por el verificador.
-- [ ] 3.2 Archive (intento 6, regla del archivo): fusión por script comparando bloque a bloque —RQ-TS-44, RQ-TS-45 y RQ-TZ-21
+- [x] 3.1 Verify (intento 5): criterios de éxito de la propuesta contra el código, M1-M6 reproducidas por el verificador.
+- [x] 3.2 Archive (intento 6, regla del archivo): fusión por script comparando bloque a bloque —RQ-TS-44, RQ-TS-45 y RQ-TZ-21
       ADDED al final; §3.5 de `transitions-st` MODIFIED en su sitio—, medida antes de aplicar (≤ 800); `registro.test.ts` de nueve a ocho
       en curso con F1C-04 en «cerradas por archivo»; `archive-report.md` (una línea de cobertura de la fila y el texto para Supervisión
       de `transitions-soporte-remoto` y `transitions-equipo-nuevo`, D8); barrido de la regla de mutación 4 de D8 con su segundo pase;

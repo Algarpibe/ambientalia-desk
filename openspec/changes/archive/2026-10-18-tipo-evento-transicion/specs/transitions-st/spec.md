@@ -122,19 +122,8 @@ NOT** lanzar ni inventar un tipo por defecto. Resuelve por catálogo sin ciclo d
 
 ### 3.5 · C5 — las transiciones no llevan tipo de evento · **CERRADO en `tipo-evento-transicion` (F1C-04)**
 
-**Esta entrada ya no describe el comportamiento actual.** Los requisitos viven ahora en esta capacidad, RQ-TS-44 (cada
-transición lleva un solo tipo de evento, de lista cerrada, con la tabla normativa de 47) y RQ-TS-45 (el resolutor por id), y
-en `trazas` RQ-TZ-21 (el historial expone el tipo, derivado al leer); lo que queda aquí es el histórico del defecto y su
-cierre, con el mismo patrón que §3.6.
-
-**Qué era** (comportamiento a corregir, destino «sin tanda asignada» antes de esta tanda; maestro `:1439-1443`, punto
-abierto nº 35). Las 34 transiciones llevaban `area` y `fields` y **no** llevaban tipo de evento (operativa / decisional /
-logística): el `interface Transition` sólo declaraba `id`, `name`, `from`, `to`, `area`, `fields` (`transitions.ts:55-62`).
-Sin ese atributo, el análisis de tiempos por tipo de evento de M7.3 no era calculable.
-
-**Cómo se cerró.** `tipo-evento-transicion` (F1C-04, `decision/c5-tipo-evento`) añadió `tipoEvento` obligatorio a
-`Transition` y se lo puso a las 47 (33 de servicio, 7 de equipo nuevo, 5 de soporte remoto y los 2 pasos del servidor), de la
-lista cerrada `TIPOS_EVENTO`; el resolutor `tipoEventoDeTransicion` lo da por id y el historial lo expone derivado al leer,
-sin columna ni migración. **Lo que sigue fuera:** el análisis de tiempos por tipo (M7.3), la restricción de Decisionales a
-Director o Coordinador (F1C-05), el informe en tres actos (F1E) y la validación de la tabla por Gerencia, que es tarea de
-persona.
+**Esta entrada ya no describe el comportamiento actual.** Los requisitos viven ahora en RQ-TS-44 (un solo tipo de evento por
+transición, de lista cerrada, con la tabla normativa de 47) y RQ-TS-45 (el resolutor por id), y en `trazas`, RQ-TZ-21 (el
+historial lo expone, derivado al leer). **Qué era:** las 34 transiciones llevaban `area` y `fields` y no tipo de evento
+(maestro `:1439-1443`, punto abierto nº 35), y sin él M7.3 no era calculable. **Lo que sigue fuera:** el análisis de M7.3,
+los Decisionales de F1C-05, el informe en tres actos (F1E) y la validación de la tabla por Gerencia, tarea de persona.

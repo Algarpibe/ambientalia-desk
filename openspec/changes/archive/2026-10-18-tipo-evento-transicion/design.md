@@ -182,7 +182,7 @@ eso sólo afecta a las frases que enumeran la forma de `Transition`:
 
 | Cita | Afirmación | Caso y tratamiento |
 |---|---|---|
-| `openspec/specs/transitions-st/spec.md:1137-1142` | «sólo declara `id`, `name`, `from`, `to`, `area`, `fields`» | **C**: la sustituye el §3.5 MODIFIED de la delta al archivar |
+| `openspec/specs/transitions-st/spec.md:1137-1142` en `f64ea71` | «sólo declara `id`, `name`, `from`, `to`, `area`, `fields`» | **C**: la sustituye el §3.5 MODIFIED de la delta al archivar |
 | `openspec/specs/transitions-soporte-remoto/spec.md:38-40`, `openspec/specs/transitions-equipo-nuevo/spec.md:24-26` | «la misma forma de `Transition`» con la lista de campos | **A** en lo normativo (siguen tipados `Transition` y `:55-62` sigue siendo el interface); la lista queda incompleta. Estas dos capacidades no están en la cabecera: no se editan aquí; se anotan en el `archive-report.md` y en el texto para Supervisión (la rama no toca `docs/sdd/ENTRADA.md`) |
 | `docs/sdd/F0-00_Baseline_as-built.md:71`, `openspec/specs/transitions-st/spec.md:118`, `docs/sdd/F0-01_Correcciones_para_el_maestro.md:505` | forma de su fecha | **B**: registros fechados, no se tocan |
 | `packages/shared/src/estados.ts:83`, `packages/shared/src/mapaBlueprint.ts:11-12`, `packages/shared/src/invariantesGrafo.test.ts:111` | `:150-151` son los dos pasos sin `fields` | **A**: sigue siendo cierto, y `satisfies` lo impone |

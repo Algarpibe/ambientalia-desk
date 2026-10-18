@@ -110,7 +110,7 @@ Ninguna línea se movió (§4), así que el riesgo es sólo de CONTENIDO. Barrid
 
 | Cita | Afirmación | Tratamiento comprobado |
 |---|---|---|
-| `openspec/specs/transitions-st/spec.md:1137-1142` | «sólo declara `id`, `name`, `from`, `to`, `area`, `fields`» | Caso C; lo sustituye el §3.5 MODIFIED (`TS:123-140`), que ya está en la delta. Pendiente de fusionar al archivar (S2) |
+| `openspec/specs/transitions-st/spec.md:1137-1142` en `f64ea71` | «sólo declara `id`, `name`, `from`, `to`, `area`, `fields`» | Caso C; lo sustituye el §3.5 MODIFIED (`TS:123-140`), que ya está en la delta. Pendiente de fusionar al archivar (S2) |
 | `openspec/specs/transitions-equipo-nuevo/spec.md:24-26`, `openspec/specs/transitions-soporte-remoto/spec.md:38-40` | «la misma forma de `Transition`» con la lista de campos | Caso A en lo normativo; la lista **queda incompleta** (no nombra `tipoEvento`). Las dos capacidades no están en la cabecera de capacidad y la rama no las toca, como dice D8 (W2) |
 | `docs/sdd/F0-00_Baseline_as-built.md:71`, `openspec/specs/transitions-st/spec.md:118`, `docs/sdd/F0-01_Correcciones_para_el_maestro.md:505` | forma de su fecha | Caso B; no se tocan, y la rama no los toca |
 | `packages/shared/src/estados.ts:83`, `packages/shared/src/mapaBlueprint.ts:11-12`, `packages/shared/src/invariantesGrafo.test.ts:111` | `transitions.ts:150-151` son los dos pasos sin `fields` | Caso A; sigue cierto: las dos constantes llevan `satisfies Omit<Transition, 'fields'>` (`packages/shared/src/transitions.ts:150-151`) |
@@ -155,7 +155,7 @@ El detector da 0 bloqueos (§1). Las abreviadas no las barre el detector: *hipó
 
 **SUGGESTION**
 - S1 · `tasks.md` 1.4 dice «32 de servicio, 7 de equipo nuevo, 5 de soporte remoto» más los 2 pasos: suma 46. Son 33 de servicio (la línea `packages/shared/src/transitions.ts:262` lleva dos); el código y la delta dicen 33. Corregir en el archive o dejarlo anotado.
-- S2 · El encabezado de §3.5 en la delta (`TS:123`) dice «CERRADO en `tipo-evento-transicion` (F1C-04)» y el vivo (`openspec/specs/transitions-st/spec.md:1137`) dice «destino: sin tanda asignada». La fusión por script tiene que casar por el prefijo «### 3.5 · C5», no por el título entero. Es el mismo patrón de §3.6 (`openspec/specs/transitions-st/spec.md:1145`).
+- S2 · El encabezado de §3.5 en la delta (`TS:123`) dice «CERRADO en `tipo-evento-transicion` (F1C-04)» y el vivo (`openspec/specs/transitions-st/spec.md:1137` en `f64ea71`) dice «destino: sin tanda asignada». La fusión por script tiene que casar por el prefijo «### 3.5 · C5», no por el título entero. Es el mismo patrón de §3.6 (`openspec/specs/transitions-st/spec.md:1145`).
 - S3 · «Abrir el historial no escribe» no tiene una prueba con una fila de transición con tipo; lo fijan las dos existentes (§2) y el cambio no añade ninguna sentencia. Suficiente; anotado.
 - S4 · Cobertura de los ficheros cambiados no medida.
 - S5 · Los títulos de escenario de ambas deltas llevan «— ROJO» (`TS:69`, `TZ:26`): quitarlo al fusionar o conservarlo por convención, como en F1C-01 y F1C-02.
