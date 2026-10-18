@@ -13,8 +13,7 @@ describe('TRANSITIONS_SOPORTE_REMOTO — catálogo (RQ-SR-01)', () => {
       ['asignacion_soporte', ['Solicitud Soporte'], 'En Proceso'],
       ['ejecutar_soporte', ['En Proceso'], 'Finalizado'],
       ['soporte_pendiente', ['En Proceso'], 'Pendiente'],
-      ['continuacion_soporte', ['Pendiente'], 'En Proceso'],
-      ['anulacion_soporte', ['En Proceso', 'Pendiente'], 'Anulado'],
+      ['continuacion_soporte', ['Pendiente'], 'En Proceso'], ['anulacion_soporte', ['En Proceso', 'Pendiente'], 'Anulado'],
     ])
   })
 
@@ -48,8 +47,7 @@ describe('TRANSITIONS_SOPORTE_REMOTO — catálogo (RQ-SR-01)', () => {
     expect(entradas('Pendiente')).toEqual(['soporte_pendiente'])
     expect(salidas('Finalizado')).toEqual([])
     expect(salidas('Pendiente')).toEqual(['continuacion_soporte', 'anulacion_soporte'])
-    expect(salidas('En Proceso')).toEqual(['ejecutar_soporte', 'soporte_pendiente', 'anulacion_soporte'])
-    expect(entradas('Anulado')).toEqual(['anulacion_soporte'])
+    expect(salidas('En Proceso')).toEqual(['ejecutar_soporte', 'soporte_pendiente', 'anulacion_soporte']); expect(entradas('Anulado')).toEqual(['anulacion_soporte'])
   })
 })
 

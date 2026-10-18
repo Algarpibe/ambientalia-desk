@@ -204,8 +204,7 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
       ['analisis_y_acciones', ['Notificado'], 'Ingresado'],
       ['verificacion', ['En Proceso'], 'Verificación'],
       ['liberacion', ['En Proceso', 'Verificación'], 'Finalizado'],
-      ['rechazo_verificacion', ['Verificación'], 'Notificado'],
-      ['anulacion_equipo_nuevo', ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], 'Anulado'],
+      ['rechazo_verificacion', ['Verificación'], 'Notificado'], ['anulacion_equipo_nuevo', ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], 'Anulado'],
     ])
     const salidasDeVerificacion = TRANSITIONS_EQUIPO_NUEVO.filter((t) => t.from.includes('Verificación')).map((t) => t.id)
     expect(salidasDeVerificacion).toEqual(['liberacion', 'rechazo_verificacion', 'anulacion_equipo_nuevo'])
@@ -243,8 +242,7 @@ describe('invariantes del catálogo soporte-remoto (F1B-06)', () => {
       ['asignacion_soporte', ['Solicitud Soporte'], 'En Proceso'],
       ['ejecutar_soporte', ['En Proceso'], 'Finalizado'],
       ['soporte_pendiente', ['En Proceso'], 'Pendiente'],
-      ['continuacion_soporte', ['Pendiente'], 'En Proceso'],
-      ['anulacion_soporte', ['En Proceso', 'Pendiente'], 'Anulado'],
+      ['continuacion_soporte', ['Pendiente'], 'En Proceso'], ['anulacion_soporte', ['En Proceso', 'Pendiente'], 'Anulado'],
     ])
   })
 

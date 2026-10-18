@@ -182,9 +182,7 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   diagnostico_complementario: { desde: ['En Proceso'], a: 'Continuación del proceso' },
   entrega_al_cliente: { desde: ['Por Entregar'], a: 'Finalizado' },
   habilitado_para_entrega: { desde: ['Liberación Comercial'], a: 'Por Entregar' },
-  notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' },
-  // F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
-  anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' },
+  notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' }, anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' }, // F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
 }
 
 describe('las 32 transiciones, ejecutadas contra el servidor', () => {
@@ -307,8 +305,7 @@ const CASOS_EQUIPO_NUEVO: Record<string, { desde: string[]; a: string }> = {
   analisis_y_acciones: { desde: ['Notificado'], a: 'Ingresado' },
   verificacion: { desde: ['En Proceso'], a: 'Verificación' },
   liberacion: { desde: ['En Proceso', 'Verificación'], a: 'Finalizado' },
-  rechazo_verificacion: { desde: ['Verificación'], a: 'Notificado' },
-  anulacion_equipo_nuevo: { desde: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], a: 'Anulado' },
+  rechazo_verificacion: { desde: ['Verificación'], a: 'Notificado' }, anulacion_equipo_nuevo: { desde: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], a: 'Anulado' },
 }
 
 describe('las siete transiciones de Equipo nuevo, ejecutadas contra el servidor (F1B-06)', () => {
@@ -378,8 +375,7 @@ const CASOS_SOPORTE_REMOTO: Record<string, { desde: string[]; a: string }> = {
   asignacion_soporte: { desde: ['Solicitud Soporte'], a: 'En Proceso' },
   ejecutar_soporte: { desde: ['En Proceso'], a: 'Finalizado' },
   soporte_pendiente: { desde: ['En Proceso'], a: 'Pendiente' },
-  continuacion_soporte: { desde: ['Pendiente'], a: 'En Proceso' },
-  anulacion_soporte: { desde: ['En Proceso', 'Pendiente'], a: 'Anulado' },
+  continuacion_soporte: { desde: ['Pendiente'], a: 'En Proceso' }, anulacion_soporte: { desde: ['En Proceso', 'Pendiente'], a: 'Anulado' },
 }
 
 describe('las cinco transiciones de Soporte remoto, ejecutadas contra el servidor (F1B-06, cambio 2)', () => {
