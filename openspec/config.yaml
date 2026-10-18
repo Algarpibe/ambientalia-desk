@@ -5067,6 +5067,34 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "M1.3 C5 y M1.8 · Anexo D nº 35"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1C-04 (correcciones antes de fusionar)"
+
+  - clave: "decision/f1c05-decisionales-por-cargo"
+    fecha: "2026-10-18"
+    pregunta: |
+      ¿Quién ejecuta las transiciones Decisionales mientras el Coordinador Técnico esté vacante, qué área decide en las de
+      área mixta y cuándo se construye la parte de Decisionales de F1C-05?
+    respuesta_textual: |
+      «Mientras el Coordinador Técnico esté vacante, las Decisionales técnicas las pueden ejecutar el Director Técnico y el Especialista técnico (Johny Luna). En Comercial, el Director y la Coordinadora Comercial. Transiciones de área mixta: decide el área del estado de origen; rechazo_garantia y rechazo_comercial son de Comercial y rechazo_revision de Servicio Técnico; confírmalo contra el estado de origen de cada una. La parte de Decisionales de F1C-05 estaba planificada para después del corte: constrúyela ahora, pero detrás de un interruptor que nazca apagado. Se enciende en enero, no antes del 14/12.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 18/10 y se recoge tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) Aplica la regla de `decision/c10-permisos-cargo` («las transiciones que F1C-04 clasifique como Decisionales sólo
+      las ejecuta el Director o el Coordinador del área correspondiente») sobre la clasificación validada en
+      `decision/f1c04-tabla-tipos-validada`: 14 Decisionales. Las de la lista corta con un cargo más estricto
+      (`liberacion_sin_factura` → Director Comercial) conservan el suyo.
+      (2) Confirmación contra el estado de origen (`packages/shared/src/transitions.ts:214`, `:234`, `:238`; tabla de áreas
+      del M1.9, `R08.4.md:4530-4537`): `rechazo_revision` sale de `Rev./Diagnostico`, que el maestro asigna a Servicio
+      Técnico (`R08.4.md:4534`) → Servicio Técnico ✓; `rechazo_comercial` sale de `Notificación Comercial`, que asigna a
+      Comercial (`R08.4.md:4531`) → Comercial ✓; `rechazo_garantia` sale de `Notificación a Compras`, que el maestro asigna
+      a Compras (`R08.4.md:4537` y `:4625-4628`), y Compras no tiene Director ni Coordinador
+      (`packages/shared/src/cargos.ts:12-15`): se aplica la asignación expresa de Gerencia (Comercial) como EXCEPCIÓN a la
+      regla del origen.
+      (3) El interruptor nace cerrado (`=== 'true'`) y no se enciende antes del 14/12; apagado, los permisos son
+      exactamente los de hoy.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c05-decisionales-por-cargo)"
+    maestro_pasaje: "M1.9 · Anexo D nº 39"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1C-05 (Decisionales por cargo, cierra: no; el propietario del registro sigue aplazado)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
