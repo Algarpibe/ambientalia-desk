@@ -209,7 +209,7 @@ describe('guardas de autenticación', () => {
  * F1B-06/F1A-03 — LA MATRIZ 6×3 DEL CATÁLOGO `TRANSITIONS_EQUIPO_NUEVO`, CONTRA EL SERVIDOR.
  *
  * Escrita A MANO y no derivada: con seis transiciones el total esperado (12 prohibidos, 6
- * permitidos) es más claro escrito que calculado, y por s2 las seis son `Servicio Técnico`, así que
+ * permitidos) es más claro escrito que calculado, y por E-226 las seis son `Servicio Técnico`, así que
  * el resultado es uniforme.
  *
  * ⚠️ MISMA CORRECCIÓN (c) que `transicionesEjecucion.test.ts`: cada ticket se siembra con

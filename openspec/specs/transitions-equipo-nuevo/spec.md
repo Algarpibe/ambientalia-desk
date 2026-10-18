@@ -106,19 +106,19 @@ añade `certificado_fabrica`.)
 - AND `liberacion` declara exactamente `comment`, `derivado_a` y `certificado_fabrica`, este último con `required` falso
 - AND añadir un campo a cualquier otra entrada, o marcar `certificado_fabrica` como obligatorio, pone la prueba en rojo (sustituye a «exactamente comentario y derivación» de `invariantesGrafo.test.ts:213-216`)
 
-## 2 · Área de las cinco — supuesto s2
+## 2 · Área de las seis — decidida por Gerencia (E-226)
 
-### Requirement: RQ-EN-02 · Área por equivalencia con Servicio Técnico
+### Requirement: RQ-EN-02 · Área de las seis: Servicio Técnico, por decisión de Gerencia
 
-Ninguna fuente accesible da el área de las seis transiciones (ni el maestro, ni Zoho). El sistema
-**SHALL** declarar las seis como área `Servicio Técnico`, por equivalencia con el grafo de servicio —
-supuesto reversible s2 de la propuesta, aplicado por la regla de ejecución.
+Las seis transiciones **SHALL** ser de área `Servicio Técnico` (`decision/e226-espera-y-areas-equipo-nuevo`, 17/10): la
+regla es Servicio Técnico salvo las de entrega o facturación al cliente, que son de Comercial, y ninguna de las seis lo es.
+El docblock de `TRANSITIONS_EQUIPO_NUEVO` (`packages/shared/src/transitions.ts:347-348`) **SHALL** citar esa decisión.
 
-*Hipótesis*, no cerrada por ninguna fuente: `Liberación` podría ser de área Comercial, por analogía con
-`liberacion_sin_factura` (`transitions.ts:246`). El catálogo **SHALL** declararla Servicio Técnico
-hasta que una fuente la corrija.
+`Liberación` **SHALL** ser de Servicio Técnico (supuesto S-2, lista semanal): es la liberación técnica tras el control, con
+el certificado de fábrica (`transitions.ts:359-360`; M1.4, `R08.4.md:1698`), no una entrega ni una facturación. La analogía
+con `liberacion_sin_factura` (`transitions.ts:246`), de Comercial porque depende de la factura, **SHALL NOT** aplicarse.
 
-(Previously: «las cinco transiciones»; ahora «las seis», con `rechazo_verificacion` incluida por s2.)
+(Previously: área por equivalencia, supuesto s2, con la hipótesis de que `Liberación` fuera de Comercial. Ver `RQ-EN-13`.)
 
 #### Scenario: Las seis transiciones exigen el área Servicio Técnico
 - GIVEN un usuario cuya única área es `Comercial`
@@ -253,11 +253,11 @@ la guarda 2.
 
 ## 7 · Verificación — clasificación, campos y tablero
 
-### Requirement: RQ-EN-07 · `Verificación` clasifica `sin_clasificar`, con dos campos, y tiene columna propia en el tablero
+### Requirement: RQ-EN-07 · `Verificación` no es espera, con dos campos, y tiene columna propia en el tablero
 
-`Verificación` **SHALL** registrarse en `CLASIFICACION_EN_ESPERA` (`estados.ts:59-106`) con clase
-`sin_clasificar` — valor válido del tipo (`estados.ts:40`) — porque ninguna fuente da su clase real;
-es supuesto reversible s7 de la propuesta.
+`Verificación` **SHALL** registrarse en `CLASIFICACION_EN_ESPERA` (`estados.ts:59-106`) con clase `ninguna`
+(`decision/e226-espera-y-areas-equipo-nuevo`: «Verificación: no es espera»): es trabajo propio de Servicio Técnico y el
+tablero la enseña en «Abiertos». Hasta E-226 era `sin_clasificar` (supuesto s7).
 
 - La transición `Verificación` **SHALL** declarar sólo dos campos: comentario y la casilla de
   derivación; ninguna fuente da otros.
@@ -270,6 +270,11 @@ es supuesto reversible s7 de la propuesta.
 - GIVEN un ticket cuyo estado es `Verificación`
 - WHEN se calcula su columna de tablero (`columnForStatus`)
 - THEN devuelve `'verificacion'`, no `'otros'`
+
+#### Scenario: Verificación no es espera
+- GIVEN el registro `CLASIFICACION_EN_ESPERA`
+- WHEN se consulta `Verificación`
+- THEN devuelve `ninguna`, y no está en `ESTADOS_EN_ESPERA`
 
 ## 8 · Compuesto y gas patrón vigente — escalón B
 
@@ -550,3 +555,14 @@ esquema y del cambio **MUST NOT** modificar, marcar ni rellenar ninguna fila exi
 - Pantalla de mantenimiento de gases patrón y edición del compuesto desde la ficha de la hoja de vida → F1B-02 y F1D-01.
 - Certificado propio de Ambientalia y sus tres firmas → módulo de informes (`config.yaml:2914`).
 - Marcar o corregir liberaciones anteriores (`config.yaml:2913`).
+
+### Requirement: RQ-EN-13 · El área de las seis la vigila una prueba (E-226)
+
+La aserción de área de `packages/shared/src/invariantesGrafo.test.ts:215` **SHALL** exigir `Servicio Técnico` en las seis
+transiciones de `TRANSITIONS_EQUIPO_NUEVO` y nombrar E-226 en su mensaje. Ningún área cambia con E-226, así que ningún
+permiso cambia: la matriz de `apps/desk/server/permisos.test.ts` sigue igual.
+
+#### Scenario: Pasar `liberacion` a Comercial se pone rojo (mutación)
+- GIVEN `liberacion` con `area: 'Comercial'`
+- WHEN corre `invariantesGrafo.test.ts`
+- THEN falla la aserción de área de las seis

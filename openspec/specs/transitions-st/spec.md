@@ -618,7 +618,7 @@ a **cinco** (`En Espera de Repuestos`, `Servicio externo`, `Notificación client
 `Por Entregar / Sin facturar`) e `interna` se queda en **seis**. El array que fije la prueba **SHALL**
 comprobarse contra la salida real de `ESTADOS.filter(...)` (`estados.ts:120`), nunca al revés: mover
 las dos entradas cambia su POSICIÓN dentro de `ESTADOS_EN_ESPERA`, y un `toEqual` escrito de memoria
-fijaría el orden equivocado.
+fijaría el orden equivocado. Desde E-226 son **doce**, con `Pendiente` la última (`RQ-TS-39`).
 
 Es fundamento nuevo, no la modificación de un requisito existente: `transitions-st` no declaraba antes
 un requisito formal sobre la composición de `CLASIFICACION_EN_ESPERA`; sólo la mencionaba en prosa
@@ -633,7 +633,7 @@ un requisito formal sobre la composición de `CLASIFICACION_EN_ESPERA`; sólo la
 - GIVEN el registro reclasificado
 - WHEN se calcula `ESTADOS_EN_ESPERA` (`ESTADOS.filter(...)`, `estados.ts:120`)
 - THEN el resultado tiene **once** entradas, en el orden que produce el filtro sobre el registro
-  agrupado por clase — no en el orden que tenía la lista de nueve con las dos añadidas al final
+  agrupado por clase — no en el orden que tenía la lista de nueve con las dos añadidas al final (doce desde E-226, `RQ-TS-39`)
 
 ---
 
@@ -1056,7 +1056,7 @@ no ha entrado, no un suceso del mundo que esperar.
 de «nueve» por «once».)*
 
 #### Scenario: la derivación mal hecha da ocho, no cuatro, y las cuatro que sobran comparten razón
-- GIVEN los doce estados con una sola transición de salida y los once estados `en_espera` (tras
+- GIVEN los doce estados con una sola transición de salida y los once estados `en_espera` de servicio (doce con `Pendiente` desde E-226, que no es de servicio; tras
   reclasificar `Por Entregar` y `Por Entregar / Sin facturar` a `externa`)
 - WHEN se cruzan las dos listas
 - THEN el resultado tiene **ocho** elementos, y los **cuatro** que no son de `ESTADOS_SIN_SALIDA` son
@@ -1185,10 +1185,10 @@ criterios distintos usan la palabra «espera» y **MUST** nombrarse distinto:
 | Nombre | Criterio | Fuente | Alcance |
 |---|---|---|---|
 | `sin_salida` | Su única salida depende de algo que la aplicación no controla | M1.3.4 (`:1162`) | **4 estados** |
-| `en_espera` | El ticket está parado esperando el acto de un tercero y el área dueña no puede hacer nada por su cuenta | Vista del tablero | **11 estados** |
+| `en_espera` | El ticket está parado esperando el acto de un tercero y el área dueña no puede hacer nada por su cuenta | Vista del tablero | **12 estados** |
 | `bodegaje` | El tiempo que un equipo pasa en Ambientalia esperando una respuesta del cliente | M1.10 `[DEFINIDO — R08]` (`:1686`) | **3 periodos entre fechas**, no estados |
 
-> **La vista muestra las once. El reloj del SLA NO lee esta clasificación** (`estados.ts:28`).
+> **La vista muestra las doce. El reloj del SLA NO lee esta clasificación** (`estados.ts:28`).
 
 El reloj para en los tres bodegajes, que son periodos entre fechas. Un estado **MAY** estar
 `en_espera` sin parar ningún reloj, y un bodegaje **MAY** transcurrir sin pasar por ningún estado de
@@ -1196,7 +1196,7 @@ la lista.
 
 **Y desde F1A-02 esa regla tiene un caso que la demuestra, no sólo una advertencia.** El único
 estado con SLA declarado es `Notificado`, y está clasificado `ninguna` (`estados.ts:91`): no es
-ninguno de los once de la vista ni de los cuatro sin salida. La primera regla por tiempo que el
+ninguno de los doce de la vista ni de los cuatro sin salida. La primera regla por tiempo que el
 código tiene lee una lista **distinta** de la que enseña el tablero, exactamente como §3.7 anticipaba
 cuando todavía era hipótesis. Probado en `packages/shared/src/sla.test.ts` — si alguien «arreglara»
 el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, se pone rojo. Ver `RQ-TS-15`.
@@ -1206,9 +1206,9 @@ el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, se pone rojo. Ver `RQ-TS-15`.
 `ESTADOS_EN_ESPERA` (escenario S11 de la propuesta, RQ-TS-15): dos de los tres estados con alarma están en la
 clasificación de espera, pero la alarma y la vista siguen siendo criterios independientes.
 
-`Pendiente` **SHALL** quedar como `sin_clasificar`, que es valor válido y no un hueco: obligar a
-clasificar forzaría a inventar la respuesta (`estados.ts:53-54`, `:101-105`). Lo decide Servicio
-Técnico.
+`Pendiente` **SHALL** quedar como `externa` desde E-226 (`RQ-TS-39`); hasta entonces era `sin_clasificar`, que
+sigue siendo valor válido y no un hueco (`estados.ts:53-54`). Lo decidió Gerencia el 17/10
+(`decision/e226-espera-y-areas-equipo-nuevo`).
 
 *(Previously, hasta el archivado de `por-entregar-es-espera` el 2026-09-12: la tabla
 declaraba `en_espera` con **9 estados**, y el texto decía «la vista muestra las nueve».)*
@@ -1639,10 +1639,10 @@ ejecutable desde `Pendiente` en el flujo de servicio.
 
 `Pendiente` **SHALL** figurar en `ESTADOS_SOLO_SOPORTE_REMOTO` y **SHALL NOT** figurar en
 `ESTADOS_SERVICIO`, que **SHALL** tener exactamente **20** estados (supuesto S-1; antes 21). `ESTADOS`
-**SHALL** seguir en **23** y `Pendiente` **SHALL** seguir clasificado `sin_clasificar` en
-`CLASIFICACION_EN_ESPERA`, porque `soporte_pendiente` y `continuacion_soporte` lo usan.
+**SHALL** seguir en **23**, porque `soporte_pendiente` y `continuacion_soporte` usan `Pendiente`; su clase
+en `CLASIFICACION_EN_ESPERA` la fija `RQ-TS-39` (`externa` desde E-226; era `sin_clasificar`).
 `FASE_POR_ESTADO` **SHALL NOT** contener `Pendiente` y el reparto de fases **SHALL** pasar de 4·12·5 a
-4·11·5. `ESTADOS_SIN_SALIDA`, `ESTADOS_EN_ESPERA` y la columna de tablero `pendiente` **SHALL** quedar sin
+4·11·5. `ESTADOS_SIN_SALIDA` y la columna de tablero `pendiente` **SHALL** quedar sin
 cambio. Ninguna lista del reloj del SLA **SHALL** contener `Pendiente` (supuesto S-4: si el diseño encuentra
 una, se quita en esta tanda).
 
@@ -1682,7 +1682,7 @@ valores **SHALL** coincidir con `TRANSITIONS.length`, con las aristas del diagra
 #### Scenario: la mención a `Pendiente` de `esperas` queda coherente
 - GIVEN la entrada `esperas` de `cifras_ancladas`
 - WHEN se lee su recuento de estados de servicio
-- THEN no cuenta `Pendiente` entre los 20 y sigue diciendo 11 estados en espera
+- THEN no cuenta `Pendiente` entre los 20; el recuento de espera que lee el barrido es el del código (12 desde E-226, `RQ-TS-39`)
 
 ### RQ-TS-27 · Los guardianes numéricos llevan las cifras nuevas
 
@@ -2571,3 +2571,43 @@ de área Comercial.
 - GIVEN un ticket con `orden_venta` vacía y una asociación vigente de `OVI-2026-001`
 - WHEN un usuario sin cargo envía esa orden
 - THEN no recibe el `403` de cargo
+
+### RQ-TS-39 · E-226: `Pendiente` es espera externa; `Verificación` y `Solicitud Soporte` no son espera
+
+`CLASIFICACION_EN_ESPERA` (`packages/shared/src/estados.ts:59-106`) **SHALL** clasificar `Pendiente` como `'externa'`,
+`Verificación` como `'ninguna'` y `Solicitud Soporte` como `'ninguna'` (`decision/e226-espera-y-areas-equipo-nuevo`,
+17/10: «es espera lo que depende de alguien de fuera»; `Solicitud Soporte`, supuesto del analista). Ningún estado
+**SHALL** quedar `sin_clasificar`, que **SHALL** seguir siendo valor válido del tipo `EnEspera` (`estados.ts:40`).
+`ESTADOS_EN_ESPERA` **SHALL** tener **doce** entradas, las once de antes en su orden y `Pendiente` la última.
+
+- Las tres entradas **SHALL** quedarse en las líneas que ocupaban (`estados.ts:101-105`), una por línea, con la
+  excepción a la agrupación por clase escrita en su comentario: el fichero está muy citado y mudarlas desplazaría sus
+  citas (regla de mutación 4). `estados.ts` **SHALL** conservar su número de líneas.
+- La entrada `'Pendiente': 'externa',` **SHALL** ir sola en su línea y sin comentario detrás, porque la comprobación 5
+  del barrido la cuenta leyendo el texto (`apps/desk/server/reconciliacion/comprobaciones.ts:162`). El recuento del
+  barrido sobre el `estados.ts` real **SHALL** coincidir con `ESTADOS_EN_ESPERA.length`, y una prueba lo enfrenta.
+- Los comentarios de `estados.ts` que dan la cifra de la vista (`:21`, `:28`, `:115`) **SHALL** decir doce, y una prueba
+  los lee (regla de mutación 2).
+- El cruce «salida única ∩ `en_espera`» (`estados.ts:145`, «da OCHO») **SHALL** quedar en ocho: se calcula sobre
+  `ESTADOS_SERVICIO`, que no contiene `Pendiente` (`comentariosVigilados.test.ts:33-34`).
+- El reloj del SLA **SHALL NOT** leer esta clasificación (§3.7): las alarmas no cambian.
+
+#### Scenario: la vista enseña doce, con `Pendiente` la última
+- GIVEN el registro tras E-226
+- WHEN se calcula `ESTADOS_EN_ESPERA`
+- THEN tiene doce entradas y la última es `Pendiente`
+
+#### Scenario: `Verificación` y `Solicitud Soporte` no son espera
+- GIVEN tickets en `Verificación` y en `Solicitud Soporte`
+- WHEN se clasifican con `enEsperaDe` y con el predicado del tablero
+- THEN su clase es `ninguna` y el tablero los enseña en «Abiertos», no en «Espera»
+
+#### Scenario: el barrido cuenta lo mismo que el código (mutación)
+- GIVEN un comentario añadido detrás de `'Pendiente': 'externa',`
+- WHEN corre la prueba que enfrenta la comprobación 5 con `ESTADOS_EN_ESPERA`
+- THEN se pone roja: el barrido cuenta once y el código doce
+
+#### Scenario: el comentario de la cifra no envejece (mutación)
+- GIVEN `estados.ts:115` diciendo «ONCE» con doce en el código
+- WHEN corre `comentariosVigilados.test.ts`
+- THEN se pone roja

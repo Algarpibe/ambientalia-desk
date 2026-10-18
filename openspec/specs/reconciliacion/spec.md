@@ -144,9 +144,9 @@ de brechas salió **falso** por leer `config.yaml` en vez del código, y la prop
 deja escrito. Leer el registro para comprobar el registro es el molde del fallo.
 
 #### Scenario: la cifra sale del código
-- GIVEN `ESTADOS_EN_ESPERA` con once entradas en `packages/shared/src/estados.ts`
+- GIVEN `ESTADOS_EN_ESPERA` con doce entradas en `packages/shared/src/estados.ts` (once hasta E-226, `RQ-RC-13`)
 - WHEN corre la comprobación 5
-- THEN reporta 11 frente a los 4 del maestro, leídos del código y no de `config.yaml`
+- THEN reporta 12 frente a los 4 del maestro, leídos del código y no de `config.yaml`
 
 #### Scenario: la divergencia legítima se reporta como tal
 - GIVEN la entrada `esperas`, cuya clave `divergencia` la declara legítima
@@ -521,3 +521,21 @@ y la capacidad nacería siendo el desvío que existe para cazar.
 - GIVEN el cambio que crea `openspec/specs/reconciliacion/spec.md`
 - WHEN corre `npm run reconcile` por primera vez
 - THEN la comprobación 1 reporta **0 huérfanas** y el código de salida es 0
+
+### Requirement: RQ-RC-13 · El recuento de esperas del barrido coincide con `ESTADOS_EN_ESPERA`
+
+La comprobación 5 lee `estados.ts` como TEXTO (`apps/desk/server/reconciliacion/comprobaciones.ts:154-165`) y cuenta
+sólo las líneas `'X': 'externa'` o `'X': 'interna'` que van solas (`:162`); la vista cuenta con `ESTADOS_EN_ESPERA`. Son
+dos implementaciones de la misma cifra (molde H5). El recuento del barrido sobre el `estados.ts` real **SHALL** coincidir
+con `ESTADOS_EN_ESPERA.length`, y `apps/desk/server/reconciliacion/esperasContraRegistro.test.ts` lo enfrenta
+(`espera-y-areas-equipo-nuevo`, E-226). `esperasDelCodigo` **SHALL** exportarse para esa prueba.
+
+#### Scenario: el texto y el registro cuentan lo mismo
+- GIVEN el `estados.ts` real
+- WHEN se cuenta con `esperasDelCodigo` y con `ESTADOS_EN_ESPERA`
+- THEN las dos cifras son iguales (12 desde E-226)
+
+#### Scenario: un comentario detrás de una entrada `externa` se pone rojo (mutación)
+- GIVEN `'Pendiente': 'externa', // …`
+- WHEN corre `esperasContraRegistro.test.ts`
+- THEN falla: el barrido cuenta once y el código doce

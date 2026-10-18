@@ -151,7 +151,7 @@ function listaMaestro(cabecera: string): string[] {
 }
 
 /** `ESTADOS_EN_ESPERA` se DERIVA de las clases `externa` e `interna`, no es una lista aparte. */
-function esperasDelCodigo(fuente: string): number {
+export function esperasDelCodigo(fuente: string): number {
   const lineas = fuente.split(SALTO).map(sinRetorno)
   const inicio = lineas.findIndex((l) => l.includes('CLASIFICACION_EN_ESPERA'))
   if (inicio === -1) return 0
