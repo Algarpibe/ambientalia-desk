@@ -17,8 +17,8 @@ Las referencias D* son de `design.md`. Las cifras se leen del rojo, no se estima
       `openspec/config.yaml` → `cifras_ancladas` y `capabilities`), `invariantesGrafo`, `estados`, `migracionTickets`,
       `prioridad`, `mapaBlueprint` (+ regenerar artefactos), `permisos`, `cargos`, `transicionesEjecucion`, `columns`.
 - [x] 1.7 Reentrancia (D5): `reentrancia.ts:79` a comentario en su sitio; `reentrancia.test.ts`, `bodegaje.test.ts:113`,
-      `invariantesGrafo.test.ts:138` y las pruebas que recorrían el ciclo (`liberacionSinFactura.test.ts` y compañía)
-      ponen el ticket en `Por Facturar` por el arnés en lugar de por `entrega_sin_factura`.
+      `invariantesGrafo.test.ts:138` y las pruebas que recorrían el ciclo. Medido al aplicar: ninguna lo recorría; `liberacionSinFactura.test.ts`
+      ya ponía el ticket en `Por Facturar` por el arnés, y no hubo que tocarla (S1 del verify).
 - [x] 1.8 ROJO: HTTP de «Facturar» (RQ-TS-42, escenarios 2-5) en `apps/desk/server/facturar.test.ts`: `200` con
       `fecha_factura`, número en `custom_fields` y en la traza, `Closed`; `422` por caso; `403` de Servicio Técnico;
       orden `409` < `403` < `422` y presencia antes que contenido.
@@ -42,7 +42,7 @@ Las referencias D* son de `design.md`. Las cifras se leen del rojo, no se estima
 
 ## Cierre
 
-- [ ] 3.1 verify (intento 5).
+- [x] 3.1 verify (intento 5).
 - [ ] 3.2 archive con la regla del archivo (intento 6): fusión por script, `archive-report.md`, `registro.test.ts` a
       ocho en curso con F1C-02 por archivo, `RECONCILIACION.md` regenerado en la rama, cuatro códigos y
       `git show --numstat` del commit de archivo.
