@@ -25,7 +25,7 @@ Un intento de aplicación con techo 800 (válvula 720). Se asienta sólo si sus 
 ## Cierre del cambio
 
 - [ ] 3.1 Regla de mutación 4: `wc -l` igual en los ficheros tocados; barrido de citas a `estados.ts` y `transitions.ts`.
-- [ ] 3.2 `verify-report.md` contra spec, diseño y tareas.
+- [x] 3.2 `verify-report.md` contra spec, diseño y tareas.
 - [ ] 3.3 Archive: fusión de los deltas por script; en sitio, sin bloque RQ, `transitions-st` §3.7 (`:1188`, `:1191`,
   `:1209-1211`) y `transitions-equipo-nuevo` `:109`; `archive-report.md`; parte revisable medida ANTES; `git show
   --numstat` sólo del cambio; `RECONCILIACION.md` en la rama.
