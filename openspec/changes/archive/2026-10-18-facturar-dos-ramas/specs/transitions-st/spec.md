@@ -109,8 +109,7 @@ derivación):
 | `Ticket creado`, sólo por botones | 20 | `OV asignada`, `Remisión creada` |
 | `Ticket creado`, sumando el paso sin botón de RQ-TS-03 | 21 | `OV asignada` |
 
-`Pendiente de facturar` (RQ-TS-42) se alcanza por `entrega_sin_factura`. (Previously, hasta F1C-02: 19, 19 y 20 sobre 21
-estados. Hasta F1C-01: 18, 18 y 19 sobre 20 estados; `Anulado` (RQ-TS-40) se alcanza desde las dos esperas externas y los tres orígenes de Rechazo. Antes de F1C-09: 19, 19 y 20 sobre 21, por `Pendiente`.)
+`Pendiente de facturar` (RQ-TS-42) se alcanza por `entrega_sin_factura`. (Previously, hasta F1C-02: 19, 19 y 20 sobre 21 estados. Hasta F1C-01: 18, 18 y 19 sobre 20 estados; `Anulado` (RQ-TS-40) se alcanza desde las dos esperas externas y los tres orígenes de Rechazo. Antes de F1C-09: 19, 19 y 20 sobre 21, por `Pendiente`.)
 
 `Remisión creada` **MUST NOT** ser alcanzable por ninguna transición con botón; su única entrada es el paso
 sin botón de `estadoPorRemision.ts`. No hay estados huérfanos y no hay callejones sin salida más allá de
@@ -132,15 +131,12 @@ estados de servicio la conclusión —«no hay estados huérfanos»— se sostie
 
 ### 3.3 · C4 y la reentrancia — nueve campos de fecha (once hasta F1C-02) que una segunda pasada reescribe · **destino F1C-06, C9**
 
-**Comportamiento actual.** El grafo tiene ciclos, y las transiciones internas a un ciclo reescriben sus campos de fecha
-al recorrerlo otra vez. Los campos afectados **SHALL** ser exactamente **nueve**, derivados del grafo y no de una tabla
-escrita a mano (`packages/shared/src/reentrancia.ts:218`, conjunto fijado en `invariantesGrafo.test.ts`).
+**Comportamiento actual.** El grafo tiene ciclos, y las transiciones internas a un ciclo reescriben sus campos de fecha al recorrerlo otra vez. Los campos afectados **SHALL** ser exactamente **nueve**, derivados del grafo y no de una tabla escrita a mano (`packages/shared/src/reentrancia.ts:218`, conjunto fijado en `invariantesGrafo.test.ts`).
 
 **C4 está corregida (F1C-02, RQ-TS-43).** El ciclo entre `Por Facturar` y `Por Entregar / Sin facturar` desapareció:
 `entrega_sin_factura` lleva a `Pendiente de facturar`, y de ahí sólo se sale a `Finalizado`. `Fecha Remisión de Salida`
 se escribe una sola vez (maestro M1.3.5, `R08.4.md:1356`) y `Fecha prevista de facturación` deja de ser reentrante.
-(Previously, hasta F1C-02: once campos, con el ciclo de cierre que podía recorrerse indefinidamente y pisaba `Fecha
-Remisión de Salida`.)
+(Previously, hasta F1C-02: once campos, con el ciclo de cierre que podía recorrerse indefinidamente y pisaba `Fecha Remisión de Salida`.)
 
 **Lo que salva el caso, y por qué esto no obliga a rediseñar aquí:** `ticket_transitions.values` es
 `jsonb` y guarda **todos** los valores de cada transición (`repo.ts:314-318`). Las columnas de
@@ -160,8 +156,7 @@ siendo la vía para los ciclos que quedan.
 `estados` = 22 de servicio. La descripción de la capacidad `transitions-st` en `capabilities` **SHALL** decir «33
 transiciones y 22 estados». Estos valores **SHALL** coincidir con `TRANSITIONS.length`, con las aristas del diagrama
 completo y con `ESTADOS_SERVICIO.length`, y **SHALL** cambiar en el mismo commit que el código. El texto `codigo` de
-`pasos_del_mapa` **SHALL** nombrar las 33 transiciones y la arista de `anulacion` desde sus cinco orígenes. (Previously,
-hasta F1C-02: 32 / 40 / 21, fijadas por F1C-01; hasta F1C-01: 31 / 35 / 20, fijadas por F1C-09.)
+`pasos_del_mapa` **SHALL** nombrar las 33 transiciones y la arista de `anulacion` desde sus cinco orígenes. (Previously, hasta F1C-02: 32 / 40 / 21, fijadas por F1C-01; hasta F1C-01: 31 / 35 / 20, fijadas por F1C-09.)
 
 #### Scenario: las tres cifras coinciden con el código
 - GIVEN `cifras_ancladas` y el código tras el cambio
@@ -262,20 +257,16 @@ construye su `SET` sólo con esa lista (`repo.ts:44-54`, `:76-91`), así que el 
 sale entero si la fila es `managed_by_app` (`repo.ts:71`), que `writeTransition` marca (`repo.ts:298`). Molde:
 `fecha_aviso_cliente` (`repo.test.ts`, guarda propia).
 
-**Re-liberación.** Desde F1C-02 el grafo ya no la produce: `entrega_sin_factura` lleva a `Pendiente de facturar`
-(RQ-TS-42) y las ramas no vuelven (RQ-TS-43). Sigue siendo posible en los tickets que volvieron a `Por Facturar` por el
-ciclo antes de F1C-02, que se quedan donde están (supuesto S-9 de F1C-02), y para ellos rige lo que sigue. (Previously,
-hasta F1C-02: el ciclo `Por Facturar` → `Por Entregar / Sin facturar` → `Por Facturar` podía recorrerse más de una vez.)
+**Re-liberación.** Desde F1C-02 el grafo ya no la produce: `entrega_sin_factura` lleva a `Pendiente de facturar` (RQ-TS-42) y las ramas no vuelven (RQ-TS-43). Sigue siendo posible en los tickets que volvieron a `Por Facturar` por el
+ciclo antes de F1C-02, que se quedan donde están (supuesto S-9 de F1C-02), y para ellos rige lo que sigue. (Previously, hasta F1C-02: el ciclo `Por Facturar` → `Por Entregar / Sin facturar` → `Por Facturar` podía recorrerse más de una vez.)
 En cada liberación el servidor **SHALL** exigir motivo y fecha de nuevo,
 leyendo **sólo el cuerpo** de la petición, y **SHALL** escribir los valores de esa liberación; la traza conserva **todas**
 las liberaciones. Los campos de esta transición **MUST NOT** quedar bloqueados ni prellenados con el valor de la liberación
 anterior en el cliente: `yaLoTraeElTicket` deja de aplicar a ellos.
 
 **Reentrancia.** Desde F1C-02 `Fecha prevista de facturación` **SHALL NOT** ser reentrante: el ciclo de cierre
-desapareció (RQ-TS-43) y la tabla de reentrancia queda en **nueve** campos (siete obligatorios) y **ocho** casos. En un
-ticket que se re-libera desde el histórico, la columna guarda el **último** valor y la traza **todos**
-(`reentrancia.ts:16-24`). (Previously, hasta F1C-02: once campos, nueve obligatorios, diez casos, con la fecha prevista
-entre ellos.)
+desapareció (RQ-TS-43) y la tabla de reentrancia queda en **nueve** campos (siete obligatorios) y **ocho** casos. En un ticket que se re-libera desde el histórico, la columna guarda el **último** valor y la traza **todos**
+(`reentrancia.ts:16-24`). (Previously, hasta F1C-02: once campos, nueve obligatorios, diez casos, con la fecha prevista entre ellos.)
 
 **Regla invariable 13, decisión a decisión.**
 

@@ -164,36 +164,36 @@ testigo (`packages/shared/src/transitions.ts:325-334`).
 - WHEN se calculan las salidas de `Pendiente`
 - THEN tiene `continuacion_soporte` y no es terminal
 
-### RQ-TS-05 · Alcanzabilidad de los 21 estados de servicio
+### RQ-TS-05 · Alcanzabilidad de los 22 estados de servicio
 
 **Verificado por cierre transitivo** sobre `TRANSITIONS` (la cifra se fija en la prueba; la tabla es la
 derivación):
 
 | Desde | Estados alcanzados, contando el origen | No alcanzados |
 |---|---|---|
-| `OV asignada` | 19 | `Ticket creado`, `Remisión creada` |
-| `Ticket creado`, sólo por botones | 19 | `OV asignada`, `Remisión creada` |
-| `Ticket creado`, sumando el paso sin botón de RQ-TS-03 | 20 | `OV asignada` |
+| `OV asignada` | 20 | `Ticket creado`, `Remisión creada` |
+| `Ticket creado`, sólo por botones | 20 | `OV asignada`, `Remisión creada` |
+| `Ticket creado`, sumando el paso sin botón de RQ-TS-03 | 21 | `OV asignada` |
 
-(Previously, hasta F1C-01: 18, 18 y 19 sobre 20 estados; `Anulado` (RQ-TS-40) se alcanza desde las dos esperas externas y los tres orígenes de Rechazo. Antes de F1C-09: 19, 19 y 20 sobre 21, por `Pendiente`.)
+`Pendiente de facturar` (RQ-TS-42) se alcanza por `entrega_sin_factura`. (Previously, hasta F1C-02: 19, 19 y 20 sobre 21 estados. Hasta F1C-01: 18, 18 y 19 sobre 20 estados; `Anulado` (RQ-TS-40) se alcanza desde las dos esperas externas y los tres orígenes de Rechazo. Antes de F1C-09: 19, 19 y 20 sobre 21, por `Pendiente`.)
 
 `Remisión creada` **MUST NOT** ser alcanzable por ninguna transición con botón; su única entrada es el paso
 sin botón de `estadoPorRemision.ts`. No hay estados huérfanos y no hay callejones sin salida más allá de
 `Finalizado` y `Anulado`.
 
 **Discrepancia con el maestro (R08.1, histórica).** M1.3.8 (`R08.1.md:1413`) decía «18 desde `OV asignada`,
-y desde `Ticket creado` los otros 20». Las dos cifras eran correctas pero no sobre la misma base. Con 21
+y desde `Ticket creado` los otros 20». Las dos cifras eran correctas pero no sobre la misma base. Con 22
 estados de servicio la conclusión —«no hay estados huérfanos»— se sostiene.
 
 #### Scenario: alcanzabilidad desde `OV asignada`
 - GIVEN `TRANSITIONS` tras el cambio
 - WHEN se calcula el cierre transitivo desde `OV asignada`
-- THEN alcanza 19 estados y no alcanza `Ticket creado` ni `Remisión creada`
+- THEN alcanza 20 estados y no alcanza `Ticket creado` ni `Remisión creada`
 
 #### Scenario: no hay huérfanos con el paso sin botón
 - GIVEN `TRANSITIONS` y el paso `TRANSICION_REMISION_CONFIRMADA`
 - WHEN se calcula el cierre desde `Ticket creado`
-- THEN alcanza 20 estados, todos menos `OV asignada`
+- THEN alcanza 21 estados, todos menos `OV asignada`
 
 ---
 
@@ -1064,15 +1064,14 @@ de «nueve» por «once».)*
   `toEqual` de `packages/shared/src/estados.test.ts` que hoy fija «seis» y dos sobrantes se recalibra
   contra la salida real del cruce, no al revés
 
-### 3.3 · C4 y la reentrancia — once campos de fecha (diez hasta F1C-05) que una segunda pasada reescribe · **destino F1C-02, F1C-06, C9**
+### 3.3 · C4 y la reentrancia — nueve campos de fecha (once hasta F1C-02) que una segunda pasada reescribe · **destino F1C-06, C9**
 
-**Comportamiento actual, a corregir en C4.** El grafo tiene ciclos, y las transiciones internas a un
-ciclo reescriben sus campos de fecha al recorrerlo otra vez. Los campos afectados **SHALL** ser
-exactamente **diez**, derivados del grafo y no de una tabla escrita a mano
-(`packages/shared/src/reentrancia.ts:218`, conjunto fijado en `invariantesGrafo.test.ts:137-150`).
+**Comportamiento actual.** El grafo tiene ciclos, y las transiciones internas a un ciclo reescriben sus campos de fecha al recorrerlo otra vez. Los campos afectados **SHALL** ser exactamente **nueve**, derivados del grafo y no de una tabla escrita a mano (`packages/shared/src/reentrancia.ts:218`, conjunto fijado en `invariantesGrafo.test.ts`).
 
-El más visible es el ciclo entre `Por Facturar` y `Por Entregar / Sin facturar`, que puede recorrerse
-indefinidamente y pisa `Fecha Remisión de Salida` (maestro M1.3.5, `:1190-1192`).
+**C4 está corregida (F1C-02, RQ-TS-43).** El ciclo entre `Por Facturar` y `Por Entregar / Sin facturar` desapareció:
+`entrega_sin_factura` lleva a `Pendiente de facturar`, y de ahí sólo se sale a `Finalizado`. `Fecha Remisión de Salida`
+se escribe una sola vez (maestro M1.3.5, `R08.4.md:1356`) y `Fecha prevista de facturación` deja de ser reentrante.
+(Previously, hasta F1C-02: once campos, con el ciclo de cierre que podía recorrerse indefinidamente y pisaba `Fecha Remisión de Salida`.)
 
 **Lo que salva el caso, y por qué esto no obliga a rediseñar aquí:** `ticket_transitions.values` es
 `jsonb` y guarda **todos** los valores de cada transición (`repo.ts:314-318`). Las columnas de
@@ -1082,8 +1081,9 @@ deja escrita para `kpis` y F1C-06:
 > **Los KPIs de G.6 SHALL calcularse sobre `ticket_transitions.values`, no sobre `tickets.*`.**
 
 Cuatro indicadores de G.6 —columnas 50, 53, 57 y 58— quedan rotos y **sin dueño** asignado
-(`reentrancia.ts:71-83`). Elegir entre las dos soluciones de P34 es F1C-02; esta spec sólo registra
-que se puede (`reentrancia.ts:32`).
+(`reentrancia.ts:71-83`). La columna 47, que era la de C4, sale del cruce con F1C-02: su campo dejó de ser reentrante.
+F1C-02 resolvió C4 quitando el ciclo, no eligiendo entre las dos soluciones de P34 (`reentrancia.ts:32`), que siguen
+siendo la vía para los ciclos que quedan.
 
 ### 3.4 · La tercera puerta de la orden de venta · **DECIDIDA, y se construye**
 
@@ -1666,23 +1666,23 @@ una, se quita en esta tanda).
 - WHEN se inspeccionan sus claves
 - THEN son exactamente `Notificado`, `Remisión creada` y `Notificación cliente`
 
-### RQ-TS-26 · La cifra anclada del maestro dice 32 / 40 / 21 en el mismo commit que el código
+### RQ-TS-26 · La cifra anclada del maestro dice 33 / 41 / 22 en el mismo commit que el código
 
-`openspec/config.yaml` **SHALL** declarar en `cifras_ancladas` `transiciones` = 32, `pasos_del_mapa` = 40 y
-`estados` = 21 de servicio, y **SHALL** cerrar la `divergencia` caducada de `pasos_del_mapa`. La descripción
-de la capacidad `transitions-st` en `capabilities` **SHALL** decir «32 transiciones y 21 estados». Estos
-valores **SHALL** coincidir con `TRANSITIONS.length`, con las aristas del diagrama completo y con
-`ESTADOS_SERVICIO.length`, y **SHALL** cambiar en el mismo commit que el código. El texto `codigo` de `pasos_del_mapa` **SHALL** nombrar las 32 transiciones y la arista de `anulacion` desde sus cinco orígenes. (Previously, hasta F1C-01: 31 / 35 / 20, fijadas por F1C-09.)
+`openspec/config.yaml` **SHALL** declarar en `cifras_ancladas` `transiciones` = 33, `pasos_del_mapa` = 41 y
+`estados` = 22 de servicio. La descripción de la capacidad `transitions-st` en `capabilities` **SHALL** decir «33
+transiciones y 22 estados». Estos valores **SHALL** coincidir con `TRANSITIONS.length`, con las aristas del diagrama
+completo y con `ESTADOS_SERVICIO.length`, y **SHALL** cambiar en el mismo commit que el código. El texto `codigo` de
+`pasos_del_mapa` **SHALL** nombrar las 33 transiciones y la arista de `anulacion` desde sus cinco orígenes. (Previously, hasta F1C-02: 32 / 40 / 21, fijadas por F1C-01; hasta F1C-01: 31 / 35 / 20, fijadas por F1C-09.)
 
 #### Scenario: las tres cifras coinciden con el código
 - GIVEN `cifras_ancladas` y el código tras el cambio
 - WHEN se comparan
-- THEN 32 = `TRANSITIONS.length`, 40 = aristas del diagrama completo y 21 = `ESTADOS_SERVICIO.length`
+- THEN 33 = `TRANSITIONS.length`, 41 = aristas del diagrama completo y 22 = `ESTADOS_SERVICIO.length`
 
 #### Scenario: la mención a `Pendiente` de `esperas` queda coherente
 - GIVEN la entrada `esperas` de `cifras_ancladas`
 - WHEN se lee su recuento de estados de servicio
-- THEN no cuenta `Pendiente` entre los 21; el recuento de espera que lee el barrido es el del código (12 desde E-226, `RQ-TS-39`)
+- THEN no cuenta `Pendiente` entre los 22; el recuento de espera que lee el barrido es el del código (12 desde E-226, `RQ-TS-39`)
 
 ### RQ-TS-27 · Los guardianes numéricos llevan las cifras nuevas
 
@@ -2262,16 +2262,16 @@ construye su `SET` sólo con esa lista (`repo.ts:44-54`, `:76-91`), así que el 
 sale entero si la fila es `managed_by_app` (`repo.ts:71`), que `writeTransition` marca (`repo.ts:298`). Molde:
 `fecha_aviso_cliente` (`repo.test.ts`, guarda propia).
 
-**Re-liberación.** El ciclo `Por Facturar` → `Por Entregar / Sin facturar` → `Por Facturar` puede recorrerse más de una vez
-(`entrega_sin_factura` vuelve a `Por Facturar`). En cada liberación el servidor **SHALL** exigir motivo y fecha de nuevo,
+**Re-liberación.** Desde F1C-02 el grafo ya no la produce: `entrega_sin_factura` lleva a `Pendiente de facturar` (RQ-TS-42) y las ramas no vuelven (RQ-TS-43). Sigue siendo posible en los tickets que volvieron a `Por Facturar` por el
+ciclo antes de F1C-02, que se quedan donde están (supuesto S-9 de F1C-02), y para ellos rige lo que sigue. (Previously, hasta F1C-02: el ciclo `Por Facturar` → `Por Entregar / Sin facturar` → `Por Facturar` podía recorrerse más de una vez.)
+En cada liberación el servidor **SHALL** exigir motivo y fecha de nuevo,
 leyendo **sólo el cuerpo** de la petición, y **SHALL** escribir los valores de esa liberación; la traza conserva **todas**
 las liberaciones. Los campos de esta transición **MUST NOT** quedar bloqueados ni prellenados con el valor de la liberación
 anterior en el cliente: `yaLoTraeElTicket` deja de aplicar a ellos.
 
-**Reentrancia.** `Fecha prevista de facturación` es un campo de fecha de una transición del ciclo `Por Facturar` ⇄
-`Por Entregar / Sin facturar`, así que la tabla de reentrancia **SHALL** declararla: pasan a ser **once** los campos de
-fecha reentrantes (nueve obligatorios) y **diez** los casos. La columna guarda el **último** valor y la traza **todos**
-(`reentrancia.ts:16-24`): es un hecho del grafo, no un defecto, y se anota para quien lea la tabla.
+**Reentrancia.** Desde F1C-02 `Fecha prevista de facturación` **SHALL NOT** ser reentrante: el ciclo de cierre
+desapareció (RQ-TS-43) y la tabla de reentrancia queda en **nueve** campos (siete obligatorios) y **ocho** casos. En un ticket que se re-libera desde el histórico, la columna guarda el **último** valor y la traza **todos**
+(`reentrancia.ts:16-24`). (Previously, hasta F1C-02: once campos, nueve obligatorios, diez casos, con la fecha prevista entre ellos.)
 
 **Regla invariable 13, decisión a decisión.**
 
@@ -2288,8 +2288,8 @@ fecha reentrantes (nueve obligatorios) y **diez** los casos. La columna guarda e
 Además, el cliente **SHALL** mostrar el motivo y la fecha en la ficha del ticket (supuesto S-5); es presentación, no decide
 ni impide nada.
 
-**Fuera de este requisito, a propósito.** (a) La **alarma por fecha vencida** y el estado «Pendiente de facturar» (F1C-02,
-después del corte, E-102). (b) El **marcado del histórico** de liberaciones con casilla (`p64-historico-c1`): este cambio
+**Fuera de este requisito, a propósito.** (a) La **alarma por fecha vencida** y el estado «Pendiente de facturar»: los
+construye F1C-02 (RQ-TS-42 y `derivacion-avisos` RQ-AV-23). (b) El **marcado del histórico** de liberaciones con casilla (`p64-historico-c1`): este cambio
 no toca filas viejas. (c) **Decisionales** y propietario del registro (resto de F1C-05). (d) Exigir que la fecha sea futura
 (SP-1). (e) Borrar la columna `liberacion_sin_facturar` o su entrada en `PROMOTED_COLUMNS`. (f) Cualquier cambio de las
 demás guardas de `executeTransition` (IV-12 incluido).
@@ -2434,13 +2434,13 @@ demás guardas de `executeTransition` (IV-12 incluido).
 - THEN responde un solo `422 { errors }` en el que el error de presencia de la fecha aparece **antes** que el de la lista
 
 #### Scenario: Una segunda liberación exige de nuevo motivo y fecha, y no hereda los anteriores — ROJO
-- GIVEN un ticket liberado con unos valores, devuelto a `Por Facturar` por `entrega_sin_factura`
+- GIVEN un ticket liberado con unos valores que vuelve a estar en `Por Facturar` (histórico anterior a F1C-02)
 - WHEN un Director Comercial ejecuta otra vez `liberacion_sin_factura` sin motivo ni fecha
 - THEN `422` de presencia; y con valores nuevos válidos responde `200`, las columnas pasan a los valores nuevos y la traza
   tiene dos filas de `liberacion_sin_factura` con sus valores distintos
 
 #### Scenario: Una segunda liberación por otro motivo y sin texto deja el texto en null — ROJO
-- GIVEN un ticket liberado con el tercer motivo y un texto, devuelto a `Por Facturar` por `entrega_sin_factura`
+- GIVEN un ticket liberado con el tercer motivo y un texto que vuelve a estar en `Por Facturar` (histórico anterior a F1C-02)
 - WHEN un Director Comercial ejecuta otra vez `liberacion_sin_factura` con el primer motivo, una fecha válida y sin texto
 - THEN responde `200` y `tickets.custom_fields` lleva `null` en «Texto de la autorización», no el de la primera liberación;
   la fila de traza de la primera conserva su texto (diseño D7)
@@ -2458,19 +2458,19 @@ demás guardas de `executeTransition` (IV-12 incluido).
 #### Scenario: El cargo sigue siendo Director Comercial — CARACTERIZACIÓN
 - GIVEN valores válidos de los campos nuevos (el arnés usa la primera opción del `select` y `2026-01-15`)
 - WHEN los ejecutan un Director Comercial y un Comercial sin cargo
-- THEN el primero recibe `200` y el segundo `403`; el barrido de cargo sigue en 744 combinaciones con la misma única
-  diferencia (`RQ-TS-30`)
+- THEN el primero recibe `200` y el segundo `403`; el barrido de cargo mantiene la misma única diferencia (`RQ-TS-30`)
 
-#### Scenario: La tabla de reentrancia declara once campos — ROJO (prueba editada a propósito)
-- GIVEN el catálogo tras el cambio
+#### Scenario: La fecha prevista ya no es reentrante — ROJO (prueba editada a propósito)
+- GIVEN el catálogo tras F1C-02
 - WHEN corren la tabla de reentrancia y el invariante 6
-- THEN la tabla declara diez casos y once campos de fecha reentrantes, nueve obligatorios, con «Fecha prevista de
-  facturación» entre ellos, derivados del grafo y no de una lista escrita a mano
+- THEN la tabla declara ocho casos y nueve campos de fecha reentrantes, siete obligatorios, sin «Fecha prevista de
+  facturación», derivados del grafo y no de una lista escrita a mano
 
 #### Scenario: Lo que queda fuera no se construye — CARACTERIZACIÓN
 - GIVEN el cambio completo
-- WHEN se busca una alarma por fecha vencida, el estado «Pendiente de facturar» o una regla de Decisionales
-- THEN no existen: son de F1C-02 y del resto de F1C-05, y archivar este cambio no los da por hechos
+- WHEN se busca una regla de Decisionales o el propietario del registro
+- THEN no existen: son del resto de F1C-05, y archivar este cambio no los da por hechos; la alarma y el estado
+  «Pendiente de facturar» los construye F1C-02
 
 ### RQ-TS-36 · Las transiciones con campo de orden exigen el cargo cuando entra una OVI (escalón B)
 
@@ -2726,3 +2726,97 @@ existir restricción de motivo por estado de origen.
 - GIVEN un ticket en `Servicio externo` y un usuario de Comercial
 - WHEN ejecuta `anulacion` con «El cliente no aprueba o se echa atrás», «Sin solución técnica», «Repuesto no disponible» o «Caducidad de espera: …»
 - THEN responde `200`; ya lo prueba `apps/desk/server/anulacion.test.ts:59-62` (los cuatro motivos distintos de «Otro», desde `Servicio externo`), y desde `En Espera de Repuestos` lo prueba `:54-58` con un motivo. «Otro» con detalle se prueba sólo desde `Rev./Diagnostico` (`:63-67`) y desde una espera no tiene prueba propia: hipótesis, la pertenencia no mira el estado de origen (`anulacion.ts:50`)
+
+### RQ-TS-42 · Las dos ramas de cierre: `Pendiente de facturar` y «Facturar»
+
+Fuente: `decision/c4-dos-ramas` (`openspec/config.yaml:1854`) y maestro M1.3.5
+(`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1343-1361`; vías en `:1347-1352`).
+
+**El estado.** `Pendiente de facturar` **SHALL** registrarse en `CLASIFICACION_EN_ESPERA` con clase `ninguna` (supuesto
+S-3: como `Por Facturar`, espera un acto de Comercial dentro de la aplicación), **SHALL** ser estado de servicio, de la
+fase `cierre`, con columna propia en el tablero, y **SHALL NOT** entrar en `ESTADOS_SIN_SALIDA`. Es abierto: produce
+`statusType: 'Open'`.
+
+**La rama sin factura.** `entrega_sin_factura` **SHALL** llevar de `Por Entregar / Sin facturar` a `Pendiente de facturar`,
+con el mismo id, el mismo nombre, la misma área y los mismos campos. La rama con factura no cambia.
+
+**La transición «Facturar».** `facturar` **SHALL** declararse en `TRANSITIONS` con `from: ['Pendiente de facturar']`,
+`to: 'Finalizado'`, área `Comercial` (supuesto S-2) y, además del comentario y la derivación que llevan todas, dos campos
+obligatorios: «Número de factura» (`text`, a `tickets.custom_fields` y a la traza; supuesto S-1) y «Fecha De Factura»
+(`date`, que va a `tickets.fecha_factura` por `PROMOTED_COLUMNS`). Es la ÚNICA salida de `Pendiente de facturar`. No hay
+estado «Facturado»: facturado es `fecha_factura`. `facturar` **SHALL NOT** tener excepción de cargo.
+
+**La guarda.** Además de la presencia que ya impone `buildTransitionPlan`, el servidor **SHALL** rechazar en el `422`
+agregado del escalón C un número de factura que quede vacío tras recortar y una fecha que no sea un día de calendario
+real. El orden es el de F1B-10: el `409` de estado y el `403` de área van antes; dentro del `422`, la presencia va
+delante del contenido.
+
+**Regla invariable 13, decisión a decisión.**
+
+| # | Lo que decide el cliente | Qué impone el servidor | Estado |
+|---|---|---|---|
+| 1 | El botón «Facturar» sólo aparece en `Pendiente de facturar` | `409` de estado (`ticketService.ts`, `t.from.includes`) | Espejo legítimo cuando su escenario esté en verde |
+| 2 | El botón sólo lo ve Comercial | `403` de área (`canExecuteTransition`) | Espejo legítimo, ya probado por el barrido de permisos |
+| 3 | Número y fecha obligatorios (asterisco) | `buildTransitionPlan` (presencia) y la guarda nueva (contenido) | Espejo legítimo cuando sus escenarios estén en verde |
+| 4 | La fecha es una fecha (`input type="date"`) | La guarda nueva (día real) | Ídem |
+
+#### Scenario: el catálogo declara el estado, la rama y «Facturar» — ROJO
+- GIVEN `TRANSITIONS` y `CLASIFICACION_EN_ESPERA` tras el cambio
+- WHEN se leen `entrega_sin_factura`, `facturar` y `Pendiente de facturar`
+- THEN `entrega_sin_factura` va a `Pendiente de facturar`; `facturar` va de `Pendiente de facturar` a `Finalizado`, área
+  `Comercial`, con «Número de factura» y «Fecha De Factura» obligatorios; y el estado es `ninguna`, de fase `cierre`
+
+#### Scenario: «Facturar» registra la factura y su fecha y cierra el ticket — ROJO
+- GIVEN un ticket en `Pendiente de facturar` y un usuario de Comercial
+- WHEN ejecuta `facturar` con número `FV-1234` y fecha `2027-01-20`
+- THEN responde `200`; el ticket queda en `Finalizado` con `status_type` `Closed`, `fecha_factura` `2027-01-20` y
+  «Número de factura» `FV-1234` en `custom_fields` y en la traza
+
+#### Scenario: «Facturar» sin factura o sin fecha no pasa — ROJO
+- GIVEN un ticket en `Pendiente de facturar`
+- WHEN se ejecuta `facturar` sin número, con un número de sólo espacios, sin fecha o con `2027-02-30`
+- THEN responde `422` con el error de cada caso y el ticket no se mueve
+
+#### Scenario: otra área no factura — ROJO
+- GIVEN un ticket en `Pendiente de facturar` y un usuario sólo de Servicio Técnico
+- WHEN ejecuta `facturar` con valores válidos
+- THEN responde `403` de área y el ticket no se mueve
+
+#### Scenario: las guardas de «Facturar» van en el orden de F1B-10 — ROJO
+- GIVEN un ticket en `Por Facturar` y un cuerpo de `facturar` sin número
+- WHEN lo ejecuta un usuario de Servicio Técnico
+- THEN responde `409` de estado (no `403` ni `422`); en `Pendiente de facturar`, el mismo cuerpo da `403`; y un Comercial
+  sin fecha y con número de espacios recibe un solo `422` con la presencia de la fecha antes que el contenido del número
+
+### RQ-TS-43 · Las dos ramas avanzan y no vuelven
+
+El subgrafo de cierre —`Por Facturar`, `Liberación Comercial`, `Por Entregar`, `Por Entregar / Sin facturar` y
+`Pendiente de facturar`— **SHALL NOT** contener ningún ciclo, y ninguna transición que salga de uno de ellos **SHALL**
+llevar a un estado anterior del subgrafo. De `Pendiente de facturar` **SHALL** salirse sólo a `Finalizado`. Lo vigila un
+invariante del grafo derivado de `TRANSITIONS`, no una lista escrita a mano.
+
+Con el ciclo desaparece su reentrancia: `Fecha Remisión de Salida` y `Fecha prevista de facturación` **SHALL NOT** ser
+campos de fecha reentrantes, y la fila de la columna 47 de `INDICADORES_G6` (`alcance: 'C4'`) **SHALL** salir del cruce,
+porque su campo deja de serlo. Quedan **nueve** campos reentrantes (siete obligatorios), **ocho** casos y **dos** ciclos.
+
+#### Scenario: no hay ciclo entre los estados de cierre — ROJO
+- GIVEN `TRANSITIONS` tras el cambio
+- WHEN se calculan los componentes fuertemente conexos del grafo
+- THEN ninguno contiene un estado de cierre, y los dos que quedan son los de diagnóstico y espera
+
+#### Scenario: una transición que vuelva a cerrar el ciclo se pone en rojo — MUTACIÓN
+- GIVEN el catálogo con `entrega_sin_factura` devuelta a `Por Facturar`, o con una transición de `Pendiente de facturar`
+  a `Por Facturar`
+- WHEN corre el invariante
+- THEN falla
+
+#### Scenario: de `Pendiente de facturar` sólo se sale a `Finalizado` — ROJO
+- GIVEN `TRANSITIONS`
+- WHEN se listan las salidas de `Pendiente de facturar`
+- THEN son exactamente `[facturar]` y su destino es `Finalizado`
+
+#### Scenario: la reentrancia pierde el ciclo de cierre — ROJO (prueba editada a propósito)
+- GIVEN la tabla de reentrancia tras el cambio
+- WHEN se cuentan casos y campos
+- THEN hay ocho casos, nueve campos (siete obligatorios), sin `Fecha Remisión de Salida` ni `Fecha prevista de
+  facturación`, e `INDICADORES_G6` ya no lleva la columna 47

@@ -43,7 +43,7 @@ Las referencias D* son de `design.md`. Las cifras se leen del rojo, no se estima
 ## Cierre
 
 - [x] 3.1 verify (intento 5).
-- [ ] 3.2 archive con la regla del archivo (intento 6): fusión por script, `archive-report.md`, `registro.test.ts` a
+- [x] 3.2 archive con la regla del archivo (intento 6): fusión por script, `archive-report.md`, `registro.test.ts` a
       ocho en curso con F1C-02 por archivo, `RECONCILIACION.md` regenerado en la rama, cuatro códigos y
       `git show --numstat` del commit de archivo.
 
