@@ -10,7 +10,7 @@ Cinco intentos (propuesta §5), cada uno con techo 800 y válvula 720, salvo el 
 
 ## Intento 1b · Specs
 
-- [ ] 1b.1 Deltas de `transitions-st`, `transitions-equipo-nuevo`, `transitions-soporte-remoto` y `tickets-core`. Los
+- [x] 1b.1 Deltas de `transitions-st`, `transitions-equipo-nuevo`, `transitions-soporte-remoto` y `tickets-core`. Los
   MODIFIED se copian del bloque vivo por script, y antes del commit se comparan con `diff` los títulos
   `#### Scenario` del bloque vivo y del delta.
 
