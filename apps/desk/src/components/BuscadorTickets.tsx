@@ -3,8 +3,8 @@ import { BUSQUEDA_MAX } from '@ambientalia/shared'
 import { aplazar, ESPERA_BUSQUEDA_MS } from '../lib/busquedaTickets'
 
 /**
- * Caja de búsqueda del listado por número de ticket o por serial (RQ-VT-11). Sin lógica de dominio:
- * envía el texto tal cual, tras una espera, y el servidor lo recorta, lo normaliza y lo valida. El
+ * Caja de búsqueda del listado por número, serial, cliente o código (RQ-VT-11, RQ-VT-17). Sin lógica de dominio:
+ * envía el texto tal cual, tras una espera, y el servidor decide en qué campos busca, lo normaliza y lo valida. El
  * `maxLength` es comodidad; el límite lo impone el servidor con `422`.
  */
 export function BuscadorTickets({ onBuscar }: { onBuscar: (q: string) => void }) {
@@ -18,9 +18,9 @@ export function BuscadorTickets({ onBuscar }: { onBuscar: (q: string) => void })
         value={texto}
         maxLength={BUSQUEDA_MAX}
         onChange={(e) => setTexto(e.target.value)}
-        placeholder="Buscar por número o serial"
-        aria-label="Buscar por número de ticket o por serial"
-        className="w-56 pl-8 pr-2 py-1.5 border border-slate-200 rounded text-[13px] text-slate-700 bg-white focus:outline-none focus:border-blue-400"
+        placeholder="Buscar por número, serial, cliente o código"
+        aria-label="Buscar por número de ticket, serial, cliente o código de servicio"
+        className="w-72 pl-8 pr-2 py-1.5 border border-slate-200 rounded text-[13px] text-slate-700 bg-white focus:outline-none focus:border-blue-400"
       />
     </div>
   )
