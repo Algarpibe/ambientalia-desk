@@ -81,7 +81,7 @@ decisión de Gerencia (F0-00); lo comprueba `npm run typecheck`.
 |---|---|---|
 | Ocultar una Decisional a quien no tiene el cargo de su área (encendido) | `apps/desk/server/services/ticketService.ts:131`, el `403` de Decisionales | `decisionalesPorCargo.test.ts`, «un Técnico recibe 403…», M2, M3 |
 | Mostrarla al Especialista técnico sólo con el Coordinador vacante | `ticketService.ts:131` con `contextoDecisionales` (`apps/desk/server/services/decisionales.ts:10-13`) | las dos del Especialista, M4a, M4b |
-| Saber si el interruptor está encendido y si el Coordinador está vacante | `apps/desk/server/routes/permisosDecisionales.ts:16`, que llama a la misma `contextoDecisionales` | las tres de la ruta, M2b, M4a |
+| Saber si el interruptor está encendido y si el Coordinador está vacante | `apps/desk/server/routes/permisosDecisionales.ts:16-17`, que llama a la misma `contextoDecisionales` | las tres de la ruta, M2b, M4a |
 | Si la ruta falla, no filtrar (contexto apagado) | `ticketService.ts:131`: el `403` sigue mandando | — (comodidad; la guarda está probada) |
 | Ocultar `liberacion_sin_factura` a quien no es Director Comercial | `ticketService.ts:131`, el `403` de cargo (RQ-PM-17, sin cambio) | «la lista corta no se relaja», M6 |
 

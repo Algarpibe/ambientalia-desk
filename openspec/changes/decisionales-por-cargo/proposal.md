@@ -38,7 +38,7 @@ interruptor apagado nada cambia, y el texto del maestro se actualiza cuando se e
   cargo fuera de la lista cuenta como «sin cargo» (`cargoEfectivo`, `:40-42`).
 - El servidor lo impone en `executeTransition`: `409` de estado (`apps/desk/server/services/ticketService.ts:126-128`),
   `403` de área (`:129-130`) y `403` de cargo en la línea siguiente (`:131`), antes de la prioridad, la OVI, la verificación y
-  todo `422` (`:131-134`). RQ-PM-18 fija ese orden (`openspec/specs/permissions/spec.md:434-462`).
+  todo `422` (el primero, el de derivación, en `:141`). RQ-PM-18 fija ese orden (`openspec/specs/permissions/spec.md:434-462`).
 - El cargo viaja en la sesión: `USER_SELECT` lee `cargo_permiso` (`apps/desk/server/auth/users.ts:14-16`) y `rowToPublicUser`
   lo deja en `cargoPermiso` (`:30`); `GET /api/auth/me` devuelve `req.user` tal cual (`apps/desk/server/auth/routes.ts:36`).
 - El cliente filtra los botones con la misma compuesta: `puedeEjecutarTransicion(user, t)`
