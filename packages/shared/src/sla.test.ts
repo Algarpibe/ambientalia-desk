@@ -42,13 +42,13 @@ describe('C11 · el reloj del SLA', () => {
   /**
    * LA COHERENCIA QUE §3.7 DE `transitions-st` PEDÍA — y desde F1B-08 se prueba por INDEPENDENCIA.
    *
-   * `estados.ts:28` avisa: «La vista muestra las once. El reloj del SLA NO lee esta clasificación.»
+   * `estados.ts:28` avisa: «La vista muestra las doce. El reloj del SLA NO lee esta clasificación.»
    * En 6516e5f se probaba con exclusión (el único estado con SLA, `Notificado`, estaba fuera de las
    * once). Con tres alarmas eso ya no vale: `Remisión creada` y `Notificación cliente` SÍ están en la
    * vista. Lo que se prueba es que ninguna lista sale de la otra: hay alarmas dentro y fuera de las
-   * once, y estados de espera sin alarma. Si el reloj leyera `ESTADOS_EN_ESPERA`, se pone roja.
+   * doce, y estados de espera sin alarma. Si el reloj leyera `ESTADOS_EN_ESPERA`, se pone roja.
    */
-  it('el reloj y la vista no leen la misma lista: hay alarmas dentro y fuera de las once', () => {
+  it('el reloj y la vista no leen la misma lista: hay alarmas dentro y fuera de las doce', () => {
     const conSla = Object.keys(SLA_HORAS_POR_ESTADO), espera = ESTADOS_EN_ESPERA as string[]
     expect([conSla.some((e) => espera.includes(e)), conSla.some((e) => !espera.includes(e))]).toEqual([true, true])
     expect(espera.some((e) => !conSla.includes(e)), 'algún estado de espera sin alarma').toBe(true)

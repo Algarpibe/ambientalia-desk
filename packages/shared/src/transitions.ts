@@ -344,8 +344,8 @@ export function areasSiguientes(estado: string, transiciones: readonly Transitio
  * a `Verificación` (D1 de `design.md`) hacia `Finalizado`, y `rechazo_verificacion` (D2) hacia
  * `Notificado`, con la misma forma que el resto: sólo `comment()` y `derivacion()` (s3).
  *
- * Área: las seis son `Servicio Técnico` por equivalencia (supuesto s2, ninguna fuente accesible la
- * contradice). Campos: `comment()` y `derivacion()`; `liberacion` añade el certificado de fábrica (`:360`) (RQ-EN-07).
+ * Área: las seis son `Servicio Técnico` (`decision/e226-espera-y-areas-equipo-nuevo`): ninguna es de entrega ni de
+ * facturación al cliente, y `liberacion` es la liberación técnica tras el control. Campos: `comment()` y `derivacion()`; `liberacion` añade el certificado de fábrica (`:360`) (RQ-EN-07).
  */
 export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
   { id: 'ingreso_equipo_nuevo', name: 'Ingreso equipo nuevo', from: ['Ingresado'], to: 'En Proceso', area: 'Servicio Técnico',

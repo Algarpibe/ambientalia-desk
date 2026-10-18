@@ -212,7 +212,7 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
 
   it('corrección (b) · las seis entradas de Equipo nuevo declaran comentario y derivación (liberacion, además, el certificado)', () => {
     for (const t of TRANSITIONS_EQUIPO_NUEVO) {
-      expect(t.area, `${t.id} no es de Servicio Técnico (s2)`).toBe('Servicio Técnico')
+      expect(t.area, `${t.id} no es de Servicio Técnico (E-226)`).toBe('Servicio Técnico')
       expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(t.id === 'liberacion' ? ['comment', 'certificado_fabrica', 'derivado_a'] : ['comment', 'derivado_a'])
     }
   })

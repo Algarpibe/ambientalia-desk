@@ -18,14 +18,14 @@
  * | Nombre        | Criterio                                                                   | Fuente          | Alcance                          |
  * |---------------|----------------------------------------------------------------------------|-----------------|----------------------------------|
  * | `sin_salida`  | Su única transición de salida depende de algo que la aplicación no controla | M1.3.4          | 4 estados                        |
- * | `en_espera`   | El ticket está parado esperando el acto de un tercero y el área dueña no    | Vista del       | 11 estados — LO QUE DECLARA ESTE |
+ * | `en_espera`   | El ticket está parado esperando el acto de un tercero y el área dueña no    | Vista del       | 12 estados — LO QUE DECLARA ESTE |
  * |               | puede hacer nada por su cuenta                                             | tablero         | módulo                           |
  * | `bodegaje`    | El tiempo que un equipo pasa en Ambientalia esperando una respuesta del     | M1.10           | 3 PERIODOS ENTRE FECHAS,         |
  * |               | cliente — tiempo que no depende de nosotros                                | `[DEFINIDO R08]`| no estados                       |
  *
  * DE AQUÍ SALE LA REGLA QUE SEPARA LA VISTA DEL RELOJ, y si no queda explícita F1C-06 la pierde:
  *
- *   **La vista muestra las once. El reloj del SLA NO lee esta clasificación.**
+ *   **La vista muestra las doce. El reloj del SLA NO lee esta clasificación.**
  *
  * El reloj para en los tres bodegajes de M1.10, que son periodos delimitados por dos fechas y no
  * estados del grafo. Un estado puede estar `en_espera` y no parar ningún reloj, y un bodegaje puede
@@ -57,7 +57,7 @@ export type EnEspera = 'externa' | 'interna' | 'ninguna' | 'sin_clasificar'
  * clasificación, no para buscar un estado suelto.
  */
 export const CLASIFICACION_EN_ESPERA = {
-  // ── externa (5) — esperamos a alguien de fuera ────────────────────────────────────────────────
+  // ── externa (5, y `Pendiente` en :103) — esperamos a alguien de fuera ─────────────────────────
   'En Espera de Repuestos': 'externa',
   'Servicio externo': 'externa',
   // El cliente tiene la cotización y no ha contestado. Tiene salida de escape (`rechazo_cliente`),
@@ -85,7 +85,7 @@ export const CLASIFICACION_EN_ESPERA = {
   // filas arriba — el tercero del que depende es otra área de la casa, no alguien de fuera.
   'Remisión creada': 'interna',
 
-  // ── ninguna (9) — el trabajo está en manos de quien tiene el ticket ───────────────────────────
+  // ── ninguna (9, y las dos de :104-105) — el trabajo está en manos de quien tiene el ticket ────
   'Ingresado': 'ninguna',
   'Rev./Diagnostico': 'ninguna',
   'Notificado': 'ninguna',
@@ -98,11 +98,11 @@ export const CLASIFICACION_EN_ESPERA = {
   'OV asignada': 'ninguna',
   'Ticket creado': 'ninguna',
 
-  // ── sin clasificar (3) ───────────────────────────────────────────────────────────────────────
-  // Pendiente de Servicio Técnico (11/09). Desde F1C-09 no es estado de servicio: sólo existe en soporte
-  // remoto (`soporte_pendiente` y `continuacion_soporte`). Su clase de espera sigue sin decidir, y quien
-  // decide es Servicio Técnico: apuntar a `ninguna` no es decidir.
-  'Pendiente': 'sin_clasificar', 'Verificación': 'sin_clasificar', 'Solicitud Soporte': 'sin_clasificar', // Verificación: equipo-nuevo (RQ-EN-07); Solicitud Soporte: soporte-remoto (RQ-SR-03); sin fuente que clasifique su espera
+  // ── decididas el 17/10 (E-226): una `externa` y dos `ninguna`, fuera de su bloque a propósito ───────
+  // `decision/e226-espera-y-areas-equipo-nuevo`: «es espera lo que depende de alguien de fuera». No se mudan a su bloque (`:56-57`) para no desplazar las citas de este fichero (regla de mutación 4), y `Pendiente` va sola y sin comentario porque la comprobación 5 del barrido la cuenta como texto (`apps/desk/server/reconciliacion/comprobaciones.ts:162`).
+  'Pendiente': 'externa',
+  'Verificación': 'ninguna', // equipo-nuevo (RQ-EN-07): trabajo propio de Servicio Técnico, no espera a nadie
+  'Solicitud Soporte': 'ninguna', // soporte-remoto (RQ-SR-03): nacimiento y cola propia; supuesto del analista, reversible
 } as const satisfies Record<string, EnEspera>
 
 /** Un estado del Blueprint. Es un tipo cerrado: lo que no está en el registro no es un estado. */
@@ -112,7 +112,7 @@ export type Estado = keyof typeof CLASIFICACION_EN_ESPERA
 export const ESTADOS: Estado[] = Object.keys(CLASIFICACION_EN_ESPERA) as Estado[]
 
 /**
- * Las ONCE que la vista del tablero enseña bajo «En espera»: externa + interna.
+ * Las DOCE que la vista del tablero enseña bajo «En espera»: externa + interna.
  *
  * ⚠️ Es la lista de la VISTA. El reloj del SLA no la lee — para en los tres bodegajes de M1.10, que
  * son periodos entre fechas. Ver la tabla de los tres criterios arriba.

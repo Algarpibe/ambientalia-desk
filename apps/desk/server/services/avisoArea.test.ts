@@ -40,7 +40,7 @@ describe('areasAAvisar', () => {
  *
  * El catálogo SINTÉTICO de abajo tiene, a propósito, áreas siguientes DISTINTAS de las de servicio
  * desde `Notificado` (`escalado_a_comercial`/`reporte_por_garantia` → Comercial/Compras): así M13
- * (7.6 de `tasks.md`) es detectable aquí aunque no lo sea con el catálogo real (s2, las cinco EN son
+ * (7.6 de `tasks.md`) es detectable aquí aunque no lo sea con el catálogo real (E-226, las seis EN son
  * todas Servicio Técnico).
  */
 describe('areasAAvisar con catálogo inyectado (F1B-06)', () => {

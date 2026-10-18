@@ -5,20 +5,20 @@ Un intento de aplicación con techo 800 (válvula 720). Se asienta sólo si sus 
 
 ## Lote 1 · Pruebas en rojo (diseño D3)
 
-- [ ] 1.1 **Rojo.** `packages/shared/src/estados.test.ts` en sitio: 6 `externa`, 11 `ninguna`, `sin_clasificar` vacío, las
+- [x] 1.1 **Rojo.** `packages/shared/src/estados.test.ts` en sitio: 6 `externa`, 11 `ninguna`, `sin_clasificar` vacío, las
   doce, `Solicitud Soporte` `ninguna`.
-- [ ] 1.2 **Rojo.** `apps/desk/src/lib/esperaE226.test.ts` (nuevo): `Pendiente` en «Espera».
-- [ ] 1.3 **Rojo.** `apps/desk/server/reconciliacion/esperasContraRegistro.test.ts` (nuevo).
-- [ ] 1.4 `packages/shared/src/comentariosVigilados.test.ts`, caso (f), al final del fichero.
+- [x] 1.2 **Rojo.** `apps/desk/src/lib/esperaE226.test.ts` (nuevo): `Pendiente` en «Espera».
+- [x] 1.3 **Rojo.** `apps/desk/server/reconciliacion/esperasContraRegistro.test.ts` (nuevo).
+- [x] 1.4 `packages/shared/src/comentariosVigilados.test.ts`, caso (f), al final del fichero.
 
 ## Lote 2 · Verde (diseño D1, D2)
 
-- [ ] 2.1 `estados.ts:101-105` con el dato; ver en rojo el caso (f) con los comentarios sin tocar.
-- [ ] 2.2 `estados.ts:21`, `:28`, `:60`, `:88`, `:115` en sitio; `sla.test.ts:45`, `:49`, `:51` en sitio.
-- [ ] 2.3 `comprobaciones.ts:154` a `export`, en sitio.
-- [ ] 2.4 `transitions.ts:347-348`; `invariantesGrafo.test.ts:215`, `permisos.test.ts:212`, `avisoArea.test.ts:43` en sitio.
-- [ ] 2.5 **Mutaciones** M0-M7 de D4, cada una restaurada; anotar qué prueba cae.
-- [ ] 2.6 **Cierre del intento.** test, typecheck, lint (165 avisos como máximo), commit y detector `--sha HEAD`; `wc -l`
+- [x] 2.1 `estados.ts:101-105` con el dato; ver en rojo el caso (f) con los comentarios sin tocar.
+- [x] 2.2 `estados.ts:21`, `:28`, `:60`, `:88`, `:115` en sitio; `sla.test.ts:45`, `:49`, `:51` en sitio.
+- [x] 2.3 `comprobaciones.ts:154` a `export`, en sitio.
+- [x] 2.4 `transitions.ts:347-348`; `invariantesGrafo.test.ts:215`, `permisos.test.ts:212`, `avisoArea.test.ts:43` en sitio.
+- [x] 2.5 **Mutaciones** M0-M7 de D4, cada una restaurada; anotar qué prueba cae.
+- [x] 2.6 **Cierre del intento.** test, typecheck, lint (165 avisos como máximo), commit y detector `--sha HEAD`; `wc -l`
   igual en los ficheros existentes; medida `git diff --shortstat --no-renames` contra el commit de partida; build para el
   bundle.
 
