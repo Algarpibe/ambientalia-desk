@@ -172,3 +172,19 @@ describe('RQ-VT-03 · las siete claves de FUNCTIONAL_VIEWS tienen su case y ning
     })
   }
 })
+
+/**
+ * anulado-con-motivo (F1C-01, RQ-TS-40, último escenario): un `Anulado` es cerrado (`statusType: 'Closed'`, `CLOSED_STATUSES`
+ * del servidor) y las vistas leen sólo `statusType`: está en «cerrados» y en «todos», y no en «abiertos» ni en «espera».
+ */
+describe('applyBoardView · un anulado es cerrado (RQ-TS-40)', () => {
+  const lista = [T({ id: 'x', status: 'Anulado', statusType: 'Closed', dueDate: '2026-01-01T00:00:00Z' }), T({ id: 'a' })]
+  const ids = (key: VistaKey) => applyBoardView(lista, key, now).map((t) => t.id).sort()
+  it('está en «cerrados»', () => { expect(ids('cerrados')).toEqual(['x']) })
+  it('no está en «abiertos», ni en «espera», ni en «vencidos»', () => {
+    expect(ids('abiertos')).toEqual(['a'])
+    expect(ids('espera')).toEqual([])
+    expect(ids('vencidos')).toEqual([])
+  })
+  it('sigue en «todos»', () => { expect(ids('todos')).toEqual(['a', 'x']) })
+})

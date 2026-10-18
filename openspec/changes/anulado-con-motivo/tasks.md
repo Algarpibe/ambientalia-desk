@@ -34,17 +34,17 @@ Cinco intentos (propuesta §5), cada uno con techo 800 y válvula 720, salvo el 
 
 ## Intento 3 · Lote 2: métricas e histórico (D6, D8)
 
-- [ ] 3.0 **Partición del intento 2** (superaba la válvula: 870 líneas medidas). Entran aquí las pruebas HTTP del lote 1
+- [x] 3.0 **Partición del intento 2** (superaba la válvula: 870 líneas medidas). Entran aquí las pruebas HTTP del lote 1
   (`apps/desk/server/anulacion.test.ts`, en rojo antes del verde del intento 2, como consta en `apply-progress.md`) y
   `apply-progress.md`.
 
-- [ ] 3.1 **Rojo.** `packages/shared/src/analisisAnulados.test.ts` (nuevo): un anulado con `finalizadoAt` en el periodo
+- [x] 3.1 **Rojo.** `packages/shared/src/analisisAnulados.test.ts` (nuevo): un anulado con `finalizadoAt` en el periodo
   no cuenta en finalizados, ni en el tiempo promedio, ni en el OTD, y sí cuenta como creado. Y un anulado no entra en la
   media de resolución de la ficha (S-5).
-- [ ] 3.2 **Rojo.** Guardián de `docs/sdd/Consulta_Candidatos_Anulado_2026-10-18.sql`, que se pone rojo si el fichero
+- [x] 3.2 **Rojo.** Guardián de `docs/sdd/Consulta_Candidatos_Anulado_2026-10-18.sql`, que se pone rojo si el fichero
   no existe o escribe.
-- [ ] 3.3 **Verde.** `analisis.ts:59`, `cierreEnCifras.ts` y el `.sql`.
-- [ ] 3.4 **Mutaciones** M6-M9 de D9, restauradas.
+- [x] 3.3 **Verde.** `analisis.ts:59`, `cierreEnCifras.ts` y el `.sql`.
+- [x] 3.4 **Mutaciones** M6-M9 de D9, restauradas.
 - [ ] 3.5 **Cierre del intento**, como el 2.6, más el build para medir el bundle.
 
 ## Intentos 4 y 5 · Verify y archive

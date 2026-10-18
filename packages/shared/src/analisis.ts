@@ -1,5 +1,5 @@
 import type { Analisis, AnalisisPunto, AnalisisMes, AnalisisRow } from './types'
-
+import { esAnulado } from './anulacion'
 function parseDate(s: string | null): Date | null {
   if (!s) return null
   const d = new Date(s)
@@ -56,7 +56,7 @@ export function computeAnalisis(rows: AnalisisRow[], from: Date | null, to: Date
       bump(porClasificacion, r.clasificaciones || '—')
       bumpMes(monthKey(created!), 'creados')
     }
-    if (cerrado && inRange(fin, from, to)) {
+    if (cerrado && !esAnulado(r.status) && inRange(fin, from, to)) {
       finalizados++
       bumpMes(monthKey(fin!), 'finalizados')
       if (created && fin) {

@@ -56,7 +56,7 @@ describe('llegadaQueCuenta (S-3)', () => {
 })
 
 describe('resolucionPromedioMs', () => {
-  const t = (id: string, createdAt: string | null, closedAt: string | null, statusType: string | null = 'Closed') => ({ id, statusType, createdAt, closedAt })
+  const t = (id: string, createdAt: string | null, closedAt: string | null, statusType: string | null = 'Closed') => ({ id, status: 'Finalizado', statusType, createdAt, closedAt })
   it('media de los cerrados cuyo cierre cuenta; el de la migración no entra', () => {
     const tickets = [
       t('a', '2026-11-01T00:00:00Z', '2026-11-01T02:00:00Z'),
