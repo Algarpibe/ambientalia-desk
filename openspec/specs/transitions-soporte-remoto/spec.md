@@ -98,8 +98,8 @@ recibe la solicitud. Se confirma en P.3 (`docs/sdd/ENTRADA.md`).
 ### Requirement: RQ-SR-03 · `Solicitud Soporte` se registra, sólo de soporte remoto
 
 `Solicitud Soporte` **SHALL** registrarse en `ESTADOS` y en `CLASIFICACION_EN_ESPERA`
-(`packages/shared/src/estados.ts:59-112`) con clase `sin_clasificar` (S-2, valor válido del tipo,
-`:40`), y **SHALL** quedar **excluido** de `ESTADOS_SERVICIO` (`:182-190`), igual que `Verificación`
+(`packages/shared/src/estados.ts:59-112`) con clase `ninguna` (`decision/e226-espera-y-areas-equipo-nuevo`, supuesto del
+analista: nacimiento y cola propia; era `sin_clasificar`, S-2), y **SHALL** quedar **excluido** de `ESTADOS_SERVICIO` (`:182-190`), igual que `Verificación`
 lo está por ser sólo de equipo nuevo. La unión de los estados derivados de `from`/`to` de los tres
 catálogos **SHALL** ser exactamente `ESTADOS`.
 
@@ -132,7 +132,7 @@ catálogos **SHALL** ser exactamente `ESTADOS`.
 #### Scenario: Clase de espera de Solicitud Soporte
 - GIVEN el registro `CLASIFICACION_EN_ESPERA`
 - WHEN se consulta `Solicitud Soporte`
-- THEN devuelve `sin_clasificar`
+- THEN devuelve `ninguna`, y el tablero la enseña en «Abiertos»
 
 ## 4 · Nacimiento
 
@@ -328,7 +328,8 @@ la sincronización con Zoho no la pise. Los tickets heredados quedan con `NULL` 
 
 La lista de estados sólo de soporte remoto (`ESTADOS_SOLO_SOPORTE_REMOTO`) **SHALL** ser exactamente
 `Solicitud Soporte` y `Pendiente`. `Pendiente` **SHALL** seguir en `ESTADOS` y en `CLASIFICACION_EN_ESPERA`
-con clase `sin_clasificar`, y **SHALL** quedar excluido de `ESTADOS_SERVICIO`. El bucle
+con clase `externa` (`decision/e226-espera-y-areas-equipo-nuevo`: «Pendiente: espera (sólo tickets antiguos)»; era
+`sin_clasificar`), y **SHALL** quedar excluido de `ESTADOS_SERVICIO`. El bucle
 `En Proceso ↔ Pendiente` de `RQ-SR-01` **SHALL** funcionar sin cambio, y los cuatro estados del catálogo de
 `Soporte remoto` **SHALL** seguir siendo `Solicitud Soporte`, `En Proceso`, `Pendiente` y `Finalizado`. La
 prueba de estados sólo de soporte remoto (`invariantesGrafo.test.ts`) **SHALL** fijar la lista de dos.
@@ -347,3 +348,8 @@ prueba de estados sólo de soporte remoto (`invariantesGrafo.test.ts`) **SHALL**
 - GIVEN un ticket `Soporte remoto` en `Pendiente`
 - WHEN se listan sus transiciones ejecutables
 - THEN es exactamente `Continuación soporte` y el flujo aplicable es `soporte-remoto`
+
+#### Scenario: un ticket en `Pendiente` se enseña en «Espera»
+- GIVEN un ticket abierto en `Pendiente`
+- WHEN el tablero calcula «Abiertos» y «Espera»
+- THEN sale en «Espera» y no en «Abiertos»

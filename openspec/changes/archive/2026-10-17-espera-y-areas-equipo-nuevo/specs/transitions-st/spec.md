@@ -30,8 +30,7 @@ un requisito formal sobre la composición de `CLASIFICACION_EN_ESPERA`; sólo la
 - GIVEN el registro reclasificado
 - WHEN se calcula `ESTADOS_EN_ESPERA` (`ESTADOS.filter(...)`, `estados.ts:120`)
 - THEN el resultado tiene **once** entradas, en el orden que produce el filtro sobre el registro
-  agrupado por clase — no en el orden que tenía la lista de nueve con las dos añadidas al final
-  (doce desde E-226, `RQ-TS-39`)
+  agrupado por clase — no en el orden que tenía la lista de nueve con las dos añadidas al final (doce desde E-226, `RQ-TS-39`)
 
 ### RQ-TS-25 · `Pendiente` pasa a ser estado sólo de soporte remoto
 
@@ -80,8 +79,7 @@ valores **SHALL** coincidir con `TRANSITIONS.length`, con las aristas del diagra
 #### Scenario: la mención a `Pendiente` de `esperas` queda coherente
 - GIVEN la entrada `esperas` de `cifras_ancladas`
 - WHEN se lee su recuento de estados de servicio
-- THEN no cuenta `Pendiente` entre los 20; el recuento de espera que lee el barrido es el del código (12 desde E-226,
-  `RQ-TS-39`), y la prosa de esa entrada la actualiza Supervisión
+- THEN no cuenta `Pendiente` entre los 20; el recuento de espera que lee el barrido es el del código (12 desde E-226, `RQ-TS-39`)
 
 ## ADDED Requirements
 

@@ -5,9 +5,8 @@
 ### Requirement: RQ-SR-03 · `Solicitud Soporte` se registra, sólo de soporte remoto
 
 `Solicitud Soporte` **SHALL** registrarse en `ESTADOS` y en `CLASIFICACION_EN_ESPERA`
-(`packages/shared/src/estados.ts:59-112`) con clase `ninguna` (`decision/e226-espera-y-areas-equipo-nuevo`, supuesto
-del analista: es el estado de nacimiento y cola propia; era `sin_clasificar`, S-2), y **SHALL** quedar **excluido** de
-`ESTADOS_SERVICIO` (`:182-190`), igual que `Verificación`
+(`packages/shared/src/estados.ts:59-112`) con clase `ninguna` (`decision/e226-espera-y-areas-equipo-nuevo`, supuesto del
+analista: nacimiento y cola propia; era `sin_clasificar`, S-2), y **SHALL** quedar **excluido** de `ESTADOS_SERVICIO` (`:182-190`), igual que `Verificación`
 lo está por ser sólo de equipo nuevo. La unión de los estados derivados de `from`/`to` de los tres
 catálogos **SHALL** ser exactamente `ESTADOS`.
 

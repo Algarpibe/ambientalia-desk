@@ -15,11 +15,8 @@ legítima de criterio**, y el barrido **SHALL** reproducir esa clasificación si
 de brechas salió **falso** por leer `config.yaml` en vez del código, y la propia entrada `esperas` lo
 deja escrito. Leer el registro para comprobar el registro es el molde del fallo.
 
-Como la lectura de `estados.ts` es de TEXTO (`apps/desk/server/reconciliacion/comprobaciones.ts:154-165`), el recuento
-del barrido sobre el fichero real **SHALL** coincidir con `ESTADOS_EN_ESPERA.length`, y una prueba lo enfrenta.
-
 #### Scenario: la cifra sale del código
-- GIVEN `ESTADOS_EN_ESPERA` con doce entradas en `packages/shared/src/estados.ts` (once hasta E-226)
+- GIVEN `ESTADOS_EN_ESPERA` con doce entradas en `packages/shared/src/estados.ts` (once hasta E-226, `RQ-RC-13`)
 - WHEN corre la comprobación 5
 - THEN reporta 12 frente a los 4 del maestro, leídos del código y no de `config.yaml`
 
@@ -28,7 +25,22 @@ del barrido sobre el fichero real **SHALL** coincidir con `ESTADOS_EN_ESPERA.len
 - WHEN corre la comprobación 5
 - THEN el fichero la presenta como divergencia legítima y no como error, y el código de salida no cambia
 
+## ADDED Requirements
+
+### Requirement: RQ-RC-13 · El recuento de esperas del barrido coincide con `ESTADOS_EN_ESPERA`
+
+La comprobación 5 lee `estados.ts` como TEXTO (`apps/desk/server/reconciliacion/comprobaciones.ts:154-165`) y cuenta
+sólo las líneas `'X': 'externa'` o `'X': 'interna'` que van solas (`:162`); la vista cuenta con `ESTADOS_EN_ESPERA`. Son
+dos implementaciones de la misma cifra (molde H5). El recuento del barrido sobre el `estados.ts` real **SHALL** coincidir
+con `ESTADOS_EN_ESPERA.length`, y `apps/desk/server/reconciliacion/esperasContraRegistro.test.ts` lo enfrenta
+(`espera-y-areas-equipo-nuevo`, E-226). `esperasDelCodigo` **SHALL** exportarse para esa prueba.
+
 #### Scenario: el texto y el registro cuentan lo mismo
 - GIVEN el `estados.ts` real
-- WHEN se cuenta con el lector de la comprobación 5 y con `ESTADOS_EN_ESPERA`
-- THEN las dos cifras son iguales; un comentario detrás de una entrada `externa` la pone roja
+- WHEN se cuenta con `esperasDelCodigo` y con `ESTADOS_EN_ESPERA`
+- THEN las dos cifras son iguales (12 desde E-226)
+
+#### Scenario: un comentario detrás de una entrada `externa` se pone rojo (mutación)
+- GIVEN `'Pendiente': 'externa', // …`
+- WHEN corre `esperasContraRegistro.test.ts`
+- THEN falla: el barrido cuenta once y el código doce
