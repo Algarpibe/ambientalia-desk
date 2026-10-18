@@ -30,12 +30,12 @@ archivo). Un intento sólo se asienta si test, typecheck, lint y el detector de 
 
 ## Intento 4 · Archive
 
-- [ ] 4.1 Fusión del delta por script: `RQ-TS-41` al final de `openspec/specs/transitions-st/spec.md`, bloque idéntico
+- [x] 4.1 Fusión del delta por script: `RQ-TS-41` al final de `openspec/specs/transitions-st/spec.md`, bloque idéntico
   al del delta (comparado con `diff`).
-- [ ] 4.2 Barrido de citas de D6 (regla de mutación 4) sobre `anulacion.ts`, `anulacion.test.ts` y la spec viva.
-- [ ] 4.3 `archive-report.md` con la tabla de la regla 13, la línea de lo que cubre de F1C-01 y lo que deja fuera, y la
+- [x] 4.2 Barrido de citas de D6 (regla de mutación 4) sobre `anulacion.ts`, `anulacion.test.ts` y la spec viva.
+- [x] 4.3 `archive-report.md` con la tabla de la regla 13, la línea de lo que cubre de F1C-01 y lo que deja fuera, y la
   medida de la parte revisable (≤ 800, regla del archivo).
-- [ ] 4.4 Mudanza de la carpeta a `openspec/changes/archive/2026-10-18-orden-motivos-anulacion/`, `RECONCILIACION.md`
+- [x] 4.4 Mudanza de la carpeta a `openspec/changes/archive/2026-10-18-orden-motivos-anulacion/`, `RECONCILIACION.md`
   regenerado en la rama, cuatro códigos en 0 y `git show --numstat` del commit de archivo (sólo este cambio).
 
 ## Fuera del recuento — de personas, archivar NO las da por hechas
