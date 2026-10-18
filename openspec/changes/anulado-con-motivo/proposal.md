@@ -98,6 +98,8 @@ Con `Anulado` pasa a 21.
 | S-5 | La media de resolución de la ficha de cliente también excluye los anulados: un servicio anulado no se resolvió | La condición de `resolucionPromedioMs` |
 | S-6 | El detalle de «Otro» es un campo de texto propio, obligatorio sólo con ese motivo | `erroresAnulacion` |
 | S-7 | El anulado sigue contando como creado en Análisis: se creó | La condición de `creados` |
+| S-8 | Anular no da el testigo: `areasSiguientes` ignora las transiciones a `Anulado`, así que no cambian los avisos por área, el traspaso ni quién puede reasignar (RQ-PM-27). Sin esto, Comercial recibiría un aviso y ganaría la reasignación en once estados de los tres flujos | La condición de `areasSiguientes` (`transitions.ts:330`) |
+| S-9 | La anulación de servicio hereda la casilla «Derivado a», como todas las de servicio (`transitions.ts:297`); las de equipo nuevo y soporte remoto no la llevan | Excluirla en `TRANSICIONES_BASE` |
 
 ## 5. Partición (el cambio no cabe en un intento de 800)
 

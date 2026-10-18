@@ -71,7 +71,7 @@ export interface Transition {
  * puede mentir y el motor no necesita una guarda aparte que lo compruebe.
  */
 const comment = (): TransitionField =>
-  ({ key: 'comment', label: 'Comentario', kind: 'comment', required: false, target: 'comment' })
+  ({ key: 'comment', label: 'Comentario', kind: 'comment', required: false, target: 'comment' }); import { camposAnulacion, ESTADO_ANULADO } from './anulacion' // va aquí y no arriba: un import nuevo desplazaría las citas del fichero (regla de mutación 4)
 const cfDate = (label: string, required = true): TransitionField =>
   ({ key: label, label, kind: 'date', required, target: 'customField' })
 const cfText = (label: string, required = true): TransitionField =>
@@ -259,7 +259,7 @@ const TRANSICIONES_BASE: Transition[] = [
   { id: 'habilitado_para_entrega', name: 'Habilitado para entrega', from: ['Liberación Comercial'], to: 'Por Entregar', area: 'Comercial',
     fields: [comment(), cfDate('Fecha de aviso al cliente')] },
   { id: 'notif_recotizacion', name: 'Notificación re cotización', from: ['Continuación del proceso'], to: 'Notificación Comercial', area: 'Comercial',
-    fields: [comment()] },
+    fields: [comment()] }, { id: 'anulacion', name: 'Anulación', from: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], to: 'Anulado', area: 'Comercial', fields: [comment(), ...camposAnulacion()] },
 ]
 
 /**
@@ -327,7 +327,7 @@ export function areasForTransition(area: string): string[] {
 export function areasSiguientes(estado: string, transiciones: readonly Transition[] = TRANSITIONS): string[] {
   const areas = new Set<string>()
   for (const t of transiciones) {
-    if (!t.from.includes(estado)) continue
+    if (!t.from.includes(estado) || t.to === ESTADO_ANULADO) continue // F1C-01 (S-8): anular es la salida de emergencia, no el trabajo siguiente; no avisa ni da a Comercial el testigo
     for (const a of areasForTransition(t.area)) areas.add(a)
   }
   return [...areas]
@@ -344,8 +344,8 @@ export function areasSiguientes(estado: string, transiciones: readonly Transitio
  * a `Verificación` (D1 de `design.md`) hacia `Finalizado`, y `rechazo_verificacion` (D2) hacia
  * `Notificado`, con la misma forma que el resto: sólo `comment()` y `derivacion()` (s3).
  *
- * Área: las seis son `Servicio Técnico` (`decision/e226-espera-y-areas-equipo-nuevo`): ninguna es de entrega ni de
- * facturación al cliente, y `liberacion` es la liberación técnica tras el control. Campos: `comment()` y `derivacion()`; `liberacion` añade el certificado de fábrica (`:360`) (RQ-EN-07).
+ * Área: las seis de trabajo son `Servicio Técnico` (`decision/e226-espera-y-areas-equipo-nuevo`): ninguna es de entrega ni de
+ * facturación al cliente, y `liberacion` es la liberación técnica tras el control. Campos: `comment()` y `derivacion()`; `liberacion` añade el certificado de fábrica (`:360`) (RQ-EN-07). La séptima, `anulacion_equipo_nuevo` (F1C-01), es `Comercial` y añade el motivo y su detalle (`decision/f1c01-area-anulado`).
  */
 export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
   { id: 'ingreso_equipo_nuevo', name: 'Ingreso equipo nuevo', from: ['Ingresado'], to: 'En Proceso', area: 'Servicio Técnico',
@@ -359,7 +359,7 @@ export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
   { id: 'liberacion', name: 'Liberación', from: ['En Proceso', 'Verificación'], to: 'Finalizado', area: 'Servicio Técnico',
     fields: [comment(), { key: 'certificado_fabrica', label: 'Número del certificado de fábrica', kind: 'text', required: false, target: 'customField' }, derivacion()] },
   { id: 'rechazo_verificacion', name: 'Rechazo de verificación', from: ['Verificación'], to: 'Notificado', area: 'Servicio Técnico',
-    fields: [comment(), derivacion()] },
+    fields: [comment(), derivacion()] }, { id: 'anulacion_equipo_nuevo', name: 'Anulación', from: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], to: 'Anulado', area: 'Comercial', fields: [comment(), ...camposAnulacion()] },
 ]
 
 /**
@@ -381,8 +381,8 @@ function cfOvAdicional(campoFecha?: string, required = false): TransitionField {
  * servicio y fundirlos mezclaría los grafos en `transitionsForStatus` y `areasSiguientes` (`design.md` D1). Va
  * tras `cfOvAdicional` y no junto al de equipo nuevo para no desplazar las citas de `:365-376` (regla de mutación 4).
  *
- * Área: las cuatro son `Servicio Técnico` por equivalencia (S-1): la columna `ÁREA_RESPONSABLE` de la hoja de
- * mapeo está vacía. Campos: sólo `comment()` y `derivacion()` (S-3); ninguno lleva `modalidad` (RQ-SR-10) ni fecha.
+ * Área: las cuatro de trabajo son `Servicio Técnico` por equivalencia (S-1): la columna `ÁREA_RESPONSABLE` de la hoja de
+ * mapeo está vacía. Campos: sólo `comment()` y `derivacion()` (S-3); ninguno lleva `modalidad` (RQ-SR-10) ni fecha. La quinta, `anulacion_soporte` (F1C-01), es `Comercial` y añade el motivo y su detalle.
  * El id de `soporte_pendiente` NO reutiliza `marcar_pendiente` (`:206`, retirada por F1C-09): buscar por id da un único catálogo (S-8).
  */
 export const TRANSITIONS_SOPORTE_REMOTO: Transition[] = [
@@ -394,4 +394,6 @@ export const TRANSITIONS_SOPORTE_REMOTO: Transition[] = [
     fields: [comment(), derivacion()] },
   { id: 'continuacion_soporte', name: 'Continuación soporte', from: ['Pendiente'], to: 'En Proceso', area: 'Servicio Técnico',
     fields: [comment(), derivacion()] },
+  { id: 'anulacion_soporte', name: 'Anulación', from: ['En Proceso', 'Pendiente'], to: 'Anulado', area: 'Comercial',
+    fields: [comment(), ...camposAnulacion()] },
 ]

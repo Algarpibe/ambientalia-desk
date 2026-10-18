@@ -65,13 +65,13 @@ describe('catalogoDelTicket / transicionesDelTicket', () => {
   it('heredados (M7): transicionesDelTicket devuelve las de TRANSITIONS desde Rev./Diagnostico, no []', () => {
     const transiciones = transicionesDelTicket({ classification: 'Equipo Nuevo', status: 'Rev./Diagnostico' })
     expect(transiciones.map((t) => t.id).sort()).toEqual(
-      ['cal_sensores_revision', 'escalado_a_revision', 'rechazo_revision'].sort(),
+      ['anulacion', 'cal_sensores_revision', 'escalado_a_revision', 'rechazo_revision'].sort(),
     )
   })
 
-  it('un ticket Equipo nuevo en Ingresado sólo ve «Ingreso equipo nuevo»', () => {
+  it('un ticket Equipo nuevo en Ingresado sólo ve «Ingreso equipo nuevo» y la anulación', () => {
     const transiciones = transicionesDelTicket({ classification: 'Equipo Nuevo', status: 'Ingresado' })
-    expect(transiciones.map((t) => t.id)).toEqual(['ingreso_equipo_nuevo'])
+    expect(transiciones.map((t) => t.id)).toEqual(['ingreso_equipo_nuevo', 'anulacion_equipo_nuevo'])
   })
 })
 
@@ -170,7 +170,7 @@ describe('flujo soporte-remoto — enrutado, catálogo y guarda de flujo (RQ-SR-
 
   it('heredado (S-6): SR en Rev./Diagnostico ve las de TRANSITIONS desde ese estado, no []', () => {
     const ids = transicionesDelTicket({ classification: 'Soporte remoto', status: 'Rev./Diagnostico' }).map((t) => t.id)
-    expect(ids.sort()).toEqual(['cal_sensores_revision', 'escalado_a_revision', 'rechazo_revision'].sort())
+    expect(ids.sort()).toEqual(['anulacion', 'cal_sensores_revision', 'escalado_a_revision', 'rechazo_revision'].sort())
   })
 
   it('heredado (S-6): SR en Ticket creado ve las de TRANSITIONS desde ese estado, no []', () => {

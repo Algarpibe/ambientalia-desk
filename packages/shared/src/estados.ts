@@ -85,7 +85,7 @@ export const CLASIFICACION_EN_ESPERA = {
   // filas arriba — el tercero del que depende es otra área de la casa, no alguien de fuera.
   'Remisión creada': 'interna',
 
-  // ── ninguna (9, y las dos de :104-105) — el trabajo está en manos de quien tiene el ticket ────
+  // ── ninguna (10, y las dos de :104-105) — el trabajo está en manos de quien tiene el ticket ────
   'Ingresado': 'ninguna',
   'Rev./Diagnostico': 'ninguna',
   'Notificado': 'ninguna',
@@ -96,7 +96,7 @@ export const CLASIFICACION_EN_ESPERA = {
   // Las dos formas de nombrar la fase inicial —Zoho y la app—. Ver `STATUS_OV_ASIGNADA` y compañía
   // en `transitions.ts:142-144`.
   'OV asignada': 'ninguna',
-  'Ticket creado': 'ninguna',
+  'Ticket creado': 'ninguna', 'Anulado': 'ninguna', // F1C-01 (RQ-TS-40): terminal y cerrado; en la misma línea para no desplazar las citas (regla de mutación 4)
 
   // ── decididas el 17/10 (E-226): una `externa` y dos `ninguna`, fuera de su bloque a propósito ───────
   // `decision/e226-espera-y-areas-equipo-nuevo`: «es espera lo que depende de alguien de fuera». No se mudan a su bloque (`:56-57`) para no desplazar las citas de este fichero (regla de mutación 4), y `Pendiente` va sola y sin comentario porque la comprobación 5 del barrido la cuenta como texto (`apps/desk/server/reconciliacion/comprobaciones.ts:162`).
@@ -108,7 +108,7 @@ export const CLASIFICACION_EN_ESPERA = {
 /** Un estado del Blueprint. Es un tipo cerrado: lo que no está en el registro no es un estado. */
 export type Estado = keyof typeof CLASIFICACION_EN_ESPERA
 
-/** Los 23 estados, en el orden en que están clasificados. */
+/** Los 24 estados, en el orden en que están clasificados. */
 export const ESTADOS: Estado[] = Object.keys(CLASIFICACION_EN_ESPERA) as Estado[]
 
 /**
@@ -139,10 +139,10 @@ export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
  * que esperar: hay una persona que todavía no ha entrado. Los cuatro de abajo esperan un camión, un
  * laboratorio o un alta en otro sistema.
  *
- * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay DOCE
+ * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay DIEZ
  * estados con una sola transición de salida —entre ellos `Ingresado` y `Ticket creado`, que son
  * trabajo corriente y no esperan a nadie—. Y cruzarla con `en_espera`, que es el intento fino,
- * tampoco: da OCHO, con `Liberación Comercial`, `Remisión creada` y los dos `Por Entregar` dentro. Por eso la prueba de
+ * tampoco: da SEIS, con `Liberación Comercial`, `Remisión creada` y los dos `Por Entregar` dentro. Por eso la prueba de
  * coherencia de `estados.test.ts` sólo comprueba que los cuatro son estados DECLARADOS, y no intenta
  * derivarlos.
  *
@@ -184,7 +184,7 @@ export const ESTADOS_SOLO_EQUIPO_NUEVO = ['Verificación'] as const satisfies re
 /** Un estado del Blueprint de Servicio Técnico: todos menos los exclusivos de `equipo-nuevo` y de `soporte-remoto`. */
 export type EstadoServicio = Exclude<Estado, (typeof ESTADOS_SOLO_EQUIPO_NUEVO)[number] | (typeof ESTADOS_SOLO_SOPORTE_REMOTO)[number]>
 
-/** `ESTADOS` menos `ESTADOS_SOLO_EQUIPO_NUEVO`, en el mismo orden — los 20 desde F1C-09. */
+/** `ESTADOS` menos `ESTADOS_SOLO_EQUIPO_NUEVO`, en el mismo orden — los 21 desde F1C-01. */
 export const ESTADOS_SERVICIO: EstadoServicio[] = ESTADOS.filter(
   (e): e is EstadoServicio => !(ESTADOS_SOLO_EQUIPO_NUEVO as readonly string[]).includes(e) && !(ESTADOS_SOLO_SOPORTE_REMOTO as readonly string[]).includes(e),
 )

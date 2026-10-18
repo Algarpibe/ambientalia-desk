@@ -50,7 +50,9 @@ Los comentarios con cifras (`:112` «Los 23», `:142` «DOCE», `:145` «OCHO»,
 | soporte remoto | `anulacion_soporte` | `En Proceso`, `Pendiente` (S-3) | línea nueva antes de `:397`: detrás no hay nada citado |
 
 Las tres son `name: 'Anulación'`, `to: 'Anulado'`, `area: 'Comercial'` y
-`fields: [comment(), ...camposAnulacion()]`, sin `derivacion()`: no hay trabajo a partir de aquí. Los ids son distintos
+`fields: [comment(), ...camposAnulacion()]`, sin `derivacion()`: no hay trabajo a partir de aquí. La de servicio
+hereda la casilla de todas formas, porque `transitions.ts:297` la añade a toda transición de servicio (S-9). Y
+`areasSiguientes` (`transitions.ts:330`) ignora las transiciones a `Anulado` (S-8): anular no da el testigo. Los ids son distintos
 en los tres catálogos (`invariantesGrafo.test.ts:174`; `transicionPorId` devuelve el primero, `flujos.ts:74-80`).
 Los docblocks de `:347-348` («las seis son `Servicio Técnico`», «Campos:») y de `:384` se corrigen en sitio.
 

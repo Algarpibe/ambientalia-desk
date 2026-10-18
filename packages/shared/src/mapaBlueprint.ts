@@ -70,7 +70,7 @@ function cabeceraGenerado(fuentes: string): string {
   ].join('\n')
 }
 
-/** Cadena determinista para el alias Mermaid de un estado: `e01`..`e20`, por posición en ESTADOS. */
+/** Cadena determinista para el alias Mermaid de un estado: `e01`..`e21`, por posición en ESTADOS. */
 function aliasDe(indicePorEstado: Map<string, string>, estado: string): string {
   const alias = indicePorEstado.get(estado)
   if (!alias) throw new Error(`mapaBlueprint: estado sin alias asignado: "${estado}"`)

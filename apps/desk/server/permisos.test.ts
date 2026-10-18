@@ -69,16 +69,16 @@ describe('matriz área × transición, contra el servidor', () => {
   /**
    * EL TOTAL, escrito a mano, porque es lo único que la derivación no puede vigilarse a sí misma.
    *
-   * 31 transiciones × 3 áreas = 93 casos. Las 24 de área simple prohíben a 2 áreas cada una y las 7
-   * compartidas a 1: 24×2 + 7×1 = 55 prohibidos, y 38 permitidos. Si mañana una transición pasa de
+   * 32 transiciones × 3 áreas = 96 casos. Las 25 de área simple prohíben a 2 áreas cada una y las 7
+   * compartidas a 1: 25×2 + 7×1 = 57 prohibidos, y 39 permitidos. Si mañana una transición pasa de
    * simple a compartida —que es exactamente lo que F1C-05 va a tocar—, estos números se mueven y hay
    * que moverlos a propósito.
    */
-  it('la matriz son 93 casos: 55 prohibidos y 38 permitidos', () => {
+  it('la matriz son 96 casos: 57 prohibidos y 39 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
-    expect(casos).toHaveLength(93)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(55)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(38)
+    expect(casos).toHaveLength(96)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(57)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(39)
   })
 
   /**
@@ -240,11 +240,11 @@ describe('matriz 6×3 · área × transición de Equipo nuevo, contra el servido
     }, 60_000)
   }
 
-  it('la matriz EN son 18 casos: 12 prohibidos y 6 permitidos', () => {
+  it('la matriz EN son 21 casos: 14 prohibidos y 7 permitidos (F1C-01: la anulación es de Comercial)', () => {
     const casos = TRANSITIONS_EQUIPO_NUEVO.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
-    expect(casos).toHaveLength(18)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(12)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(6)
+    expect(casos).toHaveLength(21)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(14)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(7)
   })
 
   it('un administrador pasa por las cinco sin que su área importe', async () => {
@@ -320,16 +320,16 @@ describe('matriz 4×3 · área × transición de Soporte remoto, contra el servi
       const esperado: Record<string, number> = {}
       for (const t of TRANSITIONS_SOPORTE_REMOTO) esperado[t.id] = canExecuteTransition([area], false, t.area) ? 200 : 403
       expect(observado).toEqual(esperado)
-      // A mano, independiente de `canExecuteTransition`: sólo Servicio Técnico pasa (S-1).
-      expect(Object.values(observado).every((s) => s === (area === 'Servicio Técnico' ? 200 : 403))).toBe(true)
+      // A mano, independiente de `canExecuteTransition`: sólo Servicio Técnico pasa (S-1), salvo la anulación, que es de Comercial (F1C-01).
+      expect(Object.entries(observado).every(([id, s]) => s === ((id === 'anulacion_soporte' ? area === 'Comercial' : area === 'Servicio Técnico') ? 200 : 403))).toBe(true)
     }, 60_000)
   }
 
-  it('la matriz SR son 12 casos: 8 prohibidos y 4 permitidos', () => {
+  it('la matriz SR son 15 casos: 10 prohibidos y 5 permitidos (F1C-01: la anulación es de Comercial)', () => {
     const casos = TRANSITIONS_SOPORTE_REMOTO.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
-    expect(casos).toHaveLength(12)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(8)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(4)
+    expect(casos).toHaveLength(15)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(10)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(5)
   })
 })
 
@@ -346,14 +346,14 @@ describe('cargo · la compuesta contra el área (puro)', () => {
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 
-  it('con la compuesta y sin cargo, la matriz son 93 casos: 56 prohibidos y 37 permitidos', () => {
+  it('con la compuesta y sin cargo, la matriz son 96 casos: 58 prohibidos y 38 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => puedeEjecutarTransicion({ areas: [a], isAdmin: false, cargoPermiso: null }, t)))
-    expect(casos).toHaveLength(93)
-    expect(casos.filter((p) => !p)).toHaveLength(56)
-    expect(casos.filter((p) => p)).toHaveLength(37)
+    expect(casos).toHaveLength(96)
+    expect(casos.filter((p) => !p)).toHaveLength(58)
+    expect(casos.filter((p) => p)).toHaveLength(38)
   })
 
-  it('cargo × área × transición: 837 casos, ninguno concede lo que el área niega (S17)', () => {
+  it('cargo × área × transición: 864 casos, ninguno concede lo que el área niega (S17)', () => {
     const cargos = [...CARGOS, null]
     let casos = 0
     for (const t of TRANSITIONS) {
@@ -365,7 +365,7 @@ describe('cargo · la compuesta contra el área (puro)', () => {
         }
       }
     }
-    expect(casos).toBe(837) // 31 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
+    expect(casos).toBe(864) // 32 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
   })
 
   it('con Director Comercial la compuesta coincide con el área en las 93 celdas', () => {
@@ -443,7 +443,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
     expect((await ejecutar(app, cookie, 'rc-rv', 'rechazo_revision')).status).toBe(200)
   }, 60_000)
 
-  it('el barrido de cargo sube a 837 y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
+  it('el barrido de cargo sube a 864 y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
     let casos = 0
     const difieren: Array<{ transicion: string; area: string }> = []
     for (const t of TRANSITIONS) {
@@ -455,7 +455,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
         }
       }
     }
-    expect(casos).toBe(837)
+    expect(casos).toBe(864)
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 })

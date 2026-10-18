@@ -1,8 +1,8 @@
-import type { Transition } from '@ambientalia/shared'
+import { ESTADO_ANULADO, type Transition } from '@ambientalia/shared'
 import { PROMOTED_COLUMNS } from '@ambientalia/zoho-sync/db/rows'
 
 const LABEL_TO_COL = new Map(PROMOTED_COLUMNS.map((p) => [p.label, p]))
-const CLOSED_STATUSES = new Set(['Finalizado'])
+const CLOSED_STATUSES = new Set(['Finalizado', ESTADO_ANULADO])
 
 /**
  * La columna de la derivación. Es una constante del código, no una etiqueta de Zoho: por eso NO está

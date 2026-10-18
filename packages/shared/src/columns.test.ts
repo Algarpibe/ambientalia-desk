@@ -43,8 +43,8 @@ describe('columns', () => {
 const COLUMNA_ANTES: Record<string, string> = {"En Espera de Repuestos":"espera_repuestos","Servicio externo":"servicio_externo","Notificación cliente":"notif_cliente","Por Entregar":"por_entregar","Por Entregar / Sin facturar":"entregar_sin_facturar","Notificación a Compras":"notif_compras","Notificación Comercial":"notif_comercial","En espera de SKU inventario":"espera_sku","Solicitado":"solicitado","Liberación Comercial":"comercial","Remisión creada":"remision_creada","Ingresado":"ingresado","Rev./Diagnostico":"revision","Notificado":"notificado","En Proceso":"proceso","Continuación del proceso":"continuacion","Por Facturar":"por_facturar","Finalizado":"otros","OV asignada":"ov_asignada","Ticket creado":"ticket_creado","Pendiente":"pendiente","Verificación":"otros","Solicitud Soporte":"otros"}
 
 describe('columna propia de Verificación y Solicitud Soporte (decision/e225-columna-propia-dos-estados)', () => {
-  it('(a) la tabla tiene por claves exactamente ESTADOS, en los dos sentidos', () => { expect(Object.keys(COLUMNA_ANTES).sort()).toEqual([...ESTADOS].sort()) })
-  it('(b) sólo esos dos estados cambian de columna', () => { expect(ESTADOS.filter((e) => columnForStatus(e) !== COLUMNA_ANTES[e]).sort()).toEqual(['Solicitud Soporte', 'Verificación']) })
+  it('(a) la tabla tiene por claves exactamente ESTADOS menos Anulado (F1C-01: nació después de la medición), en los dos sentidos', () => { expect(Object.keys(COLUMNA_ANTES).sort()).toEqual(ESTADOS.filter((e) => e !== 'Anulado').sort()) })
+  it('(b) sólo esos dos estados cambian de columna', () => { expect(ESTADOS.filter((e) => e !== 'Anulado').filter((e) => columnForStatus(e) !== COLUMNA_ANTES[e]).sort()).toEqual(['Solicitud Soporte', 'Verificación']) })
   it('(c) sus columnas son verificacion y solicitud_soporte, con ese único estado cada una', () => {
     expect(columnForStatus('Verificación')).toBe('verificacion')
     expect(columnForStatus('Solicitud Soporte')).toBe('solicitud_soporte')
@@ -52,7 +52,7 @@ describe('columna propia de Verificación y Solicitud Soporte (decision/e225-col
     expect(COLUMNS.find((c) => c.id === 'solicitud_soporte')?.statuses).toEqual(['Solicitud Soporte'])
   })
   it('(d) otros sigue siendo la última columna y no declara estados', () => { expect(COLUMNS[COLUMNS.length - 1]).toEqual({ id: 'otros', label: 'Otros', statuses: [] }) })
-  it('(e) el único estado del registro que cae en otros es Finalizado', () => { expect(ESTADOS.filter((e) => columnForStatus(e) === 'otros')).toEqual(['Finalizado']) })
+  it('(e) los únicos estados del registro que caen en otros son Finalizado y Anulado (F1C-01)', () => { expect(ESTADOS.filter((e) => columnForStatus(e) === 'otros')).toEqual(['Finalizado', 'Anulado']) })
   it('(f) ningún estado está declarado en dos columnas', () => { const declarados = COLUMNS.flatMap((c) => c.statuses); expect(new Set(declarados).size).toBe(declarados.length) })
   it('(g) la etiqueta de cada columna nueva es el nombre de su estado (supuesto S-2)', () => { expect(COLUMNS.filter((c) => c.id === 'verificacion' || c.id === 'solicitud_soporte').map((c) => c.label).sort()).toEqual(['Solicitud Soporte', 'Verificación']) })
 })

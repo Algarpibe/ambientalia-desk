@@ -16,23 +16,27 @@ Cinco intentos (propuesta §5), cada uno con techo 800 y válvula 720, salvo el 
 
 ## Intento 2 · Lote 1: motivos, estado, transiciones, guarda, cierre y vigilantes (D1-D5, D7)
 
-- [ ] 2.1 **Rojo.** `packages/shared/src/anulacion.test.ts` (nuevo): la lista de cinco, sin «creado por error» ni
+- [x] 2.1 **Rojo.** `packages/shared/src/anulacion.test.ts` (nuevo): la lista de cinco, sin «creado por error» ni
   «duplicado»; motivo fuera de la lista; «Otro» sin detalle; la guarda se activa por el campo; los tres catálogos llevan
   su transición con área Comercial, sus orígenes y el campo obligatorio; `Anulado` es `ninguna` y terminal.
-- [ ] 2.2 **Rojo.** `apps/desk/server/anulacion.test.ts` (nuevo), con el molde de `liberacionSinFactura.test.ts`:
+- [x] 2.2 **Rojo.** `apps/desk/server/anulacion.test.ts` (nuevo), con el molde de `liberacionSinFactura.test.ts`:
   sin motivo da `422`; motivo fuera de la lista da `422`; «Otro» sin detalle da `422`; motivo válido deja el ticket en
   `Anulado` con `status_type = 'Closed'`, la traza y el motivo en `values`; un usuario sin Comercial recibe `403`; la
   posición `403` antes de `422` con motivo malo (PL-1 bis); `409` desde `Solicitado` y desde `En espera de SKU
   inventario`; y una anulación por cada flujo.
-- [ ] 2.3 **Verde.** `anulacion.ts`, la línea `:99` de `estados.ts`, las tres transiciones (D3), `CLOSED_STATUSES`
+- [x] 2.3 **Verde.** `anulacion.ts`, la línea `:99` de `estados.ts`, las tres transiciones (D3), `CLOSED_STATUSES`
   (D4), la guarda en `ticketService.ts:134` (D5) y el export en `index.ts`.
-- [ ] 2.4 **Vigilantes** de D7: cada uno, rojo primero y luego actualizado sólo si su mensaje lo ata a este cambio. Mapa
+- [x] 2.4 **Vigilantes** de D7: cada uno, rojo primero y luego actualizado sólo si su mensaje lo ata a este cambio. Mapa
   regenerado. `cifras_ancladas` en `openspec/config.yaml` y `cifrasAncladas.test.ts`, en sitio.
-- [ ] 2.5 **Mutaciones** M0-M5 y M10 de D9, restauradas.
-- [ ] 2.6 **Cierre del intento:** test, typecheck, lint (165 avisos como máximo), commit y detector `--sha HEAD` en una
+- [x] 2.5 **Mutaciones** M0-M5 y M10 de D9, restauradas.
+- [x] 2.6 **Cierre del intento:** test, typecheck, lint (165 avisos como máximo), commit y detector `--sha HEAD` en una
   cadena; medida `git diff --shortstat --no-renames` contra la partida más lo nuevo sin trackear.
 
 ## Intento 3 · Lote 2: métricas e histórico (D6, D8)
+
+- [ ] 3.0 **Partición del intento 2** (superaba la válvula: 870 líneas medidas). Entran aquí las pruebas HTTP del lote 1
+  (`apps/desk/server/anulacion.test.ts`, en rojo antes del verde del intento 2, como consta en `apply-progress.md`) y
+  `apply-progress.md`.
 
 - [ ] 3.1 **Rojo.** `packages/shared/src/analisisAnulados.test.ts` (nuevo): un anulado con `finalizadoAt` en el periodo
   no cuenta en finalizados, ni en el tiempo promedio, ni en el OTD, y sí cuenta como creado. Y un anulado no entra en la

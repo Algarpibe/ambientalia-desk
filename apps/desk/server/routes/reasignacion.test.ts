@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import request from 'supertest'
-import { MENSAJES_REASIGNACION, CATALOGO_POR_FLUJO, AREAS, areasForTransition, type Flujo } from '@ambientalia/shared'
+import { MENSAJES_REASIGNACION, CATALOGO_POR_FLUJO, AREAS, areasForTransition, ESTADO_ANULADO, type Flujo } from '@ambientalia/shared'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { createUser } from '../auth/users'
 import { createRole } from '../auth/roles'
@@ -337,7 +337,7 @@ describe('barrido HTTP de estados por áreas contra la guarda (RQ-PM-27, RQ-TC-5
       for (const status of new Set(catalogo.flatMap((t) => [...t.from, t.to]))) {
         const id = `s${n}`; await ticketDe(id, 9600 + n, null, status, CLASIFICACION[flujo]); n++
         for (const area of AREAS) {
-          const esperado = catalogo.some((t) => t.from.includes(status) && areasForTransition(t.area).includes(area))
+          const esperado = catalogo.some((t) => t.from.includes(status) && t.to !== ESTADO_ANULADO && areasForTransition(t.area).includes(area)) // F1C-01 (S-8): anular no da el testigo
           const res = await reasignar(app, sesiones.get(area)!, id, {})
           expect(res.status, `${flujo} · ${status} · ${area}`).toBe(esperado ? 422 : 403)
           if (esperado) permitidos++; else negados++

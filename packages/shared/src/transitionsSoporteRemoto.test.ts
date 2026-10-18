@@ -8,12 +8,13 @@ import { transicionPorId, flujoDeTransicion } from './flujos'
  * `En Proceso`, `Pendiente` y `Finalizado` son homónimos de servicio y fundirlos mezclaría los grafos.
  */
 describe('TRANSITIONS_SOPORTE_REMOTO — catálogo (RQ-SR-01)', () => {
-  it('(a) son exactamente estos cuatro pares from → to, y ninguno más', () => {
+  it('(a) son exactamente estos cinco pares from → to, y ninguno más', () => {
     expect(TRANSITIONS_SOPORTE_REMOTO.map((t) => [t.id, t.from, t.to])).toEqual([
       ['asignacion_soporte', ['Solicitud Soporte'], 'En Proceso'],
       ['ejecutar_soporte', ['En Proceso'], 'Finalizado'],
       ['soporte_pendiente', ['En Proceso'], 'Pendiente'],
       ['continuacion_soporte', ['Pendiente'], 'En Proceso'],
+      ['anulacion_soporte', ['En Proceso', 'Pendiente'], 'Anulado'],
     ])
   })
 
@@ -22,18 +23,18 @@ describe('TRANSITIONS_SOPORTE_REMOTO — catálogo (RQ-SR-01)', () => {
     expect(salidas).toEqual(['asignacion_soporte'])
   })
 
-  it('(c) las cuatro declaran sólo comentario y derivación: sin modalidad, sin fecha ni motivo obligatorio (RQ-SR-10)', () => {
-    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(4)
-    for (const t of TRANSITIONS_SOPORTE_REMOTO) {
+  it('(c) las cuatro de trabajo declaran sólo comentario y derivación: sin modalidad, sin fecha ni motivo obligatorio (RQ-SR-10); la anulación lleva el motivo (F1C-01)', () => {
+    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(5)
+    for (const t of TRANSITIONS_SOPORTE_REMOTO.filter((x) => x.id !== 'anulacion_soporte')) {
       expect(t.fields.map((f) => f.key), `${t.id} declara campos de más`).toEqual(['comment', 'derivado_a'])
       expect(t.fields.some((f) => f.required), `${t.id} declara un campo obligatorio`).toBe(false)
       expect(t.fields.some((f) => f.kind === 'date'), `${t.id} declara un campo de fecha`).toBe(false)
     }
   })
 
-  it('(d) las cuatro son del área Servicio Técnico por equivalencia (S-1, RQ-SR-02)', () => {
-    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(4)
-    for (const t of TRANSITIONS_SOPORTE_REMOTO) {
+  it('(d) las cuatro de trabajo son del área Servicio Técnico por equivalencia (S-1, RQ-SR-02); la anulación es de Comercial (F1C-01)', () => {
+    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(5)
+    for (const t of TRANSITIONS_SOPORTE_REMOTO.filter((x) => x.id !== 'anulacion_soporte')) {
       expect(t.area, `${t.id} no es de Servicio Técnico`).toBe('Servicio Técnico')
     }
   })
@@ -46,16 +47,17 @@ describe('TRANSITIONS_SOPORTE_REMOTO — catálogo (RQ-SR-01)', () => {
     expect(entradas('En Proceso')).toEqual(['asignacion_soporte', 'continuacion_soporte'])
     expect(entradas('Pendiente')).toEqual(['soporte_pendiente'])
     expect(salidas('Finalizado')).toEqual([])
-    expect(salidas('Pendiente')).toEqual(['continuacion_soporte'])
-    expect(salidas('En Proceso')).toEqual(['ejecutar_soporte', 'soporte_pendiente'])
+    expect(salidas('Pendiente')).toEqual(['continuacion_soporte', 'anulacion_soporte'])
+    expect(salidas('En Proceso')).toEqual(['ejecutar_soporte', 'soporte_pendiente', 'anulacion_soporte'])
+    expect(entradas('Anulado')).toEqual(['anulacion_soporte'])
   })
 })
 
 describe('TRANSITIONS_SOPORTE_REMOTO — ids únicos entre los tres catálogos (RQ-SR-06, S-8)', () => {
   it('(e) ningún id se repite entre TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO y el catálogo de soporte remoto', () => {
     const ids = [...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO, ...TRANSITIONS_SOPORTE_REMOTO].map((t) => t.id)
-    expect(ids).toHaveLength(31 + 6 + 4)
-    expect(new Set(ids).size, 'hay ids repetidos entre catálogos').toBe(41)
+    expect(ids).toHaveLength(32 + 7 + 5)
+    expect(new Set(ids).size, 'hay ids repetidos entre catálogos').toBe(44)
   })
 
   it('(e) diagnostico_complementario sigue resolviendo a servicio y soporte_pendiente a soporte-remoto', () => {

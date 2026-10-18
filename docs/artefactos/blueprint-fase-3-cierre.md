@@ -8,6 +8,8 @@
 
 ```mermaid
 stateDiagram-v2
+    state "En Espera de Repuestos ·espera· ←diagnostico" as e01
+    state "Servicio externo ·espera· ←diagnostico" as e02
     state "Notificación cliente ←diagnostico" as e03
     state "Por Entregar" as e04
     state "Por Entregar / Sin facturar" as e05
@@ -17,6 +19,7 @@ stateDiagram-v2
     state "En Proceso ←diagnostico" as e15
     state "Por Facturar" as e17
     state "Finalizado" as e18
+    state "Anulado" as e21
     e15 --> e17 : finalización de servicio [frontera] [ST]
     e07 --> e17 : Rechazo [frontera] [C][ST]
     e03 --> e17 : Rechazo [frontera] [C]
@@ -27,4 +30,9 @@ stateDiagram-v2
     e05 --> e17 : Entrega al cliente sin factura [ST]
     e04 --> e18 : Entrega al cliente [ST]
     e10 --> e04 : Habilitado para entrega [C]
+    e01 --> e21 : Anulación [frontera] [C]
+    e02 --> e21 : Anulación [frontera] [C]
+    e13 --> e21 : Anulación [frontera] [C]
+    e07 --> e21 : Anulación [frontera] [C]
+    e03 --> e21 : Anulación [frontera] [C]
 ```

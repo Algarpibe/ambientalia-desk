@@ -5,7 +5,7 @@ import { ESTADOS_SERVICIO, ESTADOS_SIN_SALIDA } from './estados'
 /**
  * `fasesBlueprint.ts` declara la partición estado → fase como DATO (P-3 del proposal
  * `generador-mapa-blueprint`, M1.3.1 del maestro, `R08.2.md:1187-1191`). Esta prueba fija tres
- * cosas: que la tabla cubre exactamente `ESTADOS` (ni uno de más ni de menos), el recuento 4/11/5,
+ * cosas: que la tabla cubre exactamente `ESTADOS` (ni uno de más ni de menos), el recuento 4/11/6,
  * y las tres asignaciones que NO se derivan mecánicamente de otro dato ya existente — las demás se
  * leen de un vistazo en `design.md` §7.
  */
@@ -14,10 +14,10 @@ describe('fasesBlueprint — partición estado → fase', () => {
     expect(Object.keys(FASE_POR_ESTADO).sort()).toEqual([...ESTADOS_SERVICIO].sort())
   })
 
-  it('reparte los 20 estados en 4 · 11 · 5, entrada · diagnóstico · cierre', () => {
+  it('reparte los 21 estados en 4 · 11 · 6, entrada · diagnóstico · cierre', () => {
     const porFase = { entrada: 0, diagnostico: 0, cierre: 0 }
     for (const fase of Object.values(FASE_POR_ESTADO)) porFase[fase]++
-    expect(porFase).toEqual({ entrada: 4, diagnostico: 11, cierre: 5 })
+    expect(porFase).toEqual({ entrada: 4, diagnostico: 11, cierre: 6 })
     expect(FASES.map((f) => f.id)).toEqual(['entrada', 'diagnostico', 'cierre'])
   })
 

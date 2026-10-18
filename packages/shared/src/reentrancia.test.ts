@@ -212,7 +212,7 @@ describe('reentrancia del catálogo soporte-remoto (F1B-06)', () => {
   })
 
   it('el ciclo SR no tiene ningún campo de fecha reentrante', () => {
-    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(4)
+    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(5)
     expect(camposFechaReentrantes(TRANSITIONS_SOPORTE_REMOTO)).toEqual([])
   })
 })

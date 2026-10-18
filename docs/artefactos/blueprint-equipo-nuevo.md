@@ -13,6 +13,7 @@ stateDiagram-v2
     state "Notificado" as e03
     state "Verificación" as e04
     state "Finalizado" as e05
+    state "Anulado" as e06
     e01 --> e02 : Ingreso equipo nuevo [ST]
     e02 --> e03 : Producto no conforme [ST]
     e03 --> e01 : Análisis y acciones [ST]
@@ -20,6 +21,10 @@ stateDiagram-v2
     e02 --> e05 : Liberación [ST]
     e04 --> e05 : Liberación [ST]
     e04 --> e03 : Rechazo de verificación [ST]
+    e01 --> e06 : Anulación [C]
+    e02 --> e06 : Anulación [C]
+    e03 --> e06 : Anulación [C]
+    e04 --> e06 : Anulación [C]
 ```
 
 ## Leyenda de áreas

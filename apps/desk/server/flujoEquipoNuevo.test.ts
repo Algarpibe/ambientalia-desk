@@ -90,14 +90,14 @@ describe('guarda 3 · flujo aplicable del ticket', () => {
     expect((fila.rows[0] as { status: string }).status).toBe('Notificado')
   })
 
-  // P6 — área: usuario de Comercial no puede ejecutar ninguna de las cinco transiciones EN.
-  it('P6 · un usuario de Comercial no puede ejecutar ninguna transición de Equipo nuevo', async () => {
+  // P6 — área: usuario de Comercial no puede ejecutar ninguna de las seis transiciones de trabajo EN (la séptima, la anulación, es suya: F1C-01).
+  it('P6 · un usuario de Comercial no puede ejecutar ninguna transición de trabajo de Equipo nuevo', async () => {
     const cookie = await userCookie(['Comercial'])
     const { app } = appWith()
     let n = 0
     // D5 de `design.md`: se recorren TODOS los `from`, no sólo `t.from[0]` — 7 ejecuciones (F1A-03),
     // porque `liberacion` gana un segundo origen (`Verificación`).
-    for (const t of TRANSITIONS_EQUIPO_NUEVO) {
+    for (const t of TRANSITIONS_EQUIPO_NUEVO.filter((x) => x.id !== 'anulacion_equipo_nuevo')) {
       for (const origen of t.from) {
         n += 1
         const id = `en-p6-${n}`

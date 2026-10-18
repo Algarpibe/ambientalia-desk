@@ -27,6 +27,9 @@ es «Otro» sin detalle, `422` por `erroresAnulacion`, sumado al único `422` ag
 (`apps/desk/server/services/ticketService.ts:134`). Ese `422` **SHALL** correr después del `403` de área y de cargo
 (escalón B), según el orden total de §3.8.
 
+**Anular no da el testigo** **[SUPUESTO S-8]**: `areasSiguientes` **SHALL** ignorar las transiciones a `Anulado`, así que
+los avisos por área, el traspaso y quién puede reasignar (`permissions` RQ-PM-27) no cambian con este requisito.
+
 #### Scenario: Comercial anula con un motivo de la lista — ROJO
 - GIVEN un ticket de servicio en `Notificación cliente` y un usuario de Comercial
 - WHEN ejecuta `anulacion` con «Sin solución técnica»
