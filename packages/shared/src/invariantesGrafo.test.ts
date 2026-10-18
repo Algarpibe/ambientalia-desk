@@ -197,7 +197,7 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect(diferencia).toEqual([...ESTADOS_SOLO_EQUIPO_NUEVO])
   })
 
-  it('RQ-EN-01 · las siete transiciones cubren exactamente los pares del catálogo, y las salidas de Verificación son exactamente liberación y rechazo de verificación', () => {
+  it('RQ-EN-01 · las siete transiciones cubren exactamente los pares del catálogo, y las salidas de Verificación son exactamente liberación, rechazo de verificación y anulación', () => {
     expect(TRANSITIONS_EQUIPO_NUEVO.map((t) => [t.id, t.from, t.to])).toEqual([
       ['ingreso_equipo_nuevo', ['Ingresado'], 'En Proceso'],
       ['producto_no_conforme', ['En Proceso'], 'Notificado'],

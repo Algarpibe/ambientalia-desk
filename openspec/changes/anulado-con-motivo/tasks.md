@@ -45,11 +45,11 @@ Cinco intentos (propuesta §5), cada uno con techo 800 y válvula 720, salvo el 
   no existe o escribe.
 - [x] 3.3 **Verde.** `analisis.ts:59`, `cierreEnCifras.ts` y el `.sql`.
 - [x] 3.4 **Mutaciones** M6-M9 de D9, restauradas.
-- [ ] 3.5 **Cierre del intento**, como el 2.6, más el build para medir el bundle.
+- [x] 3.5 **Cierre del intento**, como el 2.6, más el build para medir el bundle.
 
 ## Intentos 4 y 5 · Verify y archive
 
-- [ ] 4.1 `verify-report.md`: escenarios → pruebas, rojo reproducido, M0-M10 reproducidas, regla 13 y regla de mutación
+- [x] 4.1 `verify-report.md`: escenarios → pruebas, rojo reproducido, M0-M10 reproducidas, regla 13 y regla de mutación
   4 sobre `estados.ts` y `transitions.ts`.
 - [ ] 5.1 Archive: los deltas fusionados por script; parte revisable medida ANTES; `archive-report.md`;
   `git show --numstat` sólo del cambio; `RECONCILIACION.md` regenerado en la rama.

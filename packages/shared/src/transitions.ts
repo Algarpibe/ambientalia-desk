@@ -393,7 +393,5 @@ export const TRANSITIONS_SOPORTE_REMOTO: Transition[] = [
   { id: 'soporte_pendiente', name: 'Soporte pendiente', from: ['En Proceso'], to: 'Pendiente', area: 'Servicio Técnico',
     fields: [comment(), derivacion()] },
   { id: 'continuacion_soporte', name: 'Continuación soporte', from: ['Pendiente'], to: 'En Proceso', area: 'Servicio Técnico',
-    fields: [comment(), derivacion()] },
-  { id: 'anulacion_soporte', name: 'Anulación', from: ['En Proceso', 'Pendiente'], to: 'Anulado', area: 'Comercial',
-    fields: [comment(), ...camposAnulacion()] },
+    fields: [comment(), derivacion()] }, { id: 'anulacion_soporte', name: 'Anulación', from: ['En Proceso', 'Pendiente'], to: 'Anulado', area: 'Comercial', fields: [comment(), ...camposAnulacion()] },
 ]

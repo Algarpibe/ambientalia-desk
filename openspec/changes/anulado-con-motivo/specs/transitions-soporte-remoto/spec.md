@@ -17,7 +17,7 @@ de `TRANSITIONS_EQUIPO_NUEVO`, con la misma forma de `Transition` (`id`, `name`,
 | Continuación soporte | Pendiente → En Proceso |
 | Anulación | En Proceso, Pendiente → Anulado |
 
-- El catálogo **SHALL** cubrir exactamente los cuatro estados `Solicitud Soporte`, `En Proceso`,
+- El catálogo **SHALL** cubrir exactamente los cinco estados `Solicitud Soporte`, `En Proceso`,
   `Pendiente`, `Finalizado` y `Anulado` (RQ-TS-40, F1C-01).
 - **Sin anulación desde `Solicitud Soporte` (S-5):** el catálogo **MUST NOT** declarar ninguna salida desde
   `Solicitud Soporte` distinta de `Asignación`: lo que se cancela al nacer se borra, no se anula. `Anulación`
