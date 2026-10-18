@@ -98,6 +98,7 @@ Las líneas citadas que cambiaron de contenido (`transitions-st/spec.md:185`; `t
 - S-7: el anulado sigue contando como creado.
 - S-8: anular no da el testigo (avisos, traspaso y reasignación sin cambios).
 - S-9: la anulación de servicio hereda la casilla «Derivado a».
+- S-10: `rechazo_garantia` (`Notificación a Compras` → `Notificación Comercial`) no se anula: es un rechazo de garantía, no un abandono.
 
 Cómo se revierte cada uno: `proposal.md` §4.
 
@@ -106,7 +107,7 @@ Cómo se revierte cada uno: `proposal.md` §4.
 | # | Qué | Dueño |
 |---|---|---|
 | P-1 | Ejecutar `docs/sdd/Consulta_Candidatos_Anulado_2026-10-18.sql` en producción, confirmar los abandonados y marcarlos | Alfonso y Servicio Técnico |
-| P-2 | Revisar S-1 a S-9 en la lista semanal | Gerencia |
+| P-2 | Revisar S-1 a S-10 en la lista semanal | Gerencia |
 | P-3 | Pegar en el maestro 21 estados, 32 transiciones y 40 pasos | Gerencia |
 | P-4 | Comprobar tras el despliegue que Comercial ve «Anulación» con su desplegable de motivos | quien despliegue |
 
