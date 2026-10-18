@@ -41,7 +41,7 @@ Ninguna línea citada se desplaza.
 | `permisos.test.ts:341-347`, `:356-369` | 1 diferencia; 744 | sin cambio |
 | `packages/shared/src/invariantesGrafo.test.ts:85`, `:88`, `:91`, `:103` | ocho; ejemplo `rechazo_cliente`; entrada C/ST | siete; ejemplo `rechazo_comercial`; comentario |
 | `areasSiguientes('Notificación cliente')` vía `avisoArea.ts:16` | Comercial, Compras, Servicio Técnico | Comercial, Compras (prueba nueva) |
-| `docs/artefactos/blueprint-completo.md:54`, `blueprint-fase-2-diagnostico.md:44`, `blueprint-fase-3-cierre.md:22` | `[C][ST]` | `[C]` |
+| `docs/artefactos/blueprint-completo.md:54` en `b16cbb4`, `blueprint-fase-2-diagnostico.md:44` en `b16cbb4`, `blueprint-fase-3-cierre.md:22` en `b16cbb4` | `[C][ST]` | `[C]` |
 
 Pruebas nuevas: `describe('F1C-10 · rechazo_cliente sólo Comercial')` en `permisos.test.ts` — usuario `['Servicio Técnico']`
 → `403` en `rechazo_cliente` desde `Notificación cliente`; `['Comercial']` → `200`; `['Servicio Técnico']` → `200` en

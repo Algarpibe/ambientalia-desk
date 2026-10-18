@@ -65,6 +65,11 @@ los avisos por área, el traspaso y quién puede reasignar (`permissions` RQ-PM-
 - WHEN se calculan las vistas del tablero
 - THEN no está en «abiertos» ni en «en espera», y sí en «cerrados»
 
+#### Scenario: `Anulado` produce `Closed` — ROJO
+- GIVEN la transición `anulacion`
+- WHEN se construye su plan de escritura
+- THEN `statusType` es `'Closed'`; sacar `Anulado` de `CLOSED_STATUSES` lo pone en rojo
+
 ## MODIFIED Requirements
 
 ### Requirement: RQ-TS-04 · `Finalizado` y `Anulado` son los únicos estados terminales
@@ -87,11 +92,6 @@ testigo (`packages/shared/src/transitions.ts:325-334`).
 - GIVEN la unión de los tres catálogos
 - WHEN se calculan las salidas de `Pendiente`
 - THEN tiene `continuacion_soporte` y no es terminal
-
-#### Scenario: `Anulado` produce `Closed` — ROJO
-- GIVEN la transición `anulacion`
-- WHEN se construye su plan de escritura
-- THEN `statusType` es `'Closed'`; sacar `Anulado` de `CLOSED_STATUSES` lo pone en rojo
 
 ### Requirement: RQ-TS-05 · Alcanzabilidad de los 21 estados de servicio
 
@@ -130,11 +130,7 @@ estados de servicio la conclusión —«no hay estados huérfanos»— se sostie
 `estados` = 21 de servicio, y **SHALL** cerrar la `divergencia` caducada de `pasos_del_mapa`. La descripción
 de la capacidad `transitions-st` en `capabilities` **SHALL** decir «32 transiciones y 21 estados». Estos
 valores **SHALL** coincidir con `TRANSITIONS.length`, con las aristas del diagrama completo y con
-`ESTADOS_SERVICIO.length`, y **SHALL** cambiar en el mismo commit que el código. El texto `codigo` de `pasos_del_mapa` **SHALL** nombrar las 32
-transiciones y la arista de `anulacion` desde sus cinco orígenes.
-
-(Previously, hasta F1C-01: 31 / 35 / 20, fijadas por F1C-09. `Anulado` era el movimiento previsto por decisión que
-anunciaba `cifras_ancladas`.)
+`ESTADOS_SERVICIO.length`, y **SHALL** cambiar en el mismo commit que el código. El texto `codigo` de `pasos_del_mapa` **SHALL** nombrar las 32 transiciones y la arista de `anulacion` desde sus cinco orígenes. (Previously, hasta F1C-01: 31 / 35 / 20, fijadas por F1C-09.)
 
 #### Scenario: las tres cifras coinciden con el código
 - GIVEN `cifras_ancladas` y el código tras el cambio

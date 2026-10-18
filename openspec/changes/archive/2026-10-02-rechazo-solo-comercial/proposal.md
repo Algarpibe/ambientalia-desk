@@ -34,8 +34,8 @@ maestro vigente ya lo dice (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Fu
    Técnico; `areasSiguientes('Notificación cliente')` = Comercial y Compras. Van al final de sus
    ficheros.
 4. **Mapa regenerado** (`npm run generar-mapa-blueprint`): tres aristas de `[C][ST]` a `[C]`
-   (`docs/artefactos/blueprint-completo.md:54`, `blueprint-fase-2-diagnostico.md:44`,
-   `blueprint-fase-3-cierre.md:22`).
+   (`docs/artefactos/blueprint-completo.md:54` en `b16cbb4`, `blueprint-fase-2-diagnostico.md:44` en `b16cbb4`,
+   `blueprint-fase-3-cierre.md:22` en `b16cbb4`).
 5. **Specs**: deltas de `permissions` (RQ-PM-03) y `transitions-st` (RQ-TS-07, invariante 5, RQ-TS-23),
    añadidos al final para no desplazar citas.
 6. **Barrido de citas** (regla de mutación 4) al cerrar, sobre los ficheros editados.

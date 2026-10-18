@@ -1,12 +1,32 @@
 # Delta para transitions-soporte-remoto
 
+## ADDED Requirements
+
+### Requirement: RQ-SR-13 · La anulación de soporte remoto: quinta transición, de Comercial, con motivo
+
+Fuente: `decision/e223-anulacion-tres-flujos` y `decision/f1c01-area-anulado`; `transitions-st` RQ-TS-40 (motivos, guarda y
+cierre). `TRANSITIONS_SOPORTE_REMOTO` **SHALL** declarar `anulacion_soporte` («Anulación») desde `En Proceso` y `Pendiente`
+**[SUPUESTO S-3 de F1C-01]** hacia `Anulado`, de área `Comercial`, con `comment()`, el motivo obligatorio de la lista y su
+detalle, y sin la casilla de derivación. **MUST NOT** salir de `Solicitud Soporte` (S-5 de RQ-SR-01). No figura en la tabla de
+RQ-SR-01, que lista las cuatro de trabajo; RQ-SR-01, RQ-SR-02 y RQ-SR-05 la nombran en su texto.
+
+#### Scenario: Comercial anula un soporte remoto desde Pendiente — ROJO
+- GIVEN un ticket `Soporte remoto` en `Pendiente`
+- WHEN un usuario de Comercial ejecuta `Anulación` con un motivo de la lista
+- THEN responde `200` y el ticket pasa a `Anulado`, cerrado
+
+#### Scenario: La anulación de soporte remoto exige Comercial — ROJO
+- GIVEN un usuario cuya única área es `Servicio Técnico` y un ticket `Soporte remoto` en `En Proceso`
+- WHEN intenta ejecutar `Anulación` con un motivo de la lista
+- THEN el servidor responde `403`
+
 ## MODIFIED Requirements
 
 ### Requirement: RQ-SR-01 · Catálogo separado de cinco transiciones sobre cinco estados
 
 El sistema **SHALL** declarar el catálogo de `Soporte remoto` como registro **separado** de `TRANSITIONS` y
 de `TRANSITIONS_EQUIPO_NUEVO`, con la misma forma de `Transition` (`id`, `name`, `from: string[]`, `to`,
-`area`, `fields`, `packages/shared/src/transitions.ts:55-62`) y exactamente estas cinco entradas
+`area`, `fields`, `packages/shared/src/transitions.ts:55-62`) y exactamente estas cinco entradas: las cuatro de trabajo de la tabla y `Anulación` (`anulacion_soporte`, RQ-SR-13)
 (`R08.2.md:1556-1567`):
 
 | Transición | Origen → destino |
@@ -15,26 +35,21 @@ de `TRANSITIONS_EQUIPO_NUEVO`, con la misma forma de `Transition` (`id`, `name`,
 | Ejecutar | En Proceso → Finalizado |
 | Soporte pendiente | En Proceso → Pendiente |
 | Continuación soporte | Pendiente → En Proceso |
-| Anulación | En Proceso, Pendiente → Anulado |
 
 - El catálogo **SHALL** cubrir exactamente los cinco estados `Solicitud Soporte`, `En Proceso`,
   `Pendiente`, `Finalizado` y `Anulado` (RQ-TS-40, F1C-01).
 - **Sin anulación desde `Solicitud Soporte` (S-5):** el catálogo **MUST NOT** declarar ninguna salida desde
-  `Solicitud Soporte` distinta de `Asignación`: lo que se cancela al nacer se borra, no se anula. `Anulación`
-  (`anulacion_soporte`) sale de `En Proceso` y de `Pendiente` **[SUPUESTO S-3 de F1C-01]**, es de área `Comercial`
-  (`decision/f1c01-area-anulado`) y declara `comment()`, el motivo obligatorio y su detalle (RQ-TS-40).
+  `Solicitud Soporte` distinta de `Asignación`: lo que se cancela al nacer se borra, no se anula. `Anulación` sale de `En Proceso` y de `Pendiente` **[SUPUESTO S-3 de F1C-01]**, es de área `Comercial` (`decision/f1c01-area-anulado`) y declara `comment()`, el motivo obligatorio y su detalle (RQ-SR-13). (Previously, hasta F1C-01: cuatro transiciones sobre cuatro estados, y ninguna anulación.)
 - Las cuatro de trabajo **SHALL** declarar sólo `comment()` y la casilla de derivación `derivacion()` (S-3), sin
   motivo obligatorio ni campo de fecha; el bucle `En Proceso ↔ Pendiente` es el que mide la espera del
   cliente (`R08.2.md:1568`) y **SHALL** tener cero campos de fecha reentrantes.
 - Regla 13: el servidor impone origen, flujo y área con este mismo catálogo compartido; el cliente lo
   consume.
 
-(Previously, hasta F1C-01: cuatro transiciones sobre cuatro estados, y ninguna anulación.)
-
 #### Scenario: Las cinco transiciones existen con sus pares exactos
 - GIVEN el catálogo de `Soporte remoto`
 - WHEN se listan sus entradas con `from` y `to`
-- THEN son exactamente los cinco pares de la tabla, y ninguna más
+- THEN son exactamente los cuatro pares de la tabla más el de `Anulación` (RQ-SR-13), y ninguna más
 
 #### Scenario: Ninguna entrada declara campos de fecha ni motivo obligatorio
 - GIVEN las cuatro entradas de trabajo del catálogo
@@ -47,21 +62,13 @@ de `TRANSITIONS_EQUIPO_NUEVO`, con la misma forma de `Transition` (`id`, `name`,
 - WHEN se añade una entrada cuyo `from` incluye `Solicitud Soporte` y cuyo `to` no es `En Proceso`
 - THEN la prueba que fija las salidas de `Solicitud Soporte` en exactamente `Asignación` falla
 
-#### Scenario: Comercial anula un soporte remoto desde Pendiente — ROJO
-- GIVEN un ticket `Soporte remoto` en `Pendiente`
-- WHEN un usuario de Comercial ejecuta `Anulación` con un motivo de la lista
-- THEN responde `200` y el ticket pasa a `Anulado`, cerrado
-
 ### Requirement: RQ-SR-02 · Área por equivalencia con Servicio Técnico
 
 Ninguna fuente accesible da el área de las cuatro transiciones (`ÁREA_RESPONSABLE` vacía en las cuatro
 filas de la hoja, §0; M1.5 tampoco). El sistema **SHALL** declarar las cuatro de trabajo como área `Servicio Técnico`,
 por equivalencia con el grafo de servicio y con `transitions-equipo-nuevo` RQ-EN-02 — supuesto reversible
 S-1, un dato por transición. *Hipótesis*, no cerrada: `Asignación` podría ser de Comercial, que es quien
-recibe la solicitud. Se confirma en P.3 (`docs/sdd/ENTRADA.md`). `Anulación` es de área `Comercial` por decisión
-(`decision/f1c01-area-anulado`), no por equivalencia.
-
-(Previously, hasta F1C-01: el catálogo eran sólo las cuatro.)
+recibe la solicitud. Se confirma en P.3 (`docs/sdd/ENTRADA.md`). `Anulación` es de área `Comercial` por decisión (`decision/f1c01-area-anulado`), no por equivalencia (RQ-SR-13). (Previously, hasta F1C-01: el catálogo eran sólo las cuatro.)
 
 #### Scenario: Las cuatro exigen el área Servicio Técnico
 - GIVEN un usuario cuya única área es `Comercial` y un ticket `Soporte remoto` en `Solicitud Soporte`
@@ -72,11 +79,6 @@ recibe la solicitud. Se confirma en P.3 (`docs/sdd/ENTRADA.md`). `Anulación` es
 - GIVEN un usuario de `Servicio Técnico` y un ticket `Soporte remoto` en `Solicitud Soporte`
 - WHEN ejecuta `Asignación`
 - THEN responde `200` y el ticket pasa a `En Proceso`
-
-#### Scenario: La anulación de soporte remoto exige Comercial — ROJO
-- GIVEN un usuario cuya única área es `Servicio Técnico` y un ticket `Soporte remoto` en `En Proceso`
-- WHEN intenta ejecutar `Anulación` con un motivo de la lista
-- THEN el servidor responde `403`
 
 ### Requirement: RQ-SR-05 · Un ticket `Soporte remoto` ve y ejecuta sólo las cinco del catálogo
 
@@ -89,9 +91,7 @@ independencia del estado. No requiere código nuevo en panel, avisos ni SLA: son
 
 - Un `Soporte remoto` heredado cuyo estado no pertenece al catálogo (p. ej. `Rev./Diagnostico`, `Ticket
   creado`) **MUST NOT** quedar varado: sigue en flujo `servicio` sin tocar sus datos (S-6).
-- `Ejecutar` **SHALL** llevar a `Finalizado`, sin salida, y `Anulación` a `Anulado`, también sin salida.
-
-(Previously, hasta F1C-01: cuatro transiciones sobre cuatro estados.)
+- `Ejecutar` **SHALL** llevar a `Finalizado`, sin salida, y `Anulación` a `Anulado`, también sin salida. (Previously, hasta F1C-01: cuatro transiciones sobre cuatro estados.)
 
 #### Scenario: Solicitud Soporte sólo ofrece Asignación
 - GIVEN un ticket `Soporte remoto` en `Solicitud Soporte`

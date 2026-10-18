@@ -18,7 +18,7 @@ Un lote, fases 1 a 6 (salvo 6.3, que es posterior al archive). Modo strict TDD. 
 RED 1.10: 8 pruebas rojas en 3 ficheros (1.1, 1.2, 1.3, 1.4, 1.5-traza, 1.7, 1.9 ×2); anti-desfase aún verde.
 GREEN 2.1: una cadena en `transitions.ts:236`; los tres ficheros pasan (75/75). El anti-desfase (`packages/shared/src/mapaBlueprint.test.ts`,
 no `apps/desk/server/`) se puso rojo natural, y `npm run generar-mapa-blueprint` lo devolvió a verde: el diff del mapa son
-exactamente tres líneas en tres ficheros (`blueprint-completo.md:54`, `-fase-2-diagnostico.md:44`, `-fase-3-cierre.md:22`,
+exactamente tres líneas en tres ficheros (`blueprint-completo.md:54` en `b16cbb4`, `-fase-2-diagnostico.md:44`, `-fase-3-cierre.md:22`,
 `[C][ST]` → `[C]`); `blueprint-fase-1-entrada.md` sin cambio de contenido (sólo aviso LF/CRLF del generador).
 
 ## Work Unit Evidence

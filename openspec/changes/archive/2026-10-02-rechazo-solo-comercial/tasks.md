@@ -45,7 +45,7 @@ trackear, y registrar ESO.
 
 - [x] 2.1 `packages/shared/src/transitions.ts:236`: `area: 'Comercial / Servicio Técnico'` → `area: 'Comercial'`; una cadena, sin mover líneas (D-1). `:234` y `:238` intactas.
 - [x] 2.2 Correr los cuatro ficheros: todo verde salvo `mapaBlueprint.test.ts` (anti-desfase, rojo natural por las tres aristas de los `.md`). Anotarlo.
-- [x] 2.3 `npm run generar-mapa-blueprint`. `git diff --stat docs/artefactos` debe tocar exactamente tres líneas en tres ficheros: `blueprint-completo.md:54`, `blueprint-fase-2-diagnostico.md:44`, `blueprint-fase-3-cierre.md:22`, de `[C][ST]` a `[C]`; `blueprint-fase-1-entrada.md` sin cambio. (TS-30 «el mapa regenerado»)
+- [x] 2.3 `npm run generar-mapa-blueprint`. `git diff --stat docs/artefactos` debe tocar exactamente tres líneas en tres ficheros: `blueprint-completo.md:54` en `b16cbb4`, `blueprint-fase-2-diagnostico.md:44` en `b16cbb4`, `blueprint-fase-3-cierre.md:22` en `b16cbb4`, de `[C][ST]` a `[C]`; `blueprint-fase-1-entrada.md` sin cambio. (TS-30 «el mapa regenerado»)
 - [x] 2.4 Re-correr el anti-desfase: verde. Sin tocar `blueprintserviciotecnico.html` ni ningún `.tsx` (regla 13 ya cumplida, `design.md` «Regla 13»).
 - [x] 2.5 Escenarios de hecho sin código nuevo: RQ-TS-30 «invariante 6 no cambia» (diez reentrantes, `invariantesGrafo.test.ts` sin editar) y «traza histórica conserva su área» (`ticketService.ts:155` sin tocar; se afirma por lectura en `apply-progress.md`). RQ-TS-23 y PM-10 «retiradas»: las pruebas existentes de 31 entradas y de ids retiradas siguen verdes.
 
