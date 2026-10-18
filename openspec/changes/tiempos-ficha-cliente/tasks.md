@@ -5,19 +5,19 @@ un fichero existente salvo al final de `cierreEnCifras.ts` (diseño D1, D2, D3, 
 
 ## Lote 1 · La ventana en shared y en el servidor (diseño D1, D2, D4)
 
-- [ ] 1.1 **Rojo.** `packages/shared/src/ventanaResolucion.test.ts` (nuevo): fuera de la ventana, límite inferior, cierre
+- [x] 1.1 **Rojo.** `packages/shared/src/ventanaResolucion.test.ts` (nuevo): fuera de la ventana, límite inferior, cierre
   de la migración dentro de la ventana, constante en 6. Verlos en rojo.
-- [ ] 1.2 **Rojo.** `apps/desk/server/fichaClienteVentana.test.ts` (nuevo): detalle de cuenta y de contacto con `ahora`
+- [x] 1.2 **Rojo.** `apps/desk/server/fichaClienteVentana.test.ts` (nuevo): detalle de cuenta y de contacto con `ahora`
   fijo, un ticket dentro y otro fuera; cuenta sin cierres en la ventana da `null`. Verlos en rojo.
-- [ ] 1.3 **Verde.** `cierreEnCifras.ts` (D1) y `directory.ts` (D2); las seis llamadas existentes con `ahora` fijo, en
+- [x] 1.3 **Verde.** `cierreEnCifras.ts` (D1) y `directory.ts` (D2); las seis llamadas existentes con `ahora` fijo, en
   sitio (D4).
-- [ ] 1.4 **Mutaciones** M0-M5 de D5, cada una en rojo y restaurada; anotar qué prueba cae.
+- [x] 1.4 **Mutaciones** M0-M5 de D5, cada una en rojo y restaurada; anotar qué prueba cae.
 
 ## Lote 2 · La ficha (diseño D3)
 
-- [ ] 2.1 `apps/desk/src/components/ClienteDetalle.tsx:2`, `:75`, `:126`, `:192-194` en sitio. Sin prueba automatizada
+- [x] 2.1 `apps/desk/src/components/ClienteDetalle.tsx:2`, `:75`, `:126`, `:192-194` en sitio. Sin prueba automatizada
   (F0-00).
-- [ ] 2.2 **Cierre del intento.** test, typecheck, lint (165 avisos como máximo), commit y detector `--sha HEAD` en una
+- [x] 2.2 **Cierre del intento.** test, typecheck, lint (165 avisos como máximo), commit y detector `--sha HEAD` en una
   cadena; `wc -l` igual en los ficheros existentes salvo `cierreEnCifras.ts`; medida `git diff --shortstat --no-renames`
   contra el commit de partida; build para medir el bundle.
 

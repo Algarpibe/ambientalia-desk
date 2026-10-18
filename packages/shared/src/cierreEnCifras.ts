@@ -41,17 +41,29 @@ export function llegadaQueCuenta(paso: { transitionId: unknown; performedAt: str
   return destino(paso.values, 'zoho')
 }
 
-/** Media en ms de `closedAt − createdAt` de los cerrados cuyo cierre cuenta (`puestos`: ticket → cierre de la migración). */
+/** Media en ms de `closedAt − createdAt` de los cerrados cuyo cierre cuenta Y cae en la ventana de seis meses (`puestos`: ticket → cierre de la migración; RQ-TC-70). */
 export function resolucionPromedioMs(
   tickets: readonly { id: string; statusType: string | null; createdAt: string | null; closedAt: string | null }[],
   puestos: ReadonlyMap<string, string>,
+  ahora: Date,
 ): number | null {
+  const desde = inicioVentanaResolucion(ahora)
   const duraciones: number[] = []
   for (const t of tickets) {
     if (t.statusType !== 'Closed') continue
     const fin = instante(cierreQueCuenta(t.closedAt, puestos.get(t.id) ?? null)), inicio = instante(t.createdAt)
-    if (fin === null || inicio === null) continue
+    if (fin === null || inicio === null || fin < desde) continue
     duraciones.push(fin - inicio)
   }
   return duraciones.length ? duraciones.reduce((s, d) => s + d, 0) / duraciones.length : null
+}
+
+/** Meses hacia atrás que abarca la media de resolución de la ficha (RQ-TC-70). */
+export const MESES_VENTANA_RESOLUCION = 6
+
+/** Inicio de la ventana (ms): `ahora` menos `MESES_VENTANA_RESOLUCION` meses en UTC; el límite inferior está incluido. */
+export function inicioVentanaResolucion(ahora: Date): number {
+  const d = new Date(ahora.getTime())
+  d.setUTCMonth(d.getUTCMonth() - MESES_VENTANA_RESOLUCION)
+  return d.getTime()
 }
