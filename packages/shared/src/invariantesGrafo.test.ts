@@ -47,10 +47,10 @@ describe('invariantes del grafo de transiciones', () => {
    * Vale menos que los demás y por eso va acompañado: un número solo no dice QUÉ se perdió. Va con
    * el conjunto de ids, que sí lo dice.
    */
-  it('2 · 31 transiciones sobre 20 estados', () => {
-    expect(TRANSITIONS).toHaveLength(31)
-    expect(ESTADOS_SERVICIO).toHaveLength(20)
-    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(31)
+  it('2 · 32 transiciones sobre 21 estados', () => {
+    expect(TRANSITIONS).toHaveLength(32)
+    expect(ESTADOS_SERVICIO).toHaveLength(21)
+    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(32)
   })
 
   /**
@@ -59,10 +59,10 @@ describe('invariantes del grafo de transiciones', () => {
    * Un estado sin salida introducido por descuido deja tickets clavados sin que nadie pueda moverlos
    * desde la interfaz, y no hay pantalla que lo avise: la de transiciones simplemente sale vacía.
    */
-  it('3 · Finalizado es el único estado sin transición de salida', () => {
+  it('3 · Finalizado y Anulado son los únicos estados sin transición de salida (F1C-01)', () => {
     const conSalida = new Set(TRANSITIONS.flatMap((t) => t.from))
     const sinSalida = ESTADOS_SERVICIO.filter((e) => !conSalida.has(e))
-    expect(sinSalida).toEqual(['Finalizado'])
+    expect(sinSalida).toEqual(['Finalizado', 'Anulado'])
   })
 
   /**
@@ -169,15 +169,15 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect([...derivados].sort()).toEqual([...ESTADOS].sort())
   })
 
-  it('la unión tiene 41 entradas (31 + 6 + 4), con ids únicos', () => {
-    expect(UNION).toHaveLength(41)
-    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(41)
+  it('la unión tiene 44 entradas (32 + 7 + 5), con ids únicos', () => {
+    expect(UNION).toHaveLength(44)
+    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(44)
   })
 
-  it('3 · sin salida en la unión es exactamente Finalizado', () => {
+  it('3 · sin salida en la unión es exactamente Finalizado y Anulado (F1C-01)', () => {
     const conSalida = new Set(UNION.flatMap((t) => t.from))
     const sinSalida = ESTADOS.filter((e) => !conSalida.has(e))
-    expect(sinSalida).toEqual(['Finalizado'])
+    expect(sinSalida).toEqual(['Finalizado', 'Anulado'])
   })
 
   it('4 · ninguna transición de ningún catálogo apunta a un estado fuera del registro', () => {
@@ -197,23 +197,23 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect(diferencia).toEqual([...ESTADOS_SOLO_EQUIPO_NUEVO])
   })
 
-  it('RQ-EN-01 · las seis transiciones cubren exactamente los pares del catálogo, y las salidas de Verificación son exactamente liberación y rechazo de verificación', () => {
+  it('RQ-EN-01 · las siete transiciones cubren exactamente los pares del catálogo, y las salidas de Verificación son exactamente liberación, rechazo de verificación y anulación', () => {
     expect(TRANSITIONS_EQUIPO_NUEVO.map((t) => [t.id, t.from, t.to])).toEqual([
       ['ingreso_equipo_nuevo', ['Ingresado'], 'En Proceso'],
       ['producto_no_conforme', ['En Proceso'], 'Notificado'],
       ['analisis_y_acciones', ['Notificado'], 'Ingresado'],
       ['verificacion', ['En Proceso'], 'Verificación'],
       ['liberacion', ['En Proceso', 'Verificación'], 'Finalizado'],
-      ['rechazo_verificacion', ['Verificación'], 'Notificado'],
+      ['rechazo_verificacion', ['Verificación'], 'Notificado'], ['anulacion_equipo_nuevo', ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], 'Anulado'],
     ])
     const salidasDeVerificacion = TRANSITIONS_EQUIPO_NUEVO.filter((t) => t.from.includes('Verificación')).map((t) => t.id)
-    expect(salidasDeVerificacion).toEqual(['liberacion', 'rechazo_verificacion'])
+    expect(salidasDeVerificacion).toEqual(['liberacion', 'rechazo_verificacion', 'anulacion_equipo_nuevo'])
   })
 
-  it('corrección (b) · las seis entradas de Equipo nuevo declaran comentario y derivación (liberacion, además, el certificado)', () => {
+  it('corrección (b) · las seis de trabajo de Equipo nuevo declaran comentario y derivación (liberacion, además, el certificado) y la séptima, de Comercial, el motivo (F1C-01)', () => {
     for (const t of TRANSITIONS_EQUIPO_NUEVO) {
-      expect(t.area, `${t.id} no es de Servicio Técnico (E-226)`).toBe('Servicio Técnico')
-      expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(t.id === 'liberacion' ? ['comment', 'certificado_fabrica', 'derivado_a'] : ['comment', 'derivado_a'])
+      expect(t.area, `${t.id} no es de Servicio Técnico (E-226)`).toBe(t.id === 'anulacion_equipo_nuevo' ? 'Comercial' : 'Servicio Técnico')
+      expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(t.id === 'anulacion_equipo_nuevo' ? ['comment', 'Motivo de anulación', 'Detalle del motivo de anulación'] : t.id === 'liberacion' ? ['comment', 'certificado_fabrica', 'derivado_a'] : ['comment', 'derivado_a'])
     }
   })
 })
@@ -237,12 +237,12 @@ describe('invariantes del catálogo soporte-remoto (F1B-06)', () => {
     expect(diferencia).toEqual(['Solicitud Soporte', 'Pendiente'])
   })
 
-  it('RQ-SR-01 · las cuatro cubren exactamente los pares del catálogo', () => {
+  it('RQ-SR-01 · las cinco cubren exactamente los pares del catálogo', () => {
     expect(TRANSITIONS_SOPORTE_REMOTO.map((t) => [t.id, t.from, t.to])).toEqual([
       ['asignacion_soporte', ['Solicitud Soporte'], 'En Proceso'],
       ['ejecutar_soporte', ['En Proceso'], 'Finalizado'],
       ['soporte_pendiente', ['En Proceso'], 'Pendiente'],
-      ['continuacion_soporte', ['Pendiente'], 'En Proceso'],
+      ['continuacion_soporte', ['Pendiente'], 'En Proceso'], ['anulacion_soporte', ['En Proceso', 'Pendiente'], 'Anulado'],
     ])
   })
 
@@ -251,11 +251,11 @@ describe('invariantes del catálogo soporte-remoto (F1B-06)', () => {
     expect(salidas).toEqual(['asignacion_soporte'])
   })
 
-  it('corrección (b) · las cuatro declaran exactamente comentario y derivación, y son de Servicio Técnico', () => {
-    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(4)
+  it('corrección (b) · las cuatro de trabajo declaran comentario y derivación y son de Servicio Técnico; la quinta, de Comercial, el motivo (F1C-01)', () => {
+    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(5)
     for (const t of TRANSITIONS_SOPORTE_REMOTO) {
-      expect(t.area, `${t.id} no es de Servicio Técnico (S-1)`).toBe('Servicio Técnico')
-      expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(['comment', 'derivado_a'])
+      expect(t.area, `${t.id} no es de Servicio Técnico (S-1)`).toBe(t.id === 'anulacion_soporte' ? 'Comercial' : 'Servicio Técnico')
+      expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(t.id === 'anulacion_soporte' ? ['comment', 'Motivo de anulación', 'Detalle del motivo de anulación'] : ['comment', 'derivado_a'])
     }
   })
 })

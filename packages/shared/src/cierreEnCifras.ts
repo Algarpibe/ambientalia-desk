@@ -1,4 +1,4 @@
-import { ID_TRANSICION_MIGRACION } from './migracionTickets'
+import { ID_TRANSICION_MIGRACION } from './migracionTickets'; import { esAnulado } from './anulacion'
 
 /**
  * La fecha que puso la migración, y su marcador, no entran en ninguna cifra (F1F-01, `fecha-migracion-fuera-de-cifras`;
@@ -43,14 +43,14 @@ export function llegadaQueCuenta(paso: { transitionId: unknown; performedAt: str
 
 /** Media en ms de `closedAt − createdAt` de los cerrados cuyo cierre cuenta Y cae en la ventana de seis meses (`puestos`: ticket → cierre de la migración; RQ-TC-70). */
 export function resolucionPromedioMs(
-  tickets: readonly { id: string; statusType: string | null; createdAt: string | null; closedAt: string | null }[],
+  tickets: readonly { id: string; status: string; statusType: string | null; createdAt: string | null; closedAt: string | null }[],
   puestos: ReadonlyMap<string, string>,
   ahora: Date,
 ): number | null {
   const desde = inicioVentanaResolucion(ahora)
   const duraciones: number[] = []
   for (const t of tickets) {
-    if (t.statusType !== 'Closed') continue
+    if (t.statusType !== 'Closed' || esAnulado(t.status)) continue
     const fin = instante(cierreQueCuenta(t.closedAt, puestos.get(t.id) ?? null)), inicio = instante(t.createdAt)
     if (fin === null || inicio === null || fin < desde) continue
     duraciones.push(fin - inicio)

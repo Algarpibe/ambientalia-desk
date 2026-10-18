@@ -89,7 +89,7 @@ El rojo previo que `apply-progress.md:54` declaraba (`registro.test.ts`, «en cu
 | M-1 | `:236` devuelto a `Comercial / Servicio Técnico` | **9 rojos**: matriz 55/38, compuesta 56/37, invariante 5, catálogo a mano, `403`, traza `Comercial`, `areasSiguientes`, `areasAAvisar`, anti-desfase. Coincide con RQ-TS-30 y RQ-TS-31 |
 | M-2a | `Comercial` en `:234` | **6 rojos**: catálogo a mano, `200` de Servicio Técnico en las otras dos, compuesta, invariante 5, anti-desfase, matriz 55/38 |
 | M-2b | `Comercial` en `:238` | **los mismos 6** |
-| M-3 | `[C][ST]` a mano en `blueprint-completo.md:54`, `blueprint-fase-2-diagnostico.md:44`, `blueprint-fase-3-cierre.md:22`, una por vez | anti-desfase rojo **en cada uno de los tres** (1 fallo, 14 pasan) |
+| M-3 | `[C][ST]` a mano en `blueprint-completo.md:54` en `b16cbb4`, `blueprint-fase-2-diagnostico.md:44` en `b16cbb4`, `blueprint-fase-3-cierre.md:22` en `b16cbb4`, una por vez | anti-desfase rojo **en cada uno de los tres** (1 fallo, 14 pasan) |
 
 Tras revertir (`git checkout -- <fichero>` el catálogo; copia restaurada los `.md`), `git diff` de producción y de mapa quedó vacío. Ninguna mutación sobrevivió.
 

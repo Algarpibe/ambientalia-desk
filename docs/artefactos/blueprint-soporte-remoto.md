@@ -12,10 +12,13 @@ stateDiagram-v2
     state "En Proceso" as e02
     state "Finalizado" as e03
     state "Pendiente" as e04
+    state "Anulado" as e05
     e01 --> e02 : Asignación [ST]
     e02 --> e03 : Ejecutar [ST]
     e02 --> e04 : Soporte pendiente [ST]
     e04 --> e02 : Continuación soporte [ST]
+    e02 --> e05 : Anulación [C]
+    e04 --> e05 : Anulación [C]
 ```
 
 ## Leyenda de áreas

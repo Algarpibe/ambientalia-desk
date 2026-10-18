@@ -21,6 +21,7 @@ stateDiagram-v2
     state "En Proceso" as e15
     state "Continuación del proceso" as e16
     state "Por Facturar →cierre" as e17
+    state "Anulado →cierre" as e21
     e12 --> e13 : Ingreso a Servicio [frontera] [ST]
     e13 --> e14 : Escalado a Revisión [ST]
     e14 --> e13 : Devolución a corrección [ST]
@@ -45,4 +46,9 @@ stateDiagram-v2
     e13 --> e17 : Rechazo [frontera] [C][ST]
     e15 --> e16 : Diagnóstico complementario [ST]
     e16 --> e07 : Notificación re cotización [C]
+    e01 --> e21 : Anulación [frontera] [C]
+    e02 --> e21 : Anulación [frontera] [C]
+    e13 --> e21 : Anulación [frontera] [C]
+    e07 --> e21 : Anulación [frontera] [C]
+    e03 --> e21 : Anulación [frontera] [C]
 ```

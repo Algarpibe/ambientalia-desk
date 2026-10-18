@@ -43,13 +43,13 @@ describe('mapaBlueprint — motor puro', () => {
     }
   })
 
-  it('RQ-MB-02 · el diagrama completo tiene 35 aristas, 3 con origen en Habilitar Servicio', () => {
+  it('RQ-MB-02 · el diagrama completo tiene 40 aristas, 3 con origen en Habilitar Servicio', () => {
     const salida = generarMapaBlueprint(entradaReal())
     const completo = salida['blueprint-completo.md']
     // El patrón exige alias `eNN` a los dos lados: la cabecera HTML cierra con un `-->` suelto
     // (`<!-- ... -->`) que un patrón desnudo `/-->/ ` contaría como arista fantasma.
     const aristas = completo.match(/e\d{2} --> e\d{2}/g) ?? []
-    expect(aristas).toHaveLength(35)
+    expect(aristas).toHaveLength(40)
     const desdeHabilitar = completo.match(/: Habilitar Servicio/g) ?? []
     expect(desdeHabilitar).toHaveLength(3)
   })
@@ -179,9 +179,9 @@ describe('mapaBlueprint — RQ-MB-06 · anti-desfase contra docs/artefactos/', (
 
 // F1C-09 (E-140): `Pendiente` sale del catálogo de servicio y ninguna arista del mapa lo toca.
 describe('mapaBlueprint — F1C-09 · Pendiente fuera del mapa de servicio', () => {
-  it('ninguna arista ni estado del diagrama completo menciona Pendiente, y quedan 35 aristas', () => {
+  it('ninguna arista ni estado del diagrama completo menciona Pendiente, y quedan 40 aristas (35 hasta F1C-01)', () => {
     const completo = generarMapaBlueprint(entradaReal())['blueprint-completo.md']
-    expect(completo.match(/e\d{2} --> e\d{2}/g) ?? []).toHaveLength(35)
+    expect(completo.match(/e\d{2} --> e\d{2}/g) ?? []).toHaveLength(40)
     expect(completo).not.toContain('Pendiente')
     expect(completo).not.toContain('Marcar como pendiente')
   })
@@ -302,11 +302,11 @@ describe('mapaPorFlujo — RQ-MB-08 · un mapa por flujo desde CATALOGO_POR_FLUJ
     for (const flujo of FLUJOS) expect(Object.keys(mapas[flujo]).length, flujo).toBeGreaterThanOrEqual(1)
   })
 
-  it('P5 · equipo nuevo: 5 estados en su orden y 7 aristas; soporte remoto: 4 y 4; sin marcas de servicio y con la leyenda', () => {
+  it('P5 · equipo nuevo: 6 estados en su orden y 11 aristas; soporte remoto: 5 y 6; sin marcas de servicio y con la leyenda', () => {
     const mapas = mapasPorFlujo()
     const casos = [
-      { flujo: 'equipo-nuevo' as const, fichero: 'blueprint-equipo-nuevo.md', estados: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación', 'Finalizado'], aristas: 7 },
-      { flujo: 'soporte-remoto' as const, fichero: 'blueprint-soporte-remoto.md', estados: ['Solicitud Soporte', 'En Proceso', 'Finalizado', 'Pendiente'], aristas: 4 },
+      { flujo: 'equipo-nuevo' as const, fichero: 'blueprint-equipo-nuevo.md', estados: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación', 'Finalizado', 'Anulado'], aristas: 11 },
+      { flujo: 'soporte-remoto' as const, fichero: 'blueprint-soporte-remoto.md', estados: ['Solicitud Soporte', 'En Proceso', 'Finalizado', 'Pendiente', 'Anulado'], aristas: 6 },
     ]
     for (const c of casos) {
       expect(Object.keys(mapas[c.flujo]), c.flujo).toEqual([c.fichero])

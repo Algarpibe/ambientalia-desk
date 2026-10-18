@@ -66,9 +66,9 @@ Las otras matrices (equipo nuevo `:243`, soporte remoto `:328`) no contienen `re
 (`packages/shared/src/mapaBlueprint.ts:78-80`). `e03` es `Notificación cliente`
 (`docs/artefactos/blueprint-completo.md:13`). Aristas que pasan de `[C][ST]` a `[C]`:
 
-- `docs/artefactos/blueprint-completo.md:54`
-- `docs/artefactos/blueprint-fase-2-diagnostico.md:44`
-- `docs/artefactos/blueprint-fase-3-cierre.md:22`
+- `docs/artefactos/blueprint-completo.md:54` en `b16cbb4`
+- `docs/artefactos/blueprint-fase-2-diagnostico.md:44` en `b16cbb4`
+- `docs/artefactos/blueprint-fase-3-cierre.md:22` en `b16cbb4`
 
 Las aristas de `e07` y `e13` conservan `[C][ST]`. `docs/artefactos/blueprintserviciotecnico.html:762` es
 un artefacto estático hecho a mano: F1C-09 tampoco lo actualizó (sigue nombrando «Marcar como

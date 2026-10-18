@@ -36,11 +36,11 @@ describe('serie P · ejecución del flujo de soporte remoto (guarda 3, estado y 
     expect((await fila('sr-1')).status).toBe('En Proceso')
   })
 
-  it('P2 · un usuario sólo de Comercial recibe 403 en las cuatro transiciones, desde su estado de origen', async () => {
+  it('P2 · un usuario sólo de Comercial recibe 403 en las cuatro transiciones de trabajo, desde su estado de origen (la anulación es suya: F1C-01)', async () => {
     const cookie = await userCookie(COMERCIAL)
     const { app } = appWith()
     let n = 0
-    for (const t of TRANSITIONS_SOPORTE_REMOTO) {
+    for (const t of TRANSITIONS_SOPORTE_REMOTO.filter((x) => x.id !== 'anulacion_soporte')) {
       n += 1
       await ticket(`sr-p2-${n}`, 92100 + n, t.from[0], 'Soporte remoto')
       const res = await ejecutar(app, cookie, `sr-p2-${n}`, t.id, n)
@@ -109,7 +109,7 @@ describe('serie P · ejecución del flujo de soporte remoto (guarda 3, estado y 
       if (res.status === 200) ok.push(t.id)
       else expect(res.status, `${t.id} desde Solicitud Soporte`).toBe(409)
     }
-    expect(n, 'transiciones recorridas (31 + 6 + 4 = 41)').toBe(41)
+    expect(n, 'transiciones recorridas (32 + 7 + 5 = 44)').toBe(44)
     expect(ok).toEqual(['asignacion_soporte'])
   }, 60_000)
 
@@ -255,8 +255,8 @@ describe('serie A · alta de soporte remoto y guarda de modalidad (escalón C)',
 describe('serie R · ninguna vía del servidor cambia modalidad después del alta', () => {
   const modalidadDe = async (id: string) => (await fila(id)).modalidad
 
-  it('R1 · las cuatro transiciones de soporte remoto ignoran modalidad en values y en la raíz del cuerpo', async () => {
-    const cookie = await userCookie(SERVICIO)
+  it('R1 · las cinco transiciones de soporte remoto ignoran modalidad en values y en la raíz del cuerpo', async () => {
+    const cookie = await userCookie([...SERVICIO, ...COMERCIAL])
     const { app } = appWith()
     let n = 0
     for (const t of TRANSITIONS_SOPORTE_REMOTO) {
@@ -267,7 +267,7 @@ describe('serie R · ninguna vía del servidor cambia modalidad después del alt
       expect(res.status, t.id).toBe(200)
       expect(await modalidadDe(`sr-r1-${n}`), `${t.id} no debe cambiar la modalidad`).toBe('remoto')
     }
-    expect(n).toBe(4)
+    expect(n).toBe(5)
   })
 
   it('R2 · PUT /api/tickets/:id/resolution con modalidad en el cuerpo la ignora', async () => {

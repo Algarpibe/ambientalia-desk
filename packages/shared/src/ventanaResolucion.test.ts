@@ -5,7 +5,7 @@ import { resolucionPromedioMs, MESES_VENTANA_RESOLUCION, inicioVentanaResolucion
 const AHORA = new Date('2027-06-15T12:00:00.000Z')
 const INICIO = '2026-12-15T12:00:00.000Z'
 const HORA = 3600000
-const t = (id: string, createdAt: string, closedAt: string) => ({ id, statusType: 'Closed', createdAt, closedAt })
+const t = (id: string, createdAt: string, closedAt: string) => ({ id, status: 'Finalizado', statusType: 'Closed', createdAt, closedAt })
 
 describe('ventana de la media de resolución (RQ-TC-70)', () => {
   it('es de seis meses de calendario hacia atrás desde ahora', () => {

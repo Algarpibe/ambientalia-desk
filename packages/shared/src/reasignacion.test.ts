@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { puedeReasignar, reasignacionDelCuerpo, MENSAJES_REASIGNACION } from './reasignacion'
 import { CATALOGO_POR_FLUJO, flujoDelTicket } from './flujos'
-import { AREAS, areasForTransition } from './transitions'
+import { AREAS, areasForTransition } from './transitions'; import { ESTADO_ANULADO } from './anulacion'
 
 /**
  * Reasignar la persona a cargo (F1B-05, RQ-PM-27, RQ-TC-50, RQ-TC-52). Todo es puro: node, sin base ni HTTP.
@@ -25,7 +25,7 @@ describe('puedeReasignar · barrido de estados por áreas contra la ruta (RQ-PM-
       for (const status of ESTADOS) {
         const catalogo = CATALOGO_POR_FLUJO[flujoDelTicket({ status, classification })]
         for (const area of AREAS) {
-          const esperado = catalogo.some((t) => t.from.includes(status) && areasForTransition(t.area).includes(area))
+          const esperado = catalogo.some((t) => t.from.includes(status) && t.to !== ESTADO_ANULADO && areasForTransition(t.area).includes(area)) // F1C-01 (S-8): anular no da el testigo
           expect(puedeReasignar(sujeto([area]), { status, classification }), `${classification ?? 'servicio'} · ${status} · ${area}`).toBe(esperado)
           comparados++
         }

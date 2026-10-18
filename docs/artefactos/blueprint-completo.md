@@ -28,6 +28,7 @@ stateDiagram-v2
     state "Finalizado" as e18
     state "OV asignada" as e19
     state "Ticket creado" as e20
+    state "Anulado" as e21
     e19 --> e12 : Habilitar Servicio [C]
     e20 --> e12 : Habilitar Servicio [C]
     e11 --> e12 : Habilitar Servicio [C]
@@ -61,6 +62,11 @@ stateDiagram-v2
     e04 --> e18 : Entrega al cliente [ST]
     e10 --> e04 : Habilitado para entrega [C]
     e16 --> e07 : Notificación re cotización [C]
+    e01 --> e21 : Anulación [C]
+    e02 --> e21 : Anulación [C]
+    e13 --> e21 : Anulación [C]
+    e07 --> e21 : Anulación [C]
+    e03 --> e21 : Anulación [C]
     e20 --> e11 : Remisión creada (sin botón) [ST]
     e11 --> e20 : Remisión anulada (sin botón) [ST]
 ```

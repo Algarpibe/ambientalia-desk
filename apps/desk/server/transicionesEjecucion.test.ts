@@ -182,10 +182,10 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   diagnostico_complementario: { desde: ['En Proceso'], a: 'Continuación del proceso' },
   entrega_al_cliente: { desde: ['Por Entregar'], a: 'Finalizado' },
   habilitado_para_entrega: { desde: ['Liberación Comercial'], a: 'Por Entregar' },
-  notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' },
+  notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' }, anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' }, // F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
 }
 
-describe('las 31 transiciones, ejecutadas contra el servidor', () => {
+describe('las 32 transiciones, ejecutadas contra el servidor', () => {
   /**
    * EL GUARDIÁN DE COBERTURA: el conjunto de huérfanas tiene que estar VACÍO.
    *
@@ -227,9 +227,9 @@ describe('las 31 transiciones, ejecutadas contra el servidor', () => {
     const salidas: Record<string, string[]> = {}
     for (const e of ESTADOS_SIN_SALIDA) salidas[e] = TRANSITIONS.filter((t) => t.from.includes(e)).map((t) => t.id)
     expect(salidas).toEqual({
-      'En Espera de Repuestos': ['llegada_repuestos'],
+      'En Espera de Repuestos': ['llegada_repuestos', 'anulacion'],
       'Solicitado': ['entrega_repuestos'],
-      'Servicio externo': ['retorno_servicio_externo'],
+      'Servicio externo': ['retorno_servicio_externo', 'anulacion'],
       'En espera de SKU inventario': ['notif_cliente_sku'],
     })
   })
@@ -247,7 +247,7 @@ describe('las 31 transiciones, ejecutadas contra el servidor', () => {
    * lo que la decisión dice. Se afirma que hay UNA fila —ni cero ni dos— con su id, sus dos
    * extremos, su área y su actor.
    */
-  it('las 31 salen de su origen, llegan a su destino y dejan traza', async () => {
+  it('las 32 salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
     const { app } = appWith()
 
@@ -280,9 +280,9 @@ describe('las 31 transiciones, ejecutadas contra el servidor', () => {
     }
 
     expect(observado).toEqual(esperado)
-    // Y que el barrido no se haya quedado corto: 31 transiciones y 33 ejecuciones, porque
-    // `habilitar_servicio` sale de tres estados. Un barrido sobre un grafo vacío también daría verde.
-    expect(n, 'ejecuciones del barrido').toBe(33)
+    // Y que el barrido no se haya quedado corto: 32 transiciones y 38 ejecuciones, porque
+    // `habilitar_servicio` sale de tres estados y `anulacion` de cinco. Un barrido sobre un grafo vacío también daría verde.
+    expect(n, 'ejecuciones del barrido').toBe(38)
   }, 60_000)
 })
 
@@ -305,10 +305,10 @@ const CASOS_EQUIPO_NUEVO: Record<string, { desde: string[]; a: string }> = {
   analisis_y_acciones: { desde: ['Notificado'], a: 'Ingresado' },
   verificacion: { desde: ['En Proceso'], a: 'Verificación' },
   liberacion: { desde: ['En Proceso', 'Verificación'], a: 'Finalizado' },
-  rechazo_verificacion: { desde: ['Verificación'], a: 'Notificado' },
+  rechazo_verificacion: { desde: ['Verificación'], a: 'Notificado' }, anulacion_equipo_nuevo: { desde: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'], a: 'Anulado' },
 }
 
-describe('las seis transiciones de Equipo nuevo, ejecutadas contra el servidor (F1B-06)', () => {
+describe('las siete transiciones de Equipo nuevo, ejecutadas contra el servidor (F1B-06)', () => {
   it('ninguna transición del catálogo EN se queda sin caso, y ningún caso sobra', () => {
     const conCaso = new Set(Object.keys(CASOS_EQUIPO_NUEVO))
     const huerfanas = TRANSITIONS_EQUIPO_NUEVO.filter((t) => !conCaso.has(t.id)).map((t) => t.id)
@@ -362,7 +362,7 @@ describe('las seis transiciones de Equipo nuevo, ejecutadas contra el servidor (
     }
 
     expect(observado).toEqual(esperado)
-    expect(n, 'ejecuciones del barrido EN').toBe(7)
+    expect(n, 'ejecuciones del barrido EN').toBe(11)
   })
 })
 
@@ -375,10 +375,10 @@ const CASOS_SOPORTE_REMOTO: Record<string, { desde: string[]; a: string }> = {
   asignacion_soporte: { desde: ['Solicitud Soporte'], a: 'En Proceso' },
   ejecutar_soporte: { desde: ['En Proceso'], a: 'Finalizado' },
   soporte_pendiente: { desde: ['En Proceso'], a: 'Pendiente' },
-  continuacion_soporte: { desde: ['Pendiente'], a: 'En Proceso' },
+  continuacion_soporte: { desde: ['Pendiente'], a: 'En Proceso' }, anulacion_soporte: { desde: ['En Proceso', 'Pendiente'], a: 'Anulado' },
 }
 
-describe('las cuatro transiciones de Soporte remoto, ejecutadas contra el servidor (F1B-06, cambio 2)', () => {
+describe('las cinco transiciones de Soporte remoto, ejecutadas contra el servidor (F1B-06, cambio 2)', () => {
   it('ninguna transición del catálogo SR se queda sin caso, y ningún caso sobra', () => {
     const conCaso = new Set(Object.keys(CASOS_SOPORTE_REMOTO))
     expect(TRANSITIONS_SOPORTE_REMOTO.filter((t) => !conCaso.has(t.id)).map((t) => t.id), 'transiciones SR sin caso').toEqual([])
@@ -392,7 +392,7 @@ describe('las cuatro transiciones de Soporte remoto, ejecutadas contra el servid
     expect(CASOS_SOPORTE_REMOTO).toEqual(delGrafo)
   })
 
-  it('las cuatro salen de su origen, llegan a su destino y dejan traza', async () => {
+  it('las cinco salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
     const { app } = appWith()
     const observado: Record<string, string[]> = {}
@@ -416,7 +416,7 @@ describe('las cuatro transiciones de Soporte remoto, ejecutadas contra el servid
       }
     }
     expect(observado).toEqual(esperado)
-    expect(n, 'ejecuciones del barrido SR').toBe(4)
+    expect(n, 'ejecuciones del barrido SR').toBe(6)
   })
 })
 
