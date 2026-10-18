@@ -57,3 +57,16 @@ export function erroresAnulacion(t: Pick<Transition, 'fields'>, valores: unknown
 export function esAnulado(estado: string): boolean {
   return estado === ESTADO_ANULADO
 }
+
+const ESPERAS_EXTERNAS = new Set(['En Espera de Repuestos', 'Servicio externo'])
+const MOTIVOS_PRIMERO_EN_ESPERA = ['Repuesto no disponible', 'Sin solución técnica']
+
+/**
+ * Orden de los motivos en el desplegable según el estado de origen (`decision/f1c01-motivos-esperas`). Desde las dos
+ * esperas externas van primero «Repuesto no disponible» y «Sin solución técnica»; en el resto, el orden base. «Otro»
+ * queda último por construcción. Es presentación: el servidor sigue validando la pertenencia en `erroresAnulacion`.
+ */
+export function motivosAnulacionOrdenados(estado: string): string[] {
+  if (!ESPERAS_EXTERNAS.has(estado)) return [...MOTIVOS_ANULACION]
+  return [...MOTIVOS_PRIMERO_EN_ESPERA, ...MOTIVOS_ANULACION.filter((m) => !MOTIVOS_PRIMERO_EN_ESPERA.includes(m))]
+}

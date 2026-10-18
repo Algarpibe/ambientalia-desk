@@ -5,7 +5,7 @@ import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/p
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarTransicion, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
+import { puedeEjecutarTransicion, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -160,7 +160,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
             {active.fields.filter((f) => f.target !== 'priority' || (!!user && puedeAjustarPrioridadTicket(user))).map((f) => (
               <Field
                 key={f.key}
-                f={f}
+                f={f.key === CLAVE_MOTIVO_ANULACION ? { ...f, options: motivosAnulacionOrdenados(status) } : f}
                 value={values[f.key]}
                 onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))}
                 // Bloqueado por dos motivos distintos que se ven igual: o el ticket ya lo trae, o lo

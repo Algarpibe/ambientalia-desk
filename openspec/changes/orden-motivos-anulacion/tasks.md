@@ -12,15 +12,15 @@ archivo). Un intento sólo se asienta si test, typecheck, lint y el detector de 
 
 ## Intento 2 · Aplicar (D1-D5)
 
-- [ ] 2.1 **Rojo.** `packages/shared/src/anulacion.test.ts`: import ampliado en sitio (`:4`) y un `describe` nuevo al
+- [x] 2.1 **Rojo.** `packages/shared/src/anulacion.test.ts`: import ampliado en sitio (`:4`) y un `describe` nuevo al
   final con las seis pruebas de D5. Correr la suite y comprobar que fallan por la función ausente.
-- [ ] 2.2 **Verde.** `motivosAnulacionOrdenados(estado)` al final de `packages/shared/src/anulacion.ts` (D1), con las
+- [x] 2.2 **Verde.** `motivosAnulacionOrdenados(estado)` al final de `packages/shared/src/anulacion.ts` (D1), con las
   dos esperas nombradas y sin importar valores de `transitions.ts`.
-- [ ] 2.3 **Mutaciones.** Reproducir M1-M4 de la propuesta §5 y la copia defensiva de D5 sobre la función, una a una;
+- [x] 2.3 **Mutaciones.** Reproducir M1-M4 de la propuesta §5 y la copia defensiva de D5 sobre la función, una a una;
   cada una pone la suite en rojo; anotar el nombre de la prueba que cae y restaurar.
-- [ ] 2.4 **Consumo.** `apps/desk/src/components/TransitionPanel.tsx`: los dos nombres en el import de `:8` y la
+- [x] 2.4 **Consumo.** `apps/desk/src/components/TransitionPanel.tsx`: los dos nombres en el import de `:8` y la
   sustitución de `f={f}` en `:163` (D3). El fichero sigue con 267 líneas.
-- [ ] 2.5 **Cierre del intento.** `npm test`, `npm run typecheck`, `npm run lint` y el detector de citas en 0;
+- [x] 2.5 **Cierre del intento.** `npm test`, `npm run typecheck`, `npm run lint` y el detector de citas en 0;
   `apps/desk/server` sin cambios (`git diff --stat`); medida con `git diff --shortstat --no-renames` más lo nuevo sin
   trackear.
 
