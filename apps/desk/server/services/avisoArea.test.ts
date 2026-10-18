@@ -45,7 +45,7 @@ describe('areasAAvisar', () => {
  */
 describe('areasAAvisar con catálogo inyectado (F1B-06)', () => {
   const CATALOGO_SINTETICO: Transition[] = [
-    { id: 'sintetica_1', name: 'Sintética 1', from: ['Notificado'], to: 'Ingresado', area: 'Compras', fields: [] },
+    { id: 'sintetica_1', name: 'Sintética 1', from: ['Notificado'], to: 'Ingresado', area: 'Compras', tipoEvento: 'Operativo', fields: [] },
   ]
 
   it('con catálogo inyectado, las áreas siguientes salen de ESE catálogo, no de TRANSITIONS', () => {

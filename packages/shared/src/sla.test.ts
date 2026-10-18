@@ -6,7 +6,7 @@ import { CATALOGO_POR_FLUJO } from './flujos'
 
 /** Una transición mínima con su casilla de derivación, para los grafos sintéticos de más abajo. */
 const trans = (id: string, from: string, porDefecto: DerivacionPorDefecto): Transition => ({
-  id, name: id, from: [from], to: 'Z', area: 'Servicio Técnico',
+  id, name: id, from: [from], to: 'Z', area: 'Servicio Técnico', tipoEvento: 'Operativo',
   fields: [{ key: CLAVE_DERIVACION, label: 'Derivado a', kind: 'usuario', required: false, target: 'derivacion', porDefecto }],
 })
 

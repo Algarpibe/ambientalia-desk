@@ -291,7 +291,7 @@ describe('buildTransitionPlan · casilla obligatoria (RQ-TS-08, sintética)', ()
   // CARACTERIZACIÓN: nace verde. El motor ya exige la casilla marcada (`transitionExec.ts:76`, F1A-01); el lote 2
   // quita del catálogo la última casilla obligatoria y esta prueba queda como la única que ejercita esa condición.
   // Se valida por mutación (M10): dejar `empty` para el checkbox pone en rojo el caso `false`.
-  const casilla = { id: 'x', name: 'x', from: ['A'], to: 'B', area: 'Comercial', fields: [{ key: 'Confirmo', label: 'Confirmo', kind: 'checkbox' as const, required: true, target: 'customField' as const }] }
+  const casilla = { id: 'x', name: 'x', from: ['A'], to: 'B', area: 'Comercial', tipoEvento: 'Operativo' as const, fields: [{ key: 'Confirmo', label: 'Confirmo', kind: 'checkbox' as const, required: true, target: 'customField' as const }] }
   it('ausente y en false dan el mismo error; marcada no da error', () => {
     expect(buildTransitionPlan(casilla, {}).errors).toEqual(['Falta el campo obligatorio: Confirmo'])
     expect(buildTransitionPlan(casilla, { Confirmo: false }).errors).toEqual(['Falta el campo obligatorio: Confirmo'])
@@ -300,7 +300,7 @@ describe('buildTransitionPlan · casilla obligatoria (RQ-TS-08, sintética)', ()
 })
 
 describe('buildTransitionPlan · enrutado de motivo, fecha y texto de la liberación (RQ-TS-09, sintética)', () => {
-  const t = { id: 'x', name: 'x', from: ['A'], to: 'B', area: 'Comercial', fields: [motivoCampo, fechaCampo, textoCampo] }
+  const t = { id: 'x', name: 'x', from: ['A'], to: 'B', area: 'Comercial', tipoEvento: 'Operativo' as const, fields: [motivoCampo, fechaCampo, textoCampo] }
   it('motivo y fecha van a columna (la fecha recortada a día) y el texto a customFields', () => {
     const plan = buildTransitionPlan(t, { 'Motivo de liberación sin factura': 'c', 'Fecha prevista de facturación': '2026-10-04T10:00:00Z', 'Texto de la autorización': 'Autoriza' })
     expect(plan.errors).toEqual([])

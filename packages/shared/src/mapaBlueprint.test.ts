@@ -197,7 +197,7 @@ describe('mapaBlueprint — F1B-09 · campos opcionales y guarda condicionada', 
   it('P1 · RQ-MB-04 · con `fases` vacío y `fasePorEstado` vacío no lanza y devuelve un solo fichero', () => {
     const entrada: EntradaMapa = {
       transiciones: [
-        { id: 'a', name: 'Paso A', from: ['Uno'], to: 'Dos', area: 'Comercial', fields: [] },
+        { id: 'a', name: 'Paso A', from: ['Uno'], to: 'Dos', area: 'Comercial', tipoEvento: 'Operativo', fields: [] },
       ],
       sinBoton: [],
       estados: ['Uno', 'Dos'],
@@ -291,7 +291,7 @@ function desfases(ficheros: Record<string, string>, directorio: URL): string[] {
 }
 
 function transicionInyectada(desde: string, hasta: string): Transition {
-  return { id: 'inyectada_por_la_prueba', name: 'Transición inyectada por la prueba', from: [desde], to: hasta, area: 'Servicio Técnico', fields: [] }
+  return { id: 'inyectada_por_la_prueba', name: 'Transición inyectada por la prueba', from: [desde], to: hasta, area: 'Servicio Técnico', tipoEvento: 'Operativo', fields: [] }
 }
 
 describe('mapaPorFlujo — RQ-MB-08 · un mapa por flujo desde CATALOGO_POR_FLUJO', () => {
