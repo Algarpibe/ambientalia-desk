@@ -13,7 +13,7 @@ hacen sobre una copia en el directorio temporal de la sesión y se restauran cop
 - [x] 1.3 `packages/shared/src/tipoEvento.ts` (D1), `export * from './tipoEvento'` al final de `packages/shared/src/index.ts`
       y `tipoEvento` obligatorio en `transitions.ts:60` (tipo en línea, comentario final corto). ROJO por valores
       (`undefined`) y `tsc` con un error por entrada sin tipo y por literal de D4: es M1 natural; anotar el número.
-- [x] 1.4 VERDE: los 47 valores en su línea (`transitions.ts:150-151` con `satisfies Omit<Transition, 'fields'>`, 32 de servicio,
+- [x] 1.4 VERDE: los 47 valores en su línea (`transitions.ts:150-151` con `satisfies Omit<Transition, 'fields'>`, 32 líneas de servicio con 33 entradas,
       7 de equipo nuevo, 5 de soporte remoto) y los seis literales de D4 (`mapaBlueprint.test.ts:200`, `:294`; `sla.test.ts:9`;
       `avisoArea.test.ts:48`; `transitionExec.test.ts:294`, `:303`). Los dos `tsc` vuelven a la línea base.
 - [x] 1.5 Guarda de D2: `wc -l` de `transitions.ts` idéntico; `git diff --numstat -- packages/shared/src/transitions.ts` = `47 47`;
