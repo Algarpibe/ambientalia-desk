@@ -127,7 +127,7 @@ definitiva la da `tsc`. La carpeta de este cambio cuenta en «en curso», que el
    propiedad de la transición y que el historial anterior queda clasificado igual (`R08.4.md:1665`, `:3026`). Guardarlo
    por fila dejaría sin tipo todas las filas anteriores, y una corrección validada por Gerencia dejaría dos tipos para el
    mismo acto. La traza ya guarda el id (`packages/zoho-sync/src/db/schema.sql:57-61`), que es todo lo que M7.3 necesita.
-5. **Servidor: el historial lo expone.** `getHistorialTicket` (`apps/desk/server/db/historial.ts:131-160`) ya selecciona
+5. **Servidor: el historial lo expone.** `getHistorialTicket` (`apps/desk/server/db/historial.ts:131-162`) ya selecciona
    `transition_id` (`:137`) y no lo usa; `eventoTransicion` (`:49-61`) añade `tipoEvento`, derivado del catálogo por
    `transition_id`, **nunca de `values` ni del cuerpo**: `b.values` llega casi entero al jsonb de la traza
    (`apps/desk/server/services/ticketService.ts:155`), así que un `values.tipoEvento` enviado por el navegador quedaría

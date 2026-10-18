@@ -7,7 +7,7 @@
 Fuente: maestro M1.3 y M7.3 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1665`, `:3026`):
 el tipo es propiedad de la transición, y los movimientos registrados antes de aplicarlo quedan clasificados igual.
 
-El historial del ticket (`getHistorialTicket`, `apps/desk/server/db/historial.ts:131-160`) **SHALL** llevar en cada evento de
+El historial del ticket (`getHistorialTicket`, `apps/desk/server/db/historial.ts:131-162`) **SHALL** llevar en cada evento de
 transición (`eventoTransicion`, `apps/desk/server/db/historial.ts:49-61`) el campo `tipoEvento`, resuelto con
 `tipoEventoDeTransicion` (`transitions-st` RQ-TS-45) **a partir del `transition_id` de la fila**
 (`apps/desk/server/db/historial.ts:137`) y de **ninguna otra fuente**: **MUST NOT** leerse de `values`, que recibe casi
