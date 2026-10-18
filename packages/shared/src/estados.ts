@@ -96,7 +96,7 @@ export const CLASIFICACION_EN_ESPERA = {
   // Las dos formas de nombrar la fase inicial —Zoho y la app—. Ver `STATUS_OV_ASIGNADA` y compañía
   // en `transitions.ts:142-144`.
   'OV asignada': 'ninguna',
-  'Ticket creado': 'ninguna', 'Anulado': 'ninguna', // F1C-01 (RQ-TS-40): terminal y cerrado; en la misma línea para no desplazar las citas (regla de mutación 4)
+  'Ticket creado': 'ninguna', 'Pendiente de facturar': 'ninguna', 'Anulado': 'ninguna', // F1C-01 (RQ-TS-40): Anulado, terminal y cerrado; F1C-02 (RQ-TS-42, S-3): Pendiente de facturar, abierto, espera un acto de Comercial; en la misma línea para no desplazar las citas (regla de mutación 4)
 
   // ── decididas el 17/10 (E-226): una `externa` y dos `ninguna`, fuera de su bloque a propósito ───────
   // `decision/e226-espera-y-areas-equipo-nuevo`: «es espera lo que depende de alguien de fuera». No se mudan a su bloque (`:56-57`) para no desplazar las citas de este fichero (regla de mutación 4), y `Pendiente` va sola y sin comentario porque la comprobación 5 del barrido la cuenta como texto (`apps/desk/server/reconciliacion/comprobaciones.ts:162`).
@@ -139,7 +139,7 @@ export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
  * que esperar: hay una persona que todavía no ha entrado. Los cuatro de abajo esperan un camión, un
  * laboratorio o un alta en otro sistema.
  *
- * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay DIEZ
+ * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay ONCE
  * estados con una sola transición de salida —entre ellos `Ingresado` y `Ticket creado`, que son
  * trabajo corriente y no esperan a nadie—. Y cruzarla con `en_espera`, que es el intento fino,
  * tampoco: da SEIS, con `Liberación Comercial`, `Remisión creada` y los dos `Por Entregar` dentro. Por eso la prueba de

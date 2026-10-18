@@ -109,7 +109,7 @@ describe('puedeEjecutarTransicion · la compuesta', () => {
   it('el cargo sin el área no concede (Servicio Técnico + Director Comercial)', () => {
     expect(puedeEjecutarTransicion(sujeto(['Servicio Técnico'], 'Director Comercial'), LIBERACION)).toBe(false)
   })
-  it('el administrador pasa por las 31, con o sin cargo', () => {
+  it('el administrador pasa por las 33, con o sin cargo', () => {
     for (const t of TRANSITIONS) expect(puedeEjecutarTransicion(sujeto([], null, true), t)).toBe(true)
   })
 })
@@ -201,8 +201,8 @@ describe('el cargo SÓLO restringe · barrido área × cargo × acción (RQ-PM-2
       }
     }
     expect(violaciones).toEqual([])
-    // 5 subconjuntos × 11 valores de cargo (8 + 3) × (32 transiciones + 2 primitivas) = 1.870, a mano.
-    expect(casos).toBe(1870)
+    // 5 subconjuntos × 11 valores de cargo (8 + 3) × (33 transiciones + 2 primitivas) = 1.925, a mano.
+    expect(casos).toBe(1925)
     expect(concedidos).toBeGreaterThan(0) // no pasa en vacío
   })
 })
@@ -257,7 +257,7 @@ describe('N2 · el octavo cargo «Especialista técnico» se comporta como «Té
     expect(cargoPermisoDelCuerpo('  Especialista técnico ')).toEqual({ ok: true, cargo: 'Especialista técnico' })
   })
 
-  it('sus veredictos sobre las 31 transiciones y las tres primitivas son los de «Técnico»', () => {
+  it('sus veredictos sobre las 33 transiciones y las tres primitivas son los de «Técnico»', () => {
     let comparadas = 0
     for (const areas of [[], ['Comercial'], ['Servicio Técnico'], [...AREAS]]) {
       const esp = sujeto(areas, 'Especialista técnico')
