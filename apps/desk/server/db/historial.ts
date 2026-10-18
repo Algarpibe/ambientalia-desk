@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientalia/shared'
-import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'; import { lineaTraspaso } from './traspaso'; import { eventosReasignacion } from './eventoReasignacion'
+import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura, tipoEventoDeTransicion } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'; import { lineaTraspaso } from './traspaso'; import { eventosReasignacion } from './eventoReasignacion'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
 import {
   camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
@@ -48,7 +48,7 @@ function eventoCreacion(fila: Record<string, unknown>, ticket: Record<string, un
 
 function eventoTransicion(fila: Record<string, unknown>, nombres: Map<string, string>): HistoryEvent {
   return {
-    eventName: 'AppTransition',
+    eventName: 'AppTransition', tipoEvento: tipoEventoDeTransicion(typeof fila.transition_id === 'string' ? fila.transition_id : null),
     time: iso(fila.performed_at),
     actor: (fila.performed_by as string) ?? 'App',
     title: `Transición: ${fila.transition_name ?? ''}`.trim(),

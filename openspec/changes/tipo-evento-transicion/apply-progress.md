@@ -44,3 +44,34 @@ Las pruebas de `packages/shared/src` sólo las ve el segundo `tsc`. El barrido e
 Pendiente para el orquestador: commit y detector de citas (`--sha HEAD`). Ninguna posición de `transitions.ts`, `index.ts` ni de las pruebas se movió.
 
 **Contraste del orquestador (antes del commit).** Los 47 valores de `transitions.ts` comparados por script con la tabla de la medición: 0 diferencias. M3 y M1a reproducidas: M3 deja 5 de 9 en rojo en `tipoEvento.test.ts`; M1a da `transitions.ts(202,3): error TS2741` en los dos programas de `npm run typecheck`. Restaurado por copia, `cmp` idéntico, `47 47`.
+
+## Lote 2 — el historial expone el tipo (intento 4)
+
+| Tarea | Rojo visto | Verde |
+|---|---|---|
+| 2.1 `historialTipoEvento.test.ts` (5 pruebas, pg-mem, filas escritas a mano en `ticket_transitions`) | 4 de 5 en rojo: `aprobacion` da `undefined` (esperaba `Decisional`), con `values` `{"tipoEvento":"Administrativo"}` igual, migración sin la propiedad (`expected false to be true`), las dos filas `[undefined, undefined]`. La de creación nace verde (se valida con M6) | — |
+| 2.2 `types.ts:611` y `historial.ts:3` y `:51` | — | 5 de 5. `--numstat` `types.ts` `1 1`, `historial.ts` `2 2`; `eventoCreacion` y `historial.ts:143` sin tocar; `fila.values` no se lee para el tipo |
+
+## Mutaciones del lote 2 (D6), sobre copia en el directorio temporal y restauradas copiando
+
+| # | Mutación | Rojo | Restaurado |
+|---|---|---|---|
+| M4 | `:51` lee `json(fila.values)?.tipoEvento` antes que el id | 1 de 5: «un `values` con otro tipo no lo cambia» | `cmp` idéntico, `2 2` |
+| M5a | `tipoEvento: null` | 3 de 5: catálogo, `values`, fila anterior y nueva | `cmp` idéntico, `2 2` |
+| M5b | resolver por `transition_name` | 3 de 5, las mismas | `cmp` idéntico, `2 2` |
+| M6 | `eventoCreacion` con `tipoEvento: null` | 1 de 5: «el evento de creación no lleva la propiedad» | `cmp` idéntico, `2 2` |
+
+## Medidas del cierre del lote
+
+| Medida | Valor |
+|---|---|
+| `npm run typecheck` | 0 errores |
+| `tsc -p packages/shared` | 2 errores, los mismos ajenos (`fasesBlueprint.test.ts:33`, `reasignacion.test.ts:60`) |
+| `npx vitest run` | 4968 pasadas / 11 omitidas (base del lote 1: 4963 / 11; +5); 297 ficheros pasan, 3 omitidos |
+| `npx eslint .` | 0 errores / 165 avisos |
+| Paquete del cliente | `index-CtuL2ALD.js` 419.433 bytes, sin cambio respecto al lote 1 |
+| Líneas del intento | rastreado: `types.ts` 1/1 y `historial.ts` 2/2; sin trackear: `historialTipoEvento.test.ts` 56 líneas; más este informe |
+
+Pendiente para el orquestador: tarea 2.4 (commit y detector de citas). Ninguna posición de `types.ts` ni de `historial.ts` se movió.
+
+**Contraste del orquestador (antes del commit).** M4 reproducida: con `historial.ts:51` leyendo antes `values.tipoEvento`, cae justo «un `values` con otro tipo no lo cambia» (1 de 5). Restaurado por copia, `cmp` idéntico, `2 2`. `historial.ts` y `types.ts` no cambian de número de líneas.

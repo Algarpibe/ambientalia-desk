@@ -29,14 +29,14 @@ hacen sobre una copia en el directorio temporal de la sesión y se restauran cop
 
 ## Lote 2 — servidor: el historial expone el tipo (intento 4)
 
-- [ ] 2.1 ROJO: `apps/desk/server/db/historialTipoEvento.test.ts` (D5; molde `eventoReasignacion.test.ts:35-49`) — los cinco
+- [x] 2.1 ROJO: `apps/desk/server/db/historialTipoEvento.test.ts` (D5; molde `eventoReasignacion.test.ts:35-49`) — los cinco
       escenarios de RQ-TZ-21; el de «la fila anterior se clasifica igual» compara las dos filas **y** exige Decisional. El de la
       creación nace verde y se valida con M6.
-- [ ] 2.2 VERDE: `HistoryEvent` con `tipoEvento?: … | null` en `types.ts:611`; `tipoEventoDeTransicion` en `historial.ts:3` y
+- [x] 2.2 VERDE: `HistoryEvent` con `tipoEvento?: … | null` en `types.ts:611`; `tipoEventoDeTransicion` en `historial.ts:3` y
       `tipoEvento` en `historial.ts:51`, derivado de `transition_id` y nunca de `values`. `eventoCreacion` y `historial.ts:143` sin cambio.
-- [ ] 2.3 Mutaciones: M4 (`json(fila.values)?.tipoEvento` antes), M5 (devolver `null` o resolver por `transition_name`) y M6
+- [x] 2.3 Mutaciones: M4 (`json(fila.values)?.tipoEvento` antes), M5 (devolver `null` o resolver por `transition_name`) y M6
       (`eventoCreacion` con `tipoEvento: null`), cada una roja en `npx vitest run apps/desk/server/db/historialTipoEvento.test.ts`.
-- [ ] 2.4 Los cuatro códigos en una cadena (vitest, typecheck, eslint, detector tras el commit); `apply-progress.md` y commit.
+- [x] 2.4 Los cuatro códigos en una cadena (vitest, typecheck, eslint, detector tras el commit); `apply-progress.md` y commit.
 
 ## Cierre
 

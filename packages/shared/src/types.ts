@@ -608,7 +608,7 @@ export interface ResolutionAttachment { id: string; filename: string; contentTyp
 export interface Resolution { html: string | null; updatedAt: string | null; updatedBy: string | null; attachments: ResolutionAttachment[] }
 
 export interface HistoryDetail { label: string; value: string; html?: boolean }
-export interface HistoryEvent { eventName: string; time: string | null; actor: string; title: string; details: HistoryDetail[] }
+export interface HistoryEvent { eventName: string; time: string | null; actor: string; title: string; details: HistoryDetail[]; tipoEvento?: import('./tipoEvento').TipoEvento | null }
 
 export interface ContactLite { id: string; name: string; company: string | null; companyId: string | null; email: string | null; phone: string | null }
 export interface AccountLite { id: string; name: string; nit: string | null; email: string | null; phone: string | null; city: string | null }
