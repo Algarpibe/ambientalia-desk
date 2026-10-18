@@ -97,3 +97,11 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...base, DB_SCHEMA: 'desk' } as any).dbSchema).toBe('desk')
   })
 })
+
+describe('DECISIONALES_POR_CARGO (F1C-05, RQ-PM-28)', () => {
+  it('nace cerrado: sólo el literal "true" lo enciende', () => {
+    expect(loadConfig(base).decisionalesPorCargo).toBe(false)
+    for (const v of ['', 'false', 'TRUE', 'True', '1', 'yes', ' true']) expect(loadConfig({ ...base, DECISIONALES_POR_CARGO: v }).decisionalesPorCargo, v).toBe(false)
+    expect(loadConfig({ ...base, DECISIONALES_POR_CARGO: 'true' }).decisionalesPorCargo).toBe(true)
+  })
+})

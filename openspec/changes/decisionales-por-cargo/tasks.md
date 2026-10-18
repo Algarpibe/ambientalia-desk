@@ -6,14 +6,14 @@ comprueba; nunca `git checkout` ni `git stash`.
 
 ## Lote 1 — packages/shared y el interruptor (intento 3)
 
-- [ ] 1.1 Línea base: `npx vitest run packages/shared packages/zoho-sync/src/config.test.ts` en verde; `npm run typecheck` en 0.
-- [ ] 1.2 ROJO: `packages/shared/src/decisionales.test.ts` (D6) con la tabla de las 14 y los escenarios de RQ-PM-29. Rojo por
+- [x] 1.1 Línea base: `npx vitest run packages/shared packages/zoho-sync/src/config.test.ts` en verde; `npm run typecheck` en 0.
+- [x] 1.2 ROJO: `packages/shared/src/decisionales.test.ts` (D6) con la tabla de las 14 y los escenarios de RQ-PM-29. Rojo por
       módulo inexistente.
-- [ ] 1.3 VERDE: `packages/shared/src/decisionales.ts` (D1) y `export * from './decisionales'` al final de `index.ts`.
-- [ ] 1.4 ROJO: `describe` nuevo al final de `packages/zoho-sync/src/config.test.ts` (RQ-PM-28). Rojo por `undefined`.
-- [ ] 1.5 VERDE: `decisionalesPorCargo` en `config.ts` (D2): interfaz en la línea 66, carga tras `:123`.
-- [ ] 1.6 Mutaciones M1a, M1b, M3, M4a, M4b, M5a, M5b y M6 sobre la prueba de shared y la de config: todas rojas y restauradas.
-- [ ] 1.7 Los cuatro códigos (test, typecheck, lint con los 165 avisos de partida, detector tras el commit), `apply-progress.md`
+- [x] 1.3 VERDE: `packages/shared/src/decisionales.ts` (D1) y `export * from './decisionales'` al final de `index.ts`.
+- [x] 1.4 ROJO: `describe` nuevo al final de `packages/zoho-sync/src/config.test.ts` (RQ-PM-28). Rojo por `undefined`.
+- [x] 1.5 VERDE: `decisionalesPorCargo` en `config.ts` (D2): interfaz en la línea 66, carga tras `:123`.
+- [x] 1.6 Mutaciones M1a, M1b, M3, M4a, M4b, M5a, M5b y M6 sobre la prueba de shared y la de config: todas rojas y restauradas.
+- [x] 1.7 Los cuatro códigos (test, typecheck, lint con los 165 avisos de partida, detector tras el commit), `apply-progress.md`
       del lote 1 y commit; medida `--no-renames` contra el commit de partida del intento.
 
 ## Lote 2 — servidor, ruta, cliente y DEPLOY.md (intento 4)
