@@ -15,15 +15,15 @@ comprobaciones terminan en 0. Los avisos son de forma (formato del registro de T
 | `npx vitest run` | **0** | 299 ficheros en verde, 3 saltados; 5.003 pruebas en verde, 11 saltadas |
 | `npm run typecheck` | **0** | `tsc -b` y `tsc -p apps/desk/tsconfig.server.json --noEmit` sin errores |
 | `npx eslint .` | **0** | 0 errores, 165 avisos (igual que la línea base) |
-| `tsx apps/desk/server/citas/cli.ts --sha HEAD` | **0** | 7.309 comprobadas; 0 cabeceras inválidas; 13 abreviadas rotas informativas, ninguna de este cambio (la única que nombra `DEPLOY.md`, `docs/sdd/F0-00_Baseline_as-built.md:113`, apunta a `DEPLOY.md:56`, que esta tanda no toca: su único hunk empieza en la línea 753) |
+| `tsx apps/desk/server/citas/cli.ts --sha HEAD` | **0** | 7.309 comprobadas; 0 cabeceras inválidas; 13 abreviadas rotas informativas, ninguna de este cambio (la única que nombra `DEPLOY.md`, `docs/sdd/F0-00_Baseline_as-built.md:113`, apunta a la línea 56 de ese fichero, que esta tanda no toca: su único hunk empieza en la línea 753) |
 
 ## Requisito → evidencia
 
 | Requisito / escenario | Código | Prueba | Estado |
 |---|---|---|---|
-| RQ-PM-28 · sólo `'true'` lo enciende | `packages/zoho-sync/src/config.ts:124` (`=== 'true'`); interfaz `:66` | `packages/zoho-sync/src/config.test.ts:100-107` (vacío, `false`, `TRUE`, `1`, `yes`, `true`) | OK |
+| RQ-PM-28 · sólo `'true'` lo enciende | `packages/zoho-sync/src/config.ts:124` (`=== 'true'`); interfaz `:66` | `packages/zoho-sync/src/config.test.ts:101-107` (vacío, `false`, `TRUE`, `1`, `yes`, `true`) | OK |
 | RQ-PM-28 · apagado todo como hoy, sin consulta extra | `apps/desk/server/services/ticketService.ts:131`: `config?.decisionalesPorCargo ? … : null` cortocircuita antes de `contextoDecisionales`; `apps/desk/server/services/decisionales.ts:10-13` devuelve `DECISIONALES_APAGADO` sin consultar | `apps/desk/server/decisionalesPorCargo.test.ts`: caracterización (Técnico ejecuta `escalado_a_revision`, ticket a `Notificado`) y «no consulta» (espía de SQL, `:53`) | OK |
-| RQ-PM-28 · `DEPLOY.md` | `DEPLOY.md:753-774` (§15): qué enciende, qué se rompe, no antes del 14/12/2026, cargos antes de encender, línea para `.env.example` | lectura | OK |
+| RQ-PM-28 · `DEPLOY.md` | `DEPLOY.md:754-774` (§15): qué enciende, qué se rompe, no antes del 14/12/2026, cargos antes de encender, línea para `.env.example` | lectura | OK |
 | RQ-PM-29 · las 14 Decisionales y su área | `packages/shared/src/decisionales.ts:16-24` (mixtas y `area`) | `packages/shared/src/decisionales.test.ts` (tabla escrita a mano contra `CATALOGO_POR_FLUJO`) | OK |
 | RQ-PM-29 · Técnico sin cargo suficiente | `decisionales.ts:44-49`, `:27-32` | 18 pruebas en `decisionales.test.ts` | OK |
 | RQ-PM-29 · Especialista sólo con Coordinador vacante | `decisionales.ts:29-31`; vacante por `apps/desk/server/db/avisos.ts:121-127` (`active = true AND cargo_permiso = $1`) usada en `services/decisionales.ts:13` | dos del Especialista en shared y en servidor; M4a y M4b | OK |
@@ -90,7 +90,7 @@ Ninguno.
   sustituye a la tabla, no hay incumplimiento de fondo. Recomendación: dejarlo dicho en el `archive-report.md`.
 - **W2 · Cita desfasada una línea.** `apply-progress.md:84` («`permisosDecisionales.ts:16`, que llama a la misma
   `contextoDecisionales`») apunta a la apertura de la ruta (`app.get` de `/api/permisos/decisionales`); la llamada está en
-  `apps/desk/server/routes/permisosDecisionales.ts:17`. En `DEPLOY.md:753-774` (§15) la frase habla de la ruta y `:16` vale.
+  `apps/desk/server/routes/permisosDecisionales.ts:17`. En `DEPLOY.md:754-774` (§15) la frase habla de la ruta y `:16` vale.
   El detector no lo caza (la línea existe y no está vacía).
 
 ### SUGGESTION
