@@ -19,7 +19,7 @@ internas (`Notificación a Compras`, `Notificación Comercial`, `En espera de SK
 La lista **MUST NOT** derivarse de `CLASIFICACION_EN_ESPERA`, de `ESTADOS_EN_ESPERA` (`packages/shared/src/estados.ts:59`,
 `:120`) ni de ninguna función de la vista: es propia del reloj para que un cambio en el tablero no mueva el SLA. Hoy las
 dos listas coinciden salvo en `Pendiente`, que la vista clasifica `externa` (`packages/shared/src/estados.ts:103`) y el
-reloj no para. Los comentarios de `estados.ts:26-30` y `:117-118` **SHALL** dejar de afirmar que el reloj para en los
+reloj no para. Los comentarios de `estados.ts:30-33` y `:117-118` en `db73518` **SHALL** dejar de afirmar que el reloj para en los
 tres bodegajes.
 
 #### Scenario: las seis esperas internas corren — ROJO
