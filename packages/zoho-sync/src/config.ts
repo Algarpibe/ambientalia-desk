@@ -63,7 +63,7 @@ export interface AppConfig {
   sweepMaxRows: number
   sweepMaxPct: number
   migracionTicketsHabilitada: boolean   // E-231: permite APLICAR la migración de F1F-01 (`aplicar=true`); nace cerrada
-}
+  decisionalesPorCargo: boolean }   // F1C-05 (RQ-PM-28): exige el cargo en las Decisionales; nace cerrado. En esta línea para no desplazar citas
 type Env = Record<string, string | undefined>
 
 function required(env: Env, key: string): string {
@@ -121,5 +121,6 @@ export function loadConfig(env: Env = process.env): AppConfig {
     sweepMaxRows: env.SWEEP_MAX_ROWS ? Number(env.SWEEP_MAX_ROWS) : 200,
     sweepMaxPct: env.SWEEP_MAX_PCT ? Number(env.SWEEP_MAX_PCT) : 0.1,
     migracionTicketsHabilitada: env.MIGRACION_TICKETS_HABILITADA === 'true',   // default OFF (E-231)
+    decisionalesPorCargo: env.DECISIONALES_POR_CARGO === 'true',   // default OFF (F1C-05); no se enciende antes del 14/12
   }
 }
