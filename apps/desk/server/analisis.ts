@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { esIdProvisional, cierreQueCuenta, type AnalisisRow } from '@ambientalia/shared'
-import { nombresProvisionales } from './db/clientesProvisionales'; import { cierresPuestosPorMigracion } from './db/cierresDeMigracion'
+import { nombresProvisionales } from './db/clientesProvisionales'; import { cierresPuestosPorMigracion } from './db/cierresDeMigracion'; import { tiemposDelRelojPorTicket } from './db/relojSla'
 
 function toIso(v: unknown): string | null {
   if (v == null) return null
@@ -8,7 +8,7 @@ function toIso(v: unknown): string | null {
   return String(v)
 }
 
-export async function getAnalisisRows(db: Queryable): Promise<AnalisisRow[]> {
+export async function getAnalisisRows(db: Queryable, ahora: Date = new Date()): Promise<AnalisisRow[]> {
   const r = await db.query(
     `SELECT t.id, t.status, t.status_type, t.created_time, t.closed_time, t.fecha_finalizacion_st, t.dias_entrega, t.marca, t.tipo_servicio, t.classification,
             COALESCE(a.name, cl.name) AS cliente, t.client_id, g.name AS tecnico
@@ -19,7 +19,7 @@ export async function getAnalisisRows(db: Queryable): Promise<AnalisisRow[]> {
   )
   const filas = r.rows as any[]
   // Segunda consulta (F1B-15, RQ-TC-34): el cliente provisional no está en la vista `clients` del JOIN.
-  const [provisionales, migracion] = await Promise.all([nombresProvisionales(db, filas.filter((x) => !x.cliente && esIdProvisional(x.client_id)).map((x) => x.client_id)), cierresPuestosPorMigracion(db)])
+  const [provisionales, migracion, tiempos] = await Promise.all([nombresProvisionales(db, filas.filter((x) => !x.cliente && esIdProvisional(x.client_id)).map((x) => x.client_id)), cierresPuestosPorMigracion(db), tiemposDelRelojPorTicket(db, filas, ahora)]) // F1C-06: tercera consulta fija, sólo si hay cerradas
   return filas.map((x) => ({
     status: x.status, statusType: x.status_type ?? null,
     createdAt: toIso(x.created_time),
@@ -27,7 +27,7 @@ export async function getAnalisisRows(db: Queryable): Promise<AnalisisRow[]> {
     diasEntrega: x.dias_entrega != null && x.dias_entrega !== '' ? Number(x.dias_entrega) : null,
     marca: x.marca ?? null,
     tipoServicio: x.tipo_servicio ?? null, clasificaciones: x.classification ?? null,
-    cliente: x.cliente ?? provisionales.get(x.client_id) ?? null, tecnico: x.tecnico ?? null,
+    cliente: x.cliente ?? provisionales.get(x.client_id) ?? null, tecnico: x.tecnico ?? null, slaHoras: tiempos.get(String(x.id))?.slaHoras ?? null, totalHoras: tiempos.get(String(x.id))?.totalHoras ?? null,
   }))
 }
 

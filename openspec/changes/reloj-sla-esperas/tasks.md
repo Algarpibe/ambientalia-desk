@@ -23,16 +23,16 @@ referencias D* son de `design.md`; RQ-* de la delta. Las mutaciones se hacen con
 
 ## Lote 2 — servidor y cliente (intento 4)
 
-- [ ] 2.1 ROJO: `apps/desk/server/relojSla.test.ts` (pg-mem, D7): RQ-TC-75, cuentas de consultas con 10 y 100 tickets y S-D2.
-- [ ] 2.2 VERDE: `apps/desk/server/db/relojSla.ts` (D3), tres consultas fijas y `secuenciaDelReloj` pura.
-- [ ] 2.3 VERDE: `apps/desk/server/analisis.ts` (D4: `:3`, `:11`, `:22`, `:30`); `apps/desk/server/analisis.test.ts` sigue verde con
+- [x] 2.1 ROJO: `apps/desk/server/relojSla.test.ts` (pg-mem, D7): RQ-TC-75, cuentas de consultas con 10 y 100 tickets y S-D2.
+- [x] 2.2 VERDE: `apps/desk/server/db/relojSla.ts` (D3), tres consultas fijas y `secuenciaDelReloj` pura.
+- [x] 2.3 VERDE: `apps/desk/server/analisis.ts` (D4: `:3`, `:11`, `:22`, `:30`); `apps/desk/server/analisis.test.ts` sigue verde con
       sus cuentas (`:31`, `:36`, `:41`).
-- [ ] 2.4 Cliente D6: dos `Kpi` tras `:98` y `md:grid-cols-5` → `md:grid-cols-4 xl:grid-cols-7` en `Analisis.tsx:94`. Sin prueba
+- [x] 2.4 Cliente D6: dos `Kpi` tras `:98` y `md:grid-cols-5` → `md:grid-cols-4 xl:grid-cols-7` en `Analisis.tsx:94`. Sin prueba
       (`.tsx` fuera de la red, F0-00); lo cubre `npm run typecheck` y la tabla de la regla 13.
-- [ ] 2.5 Mutaciones M8, M13 y M14 contra la prueba del servidor: todas rojas y restauradas.
-- [ ] 2.6 Barrido de citas sobre `apps/desk/server/analisis.ts` y `Analisis.tsx`; guarda de D4: inserciones = borrados salvo lo nuevo.
-- [ ] 2.7 Paquete del cliente: `npm run build` contra la base `index-BOdjeBia.js` (420.931 bytes) y diferencia.
-- [ ] 2.8 Los cuatro códigos, `apply-progress.md` del lote 2 con la tabla de la regla 13 (D9) cerrada línea a línea, commit y medida.
+- [x] 2.5 Mutaciones M8, M13 y M14 contra la prueba del servidor: todas rojas y restauradas.
+- [x] 2.6 Barrido de citas sobre `apps/desk/server/analisis.ts` y `Analisis.tsx`; guarda de D4: inserciones = borrados salvo lo nuevo.
+- [x] 2.7 Paquete del cliente: `npm run build` contra la base `index-BOdjeBia.js` (420.931 bytes) y diferencia.
+- [x] 2.8 Los cuatro códigos, `apply-progress.md` del lote 2 con la tabla de la regla 13 (D9) cerrada línea a línea, commit y medida.
 
 ## Cierre
 
