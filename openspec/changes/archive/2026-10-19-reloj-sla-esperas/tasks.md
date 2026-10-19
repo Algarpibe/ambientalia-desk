@@ -36,7 +36,7 @@ referencias D* son de `design.md`; RQ-* de la delta. Las mutaciones se hacen con
 
 ## Cierre
 
-- [ ] 3.1 verify (intento 5) y archive (intento 6) con la regla del archivo; `RECONCILIACION.md` regenerado en la rama
+- [x] 3.1 verify (intento 5) y archive (intento 6) con la regla del archivo; `RECONCILIACION.md` regenerado en la rama
       (`npm run reconcile`).
 
 ## Tareas de persona (no cuentan; regla del ciclo 1)
