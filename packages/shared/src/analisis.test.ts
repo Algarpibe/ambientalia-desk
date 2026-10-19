@@ -131,4 +131,9 @@ describe('computeAnalisis · tiempos del reloj del SLA (RQ-TC-76)', () => {
     expect(sinReloj(despues)).toEqual(sinReloj(antes))
     expect([despues.tiempoSlaPromedioDias, despues.tiempoTotalPromedioDias, despues.ticketsConReloj]).toEqual([1, 2, 2])
   })
+
+  // W1 del verify: 15 h / 9 = 1,67 días; redondear da 1,7 y truncar daría 1,6. Fija el sentido del redondeo.
+  it('la media se redondea al decimal más cercano, no se trunca', () => {
+    expect(computeAnalisis([fin({ slaHoras: 15, totalHoras: 15 })], desde, hasta).tiempoSlaPromedioDias).toBe(1.7)
+  })
 })

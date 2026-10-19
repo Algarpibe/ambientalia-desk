@@ -194,3 +194,12 @@ describe('RQ-TC-76 · getAnalisisRows lleva los dos tiempos a cada fila', () => 
     expect(filas.find((f) => f.status === 'Ingresado')).toMatchObject({ slaHoras: null, totalHoras: null })
   })
 })
+
+// W2 del verify: una entrada sin estado de destino en mitad de la historia no puede contarse como «corre».
+describe('RQ-TC-75 · una entrada sin destino deja el ticket sin dato', () => {
+  it('un `toStatus` nulo en una etapa intermedia da null aunque el último estado sea el actual', () => {
+    const sinDestino: HistorialTransition = { transitionName: null, fromStatus: 'Ingresado', toStatus: null, area: null, performedBy: null, performedAt: a(lun, 12).toISOString() }
+    const cierre: HistorialTransition = { transitionName: null, fromStatus: 'Ingresado', toStatus: 'Finalizado', area: null, performedBy: null, performedAt: a(mar, 12).toISOString() }
+    expect(secuenciaDelReloj({ status: 'Finalizado', createdAt: a(lun, 8) }, [], [sinDestino, cierre])).toBeNull()
+  })
+})
