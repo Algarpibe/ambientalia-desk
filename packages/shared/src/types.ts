@@ -568,7 +568,7 @@ export interface Analisis {
   creados: number
   finalizados: number
   tiempoPromedioDias: number | null
-  cumplimientoPct: number | null
+  cumplimientoPct: number | null; tiempoSlaPromedioDias: number | null; tiempoTotalPromedioDias: number | null; ticketsConReloj: number
   porEstado: AnalisisPunto[]
   porTecnico: AnalisisPunto[]
   porCliente: AnalisisPunto[]
@@ -588,7 +588,7 @@ export interface AnalisisRow {
   cliente: string | null
   tecnico: string | null
   tipoServicio: string | null
-  clasificaciones: string | null
+  clasificaciones: string | null; slaHoras?: number | null; totalHoras?: number | null
 }
 
 export interface Activity {

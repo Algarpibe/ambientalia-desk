@@ -6,19 +6,19 @@ referencias D* son de `design.md`; RQ-* de la delta. Las mutaciones se hacen con
 
 ## Lote 1 — packages/shared (intento 3)
 
-- [ ] 1.1 Línea base: `npx vitest run packages/shared apps/desk/server/analisis.test.ts` en verde; `npm run typecheck` en 0.
-- [ ] 1.2 ROJO: `packages/shared/src/relojSla.test.ts` (D7) con los escenarios de RQ-TC-73, RQ-TC-74 y RQ-TC-77 (guardián de
+- [x] 1.1 Línea base: `npx vitest run packages/shared apps/desk/server/analisis.test.ts` en verde; `npm run typecheck` en 0.
+- [x] 1.2 ROJO: `packages/shared/src/relojSla.test.ts` (D7) con los escenarios de RQ-TC-73, RQ-TC-74 y RQ-TC-77 (guardián de
       imports y alarma de `Notificación cliente`). Rojo por módulo inexistente.
-- [ ] 1.3 VERDE: `packages/shared/src/relojSla.ts` (D1) y `export * from './relojSla'` al final de `index.ts` (tras `:48`).
-- [ ] 1.4 D2: `estados.ts:30-33` y `:117-118` reescritos en sitio; `git diff --numstat` con inserciones = borrados.
-- [ ] 1.5 Tipos D4 en sitio: `types.ts:571` y `:591`, sin insertar líneas (`:611` está citado).
-- [ ] 1.6 ROJO: `describe` nuevo al final de `packages/shared/src/analisis.test.ts` (RQ-TC-76, cinco escenarios). Rojo por medias
+- [x] 1.3 VERDE: `packages/shared/src/relojSla.ts` (D1) y `export * from './relojSla'` al final de `index.ts` (tras `:48`).
+- [x] 1.4 D2: `estados.ts:30-33` y `:117-118` reescritos en sitio; `git diff --numstat` con inserciones = borrados.
+- [x] 1.5 Tipos D4 en sitio: `types.ts:571` y `:591`, sin insertar líneas (`:611` está citado).
+- [x] 1.6 ROJO: `describe` nuevo al final de `packages/shared/src/analisis.test.ts` (RQ-TC-76, cinco escenarios). Rojo por medias
       ausentes.
-- [ ] 1.7 VERDE: D5 en `packages/shared/src/analisis.ts` (`:2`, `:19`, `:65`, `:83` en sitio; `mediasDelReloj` tras `:95`).
-- [ ] 1.8 Mutaciones M1-M7, M9-M12 y M15 contra las pruebas de shared: todas rojas y restauradas.
-- [ ] 1.9 Barrido de citas de la regla de mutación 4 sobre `estados.ts`, `analisis.ts`, `types.ts` e `index.ts`
+- [x] 1.7 VERDE: D5 en `packages/shared/src/analisis.ts` (`:2`, `:19`, `:65`, `:83` en sitio; `mediasDelReloj` tras `:95`).
+- [x] 1.8 Mutaciones M1-M7, M9-M12 y M15 contra las pruebas de shared: todas rojas y restauradas.
+- [x] 1.9 Barrido de citas de la regla de mutación 4 sobre `estados.ts`, `analisis.ts`, `types.ts` e `index.ts`
       (`grep -rnoE`), comprobando cada resultado contra el fichero y leyendo qué afirma la frase.
-- [ ] 1.10 Los cuatro códigos (test, typecheck, lint con los 165 avisos de partida, `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`
+- [x] 1.10 Los cuatro códigos (test, typecheck, lint con los 165 avisos de partida, `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`
       tras el commit), `apply-progress.md` del lote 1 y commit; medida `--no-renames` contra el commit de partida del intento.
 
 ## Lote 2 — servidor y cliente (intento 4)

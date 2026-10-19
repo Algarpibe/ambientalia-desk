@@ -27,10 +27,10 @@
  *
  *   **La vista muestra las doce. El reloj del SLA NO lee esta clasificación.**
  *
- * El reloj para en los tres bodegajes de M1.10, que son periodos delimitados por dos fechas y no
- * estados del grafo. Un estado puede estar `en_espera` y no parar ningún reloj, y un bodegaje puede
- * transcurrir sin que el ticket pase por ningún estado de esta lista. Este módulo NO declara los
- * bodegajes: no son estados, y meterlos aquí sería justo el error que la tabla evita.
+ * El reloj del SLA para en `ESTADOS_QUE_PARAN_EL_RELOJ` (`relojSla.ts`, `decision/c7-reloj-sla`), lista
+ * propia que no se deriva de esta: hoy coincide con las `externa` salvo `Pendiente`, que el reloj no
+ * para. Los bodegajes de M1.10 siguen sin declararse aquí: son periodos entre dos fechas y no estados
+ * del grafo, y meterlos aquí sería justo el error que la tabla evita.
  *
  * `sin_salida` SÍ se declara aquí, más abajo, y como dato: es la otra clasificación de negocio de
  * este módulo. Es un subconjunto de `en_espera` con el criterio más estrecho de M1.3.4, y quién
@@ -114,8 +114,8 @@ export const ESTADOS: Estado[] = Object.keys(CLASIFICACION_EN_ESPERA) as Estado[
 /**
  * Las DOCE que la vista del tablero enseña bajo «En espera»: externa + interna.
  *
- * ⚠️ Es la lista de la VISTA. El reloj del SLA no la lee — para en los tres bodegajes de M1.10, que
- * son periodos entre fechas. Ver la tabla de los tres criterios arriba.
+ * ⚠️ Es la lista de la VISTA. El reloj del SLA no la lee: tiene la suya, `ESTADOS_QUE_PARAN_EL_RELOJ`
+ * (`relojSla.ts`). Ver la tabla de los tres criterios arriba.
  */
 export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
   const clase: EnEspera = CLASIFICACION_EN_ESPERA[e]

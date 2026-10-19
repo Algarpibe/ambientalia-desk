@@ -50,3 +50,85 @@ describe('computeAnalisis', () => {
     ])
   })
 })
+
+// RQ-TC-76 (F1C-06): las dos medias del reloj del SLA, en días hábiles de 9 horas a un decimal, sobre los MISMOS tickets que
+// `tiempoPromedioDias` (cerrados, no anulados, con fin en el periodo; `analisis.ts:59`) y que además traen dato.
+describe('computeAnalisis · tiempos del reloj del SLA (RQ-TC-76)', () => {
+  const desde = new Date('2026-05-01T00:00:00Z'), hasta = new Date('2026-05-31T23:59:59Z')
+  const base = { diasEntrega: null, marca: null, cliente: null, tecnico: null, tipoServicio: null, clasificaciones: null }
+  const fin = (extra: Partial<AnalisisRow> = {}): AnalisisRow => ({
+    ...base, status: 'Finalizado', statusType: 'Closed', createdAt: '2026-05-04T00:00:00Z', finalizadoAt: '2026-05-08T00:00:00Z', ...extra,
+  })
+
+  it('el SLA y el total se promedian en días de 9 horas', () => {
+    const a = computeAnalisis([fin({ slaHoras: 9, totalHoras: 18 }), fin({ slaHoras: 27, totalHoras: 27 })], desde, hasta)
+    expect(a.tiempoSlaPromedioDias).toBe(2)
+    expect(a.tiempoTotalPromedioDias).toBe(2.5)
+    expect(a.ticketsConReloj).toBe(2)
+  })
+
+  it('el resultado va a un decimal', () => {
+    const a = computeAnalisis([fin({ slaHoras: 10, totalHoras: 10 })], desde, hasta) // 10 h / 9 = 1,111…
+    expect(a.tiempoSlaPromedioDias).toBe(1.1)
+    expect(a.tiempoTotalPromedioDias).toBe(1.1)
+  })
+
+  it('un ticket sin dato no entra en las medias, pero sí en tiempoPromedioDias', () => {
+    const a = computeAnalisis([fin({ slaHoras: 18, totalHoras: 27 }), fin({ slaHoras: null, totalHoras: null }), fin()], desde, hasta)
+    expect(a.tiempoSlaPromedioDias).toBe(2)
+    expect(a.tiempoTotalPromedioDias).toBe(3)
+    expect(a.ticketsConReloj).toBe(1)
+    expect(a.finalizados).toBe(3)
+    expect(a.tiempoPromedioDias).toBe(4)
+  })
+
+  it('un ticket con sólo uno de los dos tiempos no entra', () => {
+    const a = computeAnalisis([fin({ slaHoras: 9, totalHoras: null }), fin({ slaHoras: null, totalHoras: 9 })], desde, hasta)
+    expect(a.ticketsConReloj).toBe(0)
+    expect(a.tiempoSlaPromedioDias).toBeNull()
+  })
+
+  it('ninguno con dato da null en las dos medias y cero en el contador', () => {
+    const a = computeAnalisis([fin({ slaHoras: null, totalHoras: null }), fin()], desde, hasta)
+    expect(a.tiempoSlaPromedioDias).toBeNull()
+    expect(a.tiempoTotalPromedioDias).toBeNull()
+    expect(a.ticketsConReloj).toBe(0)
+    expect(computeAnalisis([], null, hasta)).toMatchObject({ tiempoSlaPromedioDias: null, tiempoTotalPromedioDias: null, ticketsConReloj: 0 })
+  })
+
+  it('un anulado no entra en los dos tiempos, igual que en las tres métricas de RQ-TC-71', () => {
+    const anulado = fin({ status: 'Anulado', slaHoras: 90, totalHoras: 180 })
+    const a = computeAnalisis([anulado, fin({ slaHoras: 9, totalHoras: 18 })], desde, hasta)
+    expect(a.tiempoSlaPromedioDias).toBe(1)
+    expect(a.tiempoTotalPromedioDias).toBe(2)
+    expect(a.ticketsConReloj).toBe(1)
+  })
+
+  it('un cerrado fuera del periodo o con fin anterior a la creación tampoco entra', () => {
+    const fuera = fin({ finalizadoAt: '2026-06-08T00:00:00Z', slaHoras: 90, totalHoras: 90 })
+    const alReves = fin({ createdAt: '2026-05-09T00:00:00Z', slaHoras: 90, totalHoras: 90 })
+    const a = computeAnalisis([fuera, alReves, fin({ slaHoras: 9, totalHoras: 9 })], desde, hasta)
+    expect(a.tiempoSlaPromedioDias).toBe(1)
+    expect(a.ticketsConReloj).toBe(1)
+  })
+
+  it('un abierto con dato no entra', () => {
+    const abierto: AnalisisRow = { ...base, status: 'Ingresado', statusType: 'Open', createdAt: '2026-05-04T00:00:00Z', finalizadoAt: null, slaHoras: 90, totalHoras: 90 }
+    expect(computeAnalisis([abierto], desde, hasta).ticketsConReloj).toBe(0)
+  })
+
+  it('tiempoPromedioDias, el cumplimiento y el resto valen lo que valían', () => {
+    const conReloj = rows.map((r) => ({ ...r, slaHoras: 9, totalHoras: 18 }))
+    const antes = computeAnalisis(rows, new Date('2026-05-01T00:00:00Z'), new Date('2026-05-31T23:59:59Z'))
+    const despues = computeAnalisis(conReloj, new Date('2026-05-01T00:00:00Z'), new Date('2026-05-31T23:59:59Z'))
+    expect(despues.tiempoPromedioDias).toBe(7)
+    expect(despues.cumplimientoPct).toBe(50)
+    const sinReloj = (x: ReturnType<typeof computeAnalisis>): Record<string, unknown> => {
+      const c: Record<string, unknown> = { ...x }
+      for (const k of ['tiempoSlaPromedioDias', 'tiempoTotalPromedioDias', 'ticketsConReloj']) delete c[k]
+      return c
+    }
+    expect(sinReloj(despues)).toEqual(sinReloj(antes))
+    expect([despues.tiempoSlaPromedioDias, despues.tiempoTotalPromedioDias, despues.ticketsConReloj]).toEqual([1, 2, 2])
+  })
+})
