@@ -169,16 +169,16 @@ describe('applyTransition', () => {
   })
 })
 
-describe('applyTransition · performed_by_id (F1C-07, RQ-PM-34)', () => {
+describe('applyTransition · performed_by_id (F1C-07, RQ-TZ-22)', () => {
   const T = { id: 'envio_control_calidad', name: 'Envío a control de calidad', area: 'Servicio Técnico' }
-  const P = { status: 'Control de calidad', statusType: 'Open', columns: {}, customFields: {}, comment: null }
+  const P = { status: 'Control de calidad', statusType: 'Open', columns: {}, customFields: {}, comment: null } as unknown as Parameters<typeof applyTransition>[4]
   it('guarda el id del actor; sin id (o con undefined) guarda null, nunca undefined', async () => {
-    await upsertTicket(db, ticketRowFromZoho({ id: 'p1', ticketNumber: '51', status: 'En Proceso', statusType: 'Open', customFields: {} } as any))
-    await applyTransition(db, 'p1', 'En Proceso', T, P as any, 'Ana', {}, 'user-7')
-    await applyTransition(db, 'p1', 'Control de calidad', T, P as any, 'Ana', {})
-    await applyTransition(db, 'p1', 'Control de calidad', T, P as any, 'Ana', {}, undefined)
+    await upsertTicket(db, ticketRowFromZoho({ id: 'p1', ticketNumber: '51', status: 'En Proceso', statusType: 'Open', customFields: {} } as unknown as Parameters<typeof ticketRowFromZoho>[0]))
+    await applyTransition(db, 'p1', 'En Proceso', T, P, 'Ana', {}, 'user-7')
+    await applyTransition(db, 'p1', 'Control de calidad', T, P, 'Ana', {})
+    await applyTransition(db, 'p1', 'Control de calidad', T, P, 'Ana', {}, undefined)
     const r = await db.query('SELECT performed_by_id FROM ticket_transitions WHERE ticket_id=$1 ORDER BY id', ['p1'])
-    expect(r.rows.map((x: any) => x.performed_by_id)).toEqual(['user-7', null, null])
+    expect(r.rows.map((x: { performed_by_id: string | null }) => x.performed_by_id)).toEqual(['user-7', null, null])
   })
 })
 
