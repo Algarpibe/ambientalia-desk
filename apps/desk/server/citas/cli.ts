@@ -151,7 +151,7 @@ function generarBase(repo: Repo, cwd: string): SalidaCli {
 
 export function ejecutar({ argv, entrada, cwd, env = process.env }: EntradaCli): SalidaCli {
   try {
-    const repo = repoGit(cwd, env)
+    const repo = rutasUnaVez(repoGit(cwd, env)) // ver `rutasUnaVez`, al final del fichero
     const modo = parseArgv(argv)
     if (modo.modo === 'generar-base') return generarBase(repo, cwd)
     if (modo.modo === 'sha') return comprobarSha(repo, cwd, env, modo.rev)
@@ -204,4 +204,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const { codigo, texto } = ejecutar({ argv: process.argv.slice(2), entrada: () => readFileSync(0, 'utf8'), cwd: process.cwd() })
   process.stderr.write(texto + SALTO)
   process.exitCode = codigo
+}
+
+/** Rendimiento (fuera-del-plan, 2026-10-20): en modo hook las rutas del árbol local se leían DOS veces
+ *  por push —`detectar()` y el barrido de cabeceras—, cada una con su `git ls-tree`. Dentro de una
+ *  ejecución ninguna revisión cambia, así que la primera lectura de cada una sirve para las siguientes.
+ *  Es una declaración de función y no una constante porque el punto de entrada de arriba corre al cargar
+ *  el módulo, antes de llegar aquí. Va al final para no desplazar ninguna línea citada. */
+function rutasUnaVez(repo: Repo): Repo {
+  const leidas = new Map<string, string[] | null>()
+  return {
+    ...repo,
+    rutas(rev) {
+      if (!leidas.has(rev)) leidas.set(rev, repo.rutas(rev))
+      return leidas.get(rev) as string[] | null
+    },
+  }
 }

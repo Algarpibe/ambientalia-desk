@@ -29,9 +29,9 @@ const EXTENSION_DE_TEXTO = /\.(ts|tsx|js|mjs|md|yaml|yml|json|jsonl|sql|sh)$/
  *  commiteado (uso del CLI, por push). Antes vivía sólo en `guardianes.test.ts`; ahora el guardián la
  *  importa de aquí. */
 export function textoQueGitCreeBinario(cwd: string, env: NodeJS.ProcessEnv, revision?: string): string[] {
-  const arbolVacio = spawnSync('git', ['hash-object', '-t', 'tree', '--stdin'], { cwd, env, input: '', encoding: 'utf8' }).stdout.trim()
-  const args = ['-c', 'core.quotepath=off', 'diff', '--numstat', '-z', '--no-renames', '--no-ext-diff', '--no-textconv', arbolVacio, ...(revision ? [revision] : [])]
-  const salida = spawnSync('git', args, { cwd, env, encoding: 'utf8', maxBuffer: MAX_BUFFER }).stdout
+  const numstat = (arbolVacio: string) => spawnSync('git', ['-c', 'core.quotepath=off', 'diff', '--numstat', '-z', '--no-renames', '--no-ext-diff', '--no-textconv', arbolVacio, ...(revision ? [revision] : [])], { cwd, env, encoding: 'utf8', maxBuffer: MAX_BUFFER })
+  const conConstante = numstat(ARBOL_VACIO_SHA1) // ver `ARBOL_VACIO_SHA1`, al final del fichero
+  const salida = (conConstante.status === 0 ? conConstante : numstat(arbolVacioCalculado(cwd, env))).stdout
   return salida.split(NUL).filter((e) => e.startsWith(`-${TAB}-${TAB}`)).map((e) => e.slice(4)).filter((ruta) => EXTENSION_DE_TEXTO.test(ruta))
 }
 
@@ -97,4 +97,15 @@ export function repoGit(cwd: string, env: NodeJS.ProcessEnv = process.env): Repo
       return salida.toString('utf8').split(SALTO).filter(Boolean).map((l) => l.split(TAB).slice(1).join(TAB))
     },
   }
+}
+
+/** Rendimiento (fuera-del-plan, 2026-10-20): el árbol vacío de un repositorio SHA-1 es una constante de
+ *  git, y `textoQueGitCreeBinario` ya no lanza un `git hash-object` por push para calcularlo. Si el diff
+ *  con la constante falla —otro formato de objetos, o cualquier otro error—, lo calcula como antes y
+ *  repite el diff, así que la salida es la misma en todos los casos. Va al final para no desplazar
+ *  ninguna línea citada. */
+const ARBOL_VACIO_SHA1 = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+
+function arbolVacioCalculado(cwd: string, env: NodeJS.ProcessEnv): string {
+  return spawnSync('git', ['hash-object', '-t', 'tree', '--stdin'], { cwd, env, input: '', encoding: 'utf8' }).stdout.trim()
 }

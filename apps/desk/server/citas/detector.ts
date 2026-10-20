@@ -107,7 +107,7 @@ function agrupar<T extends { fichero: string; cita: string }>(items: readonly T[
 
 /** RQ-CV-08: los DOS extremos del rango se comprueban por separado, y el motivo nombra cuál falla. */
 function rotura(c: { desde: number; hasta: number }, contenido: string): { linea: number; motivo: string } | null {
-  const lineasFichero = contenido.split('\n')
+  const lineasFichero = lineasDe(contenido) // partido UNA vez por contenido y pasada: ver `lineasDe`, al final
   if (c.desde < 1 || c.desde > lineasFichero.length) return { linea: c.desde, motivo: 'extremo inicial fuera de rango' }
   if (c.hasta < 1 || c.hasta > lineasFichero.length) return { linea: c.hasta, motivo: 'extremo final fuera de rango' }
   if (lineaVacia(lineasFichero[c.desde - 1])) return { linea: c.desde, motivo: 'extremo inicial en línea vacía' }
@@ -138,7 +138,7 @@ function arbolDeLectura(c: { ancla?: string }, arbolLocal: string): string {
 }
 
 export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
-  const { repo, arbolLocal, exclusiones, base } = opciones
+  const { repo, arbolLocal, exclusiones, base } = opciones; lineasPorContenido.clear() // pasada nueva, caché vacía
   const remoto = opciones.remoto && { en: opciones.remoto.en, indice: construirIndice(opciones.remoto.rutas) }
   const rutas = repo.rutas(arbolLocal) ?? []
   const indice = construirIndice(rutas)
@@ -339,4 +339,20 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
     comprobadas, cosechadas: citas.length, saltadas, fueraDelRepositorio, noSonCitas, informadas,
     bloqueantes, caducadas, abreviadasRotas, bloquea: bloqueantes.length > 0 || caducadas.length > 0,
   }
+}
+
+/** Rendimiento (fuera-del-plan, 2026-10-20): `rotura()` partía el contenido citado en CADA cita, y con
+ *  N citas a un fichero de N líneas eso es cuadrático (en la prueba de 1 MB eran ~15 s de 17). Cada
+ *  contenido se parte UNA vez por pasada y se reutiliza; `detectar()` vacía la caché al empezar, así que
+ *  no retiene contenidos de una pasada a otra. Va al final del fichero para no desplazar ninguna línea
+ *  citada. No cambia qué se detecta: `rotura()` sólo depende del contenido. */
+const lineasPorContenido = new Map<string, string[]>()
+
+function lineasDe(contenido: string): string[] {
+  let lineas = lineasPorContenido.get(contenido)
+  if (lineas === undefined) {
+    lineas = contenido.split('\n')
+    lineasPorContenido.set(contenido, lineas)
+  }
+  return lineas
 }
