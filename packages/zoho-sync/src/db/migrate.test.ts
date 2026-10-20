@@ -371,16 +371,16 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
    * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 67 ALTER: 40 calificadas (35 de public + 5 de books) y 27 sin calificar, todas de Desk (la 67.ª, facturar-dos-ramas: facturacion_avisada_para de tickets, sin calificar; la 65.ª y la 66.ª, rotulado-tras-enviar: enviado_por_id y aviso_sin_etiqueta_at de public.remisiones, calificadas; de la 60.ª a la 64.ª, recepcion-exencion-foto-y-casilla: una sobre public.catalogo_novedades y cuatro sobre public.remisiones, calificadas; de la 56.ª a la 59.ª, F1B-05: cuatro columnas de public.remisiones, calificadas; la 54.ª y la 55.ª, liberacion_motivo y fecha_prevista_facturacion de F1C-05: ALTER tickets sin calificar; la 52.ª y la 53.ª, origen y DROP NOT NULL de public.prioridad_ajustes de F1B-07 L2a, calificadas; la 51.ª, prioridad_en_app_at de F1B-07: ALTER tickets sin calificar; de la 45.ª a la 50.ª, F1B-04: seis calificadas, cuatro sobre public.remisiones y dos sobre public.remision_fotos; la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
+  it('son 68 ALTER: 40 calificadas (35 de public + 5 de books) y 28 sin calificar, todas de Desk (la 68.ª, control-calidad-liberacion F1C-07: performed_by_id de ticket_transitions, sin calificar; la 67.ª, facturar-dos-ramas: facturacion_avisada_para de tickets, sin calificar; la 65.ª y la 66.ª, rotulado-tras-enviar: enviado_por_id y aviso_sin_etiqueta_at de public.remisiones, calificadas; de la 60.ª a la 64.ª, recepcion-exencion-foto-y-casilla: una sobre public.catalogo_novedades y cuatro sobre public.remisiones, calificadas; de la 56.ª a la 59.ª, F1B-05: cuatro columnas de public.remisiones, calificadas; la 54.ª y la 55.ª, liberacion_motivo y fecha_prevista_facturacion de F1C-05: ALTER tickets sin calificar; la 52.ª y la 53.ª, origen y DROP NOT NULL de public.prioridad_ajustes de F1B-07 L2a, calificadas; la 51.ª, prioridad_en_app_at de F1B-07: ALTER tickets sin calificar; de la 45.ª a la 50.ª, F1B-04: seis calificadas, cuatro sobre public.remisiones y dos sobre public.remision_fotos; la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(67)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(68)
     expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(40)
-    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(27)
+    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(28)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
     // dos de arriba.
     expect(new Set(alters.filter((a) => !a.calificada).map((a) => a.tabla)), 'tablas con ALTER sin calificar')
-      .toEqual(new Set(['tickets', 'equipos', 'contacts']))
+      .toEqual(new Set(['tickets', 'equipos', 'contacts', 'ticket_transitions']))
     expect(new Set(alters.filter((a) => a.calificada).map((a) => a.identidad)), 'identidades calificadas')
       .toEqual(new Set(['books.contacts', 'public.users', 'public.roles', 'public.avisos', 'public.remisiones', 'public.catalogo_novedades', 'public.catalogo_modelos', 'public.remision_fotos', 'public.prioridad_ajustes']))
   })
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo) y las dos de public.contrato_ampliaciones (F1B-11, ampliacion-contrato) y las dos de public.encuesta_respuestas (F1F-05, indicadores-51-55) y las dos de public.nit_exentos y la de public.provisional_books_avisados (F1B-19) y las seis de recepcion-exencion-foto-y-casilla (F1B-04: ALTER y UPDATE de catalogo_novedades y cuatro ALTER de public.remisiones) y las dos ALTER de public.remisiones de rotulado-tras-enviar (enviado_por_id y aviso_sin_etiqueta_at) y la ALTER de tickets de facturar-dos-ramas (facturacion_avisada_para)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1 + 2 + 2 + 2 + 1 + 6 + 2 + 1)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo) y las dos de public.contrato_ampliaciones (F1B-11, ampliacion-contrato) y las dos de public.encuesta_respuestas (F1F-05, indicadores-51-55) y las dos de public.nit_exentos y la de public.provisional_books_avisados (F1B-19) y las seis de recepcion-exencion-foto-y-casilla (F1B-04: ALTER y UPDATE de catalogo_novedades y cuatro ALTER de public.remisiones) y las dos ALTER de public.remisiones de rotulado-tras-enviar (enviado_por_id y aviso_sin_etiqueta_at) y la ALTER de tickets de facturar-dos-ramas (facturacion_avisada_para) y la ALTER de ticket_transitions de control-calidad-liberacion (performed_by_id)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1 + 2 + 2 + 2 + 1 + 6 + 2 + 1 + 1)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -791,11 +791,11 @@ describe('reasignacion-con-motivo · public.reasignaciones (F1B-05, RQ-TZ-20)', 
     expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la DECIMONOVENA por el final; el índice, en una sola sentencia, la decimoctava; la decimoséptima es la siembra de accesorio_fuera_de_lista (F1B-04); las siete siguientes son las de contrato_ampliaciones (F1B-11), encuesta_respuestas (F1F-05), nit_exentos y provisional_books_avisados (F1B-19), las dos siguientes, ALTER de public.remisiones, las de rotulado-tras-enviar, y la última, la ALTER de tickets de facturar-dos-ramas', () => {
+  it('el CREATE va calificado con public. y es la VIGÉSIMA por el final; el índice, en una sola sentencia, la decimonovena; la decimoctava es la siembra de accesorio_fuera_de_lista (F1B-04); las siete siguientes son las de contrato_ampliaciones (F1B-11), encuesta_respuestas (F1F-05), nit_exentos y provisional_books_avisados (F1B-19), las dos siguientes, ALTER de public.remisiones, las de rotulado-tras-enviar, la penúltima, la ALTER de tickets de facturar-dos-ramas, y la última, la ALTER de ticket_transitions de control-calidad-liberacion', () => {
     const l = limpias()
-    expect(l[l.length - 19]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
+    expect(l[l.length - 20]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
     expect(l.filter((s) => /idx_reasignaciones_ticket/.test(s))).toHaveLength(1)
-    expect(l[l.length - 18]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 17]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
+    expect(l[l.length - 19]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 18]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
     expect(l.filter((s) => /reasignaciones/.test(s)), 'sentencias que mencionan reasignaciones').toHaveLength(2)
   })
 
@@ -834,10 +834,10 @@ describe('ampliacion-contrato · public.contrato_ampliaciones (F1B-11, RQ-TC-54)
     expect((await db.query('SELECT * FROM public.contrato_ampliaciones')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la DECIMOSEXTA por el final; el índice, la decimoquinta; dos sentencias la mencionan', () => {
+  it('el CREATE va calificado con public. y es la DECIMOSÉPTIMA por el final; el índice, la decimosexta; dos sentencias la mencionan', () => {
     const l = limpias()
-    expect(l[l.length - 16]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.contrato_ampliaciones \(/)
-    expect(l[l.length - 15]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public\.contrato_ampliaciones \(contrato_id\)$/)
+    expect(l[l.length - 17]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.contrato_ampliaciones \(/)
+    expect(l[l.length - 16]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public\.contrato_ampliaciones \(contrato_id\)$/)
     expect(l.filter((s) => /contrato_ampliaciones/.test(s)), 'sentencias que mencionan contrato_ampliaciones').toHaveLength(2)
   })
 
@@ -874,12 +874,12 @@ describe('indicadores-51-55 · public.encuesta_respuestas ya no cierra el esquem
     expect((await db.query('SELECT * FROM public.encuesta_respuestas')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la DECIMOCUARTA por el final; el índice, la decimotercera; dos sentencias la mencionan; trae las siete columnas y no trae canal', () => {
+  it('el CREATE va calificado con public. y es la DECIMOQUINTA por el final; el índice, la decimocuarta; dos sentencias la mencionan; trae las siete columnas y no trae canal', () => {
     const l = limpias()
-    expect(l[l.length - 14]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.encuesta_respuestas \(/)
-    expect(l[l.length - 13]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_encuesta_respuestas_ticket ON public\.encuesta_respuestas \(ticket_id\)$/)
+    expect(l[l.length - 15]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.encuesta_respuestas \(/)
+    expect(l[l.length - 14]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_encuesta_respuestas_ticket ON public\.encuesta_respuestas \(ticket_id\)$/)
     expect(l.filter((s) => /encuesta_respuestas/.test(s)), 'sentencias que mencionan encuesta_respuestas').toHaveLength(2)
-    const crear = l[l.length - 14]
+    const crear = l[l.length - 15]
     for (const col of ['id', 'ticket_id', 'calificacion', 'respondida_at', 'huella', 'cargado_por', 'cargado_at']) expect(crear, `columna ${col}`).toMatch(new RegExp(`\\b${col}\\b`))
     expect(crear).not.toMatch(/\bcanal\b/)
   })

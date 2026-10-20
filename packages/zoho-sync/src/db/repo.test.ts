@@ -169,6 +169,19 @@ describe('applyTransition', () => {
   })
 })
 
+describe('applyTransition · performed_by_id (F1C-07, RQ-PM-34)', () => {
+  const T = { id: 'envio_control_calidad', name: 'Envío a control de calidad', area: 'Servicio Técnico' }
+  const P = { status: 'Control de calidad', statusType: 'Open', columns: {}, customFields: {}, comment: null }
+  it('guarda el id del actor; sin id (o con undefined) guarda null, nunca undefined', async () => {
+    await upsertTicket(db, ticketRowFromZoho({ id: 'p1', ticketNumber: '51', status: 'En Proceso', statusType: 'Open', customFields: {} } as any))
+    await applyTransition(db, 'p1', 'En Proceso', T, P as any, 'Ana', {}, 'user-7')
+    await applyTransition(db, 'p1', 'Control de calidad', T, P as any, 'Ana', {})
+    await applyTransition(db, 'p1', 'Control de calidad', T, P as any, 'Ana', {}, undefined)
+    const r = await db.query('SELECT performed_by_id FROM ticket_transitions WHERE ticket_id=$1 ORDER BY id', ['p1'])
+    expect(r.rows.map((x: any) => x.performed_by_id)).toEqual(['user-7', null, null])
+  })
+})
+
 describe('ticket_reads (leído/no leído)', () => {
   it('setTicketRead marca leído/no leído por usuario; reactiva si se modifica tras leer', async () => {
     await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time,modified_time) VALUES ('t1',1,'A','Ingresado','Open',now(),'2026-01-01T00:00:00Z')")

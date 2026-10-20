@@ -249,7 +249,7 @@ describe('las 36 transiciones, ejecutadas contra el servidor', () => {
    */
   it('las 36 salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
-    const { app } = appWith()
+    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre
 
     const observado: Record<string, string[]> = {}
     const esperado: Record<string, string[]> = {}
@@ -263,7 +263,7 @@ describe('las 36 transiciones, ejecutadas contra el servidor', () => {
         await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)',
           [id, 70000 + n, 'Barrido de ejecución', origen]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
 
-        const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+        const res = await request(t.id === 'envio_control_calidad' ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
 
         const ticket = await db.query('SELECT status FROM tickets WHERE id = $1', [id])

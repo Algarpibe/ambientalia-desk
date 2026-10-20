@@ -105,3 +105,11 @@ describe('DECISIONALES_POR_CARGO (F1C-05, RQ-PM-28)', () => {
     expect(loadConfig({ ...base, DECISIONALES_POR_CARGO: 'true' }).decisionalesPorCargo).toBe(true)
   })
 })
+
+describe('CONTROL_CALIDAD_LIBERACION (F1C-07, RQ-PM-32)', () => {
+  it('nace cerrado: sólo el literal "true" lo enciende', () => {
+    expect(loadConfig(base).controlCalidadLiberacion).toBe(false)
+    for (const v of ['', 'false', 'TRUE', 'True', '1', 'yes', ' true']) expect(loadConfig({ ...base, CONTROL_CALIDAD_LIBERACION: v }).controlCalidadLiberacion, v).toBe(false)
+    expect(loadConfig({ ...base, CONTROL_CALIDAD_LIBERACION: 'true' }).controlCalidadLiberacion).toBe(true)
+  })
+})

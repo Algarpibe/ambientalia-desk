@@ -3,7 +3,7 @@ import { applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { vigenciaDeRemisiones } from '../db/remisiones'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente, baseSiNaceBajoTop5 } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'
-import { buildSubject, buildCodigoServicio, prefijoDeducido, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, cargosQueFaltanParaDecisional, mensajeDecisional, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, erroresPrioridadPedida, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, erroresAnulacion, erroresFacturar, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, esNitExento, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, prefijoDeducido, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, cargosQueFaltanParaDecisional, mensajeDecisional, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, erroresPrioridadPedida, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, erroresAnulacion, erroresFacturar, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, esNitExento, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, motivoQuitadaPorInterruptor, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'; import { contextoDecisionales } from './decisionales'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -125,7 +125,7 @@ export async function executeTransition(
   if (!current) throw new HttpError(404, { error: 'Ticket no encontrado' }); exigirMismoFlujo(t, current.row)
   if (!t.from.includes(current.row.status)) {
     throw new HttpError(409, { error: `La transición "${t.name}" no aplica desde el estado "${current.row.status}"` })
-  }
+  } exigirInterruptorControlCalidad(t, config) /* F1C-07 (RQ-PM-32): escalón B, tras el estado y ANTES del área */
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
   } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); const faltanDecisional = config?.decisionalesPorCargo ? cargosQueFaltanParaDecisional(t, user, await contextoDecisionales(db, true)) : null; if (faltanDecisional) throw new HttpError(403, { error: mensajeDecisional(t.name, faltanDecisional) }) /* F1C-05 (RQ-PM-30): Decisionales por cargo, sólo con DECISIONALES_POR_CARGO; tras el cargo de la lista corta */; if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const entran = await entrantesDeTransicion(db, t, b.values, id, current.row); exigirCargoOVI(entran, user); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas); await exigirAltaValidada(db, t, current.row); await exigirRemisionVigente(db, t, id) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422; F1B-03: el cargo de la OVI que ENTRA, tras la prioridad y antes de la verificación
@@ -152,7 +152,7 @@ export async function executeTransition(
   }
   const actor = user.name ?? TRANSITION_ACTOR
   const derivadoAntes = current.row.derivado_a ?? null
-  await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, valoresConMotivo(values, gas))
+  await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, valoresConMotivo(values, gas), user.id ?? null)
 
   /*
    * El aviso va DESPUÉS de la transición y fuera de su transacción, a propósito.
@@ -274,4 +274,15 @@ async function exigirRemisionVigente(db: Queryable, t: Transition, ticketId: str
   if (t.id !== 'habilitar_servicio') return
   const motivo = motivoSinRemisionVigente(await vigenciaDeRemisiones(db, ticketId))
   if (motivo) throw new HttpError(422, { error: motivo })
+}
+
+/**
+ * F1C-07 (RQ-PM-32, RQ-TS-47): el interruptor `CONTROL_CALIDAD_LIBERACION` decide cuál de las dos salidas del servicio está
+ * vigente. Apagado, el envío a control de calidad da `409`; encendido, `finalizacion_servicio` da `409` (las dos se quitan
+ * en `motivoQuitadaPorInterruptor`, de `@ambientalia/shared`). Llamada en `:128`, en la misma línea que cierra la guarda
+ * de estado: escalón B, tras el `409` de estado y ANTES del `403` de área. Al FINAL del fichero para no desplazar citas.
+ */
+function exigirInterruptorControlCalidad(t: Transition, config?: AppConfig): void {
+  const motivo = motivoQuitadaPorInterruptor(t.id, config?.controlCalidadLiberacion === true)
+  if (motivo) throw new HttpError(409, { error: motivo })
 }

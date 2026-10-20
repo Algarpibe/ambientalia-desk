@@ -90,3 +90,57 @@ Tareas 1b.1 a 1b.3 marcadas en `tasks.md`.
 - Mensajes de `mensajeSinFirma` y `motivoQuitadaPorInterruptor` son texto propio de 1b (el diseño no los fija); 2b/3 pueden afinarlos.
 - `erroresContenidoControlCalidad`: «Motivo del rechazo» ausente NO da error (lo da `transitionExec.ts:76-77`); sólo el de espacios.
 - `index.ts`: una línea al final; no se desplaza ninguna cita.
+
+## Lote 2a — interruptor, traza y envío (intento I5) · HECHO
+
+Tareas 2a.1 a 2a.5 marcadas en `tasks.md`.
+
+### Evidencia TDD
+
+| Tarea | ROJO (visto) | VERDE |
+|---|---|---|
+| 2a.1 | `config.test.ts`: `expected undefined to be false`; `repo.test.ts` `performed_by_id`: rojo (columna y parámetro ausentes); `migrate.test.ts`: `ALTER TABLE en schema.sql: expected 67 to be 68` | `config.test` 13/13, `repo.test` 45/45, `migrate.test` verde |
+| 2a.2 | `controlCalidad.test.ts`: 4 rojos de 8 (RQ-TS-47 apagado `expected 200 to be 409`; encendido + finalización `expected 200 to be 409`; CC-2 `expected 403 to be 409`; `performed_by_id`). Verdes de entrada, anotados: la caracterización apagada (`finalizacion_servicio` pasa), el envío encendido, CC-1 y el control «encendido sin área = 403» | 8/8 |
+| 2a.3 | — | `config.ts:66` (campo, misma línea) y `:125` (lectura `=== 'true'`); `schema.sql` ALTER al final; `repo.ts:283`/`:329` (`actorId` en la línea del último parámetro), `:315-317`, `:333`, `:339`; `ticketService.ts:128` (llamada en la línea que cierra el estado) y `exigirInterruptorControlCalidad` AL FINAL (`:285`); `:155` pasa `user.id ?? null`; `appHarness.ts:46`/`:49` |
+| 2a.4 | los barridos en rojo con el interruptor construido y sin ajustar: `permisos.test.ts` (4), `cargoPermiso.test.ts` S21, `transicionesEjecucion.test.ts` (el envío da 409 con la app apagada) | verdes con dos apps (apagada y encendida): el envío corre con la encendida, el resto con la apagada |
+
+### Mutaciones (una a una, restauración comprobada por comparación de bytes)
+
+| Mutación | Prueba que la caza | Rojo |
+|---|---|---|
+| M1 `=== 'true'` → `!== 'false'` (`config.ts`; `'1'` y `''` están en la prueba) | `config.test.ts` «nace cerrado» | `expected true to be false` |
+| M2 `config?.controlCalidadLiberacion === true` → `true` | caracterización apagada, «apagado, el envío da 409», CC-2 | 3 rojos |
+| M2b → `false` | «encendido: el envío pasa», «finalización da 409», control 403, traza | 4 rojos |
+| P1 el 409 del interruptor ANTES del de estado | CC-1 | `expected 'El envío a control de calidad está ap…' to contain 'no aplica desde'` |
+| P2 el 409 DESPUÉS del 403 de área | CC-2 | `expected 403 to be 409` |
+| M16 sin pasar el id (`ticketService.ts:155`) | «el envío guarda el id…» | `expected null to be '86aeb580…'` |
+| M16b `actorId ?? null` → `null` (`repo.ts`) | `repo.test.ts` | `expected [ null, null, null ] to deeply equal [ 'user-7', null, null ]` |
+
+### Códigos de salida
+
+`npm run typecheck`: 0. `npx vitest run apps/desk/server packages/zoho-sync packages/shared`: 277 ficheros pasan, 3 omitidos; 4.828 pruebas, 11 omitidas; código 0. `npx eslint` sobre los once ficheros tocados: 0 errores (21 avisos `no-explicit-any` de los `as any` de las pruebas, del estilo del fichero).
+
+### Supuestos (reversibles) y desvíos
+
+- **Interpretación del encargo:** decía «apagado el envío pasa; encendido finalizacion_servicio pasa». La función pura de 1b (`motivoQuitadaPorInterruptor`) y RQ-TS-47 dicen lo contrario: apagado, el envío da 409 y `finalizacion_servicio` pasa; encendido, el envío pasa y `finalizacion_servicio` da 409. Se implementó y se probó lo que dicen la función y el diseño.
+- **CC-1** se leyó como «el 409 de estado gana al del interruptor» (el diseño sitúa la guarda tras el estado); P1 la mueve antes y cae.
+- **Barridos HTTP:** como cada posición del interruptor deja una salida en 409, los tres barridos usan dos apps (`apagada`, `encendida`) y eligen por `t.id`; `appHarness.ts:74` NO se toca (es de 2b).
+- **Defecto cazado a tiempo:** el comentario de `schema.sql` llevaba un `;` y el divisor de sentencias de `migrate` partía la ALTER (`sentencia omitida … Unexpected end of input`); se quitó. Quien añada comentarios al final de `schema.sql` no debe usar `;`.
+- Cuatro vigilantes posicionales de `migrate.test.ts` (los índices «por el final» de reasignaciones, contrato_ampliaciones y encuesta_respuestas, y la suma de la prueba de gases) subieron en uno; el recuento de ALTER pasa a 68 (28 sin calificar; `ticket_transitions` entre las tablas de Desk). El guardián de `ALTER` sin calificar la acepta (`ticket_transitions` es de `DESK_TABLES`).
+- `controlCalidad.ts` y `camposControlCalidad.ts` (shared) sin cambios.
+
+### Citas desplazadas (para el barrido del lote 3)
+
+- `config.ts`: +1 línea en `:125` (la lectura nueva); los dos `}` de cierre bajan una (`:125-126` pasan a `:126-127`). El campo `:66` va en la misma línea (cambia su texto).
+- `repo.ts`: inserciones = borrados (7/7); cambia el texto de `:283`, `:315-317`, `:329`, `:333`, `:339`; ninguna línea se mueve.
+- `schema.sql`: +4 líneas AL FINAL (nada se mueve).
+- `ticketService.ts`: 14/3; cambian de texto `:6` (import), `:128` (llamada) y `:155` (`user.id ?? null`); +11 líneas al final (`:274-285` aprox.). Las citas a `:126-128` y `:155` conservan número.
+- `appHarness.ts`: 2/2 en `:46` y `:49`. `migrate.test.ts`: 15/15, sin mover líneas (cambian títulos y desplazamientos «por el final»).
+
+### Ficheros tocados
+
+Nuevo: `apps/desk/server/controlCalidad.test.ts` (95 líneas). Modificados: `packages/zoho-sync/src/{config.ts,config.test.ts}`, `packages/zoho-sync/src/db/{schema.sql,repo.ts,repo.test.ts,migrate.test.ts}`, `apps/desk/server/services/ticketService.ts`, `apps/desk/server/testing/appHarness.ts`, `apps/desk/server/{permisos,cargoPermiso,transicionesEjecucion}.test.ts`, `tasks.md`, este fichero.
+
+### Medida (antes de estos dos ficheros de documentación)
+
+`git diff --shortstat --no-renames HEAD`: 11 ficheros, 73 inserciones, 36 borrados (109) + 95 líneas nuevas sin trackear = **204**; techo 800.

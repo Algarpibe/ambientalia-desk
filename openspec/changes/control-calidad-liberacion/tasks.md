@@ -35,14 +35,14 @@ línea base, detector tras el commit), `apply-progress.md`, commit y la medida `
 
 ## Lote 2a — interruptor, traza y envío (intento I5; ~200 × 1,8 = 360)
 
-- [ ] 2a.1 ROJO: `packages/zoho-sync/src/config.test.ts` (RQ-PM-32: literales `'true'`) y la prueba de `performed_by_id` en
+- [x] 2a.1 ROJO: `packages/zoho-sync/src/config.test.ts` (RQ-PM-32: literales `'true'`) y la prueba de `performed_by_id` en
       `repo.test.ts`/`migrate.test.ts` (columna, sin calificar, `actorId` por defecto `null`). Rojo por `undefined` y columna ausente.
-- [ ] 2a.2 ROJO: `apps/desk/server/controlCalidad.test.ts`, primera parte: caracterización apagada (verde: anotar), RQ-TS-47, CC-1
+- [x] 2a.2 ROJO: `apps/desk/server/controlCalidad.test.ts`, primera parte: caracterización apagada (verde: anotar), RQ-TS-47, CC-1
       (`409` del interruptor antes del de estado), CC-2 (antes del `403` de área).
-- [ ] 2a.3 VERDE: `config.ts:66` y línea tras `:124` (`=== 'true'`); `appHarness.ts:46`/`:49`; `schema.sql` (`ADD COLUMN IF NOT EXISTS
+- [x] 2a.3 VERDE: `config.ts:66` y línea tras `:124` (`=== 'true'`); `appHarness.ts:46`/`:49`; `schema.sql` (`ADD COLUMN IF NOT EXISTS
       performed_by_id text`, al final); `repo.ts:283`, `:315-317`, `:329`, `:333`, `:339`; guarda `ticketService.ts:128` y envoltorio `exigirInterruptorControlCalidad`.
-- [ ] 2a.4 Barrido HTTP del envío: `permisos.test.ts:43-109` y `transicionesEjecucion.test.ts:250-286` con la app encendida; vigilantes `permisos.test.ts:77-81`/`:349-356`, `transicionesEjecucion.test.ts:185`/`:285`.
-- [ ] 2a.5 Mutaciones: M1 (`!== 'false'`) cae en `config.test.ts`; M2 (`=== true` → `true`) cae en la caracterización apagada y «apagado, el
+- [x] 2a.4 Barrido HTTP del envío: `permisos.test.ts:43-109` y `transicionesEjecucion.test.ts:250-286` con la app encendida; vigilantes `permisos.test.ts:77-81`/`:349-356`, `transicionesEjecucion.test.ts:185`/`:285`.
+- [x] 2a.5 Mutaciones: M1 (`!== 'false'`) cae en `config.test.ts`; M2 (`=== true` → `true`) cae en la caracterización apagada y «apagado, el
       envío da 409»; P1 (`409` antes del de estado) cae en CC-1; P2 (tras el `403` de área) cae en CC-2.
 
 ## Lote 2b — servicio de firma (intento I6; ~380 × 1,8 = 684; si mide > 720, RQ-TS-48 sale a un intento propio)
