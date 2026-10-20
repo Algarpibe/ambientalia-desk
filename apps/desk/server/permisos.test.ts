@@ -40,7 +40,7 @@ instalarArnes()
  */
 describe('matriz área × transición, contra el servidor', () => {
   for (const area of AREAS) {
-    it(`las 33 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
+    it(`las 36 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
       const cookie = await userCookie([area])
       const { app } = appWith()
 
@@ -69,16 +69,16 @@ describe('matriz área × transición, contra el servidor', () => {
   /**
    * EL TOTAL, escrito a mano, porque es lo único que la derivación no puede vigilarse a sí misma.
    *
-   * 33 transiciones × 3 áreas = 99 casos. Las 26 de área simple prohíben a 2 áreas cada una y las 7
-   * compartidas a 1: 26×2 + 7×1 = 59 prohibidos, y 40 permitidos. Si mañana una transición pasa de
+   * 36 transiciones × 3 áreas = 108 casos. Las 29 de área simple prohíben a 2 áreas cada una y las 7
+   * compartidas a 1: 29×2 + 7×1 = 65 prohibidos, y 43 permitidos (59 y 40 hasta F1C-07: las tres de control de calidad son de Servicio Técnico). Si mañana una transición pasa de
    * simple a compartida —que es exactamente lo que F1C-05 va a tocar—, estos números se mueven y hay
    * que moverlos a propósito.
    */
-  it('la matriz son 99 casos: 59 prohibidos y 40 permitidos', () => {
+  it('la matriz son 108 casos: 65 prohibidos y 43 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
-    expect(casos).toHaveLength(99)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(59)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(40)
+    expect(casos).toHaveLength(108)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(65)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(43)
   })
 
   /**
@@ -86,7 +86,7 @@ describe('matriz área × transición, contra el servidor', () => {
    * Va contra el servidor por lo mismo que la matriz — el `isAdmin` que decide es el de la sesión,
    * no el del argumento.
    */
-  it('un administrador pasa por las 33 sin que su área importe', async () => {
+  it('un administrador pasa por las 36 sin que su área importe', async () => {
     // Su rol NO cubre ninguna transición: lo único que le abre las 33 es ser administrador.
     const u = await createUser(db, { email: 'jefa@x.co', name: 'Jefa', passwordHash: await hashPassword('password123'), isAdmin: true })
     const cookie = `sid=${await createSession(db, u.id)}`
@@ -346,14 +346,14 @@ describe('cargo · la compuesta contra el área (puro)', () => {
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 
-  it('con la compuesta y sin cargo, la matriz son 99 casos: 60 prohibidos y 39 permitidos', () => {
+  it('con la compuesta y sin cargo, la matriz son 108 casos: 66 prohibidos y 42 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => puedeEjecutarTransicion({ areas: [a], isAdmin: false, cargoPermiso: null }, t)))
-    expect(casos).toHaveLength(99)
-    expect(casos.filter((p) => !p)).toHaveLength(60)
-    expect(casos.filter((p) => p)).toHaveLength(39)
+    expect(casos).toHaveLength(108)
+    expect(casos.filter((p) => !p)).toHaveLength(66)
+    expect(casos.filter((p) => p)).toHaveLength(42)
   })
 
-  it('cargo × área × transición: 891 casos, ninguno concede lo que el área niega (S17)', () => {
+  it('cargo × área × transición: 972 casos, ninguno concede lo que el área niega (S17)', () => {
     const cargos = [...CARGOS, null]
     let casos = 0
     for (const t of TRANSITIONS) {
@@ -365,7 +365,7 @@ describe('cargo · la compuesta contra el área (puro)', () => {
         }
       }
     }
-    expect(casos).toBe(891) // 33 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
+    expect(casos).toBe(972) // 36 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
   })
 
   it('con Director Comercial la compuesta coincide con el área en las 93 celdas', () => {
@@ -443,7 +443,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
     expect((await ejecutar(app, cookie, 'rc-rv', 'rechazo_revision')).status).toBe(200)
   }, 60_000)
 
-  it('el barrido de cargo sube a 891 y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
+  it('el barrido de cargo sube a 972 (891 hasta F1C-07) y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
     let casos = 0
     const difieren: Array<{ transicion: string; area: string }> = []
     for (const t of TRANSITIONS) {
@@ -455,7 +455,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
         }
       }
     }
-    expect(casos).toBe(891)
+    expect(casos).toBe(972)
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 })

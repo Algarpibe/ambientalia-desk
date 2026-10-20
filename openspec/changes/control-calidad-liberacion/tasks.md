@@ -7,18 +7,18 @@ línea base, detector tras el commit), `apply-progress.md`, commit y la medida `
 
 ## Lote 1a — catálogo, estado, fase, columna, mapa (intento I3; ~250 × 1,8 = 450)
 
-- [ ] 1a.1 Línea base: `npx vitest run packages/shared apps/desk/server` en verde; `npm run typecheck` en 0.
-- [ ] 1a.2 ROJO: `packages/shared/src/controlCalidadCatalogo.test.ts` (RQ-TS-46, -50): estado, fase, columna, tres transiciones,
+- [x] 1a.1 Línea base: `npx vitest run packages/shared apps/desk/server` en verde; `npm run typecheck` en 0.
+- [x] 1a.2 ROJO: `packages/shared/src/controlCalidadCatalogo.test.ts` (RQ-TS-46, -50): estado, fase, columna, tres transiciones,
       campos coincidentes con `transitions.ts:223`. Rojo por módulo y estado inexistentes.
-- [ ] 1a.3 ROJO: ajustar los vigilantes en su línea (D6: `cifrasAncladas.test.ts:24`, `estados.test.ts:16-17`/`:226`,
+- [x] 1a.3 ROJO: ajustar los vigilantes en su línea (D6: `cifrasAncladas.test.ts:24`, `estados.test.ts:16-17`/`:226`,
       `invariantesGrafo.test.ts:51-53`/`:173-174`, `tipoEvento.test.ts:12-31`/`:44-55`, `decisionales.test.ts:17-23`,
       `transitions.test.ts:126`, `transitionsSoporteRemoto.test.ts:58`, `fasesBlueprint.test.ts:17-20`, `columns.test.ts:9`/`:46-47`,
       `mapaBlueprint.test.ts:46-54`/`:182-184`, `prioridad.test.ts:118-120`, `migracionTickets.test.ts:25-28`). Rojo por los conteos.
-- [ ] 1a.4 VERDE: `packages/shared/src/camposControlCalidad.ts` (D1) y `estados.ts:99`, `fasesBlueprint.ts:55`, `columns.ts:30`,
+- [x] 1a.4 VERDE: `packages/shared/src/camposControlCalidad.ts` (D1) y `estados.ts:99`, `fasesBlueprint.ts:55`, `columns.ts:30`,
       `transitions.ts:262` (imports en `:74`), todo en su línea; `decisionales.ts:46` gana `|| IDS_FIRMA_CC.has(t.id)` (D2).
-- [ ] 1a.5 `cifras_ancladas`: sólo `openspec/config.yaml:1360-1383` (24→26, 21→23, conteos); nada más del fichero.
-- [ ] 1a.6 Regenerar el mapa con `scripts/generar-mapa-blueprint.ts` (`docs/artefactos/`); medir el desplazamiento (hipótesis ≈ 40).
-- [ ] 1a.7 Mutaciones: M12 (aprobación `to: 'Por Entregar'`: caen RQ-TS-46, `transicionesEjecucion.test.ts`, «aprobado lleva a Por
+- [x] 1a.5 `cifras_ancladas`: sólo `openspec/config.yaml:1360-1383` (24→26, 21→23, conteos); nada más del fichero.
+- [x] 1a.6 Regenerar el mapa con `scripts/generar-mapa-blueprint.ts` (`docs/artefactos/`); medir el desplazamiento (hipótesis ≈ 40).
+- [x] 1a.7 Mutaciones: M12 (aprobación `to: 'Por Entregar'`: caen RQ-TS-46, `transicionesEjecucion.test.ts`, «aprobado lleva a Por
       Facturar») y M14 (quitar la exclusión de `decisionales.ts:46`: cae RQ-PM-35, «el 403 es el de firmante»). Rojas y restauradas.
 
 ## Lote 1b — regla pura (intento I4; ~340 × 1,8 = 612)

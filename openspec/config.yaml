@@ -1358,19 +1358,19 @@ cifras_ancladas:
       la de la vista. `Pendiente` sigue `sin_clasificar` y ya tiene regla provisional escrita: el
       reloj CORRE, hasta que Servicio Técnico diga qué espera. Desde F1C-09 `Pendiente` es de soporte remoto.
   - id: pasos_del_mapa
-    maestro: "41 — decisión de F1C-02 (Pendiente de facturar; 40 con F1C-01, Anulado); la R08.4 (M1.3.7) sigue diciendo 35 pasos y queda desactualizada hasta que Gerencia pegue la corrección (P-3)"
-    codigo: "aristas del diagrama completo de mapaBlueprint.ts: las 33 transiciones con botón (habilitar_servicio sale de tres estados y anulacion de cinco) + las 2 sin botón de estadoPorRemision.ts — 41 desde F1C-02, 40 desde F1C-01, 35 desde F1C-09, eran 38"
+    maestro: "44 — decisión de F1C-07 (Control de calidad, tres pasos; 41 con F1C-02, Pendiente de facturar; 40 con F1C-01, Anulado); la R08.4 (M1.3.7) sigue diciendo 35 pasos y queda desactualizada hasta que Gerencia pegue la corrección (P-3)"
+    codigo: "aristas del diagrama completo de mapaBlueprint.ts: las 36 transiciones con botón (habilitar_servicio sale de tres estados y anulacion de cinco) + las 2 sin botón de estadoPorRemision.ts — 44 desde F1C-07, 41 desde F1C-02, 40 desde F1C-01, 35 desde F1C-09, eran 38"
     divergencia: >
-      LA R08.4 QUEDA DESACTUALIZADA desde F1C-01: el código cuenta 41 aristas (40 hasta F1C-02) y la R08.4 dice 35 pasos, hasta P-3. ERROR si el código difiere de este registro.
+      LA R08.4 QUEDA DESACTUALIZADA desde F1C-01: el código cuenta 44 aristas (41 hasta F1C-07, 40 hasta F1C-02) y la R08.4 dice 35 pasos, hasta P-3. ERROR si el código difiere de este registro.
       La R08.2 aventuró que el mapa cuenta CAMINOS y no transiciones, y la R08.4 lo confirma; lo vigila
       cifrasAncladas.test.ts, que lee este registro y lo compara con el diagrama generado.
   - id: transiciones
-    maestro: "33 — decisión de F1C-02 (Facturar; 32 con F1C-01, Anulado); la R08.4 sigue diciendo 31 hasta que Gerencia pegue la corrección (P-3)"
+    maestro: "36 — decisión de F1C-07 (Control de calidad, tres transiciones; 33 con F1C-02, Facturar; 32 con F1C-01, Anulado); la R08.4 sigue diciendo 31 hasta que Gerencia pegue la corrección (P-3)"
     codigo: "cuenta de transiciones en packages/shared/src/transitions.ts"
     divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
   - id: estados
-    maestro: "22 — decisión de F1C-02 (Pendiente de facturar; 21 con F1C-01, Anulado); la R08.4 sigue diciendo 20 hasta que Gerencia pegue la corrección (P-3)"
-    codigo: "cuenta de estados de servicio en packages/shared/src/estados.ts (ESTADOS_SERVICIO, 22 desde F1C-02, 21 desde F1C-01, 20 desde F1C-09; antes, claves de CLASIFICACION_EN_ESPERA)"
+    maestro: "23 — decisión de F1C-07 (Control de calidad; 22 con F1C-02, Pendiente de facturar; 21 con F1C-01, Anulado); la R08.4 sigue diciendo 20 hasta que Gerencia pegue la corrección (P-3)"
+    codigo: "cuenta de estados de servicio en packages/shared/src/estados.ts (ESTADOS_SERVICIO, 23 desde F1C-07, 22 desde F1C-02, 21 desde F1C-01, 20 desde F1C-09; antes, claves de CLASIFICACION_EN_ESPERA)"
     divergencia: >
       ERROR si difiere. No hay criterio alternativo que lo justifique.
       AVISO DE MOVIMIENTO PREVISTO POR DECISIÓN, no por error — anotado el 2026-09-24. Tres

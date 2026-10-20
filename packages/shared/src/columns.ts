@@ -27,7 +27,7 @@ export const COLUMNS: Column[] = [
   { id: 'pendiente', label: 'Pendiente', statuses: ['Pendiente'] },
   { id: 'notif_cliente', label: 'Notificación cliente', statuses: ['Notificación cliente'] },
   { id: 'notif_comercial', label: 'Notificación Comercial', statuses: ['Notificación Comercial'] },
-  { id: 'comercial', label: 'Liberación Comercial', statuses: ['Liberación Comercial'] },
+  { id: 'comercial', label: 'Liberación Comercial', statuses: ['Liberación Comercial'] }, { id: 'control_calidad', label: 'Control de calidad', statuses: ['Control de calidad'] }, // F1C-07 (S-14): entre Liberación Comercial y Por Facturar; misma línea para no desplazar citas
   { id: 'por_facturar', label: 'Por Facturar', statuses: ['Por Facturar'] },
   { id: 'entregar_sin_facturar', label: 'Por Entregar / Sin facturar', statuses: ['Por Entregar / Sin facturar'] },
   { id: 'por_entregar', label: 'Por Entregar', statuses: ['Por Entregar'] }, { id: 'pendiente_facturar', label: 'Pendiente de facturar', statuses: ['Pendiente de facturar'] }, // F1C-02: rama sin factura, ya entregado

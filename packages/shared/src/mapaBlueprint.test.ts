@@ -43,13 +43,13 @@ describe('mapaBlueprint — motor puro', () => {
     }
   })
 
-  it('RQ-MB-02 · el diagrama completo tiene 41 aristas, 3 con origen en Habilitar Servicio', () => {
+  it('RQ-MB-02 · el diagrama completo tiene 44 aristas, 3 con origen en Habilitar Servicio', () => {
     const salida = generarMapaBlueprint(entradaReal())
     const completo = salida['blueprint-completo.md']
     // El patrón exige alias `eNN` a los dos lados: la cabecera HTML cierra con un `-->` suelto
     // (`<!-- ... -->`) que un patrón desnudo `/-->/ ` contaría como arista fantasma.
     const aristas = completo.match(/e\d{2} --> e\d{2}/g) ?? []
-    expect(aristas).toHaveLength(41)
+    expect(aristas).toHaveLength(44)
     const desdeHabilitar = completo.match(/: Habilitar Servicio/g) ?? []
     expect(desdeHabilitar).toHaveLength(3)
   })
@@ -179,9 +179,9 @@ describe('mapaBlueprint — RQ-MB-06 · anti-desfase contra docs/artefactos/', (
 
 // F1C-09 (E-140): `Pendiente` sale del catálogo de servicio y ninguna arista del mapa lo toca.
 describe('mapaBlueprint — F1C-09 · Pendiente fuera del mapa de servicio', () => {
-  it('ninguna arista ni estado del diagrama completo menciona Pendiente (el de soporte remoto; «Pendiente de facturar», de F1C-02, es otro estado), y quedan 41 aristas (40 hasta F1C-02, 35 hasta F1C-01)', () => {
+  it('ninguna arista ni estado del diagrama completo menciona Pendiente (el de soporte remoto; «Pendiente de facturar», de F1C-02, es otro estado), y quedan 44 aristas (41 hasta F1C-07, 40 hasta F1C-02, 35 hasta F1C-01)', () => {
     const completo = generarMapaBlueprint(entradaReal())['blueprint-completo.md']
-    expect(completo.match(/e\d{2} --> e\d{2}/g) ?? []).toHaveLength(41)
+    expect(completo.match(/e\d{2} --> e\d{2}/g) ?? []).toHaveLength(44)
     expect(completo.replaceAll('Pendiente de facturar', '')).not.toContain('Pendiente')
     expect(completo).not.toContain('Marcar como pendiente')
   })

@@ -20,7 +20,8 @@ stateDiagram-v2
     state "Por Facturar" as e17
     state "Finalizado" as e18
     state "Pendiente de facturar" as e21
-    state "Anulado" as e22
+    state "Control de calidad ←diagnostico" as e22
+    state "Anulado" as e23
     e15 --> e17 : finalización de servicio [frontera] [ST]
     e07 --> e17 : Rechazo [frontera] [C][ST]
     e03 --> e17 : Rechazo [frontera] [C]
@@ -31,10 +32,11 @@ stateDiagram-v2
     e05 --> e21 : Entrega al cliente sin factura [ST]
     e04 --> e18 : Entrega al cliente [ST]
     e10 --> e04 : Habilitado para entrega [C]
-    e01 --> e22 : Anulación [frontera] [C]
-    e02 --> e22 : Anulación [frontera] [C]
-    e13 --> e22 : Anulación [frontera] [C]
-    e07 --> e22 : Anulación [frontera] [C]
-    e03 --> e22 : Anulación [frontera] [C]
+    e01 --> e23 : Anulación [frontera] [C]
+    e02 --> e23 : Anulación [frontera] [C]
+    e13 --> e23 : Anulación [frontera] [C]
+    e07 --> e23 : Anulación [frontera] [C]
+    e03 --> e23 : Anulación [frontera] [C]
     e21 --> e18 : Facturar [C]
+    e22 --> e17 : Control de calidad aprobado [frontera] [ST]
 ```

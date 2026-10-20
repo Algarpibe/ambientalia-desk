@@ -14,10 +14,10 @@ describe('fasesBlueprint — partición estado → fase', () => {
     expect(Object.keys(FASE_POR_ESTADO).sort()).toEqual([...ESTADOS_SERVICIO].sort())
   })
 
-  it('reparte los 22 estados en 4 · 11 · 7, entrada · diagnóstico · cierre', () => {
+  it('reparte los 23 estados en 4 · 12 · 7, entrada · diagnóstico · cierre', () => {
     const porFase = { entrada: 0, diagnostico: 0, cierre: 0 }
     for (const fase of Object.values(FASE_POR_ESTADO)) porFase[fase]++
-    expect(porFase).toEqual({ entrada: 4, diagnostico: 11, cierre: 7 })
+    expect(porFase).toEqual({ entrada: 4, diagnostico: 12, cierre: 7 })
     expect(FASES.map((f) => f.id)).toEqual(['entrada', 'diagnostico', 'cierre'])
   })
 

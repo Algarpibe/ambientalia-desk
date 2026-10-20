@@ -26,11 +26,11 @@ describe('tabla de reentrancia', () => {
    */
   it('el grafo tiene exactamente dos ciclos, y son estos', () => {
     expect(tablaDeReentrancia().map((c) => c.estados)).toEqual([
-      // C2 — diagnóstico / cotización / repuestos / servicio externo. Ocho estados (sin Pendiente desde F1C-09).
+      // C2 — diagnóstico / cotización / repuestos / servicio externo. Nueve estados (ocho hasta F1C-07; sin Pendiente desde F1C-09).
       [
         'En Espera de Repuestos', 'En Proceso', 'Notificación cliente', 'Solicitado',
         'Notificación Comercial', 'En espera de SKU inventario', 'Servicio externo',
-        'Continuación del proceso',
+        'Continuación del proceso', 'Control de calidad', // F1C-07: En Proceso ⇄ Control de calidad cierra un ciclo dentro del grande
       ],
       // C3 — devolución a corrección.
       ['Rev./Diagnostico', 'Notificado'],
@@ -52,9 +52,9 @@ describe('tabla de reentrancia', () => {
   })
 
   /** C2 — el grande: ocho estados y OCHO transiciones reentrantes con fecha. */
-  it('C2 · diagnóstico / cotización / repuestos / servicio externo: ocho reentrantes con fecha', () => {
+  it('C2 · diagnóstico / cotización / repuestos / servicio externo: nueve reentrantes con fecha', () => {
     const c2 = componenteQueContiene('En Proceso')!
-    expect(c2.estados).toHaveLength(8)
+    expect(c2.estados).toHaveLength(9)
     expect(c2.transiciones).toEqual([
       { id: 'llegada_repuestos', from: 'En Espera de Repuestos', to: 'En Proceso', campos: ['Fecha Recepción de repuestos'] },
       { id: 'aprobacion_y_repuestos', from: 'Notificación cliente', to: 'En Espera de Repuestos', campos: ['Fecha Orden de Compra', 'Fecha Orden De Venta'] },
@@ -63,7 +63,7 @@ describe('tabla de reentrancia', () => {
       { id: 'notif_cliente_sku', from: 'En espera de SKU inventario', to: 'Notificación cliente', campos: ['Fecha de Cotización'] },
       { id: 'solicitud_sku', from: 'Notificación Comercial', to: 'En espera de SKU inventario', campos: ['Fecha solicitud SKU'] },
       { id: 'cal_sensores_proceso', from: 'En Proceso', to: 'Servicio externo', campos: ['Fecha Salida Servicio externo'] },
-      { id: 'retorno_servicio_externo', from: 'Servicio externo', to: 'En Proceso', campos: ['Fecha Entrada de servicio externo'] },
+      { id: 'retorno_servicio_externo', from: 'Servicio externo', to: 'En Proceso', campos: ['Fecha Entrada de servicio externo'] }, { id: 'envio_control_calidad', from: 'En Proceso', to: 'Control de calidad', campos: ['Fecha Finalización ST'] }, // F1C-07 (S-16): la novena, en la misma línea para no desplazar citas
     ])
   })
 
@@ -80,8 +80,8 @@ describe('tabla de reentrancia', () => {
     expect(c3.transiciones).toEqual([])
   })
 
-  it('ocho casos en total: 8 de C2 + 0 de C3 (diez hasta F1C-02, con 2 de C1)', () => {
-    expect(tablaDeReentrancia().flatMap((c) => c.transiciones)).toHaveLength(8)
+  it('nueve casos en total: 9 de C2 + 0 de C3 (ocho hasta F1C-07, diez hasta F1C-02, con 2 de C1)', () => {
+    expect(tablaDeReentrancia().flatMap((c) => c.transiciones)).toHaveLength(9)
   })
 
   /**
@@ -89,10 +89,10 @@ describe('tabla de reentrancia', () => {
    * (`transitions.ts:75-76`), y en un campo obligatorio la segunda pasada por el ciclo no *puede*
    * dejar el valor anterior: pisa siempre. Los dos opcionales son los de `aprobacion`.
    */
-  it('nueve campos de fecha reentrantes, de los que siete son obligatorios', () => {
-    expect(camposFechaReentrantes()).toHaveLength(9)
+  it('diez campos de fecha reentrantes, de los que ocho son obligatorios (nueve y siete hasta F1C-07)', () => {
+    expect(camposFechaReentrantes()).toHaveLength(10)
     const obligatorios = camposFechaReentrantesObligatorios()
-    expect(obligatorios).toHaveLength(7)
+    expect(obligatorios).toHaveLength(8)
     expect(camposFechaReentrantes().filter((c) => !obligatorios.includes(c))).toEqual([
       'Fecha Orden de Compra Final',
       'Fecha Orden de Venta Final',

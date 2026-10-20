@@ -1,5 +1,5 @@
 import { EXCEPCIONES_POR_CARGO, esCargo, puedeEjecutarTransicion, type Cargo, type SujetoDePermiso } from './cargos'
-import { tipoEventoDeTransicion } from './tipoEvento'
+import { tipoEventoDeTransicion } from './tipoEvento'; import { IDS_FIRMA_CC } from './camposControlCalidad' // en la línea de otro import: uno nuevo desplazaría las citas del fichero (regla de mutación 4)
 
 /**
  * Decisionales por cargo (F1C-05, RQ-PM-29; `decision/c10-permisos-cargo` y `decision/f1c05-decisionales-por-cargo`): una
@@ -43,7 +43,7 @@ export function cargosQueFaltanParaDecisional(
 ): readonly Cargo[] | null {
   if (!ctx.activo || s.isAdmin) return null
   if (tipoEventoDeTransicion(t.id) !== 'Decisional') return null
-  if (Object.hasOwn(EXCEPCIONES_POR_CARGO.transiciones, t.id)) return null
+  if (Object.hasOwn(EXCEPCIONES_POR_CARGO.transiciones, t.id) || IDS_FIRMA_CC.has(t.id)) return null // F1C-07 (RQ-PM-35): las dos de firma de control de calidad tienen regla propia, más estricta
   const area = areaDeDecision(t)
   const permitidos = area ? cargosDecisionales(area, ctx.coordinadorTecnicoVacante) : []
   return esCargo(s.cargoPermiso) && permitidos.includes(s.cargoPermiso) ? null : permitidos

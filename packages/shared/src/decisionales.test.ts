@@ -13,13 +13,13 @@ import { CATALOGO_POR_FLUJO, transicionPorId } from './flujos'
  */
 const ST: AreaDeDecision = 'Servicio Técnico'
 const CO: AreaDeDecision = 'Comercial'
-const LISTA_CORTA = 'lista corta'
-const DECISIONALES: Record<string, AreaDeDecision | typeof LISTA_CORTA> = {
+const LISTA_CORTA = 'lista corta'; const FIRMA_CC = 'firma de control de calidad' // F1C-07: en la línea de LISTA_CORTA para no desplazar la tabla (citas)
+const DECISIONALES: Record<string, AreaDeDecision | typeof LISTA_CORTA | typeof FIRMA_CC> = {
   escalado_a_revision: ST, devolucion_a_correccion: ST, rechazo_revision: ST,
   producto_no_conforme: ST, liberacion: ST, rechazo_verificacion: ST,
   aprobacion: CO, rechazo_garantia: CO, rechazo_comercial: CO, rechazo_cliente: CO,
   anulacion: CO, anulacion_equipo_nuevo: CO, anulacion_soporte: CO,
-  liberacion_sin_factura: LISTA_CORTA,
+  liberacion_sin_factura: LISTA_CORTA, aprobacion_control_calidad: FIRMA_CC, rechazo_control_calidad: FIRMA_CC,
 }
 
 const ENCENDIDO_VACANTE: ContextoDecisionales = { activo: true, coordinadorTecnicoVacante: true }
@@ -29,14 +29,14 @@ const sujeto = (areas: string[], cargoPermiso?: unknown, isAdmin = false): Sujet
 const t = (id: string) => transicionPorId(id)!
 const AMBAS = ['Comercial', 'Servicio Técnico']
 
-describe('las 14 Decisionales y su área de decisión (RQ-PM-29)', () => {
-  it('el barrido de los tres catálogos da exactamente las 14 de la tabla', () => {
+describe('las 16 Decisionales y su área de decisión (RQ-PM-29, RQ-PM-35)', () => {
+  it('el barrido de los tres catálogos da exactamente las 16 de la tabla: las 14 de F1C-05 y las dos de firma de control de calidad', () => {
     const barridas = Object.values(CATALOGO_POR_FLUJO).flat().filter((x) => x.tipoEvento === 'Decisional').map((x) => x.id)
     expect(barridas.sort()).toEqual(Object.keys(DECISIONALES).sort())
   })
 
   it('cada una resuelve el área de la tabla; la de la lista corta, la suya (Comercial)', () => {
-    for (const [id, area] of Object.entries(DECISIONALES)) expect(areaDeDecision(t(id)), id).toBe(area === LISTA_CORTA ? CO : area)
+    for (const [id, area] of Object.entries(DECISIONALES)) expect(areaDeDecision(t(id)), id).toBe(area === LISTA_CORTA ? CO : area === FIRMA_CC ? ST : area)
   })
 
   it('las mixtas, por la tabla: rechazo_revision → Servicio Técnico; rechazo_comercial y rechazo_garantia → Comercial', () => {
@@ -87,7 +87,7 @@ describe('cargosQueFaltanParaDecisional', () => {
 
   it('Director y Coordinador de cada área pasan las suyas, nunca las de la otra', () => {
     for (const [id, area] of Object.entries(DECISIONALES)) {
-      if (area === LISTA_CORTA) continue
+      if (area === LISTA_CORTA || area === FIRMA_CC) continue
       const propios = area === ST ? ['Director Técnico', 'Coordinador Técnico'] : ['Director Comercial', 'Coordinador Comercial']
       const ajenos = area === ST ? ['Director Comercial', 'Coordinador Comercial'] : ['Director Técnico', 'Coordinador Técnico', 'Especialista técnico']
       for (const c of propios) expect(cargosQueFaltanParaDecisional(t(id), sujeto(AMBAS, c), ENCENDIDO_VACANTE), `${id} · ${c}`).toBeNull()
@@ -144,5 +144,16 @@ describe('mensajeDecisional', () => {
     expect(mensajeDecisional('Escalado a Revisión', ['Director Técnico', 'Coordinador Técnico']))
       .toBe('La transición "Escalado a Revisión" es Decisional: sólo la ejecutan los cargos Director Técnico, Coordinador Técnico')
     expect(mensajeDecisional('X', [])).toBe('La transición "X" es Decisional y no tiene área de decisión asignada')
+  })
+})
+
+// F1C-07 (RQ-PM-35): al final del fichero para no desplazar las citas de arriba.
+describe('las dos de firma de control de calidad (RQ-PM-35)', () => {
+  it('RQ-PM-35 · las dos de firma de control de calidad quedan fuera de la regla por cargo con el contexto encendido', () => {
+    for (const id of ['aprobacion_control_calidad', 'rechazo_control_calidad']) {
+      expect(cargosQueFaltanParaDecisional(t(id), sujeto([ST], 'Técnico'), ENCENDIDO_CUBIERTO), id).toBeNull()
+      expect(cargosQueFaltanParaDecisional(t(id), sujeto([ST], 'Especialista técnico'), ENCENDIDO_CUBIERTO), id).toBeNull()
+    }
+    expect(cargosQueFaltanParaDecisional(t('escalado_a_revision'), sujeto([ST], 'Técnico'), ENCENDIDO_CUBIERTO)).not.toBeNull()
   })
 })

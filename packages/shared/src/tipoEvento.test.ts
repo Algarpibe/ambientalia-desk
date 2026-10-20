@@ -18,7 +18,7 @@ const SERVICIO: Record<string, TipoEvento> = {
   rechazo_comercial: D, rechazo_cliente: D, rechazo_revision: D, facturado: A,
   facturado_cierre: A, diagnostico_complementario: O, liberacion_sin_factura: D, entrega_sin_factura: C,
   entrega_al_cliente: C, habilitado_para_entrega: A, notif_recotizacion: O, anulacion: D,
-  facturar: A,
+  facturar: A, envio_control_calidad: O, aprobacion_control_calidad: D, rechazo_control_calidad: D,
 }
 const EQUIPO_NUEVO: Record<string, TipoEvento> = {
   ingreso_equipo_nuevo: O, analisis_y_acciones: O, verificacion: O, producto_no_conforme: D,
@@ -40,15 +40,15 @@ describe('RQ-TS-44 · cada transición lleva un tipo de evento de la lista cerra
   it('tabla → resolutor: todo id de la tabla resuelve a su tipo', () => {
     for (const [id, tipo] of Object.entries(TABLA)) expect({ id, tipo: tipoEventoDeTransicion(id) }).toEqual({ id, tipo })
   })
-  it('cardinalidad: 47 filas, 47 ids distintos, 33/7/5/2', () => {
-    expect(Object.keys(TABLA)).toHaveLength(47)
-    expect(new Set(TODAS.map((t) => t.id)).size).toBe(47)
-    expect([Object.keys(SERVICIO).length, Object.keys(EQUIPO_NUEVO).length, Object.keys(SOPORTE_REMOTO).length, Object.keys(PASOS).length]).toEqual([33, 7, 5, 2])
-    expect([TRANSITIONS.length, TRANSITIONS_EQUIPO_NUEVO.length, TRANSITIONS_SOPORTE_REMOTO.length]).toEqual([33, 7, 5])
+  it('cardinalidad: 50 filas, 50 ids distintos, 36/7/5/2', () => {
+    expect(Object.keys(TABLA)).toHaveLength(50)
+    expect(new Set(TODAS.map((t) => t.id)).size).toBe(50)
+    expect([Object.keys(SERVICIO).length, Object.keys(EQUIPO_NUEVO).length, Object.keys(SOPORTE_REMOTO).length, Object.keys(PASOS).length]).toEqual([36, 7, 5, 2])
+    expect([TRANSITIONS.length, TRANSITIONS_EQUIPO_NUEVO.length, TRANSITIONS_SOPORTE_REMOTO.length]).toEqual([36, 7, 5])
   })
-  it('recuentos 16 / 14 / 13 / 4 en total y por catálogo', () => {
-    expect(TIPOS_EVENTO.map((t) => cuenta(TODAS, t))).toEqual([16, 14, 13, 4])
-    expect(TIPOS_EVENTO.map((t) => cuenta(TRANSITIONS, t))).toEqual([9, 9, 11, 4])
+  it('recuentos 17 / 16 / 13 / 4 en total y por catálogo', () => {
+    expect(TIPOS_EVENTO.map((t) => cuenta(TODAS, t))).toEqual([17, 16, 13, 4])
+    expect(TIPOS_EVENTO.map((t) => cuenta(TRANSITIONS, t))).toEqual([10, 11, 11, 4])
     expect([cuenta(TRANSITIONS_EQUIPO_NUEVO, O), cuenta(TRANSITIONS_EQUIPO_NUEVO, D)]).toEqual([3, 4])
     expect([cuenta(TRANSITIONS_SOPORTE_REMOTO, O), cuenta(TRANSITIONS_SOPORTE_REMOTO, D)]).toEqual([4, 1])
     expect(cuenta([TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA], C)).toBe(2)

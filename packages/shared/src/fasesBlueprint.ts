@@ -52,7 +52,7 @@ export const FASE_POR_ESTADO = {
   'Notificación a Compras': 'diagnostico',
   'Notificación Comercial': 'diagnostico',
   'Notificación cliente': 'diagnostico',
-  'En Proceso': 'diagnostico',
+  'En Proceso': 'diagnostico', 'Control de calidad': 'diagnostico', // F1C-07 (RQ-TS-46, S-14): QA es trabajo técnico, antes de la frontera 2→3
   'Continuación del proceso': 'diagnostico',
   // Pendiente: sin clave desde F1C-09. No es estado de servicio, sólo existe en soporte remoto.
   'En Espera de Repuestos': 'diagnostico',
