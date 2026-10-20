@@ -125,19 +125,24 @@ Con la configuración de `permissions` RQ-PM-32, `executeTransition` **SHALL** r
 - WHEN se calcula el alcance desde el destino de `falla_calibracion`
 - THEN `notif_cliente_comercial` es alcanzable; si `falla_calibracion` falta o lleva a un estado desde el que no se alcanza, la prueba falla
 
-### Requirement: RQ-TS-56 · Condición (3) como propiedad del grafo: desde `En Proceso` no se llega a `Por Facturar` sin Control de calidad
+### Requirement: RQ-TS-56 · Condición (3) como propiedad del grafo: el trabajo terminado pasa por Control de calidad
 
-Con el interruptor encendido, **SHALL** cumplirse como propiedad calculada del catálogo de servicio, en una prueba junto a `invariantesGrafo.test.ts`: todo camino desde `En Proceso` hasta `Por Facturar` pasa por `Control de calidad`, también el que empieza con `calibracion_directa`. La prueba **SHALL** operar sobre el catálogo real, de modo que ensuciarlo —añadir una arista de `En Proceso` o de `Rev./Diagnostico` a `Por Facturar` que no la cruce— la ponga en rojo (regla de mutación 2). Con el interruptor encendido `finalizacion_servicio` sigue dando `409` (RQ-TS-47).
+La condición (3) se lee como «el trabajo terminado pasa por Control de calidad» (S-14, supuesto reversible, no hecho). Con el interruptor encendido, las únicas entradas a `Por Facturar` alcanzables desde `En Proceso` sin pasar por `Control de calidad` **SHALL** ser los tres rechazos Decisionales: `rechazo_comercial`, `rechazo_cliente` y `rechazo_revision`, que entran desde `Notificación Comercial`, `Notificación cliente` y `Rev./Diagnostico` (`packages/shared/src/transitions.ts`; el cliente no aprueba y no hay trabajo que liberar). Es propiedad calculada sobre el catálogo real, en una prueba junto a `invariantesGrafo.test.ts`, que **SHALL** ponerse en rojo si se ensucia el catálogo: un atajo cuyo destino sea `Por Facturar`, o el interruptor que deja de quitar `finalizacion_servicio`. El conjunto sin el escape son dos; `rechazo_revision` entra por `falla_calibracion`. Con el interruptor encendido `finalizacion_servicio` sigue dando `409` (RQ-TS-47).
 
 #### Scenario: el atajo lleva a `Por Facturar` sólo por Control de calidad — ROJO
 - GIVEN el interruptor encendido y un ticket «Calibración» con OV en `Ingresado`
 - WHEN recorre `calibracion_directa`, `envio_control_calidad` y `aprobacion_control_calidad`
 - THEN llega a `Por Facturar`; y `finalizacion_servicio` desde `En Proceso` da `409`
 
+#### Scenario: las entradas sin Control de calidad son los tres rechazos — ROJO
+- GIVEN el catálogo real y el interruptor encendido
+- WHEN se calculan las transiciones a `Por Facturar` alcanzables desde `En Proceso` sin entrar en `Control de calidad`
+- THEN son exactamente `rechazo_comercial`, `rechazo_cliente` y `rechazo_revision`, las tres Decisionales; apagado, además `finalizacion_servicio`
+
 #### Scenario: ensuciar el catálogo pone la propiedad en rojo — ROJO (mutación 3)
-- GIVEN el catálogo con una transición de prueba de `En Proceso` a `Por Facturar` que no pasa por Control de calidad
+- GIVEN el catálogo con un atajo de prueba cuyo destino es `Por Facturar` (o con `finalizacion_servicio` sin quitar por el interruptor)
 - WHEN corre la propiedad
-- THEN falla; sin esa transición pasa
+- THEN el conjunto gana una id y la prueba falla; sin esa transición pasa
 
 ### Requirement: RQ-TS-57 · El escape agranda el ciclo: campos de fecha reentrantes (R-1)
 
