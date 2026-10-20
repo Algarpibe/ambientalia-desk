@@ -91,11 +91,13 @@ export function Analisis(props: { onClose: () => void }) {
         {loading && !data && <div className="text-center text-slate-400 text-[13px]">Cargando…</div>}{mostrarDescargaIndicadores(user) && <ComparacionExportacion />}
         {data && (
           <div className="max-w-[1100px] mx-auto flex flex-col gap-4">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
               <Kpi label="Activos (ahora)" value={data.activos} />
               <Kpi label="Creados (periodo)" value={data.creados} />
               <Kpi label="Finalizados (periodo)" value={data.finalizados} />
               <Kpi label="Tiempo prom. servicio" value={data.tiempoPromedioDias} suffix="días" />
+              <Kpi label="Tiempo prom. SLA (sin pausas)" value={data.tiempoSlaPromedioDias} suffix="días háb." />
+              <Kpi label="Tiempo prom. total del cliente" value={data.tiempoTotalPromedioDias} suffix="días háb." />
               <Kpi label="Cumplimiento promesa" value={data.cumplimientoPct} suffix="%" />
             </div>
             <Tendencia data={data.tendencia} />

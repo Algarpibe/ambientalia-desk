@@ -1,5 +1,5 @@
 import type { Analisis, AnalisisPunto, AnalisisMes, AnalisisRow } from './types'
-import { esAnulado } from './anulacion'
+import { esAnulado } from './anulacion'; import { JORNADA } from './calendarioLaboral'
 function parseDate(s: string | null): Date | null {
   if (!s) return null
   const d = new Date(s)
@@ -16,7 +16,7 @@ function monthKey(d: Date): string {
 
 export function computeAnalisis(rows: AnalisisRow[], from: Date | null, to: Date): Analisis {
   let activos = 0, creados = 0, finalizados = 0
-  const servicio: number[] = []
+  const servicio: number[] = [], sla: number[] = [], total: number[] = []
   let conPromesa = 0, cumplidos = 0
   const porEstado = new Map<string, number>()
   const porTecnico = new Map<string, number>()
@@ -62,7 +62,7 @@ export function computeAnalisis(rows: AnalisisRow[], from: Date | null, to: Date
       if (created && fin) {
         const dias = (fin.getTime() - created.getTime()) / 86400000
         if (dias >= 0) {
-          servicio.push(dias)
+          servicio.push(dias); if (r.slaHoras != null && r.totalHoras != null) { sla.push(r.slaHoras); total.push(r.totalHoras) }
           if (r.diasEntrega != null) { conPromesa++; if (dias <= r.diasEntrega) cumplidos++ }
         }
       }
@@ -80,7 +80,7 @@ export function computeAnalisis(rows: AnalisisRow[], from: Date | null, to: Date
   return {
     activos, creados, finalizados,
     tiempoPromedioDias: servicio.length ? Math.round((servicio.reduce((a, b) => a + b, 0) / servicio.length) * 10) / 10 : null,
-    cumplimientoPct: conPromesa ? Math.round((cumplidos / conPromesa) * 100) : null,
+    cumplimientoPct: conPromesa ? Math.round((cumplidos / conPromesa) * 100) : null, ...mediasDelReloj(sla, total),
     porEstado: puntos(porEstado),
     porTecnico: puntos(porTecnico, 10),
     porCliente: puntos(porCliente, 10),
@@ -92,4 +92,12 @@ export function computeAnalisis(rows: AnalisisRow[], from: Date | null, to: Date
       .sort((a, b) => b.value - a.value),
     tendencia,
   }
+}
+
+// RQ-TC-76 (F1C-06): las horas hábiles del reloj del SLA pasan a días hábiles de la jornada (9 h, `JORNADA`), media a un decimal.
+// Entran sólo los tickets que `tiempoPromedioDias` también cuenta y que traen los dos tiempos; sin ninguno, `null`.
+function mediasDelReloj(sla: number[], total: number[]): Pick<Analisis, 'tiempoSlaPromedioDias' | 'tiempoTotalPromedioDias' | 'ticketsConReloj'> {
+  const diasMedios = (horas: number[]): number | null =>
+    horas.length ? Math.round((horas.reduce((a, b) => a + b, 0) / horas.length / (JORNADA.finHora - JORNADA.inicioHora)) * 10) / 10 : null
+  return { tiempoSlaPromedioDias: diasMedios(sla), tiempoTotalPromedioDias: diasMedios(total), ticketsConReloj: sla.length }
 }
