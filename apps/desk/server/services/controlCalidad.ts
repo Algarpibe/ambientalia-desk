@@ -1,9 +1,11 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
-  esCargo, esFirmaControlCalidad, veredictoFirma, exigeGasPatron, erroresContenidoControlCalidad, hoyEnZona, ID_APROBACION_CC,
+  esCargo, esFirmaControlCalidad, quedaHabilitadoLibre, ID_ENVIO_CC, veredictoFirma, exigeGasPatron, erroresContenidoControlCalidad, hoyEnZona, ID_APROBACION_CC,
   type ContextoFirma, type FilaDeTraza, type Transition, type UsuarioParaFirma, type VeredictoFirma,
 } from '@ambientalia/shared'
 import { leerContextoGas } from '../db/gasesPatron'
+import { crearAviso, destinatariosAdministradores } from '../db/avisos'
+import { logger } from '../util/logger'
 
 /**
  * Lecturas de la firma del control de calidad (F1C-07, lote 2b; `permissions` RQ-PM-33, RQ-PM-34; `transitions-st` RQ-TS-48).
@@ -37,4 +39,20 @@ export async function erroresControlCalidad(db: Queryable, t: Transition, row: {
     gasExigido = exigeGasPatron(t.id, compuestoEquipo, gases, hoyEnZona())
   }
   return erroresContenidoControlCalidad({ transitionId: t.id, values, via: v?.puede ? v.via : null, gasExigido })
+}
+
+/**
+ * Aviso de bandeja a los administradores ACTIVOS cuando el ticket llega a `Control de calidad` y ya no queda un habilitado que no
+ * haya intervenido (F1C-07, lote 2c; RQ-AV-24, S-12, S-13, S-18). Sólo actúa en `envio_control_calidad`; relee el contexto, ya con
+ * la fila del envío. No va al Director Técnico, ni al actor, ni por correo, y nunca lanza: si falla, se registra y el envío sigue.
+ */
+export async function avisarSinFirmanteLibre(db: Queryable, t: Transition, ticketId: string, numero: number, actorId: string): Promise<void> {
+  if (t.id !== ID_ENVIO_CC) return
+  try {
+    if (quedaHabilitadoLibre(await contextoFirma(db, ticketId))) return
+    const texto = `El ticket #${numero} está en «Control de calidad» y no queda nadie que pueda firmarlo: firma un administrador, con motivo.`
+    for (const d of await destinatariosAdministradores(db, actorId)) await crearAviso(db, { userId: d.id, ticketId, texto })
+  } catch (e) {
+    logger.warn({ err: e, ticketId }, 'no se pudo avisar a los administradores del control de calidad sin firmante')
+  }
 }

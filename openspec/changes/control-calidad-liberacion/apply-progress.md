@@ -211,3 +211,54 @@ Nuevo: `apps/desk/server/services/controlCalidad.ts` (40 líneas). Modificados: 
 ### Códigos al cierre del lote 2b
 
 `npx vitest run apps/desk/server packages/shared packages/zoho-sync`: código **0**, 277 ficheros pasan (3 omitidos), 4.853 pruebas pasan (11 omitidas). `npm run typecheck`: 0. `npm run lint`: 0 errores, 165 avisos.
+
+## Lote 2c — prioridad, aviso y ruta (intento I7) · HECHO
+
+Tareas 2c.1 a 2c.3 marcadas en `tasks.md`.
+
+### Evidencia TDD
+
+| Tarea | ROJO (visto) | VERDE |
+|---|---|---|
+| 2c.1 | `controlCalidad.test.ts` (tercera parte, 13 pruebas): 6 rojos de 46 — `r1: expected 'Medium' to be 'High'`, `expected 'Low' to be 'High'`, `expected 'Medium' to be 'High'` (sin permiso de prioridad), `expected [] to deeply equal [ Array(1) ]` (aviso ausente), `expected 404 to be 200` (ruta), y `expected 200 to be 403` en «sólo el envío avisa» (error mío de la prueba: el administrador de respaldo SÍ puede rechazar; se corrigió el esperado a 200, no el código). Verdes de entrada, anotados: aprobado lleva a `Por Facturar`, Urgent no se rebaja, aprobación no toca prioridad, retrabajo contable (traza real: envío, rechazo, envío, rechazo, envío, aprobación = 2), Director Técnico sin aviso, sin aviso con firmante libre, S-18 | — |
+| 2c.2 | — | 46/46: `prioCC` en `ticketService.ts:133` (misma línea), `avisarSinFirmanteLibre` en `:155` (misma línea), `avisarSinFirmanteLibre` al final de `services/controlCalidad.ts`, `destinatariosAdministradores` al final de `db/avisos.ts`, `routes/permisosControlCalidad.ts` (nuevo, 18 líneas) registrado en `app.ts:22`/`:61` |
+
+### Mutaciones (una a una, `mut.mjs` de la sesión: copia, mutación, prueba, restauración y comparación de bytes; ninguna en paralelo)
+
+| Mutación | Prueba que la caza | Rojo |
+|---|---|---|
+| M11a · sin `prioCC` (rechazo no sube) | «el rechazo sube la prioridad…», «desde Low…», «sin permiso de prioridad…» | sí (3) |
+| `prioridadTrasRechazo` baja `Urgent` | «Urgent no se rebaja al rechazar» | sí (1) |
+| `plan.priority = undefined` | las mismas tres de M11a | sí (3) |
+| Aprobado no lleva a Por Facturar (`transitions.ts:262` `to: 'Por Entregar'`) | «aprobado lleva a Por Facturar…», «el Coordinador… aprueba», «el retrabajo queda en la traza…» | sí (3) |
+| Retrabajo no contable (`contarRetrabajos` devuelve 0) | «el retrabajo queda en la traza y contarRetrabajos lo cuenta» | sí (1) |
+| Aviso no sale (sin la llamada) | «M10 · sin firmante libre: avisan…» | sí (1) |
+| Aviso sale con firmante libre | «con un habilitado libre… no se avisa» | sí (1) |
+| M10 · aviso al Director Técnico (consulta `cargo_permiso = 'Director Técnico'`) | «M10 · sin firmante libre…» y «no va a nadie por ser Director Técnico» | sí (2) |
+| S-12 · el actor se avisa a sí mismo | las dos anteriores | sí (2) |
+| Aviso a administrador inactivo | «M10 · sin firmante libre…» | sí (1) |
+| Ruta siempre `activo: true` | «devuelve { activo }…» | sí (1) |
+
+**Declarado:** la primera pasada de «ruta siempre true» cambió el comentario del fichero (primera coincidencia) y no cayó; se repitió sobre `activo: config…` y cae. La primera forma de M10 (`destinatariosDeCargoPermiso` sin importar) también daba rojo, pero por un `ReferenceError` tragado por el `try/catch`; se repitió como mutación de la consulta.
+
+### Códigos de salida
+
+`npm run typecheck`: 0. `npm run lint`: 0 errores, **165 avisos** (línea base intacta; sin `as any` nuevos). `npx vitest run apps/desk/server packages/shared packages/zoho-sync`: código **0**, 277 ficheros pasan (3 omitidos), 4.866 pruebas pasan (11 omitidas).
+
+### Supuestos (reversibles)
+
+- El aviso lo escribe `avisarSinFirmanteLibre` con `crearAviso` (sólo bandeja, sin correo, S-13); no pasa por `porCorreo`/`dispararAvisos`.
+- Texto literal del delta RQ-AV-24 con `ticket_id`.
+- El rechazo por un administrador de respaldo no exige motivo de administrador (`erroresContenidoControlCalidad` solo lo pide en la aprobación).
+
+### Citas desplazadas (para el barrido del lote 3)
+
+Ninguna línea se mueve. `ticketService.ts` 4/4: cambia el TEXTO de `:6` (+`prioridadTrasRechazo`), `:7` (+`avisarSinFirmanteLibre`), `:133` (+`prioCC`) y `:155` (+la llamada). `app.ts` 2/2 en `:22` y `:61`. `db/avisos.ts` +12 al final; `services/controlCalidad.ts` +18 al final (más un import en `:2` y dos en `:7-8`... los imports de `services/controlCalidad.ts` suben de 8 a 10 líneas: **el fichero es nuevo de 2b y sin citas aún**).
+
+### Ficheros tocados
+
+Nuevo: `apps/desk/server/routes/permisosControlCalidad.ts`. Modificados: `apps/desk/server/{app.ts,controlCalidad.test.ts,db/avisos.ts,services/controlCalidad.ts,services/ticketService.ts}`, `tasks.md`, este fichero.
+
+### Medida
+
+`git diff --shortstat --no-renames HEAD`: 5 ficheros, 159 inserciones, 8 borrados (167) + 18 líneas nuevas sin trackear = **185**; techo 800, válvula 720.

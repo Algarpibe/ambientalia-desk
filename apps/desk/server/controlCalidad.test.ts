@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { transicionPorId, TRANSITIONS, CLAVES_SOLO_TRAZA_CC, CLAVE_MOTIVO_FIRMA_ADMIN, CLAVE_MOTIVO_RECHAZO_CC, CLAVE_GAS_CC, type Cargo } from '@ambientalia/shared'
+import { transicionPorId, TRANSITIONS, CLAVES_SOLO_TRAZA_CC, CLAVE_MOTIVO_FIRMA_ADMIN, CLAVE_MOTIVO_RECHAZO_CC, CLAVE_GAS_CC, contarRetrabajos, type Cargo } from '@ambientalia/shared'
 import { db, instalarArnes, appWith, adminCookie, userCookie, valoresValidos } from './testing/appHarness'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
@@ -320,5 +320,126 @@ describe('posición de las guardas nuevas (regla de mutación 1): cada prueba ac
     const a = await persona('Jefa', { admin: true }); await ticketCC('x4', { status: 'En Proceso' })
     const res = await request(apagado().app).post('/api/tickets/x4/transition').set('Cookie', a.cookie).send({ transitionId: ENVIO, values: {} })
     expect(res.status).toBe(409)
+  })
+})
+
+/**
+ * Tercera parte (lote 2c): la prioridad tras el rechazo (RQ-TS-49), el aviso a los administradores (RQ-AV-24, S-12, S-13, S-18)
+ * y la ruta del interruptor (RQ-PM-37). La prioridad se fija en `ticketService.ts:133`, en el mismo `UPDATE` de la transición;
+ * el aviso sale tras escribir (`:155`), fuera de la transacción, y nunca tumba el envío.
+ */
+const prioridadDe = async (id: string) => ((await db.query('SELECT priority FROM tickets WHERE id=$1', [id])).rows[0] as { priority: string | null }).priority
+const conPrioridad = (id: string, p: string) => db.query('UPDATE tickets SET priority=$1 WHERE id=$2', [p, id])
+const motivoRechazo = { comment: 'x', [CLAVE_MOTIVO_RECHAZO_CC]: 'no cierra' }
+const avisosDe = async (ticketId: string) => (await db.query('SELECT user_id, texto, enviado_at FROM avisos WHERE ticket_id=$1', [ticketId])).rows as Array<{ user_id: string; texto: string; enviado_at: unknown }>
+
+describe('prioridad y retrabajo (RQ-TS-49, RQ-TZ-24)', () => {
+  it('aprobado lleva a Por Facturar, con la fila de aprobación en la traza', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await ticketCC('r0')
+    expect((await firmar(c.cookie, 'r0', APROBACION)).status).toBe(200)
+    expect(await estadoDe('r0')).toBe('Por Facturar')
+    expect((await db.query('SELECT 1 FROM ticket_transitions WHERE ticket_id=$1 AND transition_id=$2', ['r0', APROBACION])).rows).toHaveLength(1)
+  })
+
+  it('M11a · el rechazo sube la prioridad a High, con y sin priority en el cuerpo', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await ticketCC('r1'); await ticketCC('r2')
+    await conPrioridad('r1', 'Medium'); await conPrioridad('r2', 'Medium')
+    expect((await firmar(c.cookie, 'r1', RECHAZO, motivoRechazo)).status).toBe(200)
+    expect((await firmar(c.cookie, 'r2', RECHAZO, { ...motivoRechazo, priority: 'Medium' })).status).toBe(200)
+    for (const id of ['r1', 'r2']) { expect(await estadoDe(id), id).toBe('En Proceso'); expect(await prioridadDe(id), id).toBe('High') }
+  })
+
+  it('M11a · el rechazo sube también desde Low y desde una prioridad vacía', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await ticketCC('r3'); await ticketCC('r4')
+    await conPrioridad('r3', 'Low')
+    expect((await firmar(c.cookie, 'r3', RECHAZO, motivoRechazo)).status).toBe(200)
+    expect((await firmar(c.cookie, 'r4', RECHAZO, motivoRechazo)).status).toBe(200)
+    expect(await prioridadDe('r3')).toBe('High'); expect(await prioridadDe('r4')).toBe('High')
+  })
+
+  it('el firmante sin permiso de ajustar la prioridad puede rechazar: no hay 403 de prioridad y queda High', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await ticketCC('r5'); await conPrioridad('r5', 'Medium')
+    const res = await firmar(c.cookie, 'r5', RECHAZO, motivoRechazo)
+    expect(res.status).toBe(200); expect(await prioridadDe('r5')).toBe('High')
+  })
+
+  it('Urgent no se rebaja al rechazar', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await ticketCC('r6'); await conPrioridad('r6', 'Urgent')
+    expect((await firmar(c.cookie, 'r6', RECHAZO, motivoRechazo)).status).toBe(200)
+    expect(await prioridadDe('r6')).toBe('Urgent')
+  })
+
+  it('la aprobación no toca la prioridad', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await ticketCC('r7'); await conPrioridad('r7', 'Medium')
+    expect((await firmar(c.cookie, 'r7', APROBACION)).status).toBe(200)
+    expect(await prioridadDe('r7')).toBe('Medium')
+  })
+
+  it('el retrabajo queda en la traza y contarRetrabajos lo cuenta (envío, rechazo, envío, rechazo, envío, aprobación = 2)', async () => {
+    const c = await persona('Coord', { cargo: COORD }); const a = await persona('Jefa', { admin: true }); await ticketCC('r8', { status: 'En Proceso' })
+    for (const [quien, t, v] of [[a, ENVIO, undefined], [c, RECHAZO, motivoRechazo], [a, ENVIO, undefined], [c, RECHAZO, motivoRechazo], [a, ENVIO, undefined], [c, APROBACION, undefined]] as const) {
+      expect((await firmar(quien.cookie, 'r8', t, v)).status, t).toBe(200)
+    }
+    const filas = (await db.query('SELECT transition_id FROM ticket_transitions WHERE ticket_id=$1 ORDER BY id', ['r8'])).rows as Array<{ transition_id: string }>
+    expect(filas.map((f) => f.transition_id)).toEqual([ENVIO, RECHAZO, ENVIO, RECHAZO, ENVIO, APROBACION])
+    expect(contarRetrabajos(filas.map((f) => ({ transitionId: f.transition_id })))).toBe(2)
+    expect(await estadoDe('r8')).toBe('Por Facturar')
+  })
+})
+
+describe('aviso a los administradores (RQ-AV-24, S-12, S-13, S-18)', () => {
+  it('M10 · sin firmante libre: avisan los administradores ACTIVOS, no el actor, no el Director Técnico; sólo bandeja', async () => {
+    const c = await persona('Coord', { cargo: COORD }); const actor = await persona('Actor', { admin: true })
+    const otro = await persona('Otro', { admin: true }); await persona('Baja', { admin: true, activo: false }); await persona('Dir', { cargo: 'Director Técnico' })
+    await ticketCC('v1', { status: 'En Proceso', derivadoA: c.id })
+    expect((await firmar(actor.cookie, 'v1', ENVIO)).status).toBe(200)
+    const avisos = await avisosDe('v1')
+    expect(avisos.map((x) => x.user_id)).toEqual([otro.id])
+    expect(avisos[0].texto).toContain('Control de calidad'); expect(avisos[0].texto).toContain('no queda nadie que pueda firmarlo')
+    expect(avisos[0].enviado_at).toBeNull()
+  })
+
+  it('M10 · el aviso no va a nadie por ser Director Técnico, aunque sea el único con ese cargo', async () => {
+    const c = await persona('Coord', { cargo: COORD }); const actor = await persona('Actor', { admin: true }); await persona('Dir', { cargo: 'Director Técnico' })
+    await ticketCC('v2', { status: 'En Proceso', derivadoA: c.id })
+    expect((await firmar(actor.cookie, 'v2', ENVIO)).status).toBe(200)
+    expect(await avisosDe('v2')).toHaveLength(0)
+  })
+
+  it('con un habilitado libre que no intervino, no se avisa a nadie', async () => {
+    await persona('Coord', { cargo: COORD }); const actor = await persona('Actor', { admin: true }); await persona('Otro', { admin: true })
+    await ticketCC('v3', { status: 'En Proceso' })
+    expect((await firmar(actor.cookie, 'v3', ENVIO)).status).toBe(200)
+    expect(await avisosDe('v3')).toHaveLength(0)
+  })
+
+  it('sólo el envío avisa: el rechazo y la aprobación no crean el aviso de sin firmante', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await persona('Otro', { admin: true }); await ticketCC('v4'); await ticketCC('v5')
+    await db.query('UPDATE tickets SET derivado_a=$1', [c.id])
+    const a = await persona('Jefa', { admin: true })
+    expect((await firmar(a.cookie, 'v4', APROBACION, aprobacionCon({ [CLAVE_MOTIVO_FIRMA_ADMIN]: 'respaldo' }))).status).toBe(200)
+    expect((await firmar(a.cookie, 'v5', RECHAZO, { ...motivoRechazo })).status).toBe(200)
+    for (const id of ['v4', 'v5']) expect((await avisosDe(id)).filter((x) => x.texto.includes('no queda nadie')), id).toHaveLength(0)
+  })
+
+  it('S-18 · si el aviso falla, el envío responde 200 y la transición queda escrita', async () => {
+    const c = await persona('Coord', { cargo: COORD }); const actor = await persona('Actor', { admin: true }); await persona('Otro', { admin: true })
+    await ticketCC('v6', { status: 'En Proceso', derivadoA: c.id })
+    const rota: Queryable = { query: (sql, params) => (/INSERT INTO avisos/.test(sql) ? Promise.reject(new Error('avisos caída')) : db.query(sql, params)) }
+    const res = await request(appWith({ controlCalidadLiberacion: true }, rota).app).post('/api/tickets/v6/transition').set('Cookie', actor.cookie)
+      .send({ transitionId: ENVIO, values: valoresValidos(transicionPorId(ENVIO)!, 1) })
+    expect(res.status).toBe(200)
+    expect(await estadoDe('v6')).toBe('Control de calidad')
+    expect(await avisosDe('v6')).toHaveLength(0)
+  })
+})
+
+describe('ruta del interruptor (RQ-PM-37)', () => {
+  it('devuelve { activo } igual a la configuración; sin sesión, 401', async () => {
+    const cookie = await adminCookie()
+    const pedir = (activo: boolean) => request(appWith({ controlCalidadLiberacion: activo }).app).get('/api/permisos/control-calidad').set('Cookie', cookie)
+    const apagadoRes = await pedir(false); expect(apagadoRes.status).toBe(200); expect(apagadoRes.body).toEqual({ activo: false })
+    const encendidoRes = await pedir(true); expect(encendidoRes.status).toBe(200); expect(encendidoRes.body).toEqual({ activo: true })
+    expect((await request(encendido().app).get('/api/permisos/control-calidad')).status).toBe(401)
   })
 })

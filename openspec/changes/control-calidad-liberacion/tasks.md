@@ -59,12 +59,12 @@ línea base, detector tras el commit), `apply-progress.md`, commit y la medida `
 
 ## Lote 2c — prioridad, aviso y ruta (intento I7; ~200 × 1,8 = 360)
 
-- [ ] 2c.1 ROJO: `controlCalidad.test.ts` HTTP, tercera parte: RQ-TS-49 (el rechazo sube a `High`, no baja `Urgent`), RQ-AV-24 (aviso a
+- [x] 2c.1 ROJO: `controlCalidad.test.ts` HTTP, tercera parte: RQ-TS-49 (el rechazo sube a `High`, no baja `Urgent`), RQ-AV-24 (aviso a
       administradores, sólo bandeja; fallo del aviso no rompe el envío), RQ-PM-37 (ruta `GET /api/permisos/control-calidad`). Rojo por
       `404` de la ruta y aviso ausente.
-- [ ] 2c.2 VERDE: `prioCC` en `ticketService.ts:133`; `avisarSinFirmanteLibre` en `:155`; `destinatariosAdministradores` al final de
+- [x] 2c.2 VERDE: `prioCC` en `ticketService.ts:133`; `avisarSinFirmanteLibre` en `:155`; `destinatariosAdministradores` al final de
       `db/avisos.ts`; `routes/permisosControlCalidad.ts` y registro en `app.ts:22`/`:61`.
-- [ ] 2c.3 Mutaciones: M10 (aviso a `destinatariosDeCargoPermiso('Director Técnico')` / sin llamada) cae en «no va al Director Técnico» /
+- [x] 2c.3 Mutaciones: M10 (aviso a `destinatariosDeCargoPermiso('Director Técnico')` / sin llamada) cae en «no va al Director Técnico» /
       «avisa a los administradores»; M11a (sin `prioCC`) cae en «el rechazo sube la prioridad».
 
 ## Lote 3 — cliente, DEPLOY.md y cierre de citas (intento I8; ~70 × 1,8 = 126)
