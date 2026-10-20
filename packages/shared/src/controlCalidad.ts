@@ -4,7 +4,7 @@ import {
   CLAVE_GAS_CC, CLAVE_MOTIVO_FIRMA_ADMIN, CLAVE_MOTIVO_RECHAZO_CC, ID_APROBACION_CC, ID_ENVIO_CC, ID_RECHAZO_CC, IDS_FIRMA_CC,
 } from './camposControlCalidad'
 import { tienePatronVigente, type GasPatronLeido } from './gasPatron'
-import { tipoEventoDeTransicion } from './tipoEvento'
+import { tipoEventoDeTransicion } from './tipoEvento'; import { IDS_CALIBRACION_DIRECTA } from './calibracionDirecta' // F1C-08: en esta línea para no desplazar citas
 
 /**
  * control-calidad-liberacion (F1C-07, D2): regla pura de quién firma el control de calidad, qué contenido exige la firma,
@@ -102,7 +102,7 @@ export function contarRetrabajos(traza: readonly { transitionId?: string | null 
 /** Por qué el interruptor quita la transición del panel; `null` si se queda. `visibleConControlCalidad` = (… === null). */
 export function motivoQuitadaPorInterruptor(transitionId: string, activo: boolean): string | null {
   if (transitionId === ID_ENVIO_CC && !activo) return 'El envío a control de calidad está apagado'
-  if (transitionId === 'finalizacion_servicio' && activo) return 'Con control de calidad encendido, el servicio se envía a control de calidad'
+  if (transitionId === 'finalizacion_servicio' && activo) return 'Con control de calidad encendido, el servicio se envía a control de calidad'; if (IDS_CALIBRACION_DIRECTA.has(transitionId) && !activo) return 'La calibración directa y su escape dependen de control de calidad, que está apagado' // F1C-08 (RQ-TS-53)
   return null
 }
 

@@ -21,19 +21,19 @@ import {
  */
 describe('tabla de reentrancia', () => {
   /**
-   * El guardia de `TRANSITIONS` —cualquier catálogo del registro tiene el suyo—: dos ciclos (tres hasta F1C-02), ni uno
+   * El guardia de `TRANSITIONS` —cualquier catálogo del registro tiene el suyo—: UN ciclo desde F1C-08 (dos hasta F1C-07, tres hasta F1C-02), ni uno
    * más. Un tercer componente fuertemente conexo es un ciclo nuevo que nadie ha visto.
    */
-  it('el grafo tiene exactamente dos ciclos, y son estos', () => {
+  it('el grafo tiene exactamente UN ciclo de doce estados (dos hasta F1C-07), y es éste', () => {
     expect(tablaDeReentrancia().map((c) => c.estados)).toEqual([
-      // C2 — diagnóstico / cotización / repuestos / servicio externo. Nueve estados (ocho hasta F1C-07; sin Pendiente desde F1C-09).
+      // C2 — diagnóstico / cotización / repuestos / servicio externo. DOCE estados (nueve hasta F1C-07): `falla_calibracion` (F1C-08, RQ-TS-57) hace que `Rev./Diagnostico`, `Notificado` y `Notificación a Compras` se alcancen desde `En Proceso`.
       [
-        'En Espera de Repuestos', 'En Proceso', 'Notificación cliente', 'Solicitado',
+        'Rev./Diagnostico', 'Notificado', 'En Espera de Repuestos', 'En Proceso', 'Notificación cliente', 'Solicitado', 'Notificación a Compras',
         'Notificación Comercial', 'En espera de SKU inventario', 'Servicio externo',
         'Continuación del proceso', 'Control de calidad', // F1C-07: En Proceso ⇄ Control de calidad cierra un ciclo dentro del grande
       ],
-      // C3 — devolución a corrección.
-      ['Rev./Diagnostico', 'Notificado'],
+      // C3 — devolución a corrección: ya no es un componente aparte, F1C-08 lo absorbe en C2 (medido por ejecución, D5).
+      // (era ['Rev./Diagnostico', 'Notificado'], sin ninguna transición con fecha)
       // C1 — el ciclo de facturación ya no existe: F1C-02 (RQ-TS-43) lo partió en dos ramas que no vuelven.
       // Hasta entonces era ['Por Facturar', 'Por Entregar / Sin facturar'].
     ])
@@ -51,48 +51,48 @@ describe('tabla de reentrancia', () => {
     expect(transitionById('liberacion_sin_factura')!.fields.find((f) => f.kind === 'date')).toMatchObject({ label: 'Fecha prevista de facturación', required: true })
   })
 
-  /** C2 — el grande: ocho estados y OCHO transiciones reentrantes con fecha. */
-  it('C2 · diagnóstico / cotización / repuestos / servicio externo: nueve reentrantes con fecha', () => {
+  /** C2 — el grande: doce estados y TRECE transiciones reentrantes con fecha (nueve hasta F1C-07). */
+  it('C2 · diagnóstico / cotización / repuestos / servicio externo: trece reentrantes con fecha, cuatro de ellas por el escape', () => {
     const c2 = componenteQueContiene('En Proceso')!
-    expect(c2.estados).toHaveLength(9)
+    expect(c2.estados).toHaveLength(12)
     expect(c2.transiciones).toEqual([
       { id: 'llegada_repuestos', from: 'En Espera de Repuestos', to: 'En Proceso', campos: ['Fecha Recepción de repuestos'] },
       { id: 'aprobacion_y_repuestos', from: 'Notificación cliente', to: 'En Espera de Repuestos', campos: ['Fecha Orden de Compra', 'Fecha Orden De Venta'] },
-      { id: 'aprobacion', from: 'Notificación cliente', to: 'En Proceso', campos: ['Fecha Orden de Compra Final', 'Fecha Orden de Venta Final'] },
+      { id: 'aprobacion', from: 'Notificación cliente', to: 'En Proceso', campos: ['Fecha Orden de Compra Final', 'Fecha Orden de Venta Final'] }, { id: 'notif_por_garantia', from: 'Notificación a Compras', to: 'En Espera de Repuestos', campos: ['Fecha Notificación por garantía'] }, // F1C-08: las cuatro nuevas entran por `falla_calibracion`, en su sitio de declaración
       { id: 'notif_cliente_comercial', from: 'Notificación Comercial', to: 'Notificación cliente', campos: ['Fecha de Cotización'] },
       { id: 'notif_cliente_sku', from: 'En espera de SKU inventario', to: 'Notificación cliente', campos: ['Fecha de Cotización'] },
-      { id: 'solicitud_sku', from: 'Notificación Comercial', to: 'En espera de SKU inventario', campos: ['Fecha solicitud SKU'] },
-      { id: 'cal_sensores_proceso', from: 'En Proceso', to: 'Servicio externo', campos: ['Fecha Salida Servicio externo'] },
+      { id: 'solicitud_sku', from: 'Notificación Comercial', to: 'En espera de SKU inventario', campos: ['Fecha solicitud SKU'] }, { id: 'reporte_por_garantia', from: 'Notificado', to: 'Notificación a Compras', campos: ['Fecha Revisión Informe'] }, { id: 'escalado_a_comercial', from: 'Notificado', to: 'Notificación Comercial', campos: ['Fecha Revisión Informe'] },
+      { id: 'cal_sensores_proceso', from: 'En Proceso', to: 'Servicio externo', campos: ['Fecha Salida Servicio externo'] }, { id: 'cal_sensores_revision', from: 'Rev./Diagnostico', to: 'Servicio externo', campos: ['Fecha Salida Servicio externo'] },
       { id: 'retorno_servicio_externo', from: 'Servicio externo', to: 'En Proceso', campos: ['Fecha Entrada de servicio externo'] }, { id: 'envio_control_calidad', from: 'En Proceso', to: 'Control de calidad', campos: ['Fecha Finalización ST'] }, // F1C-07 (S-16): la novena, en la misma línea para no desplazar citas
     ])
   })
 
   /**
-   * C3 — devolución a corrección: `Notificado` ⇄ `Rev./Diagnostico`. CERO campos de fecha.
+   * C3 — devolución a corrección: `Notificado` ⇄ `Rev./Diagnostico`. CERO campos de fecha, y YA NO ES UN CICLO APARTE (F1C-08).
    *
    * Es el ciclo que se puede recorrer las veces que haga falta sin perder nada, y va en la tabla
    * precisamente por eso: sin él, «hay ciclos» y «los ciclos pisan datos» se leerían como la misma
    * frase. Un ciclo sólo es un problema cuando escribe.
    */
-  it('C3 · devolución a corrección: ciclo sin ningún campo de fecha, y por eso inofensivo', () => {
-    const c3 = componenteQueContiene('Notificado')!
-    expect(c3.estados).toEqual(['Rev./Diagnostico', 'Notificado'])
-    expect(c3.transiciones).toEqual([])
+  it('C3 · INVERTIDA por F1C-08 (R-1): `Notificado` ya no vive en un ciclo propio, está en el grande, y el efecto viene de `falla_calibracion`', () => {
+    const c3 = componenteQueContiene('Notificado')!; const sinEscape = TRANSITIONS.filter((t) => t.id !== 'falla_calibracion') // la causa es el escape: sin él C3 vuelve a ser aparte
+    expect(c3.estados).toHaveLength(12); expect(componenteQueContiene('Notificado', sinEscape)!.estados).toEqual(['Rev./Diagnostico', 'Notificado'])
+    expect(c3.transiciones).toHaveLength(13); expect(c3).toEqual(componenteQueContiene('En Proceso')); expect(tablaDeReentrancia(sinEscape).flatMap((c) => c.transiciones)).toHaveLength(9)
   })
 
-  it('nueve casos en total: 9 de C2 + 0 de C3 (ocho hasta F1C-07, diez hasta F1C-02, con 2 de C1)', () => {
-    expect(tablaDeReentrancia().flatMap((c) => c.transiciones)).toHaveLength(9)
+  it('trece casos en total, todos del único ciclo (nueve: 9 de C2 + 0 de C3 hasta F1C-07, diez hasta F1C-02, con 2 de C1)', () => {
+    expect(tablaDeReentrancia().flatMap((c) => c.transiciones)).toHaveLength(13)
   })
 
   /**
-   * Nueve campos, SIETE obligatorios (once y nueve hasta F1C-02). `cfDate` es `required = true` por omisión
+   * Doce campos, DIEZ obligatorios (diez y ocho hasta F1C-07; once y nueve hasta F1C-02). `cfDate` es `required = true` por omisión
    * (`transitions.ts:75-76`), y en un campo obligatorio la segunda pasada por el ciclo no *puede*
    * dejar el valor anterior: pisa siempre. Los dos opcionales son los de `aprobacion`.
    */
-  it('diez campos de fecha reentrantes, de los que ocho son obligatorios (nueve y siete hasta F1C-07)', () => {
-    expect(camposFechaReentrantes()).toHaveLength(10)
+  it('doce campos de fecha reentrantes, de los que diez son obligatorios (diez y ocho hasta F1C-07)', () => {
+    expect(camposFechaReentrantes()).toHaveLength(12)
     const obligatorios = camposFechaReentrantesObligatorios()
-    expect(obligatorios).toHaveLength(8)
+    expect(obligatorios).toHaveLength(10)
     expect(camposFechaReentrantes().filter((c) => !obligatorios.includes(c))).toEqual([
       'Fecha Orden de Compra Final',
       'Fecha Orden de Venta Final',
@@ -214,5 +214,34 @@ describe('reentrancia del catálogo soporte-remoto (F1B-06)', () => {
   it('el ciclo SR no tiene ningún campo de fecha reentrante', () => {
     expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(5)
     expect(camposFechaReentrantes(TRANSITIONS_SOPORTE_REMOTO)).toEqual([])
+  })
+})
+
+/**
+ * F1C-08 (RQ-TS-57, R-1) · EL ESCAPE AGRANDA EL CICLO. Cifras CONFIRMADAS POR EJECUCIÓN antes de escribirse (apply-progress 1a.3):
+ * un solo ciclo de doce estados, trece transiciones internas con fecha y doce campos reentrantes (diez obligatorios, dos opcionales).
+ * Los dos campos nuevos son «Fecha Notificación por garantía» y «Fecha Revisión Informe»; el efecto viene de `falla_calibracion`
+ * y NO del atajo: `calibracion_directa` va de `Ingresado` a `En Proceso` y no entra en ningún ciclo.
+ */
+describe('el escape de la calibración directa agranda el ciclo (F1C-08, R-1)', () => {
+  const sin = (...ids: string[]) => TRANSITIONS.filter((t) => !ids.includes(t.id))
+  it('sin el escape, los campos son los diez de siempre; con él, esos diez más dos (en su sitio de declaración)', () => {
+    const diez = camposFechaReentrantes(sin('falla_calibracion', 'calibracion_directa'))
+    expect(diez).toHaveLength(10)
+    const doce = camposFechaReentrantes()
+    expect(doce).toHaveLength(12)
+    expect(doce.filter((c) => !diez.includes(c))).toEqual(['Fecha Notificación por garantía', 'Fecha Revisión Informe'])
+    expect(diez.every((c) => doce.includes(c))).toBe(true)
+  })
+  it('la causa es el escape: sin él pero con el atajo no cambia nada; con el escape y sin el atajo, el efecto es el mismo', () => {
+    expect(camposFechaReentrantes(sin('falla_calibracion'))).toEqual(camposFechaReentrantes(sin('falla_calibracion', 'calibracion_directa')))
+    expect(camposFechaReentrantes(sin('calibracion_directa'))).toEqual(camposFechaReentrantes())
+    expect(tablaDeReentrancia(sin('falla_calibracion')).map((c) => c.estados.length)).toEqual([9, 2])
+    expect(tablaDeReentrancia(sin('calibracion_directa')).map((c) => c.estados.length)).toEqual([12])
+  })
+  it('los dos reentrantes nuevos son obligatorios: la segunda pasada los pisa siempre', () => {
+    const obligatorios = camposFechaReentrantesObligatorios()
+    expect(obligatorios).toHaveLength(10)
+    expect(obligatorios).toEqual(expect.arrayContaining(['Fecha Notificación por garantía', 'Fecha Revisión Informe']))
   })
 })

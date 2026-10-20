@@ -11,12 +11,14 @@ stateDiagram-v2
     state "Remisión creada" as e11
     state "Ingresado" as e12
     state "Rev./Diagnostico →diagnostico" as e13
+    state "En Proceso →diagnostico" as e15
     state "OV asignada" as e19
     state "Ticket creado" as e20
     e19 --> e12 : Habilitar Servicio [C]
     e20 --> e12 : Habilitar Servicio [C]
     e11 --> e12 : Habilitar Servicio [C]
     e12 --> e13 : Ingreso a Servicio [frontera] [ST]
+    e12 --> e15 : Calibración directa [frontera] [ST]
     e20 --> e11 : Remisión creada (sin botón) [ST]
     e11 --> e20 : Remisión anulada (sin botón) [ST]
 ```

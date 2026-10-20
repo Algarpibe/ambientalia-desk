@@ -7,7 +7,7 @@ amenazas: N/A (sin shell, subprocesos, VCS ni clasificación de ejecutables). **
 *Nota de método.* Las cifras de D5 se obtuvieron aplicando a mano `componentesFuertementeConexos` y `tablaDeReentrancia`
 (`packages/shared/src/reentrancia.ts:129-203`, `:218-225`) al catálogo de `transitions.ts:178-262` con las dos transiciones
 añadidas: este agente no disponía de ejecución. Valen como **cálculo sobre el código, no como medida ejecutada**; la prueba
-roja del lote 1 (RQ-TS-57) las confirma o las corrige antes de escribirlas en ningún vigilante.
+roja del lote 1 (RQ-TS-57) las confirma o las corrige antes de escribirlas en ningún vigilante. **CONFIRMADAS por ejecución en el lote 1a (I3), sin diferencia:** un ciclo de 12 estados, 13 transiciones internas, 12 campos reentrantes, 10 obligatorios y 2 opcionales; el orden de estados, de transiciones y de campos coincide con el de esta nota (ver `apply-progress.md`, 1a.3).
 
 ## D1 · Catálogo (`packages/shared/src/transitions.ts:262`, en la misma línea)
 

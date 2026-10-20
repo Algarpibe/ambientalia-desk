@@ -8,26 +8,26 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
 
 ## Lote 1a — catálogo, regla pura, interruptor, reentrancia, cifras (intento I3; ~280 × 1,8 = 504)
 
-- [ ] 1a.1 Línea base: `npx vitest run packages/shared` en verde y `npm run typecheck` en 0 (antes de tocar nada).
-- [ ] 1a.2 ROJO: `packages/shared/src/calibracionDirecta.test.ts` (RQ-TS-52, RQ-PM-39 pura, D2): tipos, áreas, `from`/`to`, descripción como único
+- [x] 1a.1 Línea base: `npx vitest run packages/shared` en verde y `npm run typecheck` en 0 (antes de tocar nada).
+- [x] 1a.2 ROJO: `packages/shared/src/calibracionDirecta.test.ts` (RQ-TS-52, RQ-PM-39 pura, D2): tipos, áreas, `from`/`to`, descripción como único
       obligatorio; campos de `calibracion_directa` iguales a los de `ingreso_a_servicio` (molde H5); `ingreso_a_servicio` sin cambio;
       ninguna en `DERIVACION_POR_DEFECTO`; `CLAVE_DESCRIPCION_FALLA` es la key del catálogo; `motivoNoCalibracionDirecta` (sin OV, otro
       tipo, `calibración` en minúscula, escape con otro tipo, otra id → `null`); `erroresDescripcionFalla`; cláusula del interruptor.
       Rojo por módulo inexistente.
-- [ ] 1a.3 ROJO (reentrancia, RQ-TS-57): `reentrancia.test.ts` (`:27-40`, `:55-68`, `:77-81` invertida, `:83-85`, `:92-100`),
+- [x] 1a.3 ROJO (reentrancia, RQ-TS-57): `reentrancia.test.ts` (`:27-40`, `:55-68`, `:77-81` invertida, `:83-85`, `:92-100`),
       `invariantesGrafo.test.ts:137-150`, `bodegaje.test.ts:113` con las cifras de D5 (1 ciclo de 12 estados, 13 transiciones, 12
       campos reentrantes, 10/2). **La prueba confirma por ejecución** las cifras calculadas a mano en D5: se corre en rojo ANTES de
       escribir ningún número en un vigilante, se anota lo medido, y si difiere gana la medida (se corrige D5 y la spec en el mismo commit).
       La prueba declara que el efecto viene de `falla_calibracion` (R-1). Prueba de alcance: desde `Rev./Diagnostico` se llega a `notif_cliente_comercial` (RQ-TS-55 grafo).
-- [ ] 1a.4 ROJO (cifras, RQ-TS-58): vigilantes en su línea: `cifrasAncladas.test.ts`, `estados.test.ts:146-149` (`toContain` →
+- [x] 1a.4 ROJO (cifras, RQ-TS-58): vigilantes en su línea: `cifrasAncladas.test.ts`, `estados.test.ts:146-149` (`toContain` →
       `not.toContain`, comentario `:142-144`), `invariantesGrafo.test.ts:172-174` (unión 48 → 50), `mapaBlueprint.test.ts:52`/`:184`
       (44 → 46), `transitions.test.ts`, `decisionales.test.ts` (16 sin cambio), derivación 5/33. Rojo por los conteos 36/38, 50/52, 17/19.
-- [ ] 1a.5 VERDE: `calibracionDirecta.ts` (D2) y `export * from './calibracionDirecta'` al final de `index.ts`; `export ` en `ticketCreate.ts:51`;
+- [x] 1a.5 VERDE: `calibracionDirecta.ts` (D2) y `export * from './calibracionDirecta'` al final de `index.ts`; `export ` en `ticketCreate.ts:51`;
       los dos objetos en `transitions.ts:262` (misma línea, comentario «F1C-08 (RQ-TS-52)»); cláusula al final de `controlCalidad.ts:105`
       e import en `:7`. Confirmar que `tsc` no da ciclo de módulos (hipótesis de D2).
-- [ ] 1a.6 `cifras_ancladas` en `openspec/config.yaml` (38 / 23 / 46, 52 filas, 19·16·13·4, 10 con una salida): sólo ese bloque. Mapa
+- [x] 1a.6 `cifras_ancladas` en `openspec/config.yaml` (38 / 23 / 46, 52 filas, 19·16·13·4, 10 con una salida): sólo ese bloque. Mapa
       regenerado con `scripts/generar-mapa-blueprint.ts` (`docs/artefactos/blueprint-*.md`); su prueba anti-desfase en verde.
-- [ ] 1a.7 Mutaciones: M2 (quitar la cláusula de `controlCalidad.ts:105`: cae «apagado… 409» y visibilidad pura); M5 (`!== null` en vez de
+- [x] 1a.7 Mutaciones: M2 (quitar la cláusula de `controlCalidad.ts:105`: cae «apagado… 409» y visibilidad pura); M5 (`!== null` en vez de
       `=== TIPO_CALIBRACION`: cae «otro tipo no pasa», con Mantenimiento, Garantía, sin tipo y `calibración`); M1 en la regla pura (sin
       chequeo de OV: cae «sin OV el atajo no pasa»); M4 (quitar `falla_calibracion`, o llevarla a `Por Facturar`/`Finalizado`: cae «el grafo
       ofrece el escape y su destino cotiza»). Rojas y restauradas.

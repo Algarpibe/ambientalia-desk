@@ -108,9 +108,9 @@ describe('C9 · los tres bodegajes de M1.10', () => {
    * transición dentro de un ciclo, el rojo tiene que salir junto al campo, no a tres ficheros de
    * distancia.
    */
-  it('5 · el campo nuevo no entra en los diez reentrantes (nueve hasta F1C-07, once hasta F1C-02): su transición no está en ningún ciclo', () => {
+  it('5 · el campo nuevo no entra en los doce reentrantes (diez hasta F1C-07, once hasta F1C-02): su transición no está en ningún ciclo', () => {
     expect(camposFechaReentrantes()).not.toContain(CAMPO_AVISO_CLIENTE)
-    expect(camposFechaReentrantes()).toHaveLength(10)
+    expect(camposFechaReentrantes()).toHaveLength(12)
   })
 
   /**

@@ -151,7 +151,7 @@ La condición (3) se lee como «el trabajo terminado pasa por Control de calidad
 #### Scenario: la cifra de reentrantes es la medida — ROJO
 - GIVEN el grafo con las dos transiciones nuevas
 - WHEN se calcula `camposFechaReentrantes`
-- THEN el conjunto coincide con el que fijó la medición del diseño [cifra: a medir en el diseño]
+- THEN el conjunto coincide con el que fijó la medición del diseño [cifra medida por ejecución en el lote 1a: 12 campos, 10 obligatorios y 2 opcionales]
 
 #### Scenario: los campos entran por el escape — ROJO
 - GIVEN el grafo sin `falla_calibracion` y luego con ella

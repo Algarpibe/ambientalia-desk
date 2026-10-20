@@ -73,6 +73,8 @@ stateDiagram-v2
     e15 --> e22 : Envío a control de calidad [ST]
     e22 --> e17 : Control de calidad aprobado [ST]
     e22 --> e15 : Control de calidad rechazado [ST]
+    e12 --> e15 : Calibración directa [ST]
+    e15 --> e13 : Falla en calibración [ST]
     e20 --> e11 : Remisión creada (sin botón) [ST]
     e11 --> e20 : Remisión anulada (sin botón) [ST]
 ```

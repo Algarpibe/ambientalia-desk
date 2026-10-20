@@ -235,7 +235,7 @@ function exigirMismoFlujo(t: Transition, row: TicketDeFlujo): void {
 
 /**
  * F1A-03 (RQ-EN-08, RQ-EN-09, RQ-EN-10): el veredicto de `liberacion`, que mira el compuesto del equipo y los gases
- * patrón. Sólo `liberacion` lo calcula: en las otras 47 transiciones devuelve `null` SIN consultar nada. Al FINAL del
+ * patrón. Sólo `liberacion` lo calcula: en las otras 49 transiciones devuelve `null` SIN consultar nada. Al FINAL del
  * fichero, como `exigirMismoFlujo`, para no desplazar las citas vivas a `ticketService.ts`. «Hoy» es el día de Bogotá.
  */
 async function veredictoDeLiberacion(db: Queryable, t: Transition, row: { status: string; equipo_id?: string | null }): Promise<VeredictoLiberacion | null> {

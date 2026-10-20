@@ -48,5 +48,5 @@ export function prefijoDeducido(clasificacion: string | null | undefined, tipoSe
   return esClasificacionEquipoNuevo(clasificacion) ? 'HV' : esClasificacionSoporteRemoto(clasificacion) ? 'SR' : tipoServicio === TIPO_CALIBRACION ? 'CG' : tipoServicio === TIPO_PROTOCOLO ? 'PRO' : 'MT'
 }
 // Tipadas contra TIPOS_SERVICIO: si el texto sale de la lista, rompe tsc (DD-5); se leen sólo al llamar.
-const TIPO_CALIBRACION: (typeof TIPOS_SERVICIO)[number] = 'Calibración'
+export const TIPO_CALIBRACION: (typeof TIPOS_SERVICIO)[number] = 'Calibración'
 const TIPO_PROTOCOLO: (typeof TIPOS_SERVICIO)[number] = 'Protocolo'

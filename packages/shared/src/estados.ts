@@ -139,7 +139,7 @@ export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
  * que esperar: hay una persona que todavía no ha entrado. Los cuatro de abajo esperan un camión, un
  * laboratorio o un alta en otro sistema.
  *
- * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay ONCE
+ * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay DIEZ
  * estados con una sola transición de salida —entre ellos `Ingresado` y `Ticket creado`, que son
  * trabajo corriente y no esperan a nadie—. Y cruzarla con `en_espera`, que es el intento fino,
  * tampoco: da SEIS, con `Liberación Comercial`, `Remisión creada` y los dos `Por Entregar` dentro. Por eso la prueba de

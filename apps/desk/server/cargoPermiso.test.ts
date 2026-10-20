@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
-import { AREAS, TRANSITIONS, canExecuteTransition, transicionPorId } from '@ambientalia/shared'
+import { AREAS, TRANSITIONS, canExecuteTransition, transicionPorId, IDS_CALIBRACION_DIRECTA } from '@ambientalia/shared'
 import { createUser } from './auth/users'
 import { createRole } from './auth/roles'
 import { createSession } from './auth/sessions'
@@ -247,7 +247,7 @@ describe('liberacion_sin_factura: orden de las guardas', () => {
 })
 
 describe('la matriz HTTP de área, con la compuesta', () => {
-  it('S21 · de las 108 celdas (36 transiciones × 3 áreas) difiere de la de área TRES veces: Comercial sin cargo × liberacion_sin_factura y Servicio Técnico sin cargo × las dos de firma de control de calidad (200 → 403)', async () => {
+  it('S21 · de las 114 celdas (38 transiciones × 3 áreas) difiere de la de área TRES veces: Comercial sin cargo × liberacion_sin_factura y Servicio Técnico sin cargo × las dos de firma de control de calidad (200 → 403)', async () => {
     const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre
     const diferencias: Array<{ area: string; transitionId: string; observado: number }> = []
     let n = 0
@@ -257,13 +257,13 @@ describe('la matriz HTTP de área, con la compuesta', () => {
       const cookie = `sid=${await createSession(db, u.id)}`
       for (const t of TRANSITIONS) {
         n += 1
-        await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)', [`s21-${n}`, 97000 + n, 'S21', t.from[0]]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, `s21-${n}`)
-        const res = await request(t.id === 'envio_control_calidad' ? encendida : apagada).post(`/api/tickets/s21-${n}/transition`).set('Cookie', cookie)
+        await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)', [`s21-${n}`, 97000 + n, 'S21', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-S21'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, `s21-${n}`)
+        const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id)) ? encendida : apagada).post(`/api/tickets/s21-${n}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
         if (res.status !== (canExecuteTransition([area], false, t.area) ? 200 : 403)) diferencias.push({ area, transitionId: t.id, observado: res.status })
       }
     }
-    expect(n).toBe(108)
+    expect(n).toBe(114)
     expect(diferencias).toEqual([{ area: 'Comercial', transitionId: 'liberacion_sin_factura', observado: 403 }, { area: 'Servicio Técnico', transitionId: 'aprobacion_control_calidad', observado: 403 }, { area: 'Servicio Técnico', transitionId: 'rechazo_control_calidad', observado: 403 }]) // F1C-07 (2b): las dos de firma piden cargo
   }, 90_000)
 })

@@ -15,10 +15,10 @@ describe('transitions', () => {
     expect(t.every((x) => x.from.includes('Notificación cliente'))).toBe(true)
   })
 
-  it('Ingresado solo habilita "Ingreso a Servicio" hacia Rev./Diagnostico', () => {
+  it('Ingresado habilita "Ingreso a Servicio" hacia Rev./Diagnostico y, desde F1C-08, "Calibración directa"', () => {
     const t = transitionsForStatus('Ingresado')
-    expect(t).toHaveLength(1)
-    expect(t[0].id).toBe('ingreso_a_servicio')
+    expect(t).toHaveLength(2)
+    expect(t.map((x) => x.id)).toEqual(['ingreso_a_servicio', 'calibracion_directa'])
     expect(t[0].to).toBe('Rev./Diagnostico')
   })
 
@@ -120,10 +120,10 @@ describe('transitions', () => {
 
 describe('derivación por defecto del catálogo', () => {
   // Caracterización (derivacion-repuestos-director-tecnico): cinco proponen, el resto hereda.
-  it('exactamente 5 transiciones llevan propuesta por defecto y 31 heredan', () => {
+  it('exactamente 5 transiciones llevan propuesta por defecto y 33 heredan', () => {
     const propone = TRANSITIONS.filter((t) => t.fields.some((f) => f.key === CLAVE_DERIVACION && f.porDefecto))
     expect(propone).toHaveLength(5)
-    expect(TRANSITIONS.length - propone.length).toBe(31)
+    expect(TRANSITIONS.length - propone.length).toBe(33)
   })
 })
 
