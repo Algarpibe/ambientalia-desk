@@ -5134,6 +5134,31 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "sin punto del Anexo D asignado"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1C-07"
+
+  - clave: "decision/f1c08-ov-calibracion"
+    fecha: "2026-10-20"
+    pregunta: |
+      ¿Con qué fuente comprueba el servidor la condición (1) de la calibración directa, «sólo con la orden de venta de
+      calibración asignada» (`decision/p15-p59-rutas`)?
+    respuesta_textual: |
+      «Tipo de servicio + OV asignada: el atajo exige tipo de servicio "Calibración" y una OV asignada al ticket.»
+    nota_de_fuente: |
+      Respuesta elegida en la sesión de construcción del 20/10, entre dos opciones: (a) tipo de servicio más OV asignada;
+      (b) además, el contenido de la OV (sus líneas o el centro de costos del artículo), que exigía medir antes datos reales
+      o ampliar la réplica hub → desk. Se recoge la opción elegida tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) La condición (1) la impone el SERVIDOR con dos datos del ticket: `tickets.tipo_servicio` igual a «Calibración»
+      (`packages/shared/src/ticketCreate.ts:4`) y una orden de venta asignada. No se lee el contenido de la OV.
+      (2) Es la declaración de quien crea el ticket, no el contenido de la OV: un ticket con tipo «Calibración» y una OV que
+      no sea de calibración tomaría el atajo, y uno venido de Zoho con otra grafía no lo tendría. Se anota también como
+      supuesto reversible en la propuesta de F1C-08.
+      (3) Corrige la premisa de `decision/p15-p59-rutas`: el tipo de servicio de F1B-03 NO oculta ningún paso del grafo
+      (el flujo se elige por clasificación y estado, `packages/shared/src/flujos.ts:12-15`), así que F1C-08 construye el
+      atajo entero.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c08-ov-calibracion)"
+    maestro_pasaje: "Anexo D nº 15 (R08.4.md:5726-5730) · M2.1 (R08.4.md:2287)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1C-08"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
