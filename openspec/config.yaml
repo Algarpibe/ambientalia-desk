@@ -5095,6 +5095,45 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "M1.9 · Anexo D nº 39"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1C-05 (Decisionales por cargo, cierra: no; el propietario del registro sigue aplazado)"
+
+  - clave: "decision/f1c07-firma-control-calidad"
+    fecha: "2026-10-20"
+    pregunta: |
+      ¿Quién firma el Control de calidad de F1C-07 mientras el Coordinador Técnico esté vacante?
+    respuesta_textual: |
+      «Mientras el Coordinador Técnico esté vacante, firma el Control de calidad cualquiera de los dos: el Director Técnico (Gustavo Novoa) o el Especialista técnico (Johny Luna). Se mantiene la regla de que nunca firma quien hizo el trabajo: si uno de los dos intervino en el equipo, firma el otro. Cuando se nombre Coordinador Técnico, firma él, con el mismo criterio.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 20/10 y se recoge tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) Precisa la consecuencia (2) de `decision/c6-qa-liberacion` (`openspec/config.yaml:1896`): firma el Coordinador
+      Técnico; mientras esté vacante, el Director Técnico o el Especialista técnico.
+      (2) La guarda «nunca firma quien hizo el trabajo» es por PERSONA, no por cargo ni por área (consecuencia 3 de
+      `decision/c6-qa-liberacion`).
+      (3) «Vacante» = ningún usuario ACTIVO con ese `cargo_permiso`, el mismo criterio que
+      `decision/f1c05-decisionales-por-cargo`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c07-firma-control-calidad)"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1C-07"
+
+  - clave: "decision/f1c07-supuestos-corregidos"
+    fecha: "2026-10-20"
+    pregunta: |
+      ¿Qué cuenta como «intervino», qué pasa si no queda firmante habilitado sin intervención, a quién va el aviso y
+      cuándo se enciende el interruptor de F1C-07?
+    respuesta_textual: |
+      «"Intervino" es ser el técnico asignado o haber ejecutado alguna transición de tipo Operativo en el ticket. Las Decisionales, Administrativas y de Compras / Logístico no cuentan. Si no queda nadie habilitado que no haya intervenido, puede firmar un administrador, con motivo obligatorio y traza. El aviso va a los administradores, no al Director Técnico. De acuerdo con el interruptor apagado. Se enciende en enero, junto con las Decisionales de F1C-05.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 20/10 y se recoge tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) «Intervino» se mide con `tipoEventoDeTransicion` (F1C-04) sobre la traza del ticket.
+      (2) El administrador firma SÓLO cuando no queda firmante habilitado sin intervención. Supuesto del analista: si
+      firmara siempre, la regla de no intervención quedaría sin efecto.
+      (3) El interruptor se enciende en enero junto con `DECISIONALES_POR_CARGO`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c07-supuestos-corregidos)"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1C-07"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
