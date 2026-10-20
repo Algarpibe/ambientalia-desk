@@ -45,9 +45,9 @@ Supuestos de la propuesta (reversibles, citados como tales): **S-1** mismo inter
 - THEN `calibracion_directa` sólo se ve con interruptor, tipo y OV; `falla_calibracion` sólo con interruptor y tipo; las demás siempre
 
 #### Scenario: el cliente y el servidor coinciden en cada combinación — ROJO
-- GIVEN la tabla de combinaciones interruptor × tipo × OV
-- WHEN se comparan la función pura y la respuesta del servidor
-- THEN lo que el cliente oculta, el servidor lo rechaza con `409`, y lo que muestra, lo acepta
+- GIVEN la tabla interruptor × tipo × OV (ninguna, `orden_venta`, `salesorder_id`, asociación vigente), para el atajo y el escape
+- WHEN se comparan la función pura, con la OV que ve el cliente (sólo `orden_venta`, `TransitionPanel.tsx:57`), y la respuesta del servidor (tres vías, S-12)
+- THEN con la OV en `orden_venta` coinciden en toda la tabla; con la OV sólo en `salesorder_id` o en una asociación vigente el cliente oculta el atajo y el servidor lo acepta (oculta de más, nunca de menos); nunca el cliente muestra y el servidor rechaza
 
 #### Scenario (MANUAL, de persona) · El panel con el interruptor encendido y apagado
 - GIVEN un ticket «Calibración» con OV en `Ingresado` y otro en `En Proceso` en la aplicación desplegada

@@ -257,3 +257,15 @@ Escrita como entrada 36 AL FINAL de `docs/sdd/F0-01_Correcciones_para_el_maestro
 2. El texto de `DEPLOY.md` §16 va como dos frases, `**Qué enciende la calibración directa:**` y `**Qué se rompe si se pone mal la calibración directa:**`; la prueba exige además «No tiene variable propia».
 3. Cuatro ediciones de cifras de comentario que no estaban en la lista literal de 3.5 (arriba); `openspec/config.yaml:110` queda fuera del bloque `cifras_ancladas`, es de un carácter y no mueve líneas.
 4. El barrido tuvo un fallo propio: el patrón de fila no casaba las líneas de ficheros con fin de línea CRLF y la primera pasada dio 3 citas en vez de 961. Se corrigió el patrón (`[\s\S]*`) y se pasó completo otra vez. Queda anotado porque es el molde de siempre: un detector que no caza todo lo que la afirmación abarca.
+
+## Remediación del verify (W-1, W-2, S-1)
+
+Partida `ac1abd65`. Molde CD-1/CD-2: el comportamiento ya existía, así que cada prueba nueva se vio ROJA con una mutación (`herramientas/mut.mjs`), restaurada con `restaurado=true`.
+
+- **W-1 · RQ-PM-41** (`calibracionDirecta.test.ts`, al final): cuatro casos HTTP con el montaje de firma de F1C-07 (cargos, `performed_by_id`, interruptor encendido). Autor del atajo no aprueba (`403`, «intervinieron»); autor del escape no rechaza (`403`); otro Coordinador que no intervino aprueba y llega a `Por Facturar`; administrador autor del atajo, sin habilitado libre, `403` aun con motivo.
+  - Rojo: atajo → `Administrativo` en `transitions.ts:262`: caen 3 (autor del atajo, otro habilitado —su precondición es el 403 del autor—, administrador). Escape → `Administrativo`: cae 1 (autor del escape). Restaurado.
+- **W-2 · RQ-PM-39**: escenario de `specs/permissions/spec.md:47-50` reescrito según S-12 (mismo número de líneas). Prueba de tabla al final: interruptor × tipo × OV (ninguna / `orden_venta` / `salesorder_id` / asociación) × (atajo, escape) = 32 filas; cliente = `visibleConControlCalidad && visibleCalibracionDirecta` con la OV sólo por `orden_venta`. Falla si el cliente muestra y el servidor da `409`; oculto ⇒ `409` salvo las filas S-12 (donde exige `200`); y un oráculo independiente de la regla pura (si no, mutar la regla pura mueve cliente y servidor a la vez y nada cae).
+  - Rojo: servidor deja de leer la asociación (`ticketService.ts` `!enColumnas` → `false`): cae la tabla y M1b. Servidor deja de contar `orden_venta`/`salesorder_id` (`tieneOrdenVenta: asociada`): cae la tabla (+7 más). Regla pura deja de exigir OV: cae la tabla (sólo por el oráculo; sin él pasaba) y 3 más. Restaurado.
+- **S-1**: marcadas 1a.8, 1b.5, 2.8 y 3.6 en `tasks.md` (códigos 0 del orquestador en `4f835bd0`, `0f33d25a`, `5e47b33b`, `47368e68`).
+- Verde: `calibracionDirecta.test.ts` 31/31. Medida: `git diff --shortstat --no-renames ac1abd65` = 3 ficheros, 95 inserciones, 8 borrados, más esta sección; sin ficheros nuevos sin trackear.
+- Desviación: el oráculo independiente no estaba en el encargo; se añadió porque la mutación «regla pura deja de exigir OV» sobrevivía a la comparación pura cliente/servidor.

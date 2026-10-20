@@ -151,3 +151,20 @@ Ninguno.
 ## 12. Siguiente paso
 
 `sdd-archive`, sin CRITICAL. Antes: decidir W-2 y registrar W-1 en el archive-report. Condiciones: intento con techo `2 x carpeta + 800`, medir antes de aplicar la parte con carga de revisión (fusión de las dos deltas más el `archive-report.md`), fusión por script y commit con sólo el cambio archivado. Pendientes de personas, fuera del recuento: S-1 a S-16 de Gerencia, encendido de `CONTROL_CALIDAD_LIBERACION`, línea en `.env.example` (Supervisión), pegar la corrección 36 en el maestro, prueba manual del panel.
+
+## Adenda del orquestador — remediación del intento 6b (2026-10-20)
+
+El informe de arriba es la foto de `ac1abd65` y no se reescribe. La remediación, sobre esa cabeza, cierra W-1 y W-2 y aplica S-1:
+
+- **W-1 cerrado.** Cuatro casos HTTP de RQ-PM-41 al final de `apps/desk/server/calibracionDirecta.test.ts` (autor del atajo no
+  aprueba, autor del escape no rechaza, otro habilitado aprueba, administrador autor no firma). Rojo por mutación: con
+  `calibracion_directa` como `Administrativo` en `packages/shared/src/transitions.ts:262` caen tres; con `falla_calibracion`, una.
+  El orquestador reprodujo la primera: 3 de 31 en rojo, restaurada.
+- **W-2 cerrado.** El escenario de RQ-PM-39 dice ahora lo que es cierto (S-12: el cliente oculta de más, nunca de menos), y una
+  prueba de tabla de 32 filas (interruptor × tipo × cuatro vías de OV × las dos transiciones) lo fija, con un oráculo independiente
+  de la regla pura. El orquestador reprodujo «el servidor deja de leer la asociación»: 2 de 31 en rojo, restaurada.
+- **S-1 aplicada:** casillas 1a.8, 1b.5, 2.8 y 3.6 marcadas en `tasks.md` con su commit.
+- **Recuento tras la remediación:** 49 de 50 escenarios con prueba directa que pasa; el restante es el MANUAL de persona, fuera del
+  recuento (regla del ciclo 1). W-3 sigue como aviso: los dos escenarios están medidos y sus mutaciones caen.
+- **Códigos en serie sobre el árbol remediado:** typecheck 0, lint 0 (165 avisos), detector 0 (13 abreviadas informativas), `npm test`
+  0 (307 ficheros pasan y 3 se saltan; 5.212 pruebas pasan y 11 se saltan).

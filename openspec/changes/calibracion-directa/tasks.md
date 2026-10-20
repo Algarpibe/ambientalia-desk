@@ -31,7 +31,7 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
       `=== TIPO_CALIBRACION`: cae «otro tipo no pasa», con Mantenimiento, Garantía, sin tipo y `calibración`); M1 en la regla pura (sin
       chequeo de OV: cae «sin OV el atajo no pasa»); M4 (quitar `falla_calibracion`, o llevarla a `Por Facturar`/`Finalizado`: cae «el grafo
       ofrece el escape y su destino cotiza»). Rojas y restauradas.
-- [ ] 1a.8 Códigos EN SERIE: typecheck, lint, detector, test. Medida y línea de estimación: **~504 líneas (bajo 800)**.
+- [x] 1a.8 Códigos EN SERIE: typecheck, lint, detector, test. Medida y línea de estimación: **~504 líneas (bajo 800)**. Códigos 0 en `4f835bd0`.
 
 ## Lote 1b — condición (3) como propiedad del grafo (intento I3b; ~60 × 1,8 = 108)
 
@@ -43,7 +43,7 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
       `Rev./Diagnostico` a `Por Facturar`: el conjunto gana una id y la prueba cae. Y la variante «el interruptor deja de quitar
       `finalizacion_servicio`» (M2 en la propiedad). Rojas y restauradas.
 - [x] 1b.4 Escenario de RQ-TS-56 «recorre atajo, `envio_control_calidad` y `aprobacion_control_calidad` hasta `Por Facturar`» queda para el HTTP del lote 2; aquí sólo el grafo.
-- [ ] 1b.5 Códigos EN SERIE: typecheck, lint, detector, test. Estimación: **~108 líneas (bajo 800)**.
+- [x] 1b.5 Códigos EN SERIE: typecheck, lint, detector, test. Estimación: **~108 líneas (bajo 800)**. Códigos 0 en `0f33d25a`.
 
 ## Lote 2 — servidor (intento I4; ~310 × 1,8 = 558)
 
@@ -68,7 +68,7 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
       (`errFalla` fuera del agregado, o `required: false` en el catálogo): cae «descripción en blanco, 422» y «un único 422»; M8 (sin el `delete` de
       `:133`): cae «la descripción vive en la traza, no en el ticket»; M2 por HTTP: caen CD-2 y CD-6; **P1** (la guarda nueva antes del interruptor)
       cae en CD-2; **P2** (tras el `403` de área, `:129`) cae en CD-3; **P3** (tras el `422` agregado, `:134`) cae en CD-4 y CD-3; atajo para otro tipo (M5): cae «otro tipo no pasa»; atajo que se salta Control de calidad (M3): cae la propiedad y el recorrido HTTP; sin escape (M4) o escape que no cotiza: cae «el destino lleva a cotizar».
-- [ ] 2.8 Códigos EN SERIE: typecheck, lint, detector, test. Estimación: **~558 líneas (bajo 800)**.
+- [x] 2.8 Códigos EN SERIE: typecheck, lint, detector, test. Estimación: **~558 líneas (bajo 800)**. Códigos 0 en `5e47b33b`.
 
 ## Lote 3 — cliente, DEPLOY.md y cierre de citas (intento I5; ~45 × 1,8 = 81)
 
@@ -81,7 +81,7 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
       `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` con cada resultado leído contra el fichero, más el pase de las abreviadas. Releer las citas a `ticketService.ts:128`, `:133-134`,
       `controlCalidad.ts:103-107`, `:105`, `transitions.ts:262`, `sla.ts:105-110`, cuyo TEXTO cambia.
 - [x] 3.5 Caso A: comentarios y citas con cifras (`estados.test.ts:142-144` «diez»); `npm run build` y diferencia del paquete.
-- [ ] 3.6 Códigos EN SERIE: typecheck, lint, detector, test. Estimación: **~81 líneas (bajo 800)**. (Verify, I6, y archive, I7, son fases del ciclo, no tareas de este recuento.)
+- [x] 3.6 Códigos EN SERIE: typecheck, lint, detector, test. Estimación: **~81 líneas (bajo 800)**. (Verify, I6, y archive, I7, son fases del ciclo, no tareas de este recuento.) Códigos 0 en `47368e68`.
 
 ## Fuera del recuento — de personas (Regla del ciclo 1; **archivar no las da por hechas**)
 

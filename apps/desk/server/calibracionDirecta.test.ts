@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
-import { transicionPorId, calcularIndicadores, type Cargo, type PasoDelHistorial } from '@ambientalia/shared'
+import { transicionPorId, calcularIndicadores, visibleConControlCalidad, visibleCalibracionDirecta, type Cargo, type PasoDelHistorial } from '@ambientalia/shared'
 import { db, instalarArnes, appWith, adminCookie, userCookie, valoresValidos } from './testing/appHarness'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
@@ -284,5 +284,92 @@ describe('S-16 · caracterización: el atajo no es marca de ingreso, el indicado
   it('contraste · con la marca de ingreso_a_servicio y la misma revisión, el 49 sí es un valor', () => {
     const h: PasoDelHistorial[] = [{ transitionId: 'ingreso_a_servicio', performedAt: '2026-12-02T15:00:00Z', values: {} }]
     expect(i49({ ...base, fechas: { 'Fecha Revisión Informe': '2026-12-10', 'Fecha creación ticket': '2026-12-01' } }, h).valor.tipo).toBe('valor')
+  })
+})
+
+/**
+ * RQ-PM-41 (W-1 del verify): quien ejecutó el atajo o el escape «intervino» a efectos de la firma del Control de calidad (S-9).
+ * Es consecuencia de `tipoEventoDeTransicion` (las dos son Operativas) y de `intervino` (`controlCalidad.ts:38-43`); aquí se prueba
+ * la composición por HTTP, con el montaje de firma de `controlCalidad.test.ts`.
+ */
+describe('RQ-PM-41 · el autor del atajo o del escape no firma el control de calidad', () => {
+  const APROBACION = 'aprobacion_control_calidad'
+  const RECHAZO = 'rechazo_control_calidad'
+  interface Persona { id: string; nombre: string; cookie: string }
+  async function persona(nombre: string, o: { cargo?: Cargo | null; admin?: boolean } = {}): Promise<Persona> {
+    const rol = o.admin ? null : await createRole(db, { name: `R-${nombre}`, areas: ['Servicio Técnico'] })
+    const u = await createUser(db, { email: `${nombre.toLowerCase()}@x.co`, name: nombre, passwordHash: await hashPassword('password123'), isAdmin: o.admin === true, roleId: rol?.id ?? null, cargoPermiso: o.cargo ?? null })
+    return { id: u.id, nombre, cookie: `sid=${await createSession(db, u.id)}` }
+  }
+  async function trazaDe(ticketId: string, transitionId: string, quien: Persona) {
+    await db.query('INSERT INTO ticket_transitions (ticket_id, transition_id, transition_name, performed_by, performed_by_id) VALUES ($1,$2,$3,$4,$5)', [ticketId, transitionId, transitionId, quien.nombre, quien.id])
+  }
+  const COORD: Cargo = 'Coordinador Técnico'
+
+  it('quien ejecutó el atajo no aprueba: 403 que dice que intervino, y el ticket no se mueve', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await conOV('q1', { status: 'Control de calidad' }); await trazaDe('q1', ATAJO, c)
+    const res = await ejecutar(encendido(), c.cookie, 'q1', APROBACION)
+    expect(res.status).toBe(403)
+    expect(texto(res)).toContain('intervinieron')
+    expect(await estadoDe('q1')).toBe('Control de calidad')
+  })
+
+  it('quien ejecutó el escape no rechaza: 403 que dice que intervino', async () => {
+    const c = await persona('Coord', { cargo: COORD }); await conOV('q2', { status: 'Control de calidad' }); await trazaDe('q2', ESCAPE, c)
+    const res = await ejecutar(encendido(), c.cookie, 'q2', RECHAZO, { comment: 'x', 'Motivo del rechazo': 'no cierra' })
+    expect(res.status).toBe(403)
+    expect(texto(res)).toContain('intervinieron')
+    expect(await estadoDe('q2')).toBe('Control de calidad')
+  })
+
+  it('otro habilitado que no intervino aprueba y el ticket pasa a Por Facturar', async () => {
+    const autor = await persona('Autor', { cargo: COORD }); const otro = await persona('Otro', { cargo: COORD })
+    await conOV('q3', { status: 'Control de calidad' }); await trazaDe('q3', ATAJO, autor)
+    expect((await ejecutar(encendido(), autor.cookie, 'q3', APROBACION)).status).toBe(403)
+    const res = await ejecutar(encendido(), otro.cookie, 'q3', APROBACION)
+    expect([res.status, texto(res)]).toEqual([200, ''])
+    expect(await estadoDe('q3')).toBe('Por Facturar')
+  })
+
+  it('el administrador autor del atajo, sin habilitado libre, no firma ni con motivo: 403', async () => {
+    const a = await persona('Jefa', { admin: true }); await conOV('q4', { status: 'Control de calidad' }); await trazaDe('q4', ATAJO, a)
+    const res = await ejecutar(encendido(), a.cookie, 'q4', APROBACION, { ...valoresValidos(transicionPorId(APROBACION)!, 1), 'Motivo de la firma del administrador': 'no hay habilitado' })
+    expect(res.status).toBe(403)
+    expect(await estadoDe('q4')).toBe('Control de calidad')
+  })
+})
+
+/**
+ * RQ-PM-39 (W-2 del verify, S-12): el cliente y el servidor, en cada combinación interruptor × tipo × OV, atajo y escape.
+ * El cliente ve la OV sólo por `orden_venta` (`TransitionPanel.tsx:57`); el servidor la lee por tres vías. Por tanto: con la OV en
+ * `orden_venta` coinciden en toda la tabla; con la OV sólo en `salesorder_id` o en una asociación vigente el cliente oculta el atajo
+ * y el servidor lo acepta (oculta de más, nunca de menos). Falla si hay una fila donde el cliente MUESTRA y el servidor rechaza.
+ */
+describe('RQ-PM-39 · cliente y servidor en cada combinación (S-12: el cliente oculta de más, nunca de menos)', () => {
+  type Ov = 'ninguna' | 'orden_venta' | 'salesorder_id' | 'asociacion'
+  const OVS: Ov[] = ['ninguna', 'orden_venta', 'salesorder_id', 'asociacion']
+  it('si el cliente muestra, el servidor no da 409; si oculta, el servidor da 409 salvo las filas S-12', async () => {
+    const admin = await adminCookie()
+    const filas: string[] = []
+    let n = 0
+    for (const interruptor of [true, false]) for (const tipo of ['Calibración', 'Mantenimiento']) for (const ov of OVS) for (const id of [ATAJO, ESCAPE]) {
+      n += 1
+      const tk = `tab${n}`
+      await ticket(tk, { status: id === ATAJO ? 'Ingresado' : 'En Proceso', tipo, ov: ov === 'orden_venta' ? 'OV-TAB' : null, so: ov === 'salesorder_id' ? 'SO-TAB' : null })
+      if (ov === 'asociacion') await db.query(`INSERT INTO ov_asociaciones (ticket_id, numero, salesorder_id, origen) VALUES ($1,$2,NULL,'alta')`, [tk, `OV-ASOC-${tk}`])
+      const cliente = visibleConControlCalidad(id, interruptor) && visibleCalibracionDirecta(id, { tipoServicio: tipo, tieneOrdenVenta: ov === 'orden_venta' })
+      const res = await ejecutar(interruptor ? encendido() : apagado(), admin, tk, id, id === ESCAPE ? falla({ [DESC]: 'falló' }) : undefined)
+      const rechaza = res.status === 409
+      const s12 = id === ATAJO && interruptor && tipo === 'Calibración' && (ov === 'salesorder_id' || ov === 'asociacion')
+      const etiqueta = `${id} · interruptor=${interruptor} · tipo=${tipo} · ov=${ov}`
+      filas.push(`${etiqueta}: cliente=${cliente ? 'muestra' : 'oculta'} servidor=${res.status}`)
+      if (cliente) expect([etiqueta, rechaza]).toEqual([etiqueta, false])
+      else expect([etiqueta, rechaza]).toEqual([etiqueta, !s12])
+      if (s12) expect([etiqueta, res.status]).toEqual([etiqueta, 200])
+      // oráculo independiente de la regla pura: el servidor acepta si y sólo si interruptor, tipo Calibración y (en el atajo) OV por alguna vía
+      const esperado = interruptor && tipo === 'Calibración' && (id === ESCAPE || ov !== 'ninguna')
+      expect([etiqueta, rechaza]).toEqual([etiqueta, !esperado])
+    }
+    expect(filas).toHaveLength(32)
   })
 })
