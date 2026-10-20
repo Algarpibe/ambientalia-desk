@@ -3,8 +3,8 @@ import { applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { vigenciaDeRemisiones } from '../db/remisiones'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente, baseSiNaceBajoTop5 } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'
-import { buildSubject, buildCodigoServicio, prefijoDeducido, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, cargosQueFaltanParaDecisional, mensajeDecisional, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, erroresPrioridadPedida, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, erroresAnulacion, erroresFacturar, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, esNitExento, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
-import { valoresConFechasDerivadas } from './valoresDeTransicion'; import { contextoDecisionales } from './decisionales'
+import { buildSubject, buildCodigoServicio, prefijoDeducido, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, cargosQueFaltanParaDecisional, mensajeDecisional, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, erroresPrioridadPedida, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, erroresAnulacion, erroresFacturar, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, esNitExento, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, motivoQuitadaPorInterruptor, mensajeSinFirma, prioridadTrasRechazo, CLAVES_SOLO_TRAZA_CC, type VeredictoFirma, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { valoresConFechasDerivadas } from './valoresDeTransicion'; import { contextoDecisionales } from './decisionales'; import { veredictoFirmaControlCalidad, erroresControlCalidad, avisarSinFirmanteLibre } from './controlCalidad'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
 import { areasAAvisar, textoAvisoArea } from './avisoArea'
@@ -125,13 +125,13 @@ export async function executeTransition(
   if (!current) throw new HttpError(404, { error: 'Ticket no encontrado' }); exigirMismoFlujo(t, current.row)
   if (!t.from.includes(current.row.status)) {
     throw new HttpError(409, { error: `La transición "${t.name}" no aplica desde el estado "${current.row.status}"` })
-  }
+  } exigirInterruptorControlCalidad(t, config) /* F1C-07 (RQ-PM-32): escalón B, tras el estado y ANTES del área */
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
-  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); const faltanDecisional = config?.decisionalesPorCargo ? cargosQueFaltanParaDecisional(t, user, await contextoDecisionales(db, true)) : null; if (faltanDecisional) throw new HttpError(403, { error: mensajeDecisional(t.name, faltanDecisional) }) /* F1C-05 (RQ-PM-30): Decisionales por cargo, sólo con DECISIONALES_POR_CARGO; tras el cargo de la lista corta */; if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const entran = await entrantesDeTransicion(db, t, b.values, id, current.row); exigirCargoOVI(entran, user); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas); await exigirAltaValidada(db, t, current.row); await exigirRemisionVigente(db, t, id) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422; F1B-03: el cargo de la OVI que ENTRA, tras la prioridad y antes de la verificación
+  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); const faltanDecisional = config?.decisionalesPorCargo ? cargosQueFaltanParaDecisional(t, user, await contextoDecisionales(db, true)) : null; if (faltanDecisional) throw new HttpError(403, { error: mensajeDecisional(t.name, faltanDecisional) }) /* F1C-05 (RQ-PM-30): Decisionales por cargo, sólo con DECISIONALES_POR_CARGO; tras el cargo de la lista corta */; const firmaCC = await veredictoFirmaControlCalidad(db, t, id, user); exigirFirmaControlCalidad(t, firmaCC) /* F1C-07 (RQ-PM-36): 403 de firmante, escalón B, tras Decisionales y antes de la prioridad y de todo 422 */; if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const entran = await entrantesDeTransicion(db, t, b.values, id, current.row); exigirCargoOVI(entran, user); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas); await exigirAltaValidada(db, t, current.row); await exigirRemisionVigente(db, t, id) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422; F1B-03: el cargo de la OVI que ENTRA, tras la prioridad y antes de la verificación
   const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, recortarCertificado(b.values))
-  const plan = buildTransitionPlan(t, values); delete plan.customFields[CLAVE_CERTIFICADO_FABRICA] /* F1A-03 (C-8): el número es de ESA liberación y vive en la traza; no se duplica en tickets.custom_fields, que el sync pisa */; const txtLib = textoAutorizacionAGuardar(t, values); if (txtLib !== undefined) plan.customFields[CLAVE_TEXTO_AUTORIZACION] = txtLib /* F1C-05 (D7): el texto es de ESTA liberación o null */
-  const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ const errGarantia = erroresGarantiaSinOVI(current.row.tipo_servicio, entran); const errCertificado = erroresCertificado(gas, values); const errLiberacion = erroresLiberacionSinFactura(t, values); const errAnulacion = erroresAnulacion(t, values); const errFacturar = erroresFacturar(t, values) /* F1C-02 (RQ-TS-42): número no en blanco y día real */; const errPrioridad = erroresPrioridadPedida(t, b.values, current.row.priority ?? null); if (plan.errors.length || erroresFecha.length || errCuarentena.length || errGarantia.length || errCertificado.length || errLiberacion.length || errAnulacion.length || errFacturar.length || errPrioridad.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena, ...errGarantia, ...errCertificado, ...errLiberacion, ...errAnulacion, ...errFacturar, ...errPrioridad] })
+  const plan = buildTransitionPlan(t, values); const prioCC = prioridadTrasRechazo(t.id, current.row.priority ?? null); if (prioCC) plan.priority = prioCC /* F1C-07 (RQ-TS-49): el rechazo sube a High, sin bajar Urgent */; for (const k of CLAVES_SOLO_TRAZA_CC) delete plan.customFields[k] /* F1C-07 (S-17): checklist, gas y motivos son del acto y viven en la traza */; delete plan.customFields[CLAVE_CERTIFICADO_FABRICA] /* F1A-03 (C-8): el número es de ESA liberación y vive en la traza; no se duplica en tickets.custom_fields, que el sync pisa */; const txtLib = textoAutorizacionAGuardar(t, values); if (txtLib !== undefined) plan.customFields[CLAVE_TEXTO_AUTORIZACION] = txtLib /* F1C-05 (D7): el texto es de ESTA liberación o null */
+  const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ const errGarantia = erroresGarantiaSinOVI(current.row.tipo_servicio, entran); const errCertificado = erroresCertificado(gas, values); const errLiberacion = erroresLiberacionSinFactura(t, values); const errAnulacion = erroresAnulacion(t, values); const errFacturar = erroresFacturar(t, values) /* F1C-02 (RQ-TS-42): número no en blanco y día real */; const errPrioridad = erroresPrioridadPedida(t, b.values, current.row.priority ?? null); const errCC = await erroresControlCalidad(db, t, current.row, values, firmaCC) /* F1C-07 (RQ-TS-48) */; if (plan.errors.length || erroresFecha.length || errCuarentena.length || errGarantia.length || errCertificado.length || errLiberacion.length || errAnulacion.length || errFacturar.length || errPrioridad.length || errCC.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena, ...errGarantia, ...errCertificado, ...errLiberacion, ...errAnulacion, ...errFacturar, ...errPrioridad, ...errCC] })
   // El navegador manda un id de persona, y un id sin comprobar es una FK rota: el ticket quedaría
   // apuntando a alguien que no existe y la ficha no sabría a quién enseñar. Se rechaza también a los
   // dados de baja, por lo mismo que no salen en el desplegable — nunca van a abrir ese ticket.
@@ -152,7 +152,7 @@ export async function executeTransition(
   }
   const actor = user.name ?? TRANSITION_ACTOR
   const derivadoAntes = current.row.derivado_a ?? null
-  await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, valoresConMotivo(values, gas))
+  await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, valoresConMotivo(values, gas), user.id ?? null); await avisarSinFirmanteLibre(db, t, id, Number(current.row.number), user.id ?? '') /* F1C-07 (RQ-AV-24): tras escribir, fuera de la transacción; nunca lanza */
 
   /*
    * El aviso va DESPUÉS de la transición y fuera de su transacción, a propósito.
@@ -235,7 +235,7 @@ function exigirMismoFlujo(t: Transition, row: TicketDeFlujo): void {
 
 /**
  * F1A-03 (RQ-EN-08, RQ-EN-09, RQ-EN-10): el veredicto de `liberacion`, que mira el compuesto del equipo y los gases
- * patrón. Sólo `liberacion` lo calcula: en las otras 44 transiciones devuelve `null` SIN consultar nada. Al FINAL del
+ * patrón. Sólo `liberacion` lo calcula: en las otras 47 transiciones devuelve `null` SIN consultar nada. Al FINAL del
  * fichero, como `exigirMismoFlujo`, para no desplazar las citas vivas a `ticketService.ts`. «Hoy» es el día de Bogotá.
  */
 async function veredictoDeLiberacion(db: Queryable, t: Transition, row: { status: string; equipo_id?: string | null }): Promise<VeredictoLiberacion | null> {
@@ -274,4 +274,24 @@ async function exigirRemisionVigente(db: Queryable, t: Transition, ticketId: str
   if (t.id !== 'habilitar_servicio') return
   const motivo = motivoSinRemisionVigente(await vigenciaDeRemisiones(db, ticketId))
   if (motivo) throw new HttpError(422, { error: motivo })
+}
+
+/**
+ * F1C-07 (RQ-PM-32, RQ-TS-47): el interruptor `CONTROL_CALIDAD_LIBERACION` decide cuál de las dos salidas del servicio está
+ * vigente. Apagado, el envío a control de calidad da `409`; encendido, `finalizacion_servicio` da `409` (las dos se quitan
+ * en `motivoQuitadaPorInterruptor`, de `@ambientalia/shared`). Llamada en `:128`, en la misma línea que cierra la guarda
+ * de estado: escalón B, tras el `409` de estado y ANTES del `403` de área. Al FINAL del fichero para no desplazar citas.
+ */
+function exigirInterruptorControlCalidad(t: Transition, config?: AppConfig): void {
+  const motivo = motivoQuitadaPorInterruptor(t.id, config?.controlCalidadLiberacion === true)
+  if (motivo) throw new HttpError(409, { error: motivo })
+}
+
+/**
+ * F1C-07 (RQ-PM-36, RQ-TS-51): el `403` de firmante de `aprobacion_control_calidad` y `rechazo_control_calidad`. Escalón B: tras el
+ * `403` de área, el de cargo y el de Decisionales (que para estas dos devuelve `null`), y antes de la prioridad y de todo `422`.
+ * Llamada en `:131`. Sin veredicto (cualquier otra transición) o con `puede`, no hace nada. Al FINAL del fichero para no desplazar citas.
+ */
+function exigirFirmaControlCalidad(t: Transition, v: VeredictoFirma | null): void {
+  if (v && !v.puede) throw new HttpError(403, { error: mensajeSinFirma(t.name, v) })
 }

@@ -2,7 +2,7 @@ import { beforeEach, vi } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
-import { CLAVE_CERTIFICADO_FABRICA, type Transition, type Cargo } from '@ambientalia/shared'
+import { CLAVE_CERTIFICADO_FABRICA, CLAVE_MOTIVO_FIRMA_ADMIN, type Transition, type Cargo } from '@ambientalia/shared'
 import type { EquipoRow } from '../db/equipos'
 import { createApp } from '../app'; import type { RespaldadorRuta } from '../routes/respaldo'
 import { createUser } from '../auth/users'
@@ -43,10 +43,10 @@ export function instalarArnes(): void {
 export const equipoRow = (id: string, serial: string, cliente = 'Gecelca S.A. E.S.P.'): EquipoRow =>
   ({ id, serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor PM10/PM2.5', cliente_nombre: cliente, source: 'seed', raw: null })
 
-export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string; avisosCopiaEmail: string; migracionTicketsHabilitada: boolean; decisionalesPorCargo: boolean }> = {}, dbPropia?: Queryable, respaldador?: RespaldadorRuta) {
+export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string; avisosCopiaEmail: string; migracionTicketsHabilitada: boolean; decisionalesPorCargo: boolean; controlCalidadLiberacion: boolean }> = {}, dbPropia?: Queryable, respaldador?: RespaldadorRuta) {
   // Los vacíos son los que devuelve `loadConfig` cuando la variable no está: dejar alguno `undefined`
   // probaría un config que en producción no existe.
-  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', avisosCopiaEmail: '', migracionTicketsHabilitada: false, decisionalesPorCargo: false, ...overrides } as AppConfig
+  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', avisosCopiaEmail: '', migracionTicketsHabilitada: false, decisionalesPorCargo: false, controlCalidadLiberacion: false, ...overrides } as AppConfig
   const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), backfillTicketHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0, restantes: 0 }), syncContacts: vi.fn(), syncPendingHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0 }) }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
   const app = createApp({ db: dbPropia ?? db, zohoFetch, sync, config, respaldador })
@@ -71,7 +71,7 @@ export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCall
 export function valoresValidos(t: Transition, n: number): Record<string, unknown> {
   const values: Record<string, unknown> = { comment: 'valores mínimos del arnés' }
   for (const f of t.fields) {
-    if (!f.required && f.key !== CLAVE_CERTIFICADO_FABRICA) continue
+    if (!f.required && f.key !== CLAVE_CERTIFICADO_FABRICA && f.key !== CLAVE_MOTIVO_FIRMA_ADMIN) continue /* F1C-07 (2b): el motivo del administrador de respaldo, para que firme */
     if (f.kind === 'date') values[f.key] = '2026-01-15'
     else if (f.kind === 'number') values[f.key] = 3
     else if (f.kind === 'checkbox') values[f.key] = true

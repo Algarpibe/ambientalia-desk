@@ -115,9 +115,9 @@ describe('priority deja de ser obligatorio (RQ-TS-20, S-2)', () => {
       expect(campo, id).toMatchObject({ key: 'priority', kind: 'select', required: false, options: ['High', 'Medium'] })
     }
   })
-  it('TS20-4 · los obligatorios de las 33 son los de antes SALVO priority en esas dos, la liberación sin factura (F1C-05: ya no hay casilla), la anulación (F1C-01: el motivo) y «Facturar» (F1C-02: número y fecha)', () => {
-    expect(TRANSITIONS).toHaveLength(33)
-    const esperado = Object.fromEntries(Object.entries({ ...OBLIGATORIOS_ANTES, liberacion_sin_factura: ['Motivo de liberación sin factura', 'Fecha prevista de facturación'], anulacion: ['Motivo de anulación'], facturar: ['Número de factura', 'Fecha De Factura'] }).map(([id, ks]) => [id, ks.filter((k) => k !== 'priority')]))
+  it('TS20-4 · los obligatorios de las 36 son los de antes SALVO priority en esas dos, la liberación sin factura (F1C-05: ya no hay casilla), la anulación (F1C-01: el motivo) y «Facturar» (F1C-02: número y fecha)', () => {
+    expect(TRANSITIONS).toHaveLength(36)
+    const esperado = Object.fromEntries(Object.entries({ ...OBLIGATORIOS_ANTES, liberacion_sin_factura: ['Motivo de liberación sin factura', 'Fecha prevista de facturación'], anulacion: ['Motivo de anulación'], facturar: ['Número de factura', 'Fecha De Factura'], aprobacion_control_calidad: ['Puntos que fallaron en el diagnóstico revisados', 'Funcionamiento verificado', 'Equipo completo, limpio y listo para embalar'], rechazo_control_calidad: ['Motivo del rechazo'], envio_control_calidad: [...(OBLIGATORIOS_ANTES.finalizacion_servicio ?? [])] }).map(([id, ks]) => [id, ks.filter((k) => k !== 'priority')]))
     const hoy = Object.fromEntries(TRANSITIONS.map((t) => [t.id, t.fields.filter((f) => f.required).map((f) => f.key)]))
     expect(hoy).toEqual(esperado)
   })

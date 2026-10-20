@@ -21,7 +21,8 @@ stateDiagram-v2
     state "En Proceso" as e15
     state "Continuación del proceso" as e16
     state "Por Facturar →cierre" as e17
-    state "Anulado →cierre" as e22
+    state "Control de calidad" as e22
+    state "Anulado →cierre" as e23
     e12 --> e13 : Ingreso a Servicio [frontera] [ST]
     e13 --> e14 : Escalado a Revisión [ST]
     e14 --> e13 : Devolución a corrección [ST]
@@ -46,9 +47,12 @@ stateDiagram-v2
     e13 --> e17 : Rechazo [frontera] [C][ST]
     e15 --> e16 : Diagnóstico complementario [ST]
     e16 --> e07 : Notificación re cotización [C]
-    e01 --> e22 : Anulación [frontera] [C]
-    e02 --> e22 : Anulación [frontera] [C]
-    e13 --> e22 : Anulación [frontera] [C]
-    e07 --> e22 : Anulación [frontera] [C]
-    e03 --> e22 : Anulación [frontera] [C]
+    e01 --> e23 : Anulación [frontera] [C]
+    e02 --> e23 : Anulación [frontera] [C]
+    e13 --> e23 : Anulación [frontera] [C]
+    e07 --> e23 : Anulación [frontera] [C]
+    e03 --> e23 : Anulación [frontera] [C]
+    e15 --> e22 : Envío a control de calidad [ST]
+    e22 --> e17 : Control de calidad aprobado [frontera] [ST]
+    e22 --> e15 : Control de calidad rechazado [ST]
 ```

@@ -12,9 +12,9 @@ import {
  * CLASIFICACIÓN, que es decisión de Gerencia y no se deriva de nada.
  */
 describe('registro de estados', () => {
-  it('declara 25 estados, sin repetidos', () => {
-    expect(ESTADOS).toHaveLength(25)
-    expect(new Set(ESTADOS).size).toBe(25)
+  it('declara 26 estados, sin repetidos', () => {
+    expect(ESTADOS).toHaveLength(26)
+    expect(new Set(ESTADOS).size).toBe(26)
   })
 
   /**
@@ -43,7 +43,7 @@ describe('registro de estados', () => {
     ])
   })
 
-  it('ninguna son exactamente estos trece: el ticket está en manos de quien lo tiene (dos desde E-226, Anulado desde F1C-01 y Pendiente de facturar desde F1C-02)', () => {
+  it('ninguna son exactamente estos catorce: el ticket está en manos de quien lo tiene (dos desde E-226, Anulado desde F1C-01, Pendiente de facturar desde F1C-02 y Control de calidad desde F1C-07)', () => {
     expect(estadosCon('ninguna')).toEqual([
       'Ingresado',
       'Rev./Diagnostico',
@@ -53,7 +53,7 @@ describe('registro de estados', () => {
       'Por Facturar',
       'Finalizado',
       STATUS_OV_ASIGNADA,
-      STATUS_TICKET_CREADO, 'Pendiente de facturar', 'Anulado', 'Verificación', 'Solicitud Soporte',
+      STATUS_TICKET_CREADO, 'Pendiente de facturar', 'Control de calidad', 'Anulado', 'Verificación', 'Solicitud Soporte',
     ])
   })
 
@@ -222,8 +222,8 @@ describe('Solicitud Soporte (RQ-SR-03)', () => {
     expect(CLASIFICACION_EN_ESPERA['Solicitud Soporte']).toBe('ninguna')
   })
 
-  it('ESTADOS_SERVICIO queda en 22 (20 desde F1C-09, más Anulado y Pendiente de facturar), en el mismo orden, y no contiene Solicitud Soporte ni Pendiente', () => {
-    expect(ESTADOS_SERVICIO).toHaveLength(22)
+  it('ESTADOS_SERVICIO queda en 23 (20 desde F1C-09, más Anulado, Pendiente de facturar y Control de calidad), en el mismo orden, y no contiene Solicitud Soporte ni Pendiente', () => {
+    expect(ESTADOS_SERVICIO).toHaveLength(23)
     expect(ESTADOS_SERVICIO.includes('Solicitud Soporte' as never) || ESTADOS_SERVICIO.includes('Pendiente' as never)).toBe(false)
     expect(ESTADOS_SERVICIO).toEqual(ESTADOS.filter((e) => e !== 'Verificación' && e !== 'Solicitud Soporte' && e !== 'Pendiente'))
     expect(ESTADOS[ESTADOS.length - 1]).toBe('Solicitud Soporte')

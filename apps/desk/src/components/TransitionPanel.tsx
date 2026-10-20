@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { transicionesDelTicket, sugerenciaPorGarantia, type EstadoGarantia, type Transition, type TransitionField, type PersonaLite, type Remision } from '@ambientalia/shared';
-import { executeTransition, getPersonas, subirCertificadoFabrica, fetchEquipo, getContextoDecisionales } from '../api/client';
+import { executeTransition, getPersonas, subirCertificadoFabrica, fetchEquipo, getContextoDecisionales, getContextoControlCalidad } from '../api/client';
 import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/personas';
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarTransicionConDecisionales, DECISIONALES_APAGADO, type ContextoDecisionales, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, seRegistraEnCadaFactura, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
+import { puedeEjecutarTransicionConDecisionales, DECISIONALES_APAGADO, type ContextoDecisionales, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, seRegistraEnCadaFactura, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION, visibleConControlCalidad } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -52,9 +52,9 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
   onCrearRemision?: () => void; equipoId?: string | null; clienteProvisional?: boolean; garantia?: EstadoGarantia | null // F1B-18: `garantia` sólo destaca «Reporte por garantía» en Notificado, no impone. F1B-15: con ellos «Habilitar Servicio» se desactiva mientras el alta siga pendiente (comodidad; la impone el servidor, `exigirAltaValidada`)
 }) {
   const boton = botonRemision(status, remisiones ?? null); const sugerida = sugerenciaPorGarantia(status, garantia)
-  const { user } = useAuth(); const [decisionales, setDecisionales] = useState<ContextoDecisionales>(DECISIONALES_APAGADO); useEffect(() => { getContextoDecisionales().then(setDecisionales).catch(() => {}) }, []) // F1C-05 (RQ-PM-31): el contexto lo da el servidor; si falla, apagado y decide el 403
+  const { user } = useAuth(); const [decisionales, setDecisionales] = useState<ContextoDecisionales>(DECISIONALES_APAGADO); useEffect(() => { getContextoDecisionales().then(setDecisionales).catch(() => {}) }, []); const [controlCalidad, setControlCalidad] = useState(false); useEffect(() => { getContextoControlCalidad().then((c) => setControlCalidad(c.activo)).catch(() => {}) }, []) // F1C-05 (RQ-PM-31): el contexto lo da el servidor; si falla, apagado y decide el 403. F1C-07 (RQ-PM-37): el interruptor del control de calidad también; sin respuesta, apagado y decide el 409
   const transitions = transicionesDelTicket({ classification: clasificacion, status }).filter(
-    (t) => !!user && puedeEjecutarTransicionConDecisionales(user, t, decisionales),
+    (t) => !!user && puedeEjecutarTransicionConDecisionales(user, t, decisionales) && visibleConControlCalidad(t.id, controlCalidad),
   )
   const [active, setActive] = useState<Transition | null>(null);
   const [values, setValues] = useState<Record<string, unknown>>({});

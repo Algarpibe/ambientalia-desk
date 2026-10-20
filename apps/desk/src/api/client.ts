@@ -911,3 +911,8 @@ export function getMedicionGarantias(): Promise<import('@ambientalia/shared').Me
 export function getContextoDecisionales(): Promise<import('@ambientalia/shared').ContextoDecisionales> {
   return fetch('/api/permisos/decisionales', { credentials: 'include' }).then((r) => json<import('@ambientalia/shared').ContextoDecisionales>(r))
 }
+
+/** El interruptor del control de calidad (F1C-07, RQ-PM-37): lo decide el servidor; el panel sólo filtra con él. */
+export function getContextoControlCalidad(): Promise<{ activo: boolean }> {
+  return fetch('/api/permisos/control-calidad', { credentials: 'include' }).then((r) => json<{ activo: boolean }>(r))
+}

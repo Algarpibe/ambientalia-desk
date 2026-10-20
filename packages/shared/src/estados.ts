@@ -96,7 +96,7 @@ export const CLASIFICACION_EN_ESPERA = {
   // Las dos formas de nombrar la fase inicial —Zoho y la app—. Ver `STATUS_OV_ASIGNADA` y compañía
   // en `transitions.ts:142-144`.
   'OV asignada': 'ninguna',
-  'Ticket creado': 'ninguna', 'Pendiente de facturar': 'ninguna', 'Anulado': 'ninguna', // F1C-01 (RQ-TS-40): Anulado, terminal y cerrado; F1C-02 (RQ-TS-42, S-3): Pendiente de facturar, abierto, espera un acto de Comercial; en la misma línea para no desplazar las citas (regla de mutación 4)
+  'Ticket creado': 'ninguna', 'Pendiente de facturar': 'ninguna', 'Control de calidad': 'ninguna', 'Anulado': 'ninguna', // F1C-01 (RQ-TS-40): Anulado, terminal y cerrado; F1C-02 (RQ-TS-42, S-3): Pendiente de facturar, abierto, espera un acto de Comercial; en la misma línea para no desplazar las citas (regla de mutación 4)
 
   // ── decididas el 17/10 (E-226): una `externa` y dos `ninguna`, fuera de su bloque a propósito ───────
   // `decision/e226-espera-y-areas-equipo-nuevo`: «es espera lo que depende de alguien de fuera». No se mudan a su bloque (`:56-57`) para no desplazar las citas de este fichero (regla de mutación 4), y `Pendiente` va sola y sin comentario porque la comprobación 5 del barrido la cuenta como texto (`apps/desk/server/reconciliacion/comprobaciones.ts:162`).
@@ -108,7 +108,7 @@ export const CLASIFICACION_EN_ESPERA = {
 /** Un estado del Blueprint. Es un tipo cerrado: lo que no está en el registro no es un estado. */
 export type Estado = keyof typeof CLASIFICACION_EN_ESPERA
 
-/** Los 24 estados, en el orden en que están clasificados. */
+/** Los 26 estados (25 hasta F1C-07), en el orden en que están clasificados. */
 export const ESTADOS: Estado[] = Object.keys(CLASIFICACION_EN_ESPERA) as Estado[]
 
 /**
@@ -184,7 +184,7 @@ export const ESTADOS_SOLO_EQUIPO_NUEVO = ['Verificación'] as const satisfies re
 /** Un estado del Blueprint de Servicio Técnico: todos menos los exclusivos de `equipo-nuevo` y de `soporte-remoto`. */
 export type EstadoServicio = Exclude<Estado, (typeof ESTADOS_SOLO_EQUIPO_NUEVO)[number] | (typeof ESTADOS_SOLO_SOPORTE_REMOTO)[number]>
 
-/** `ESTADOS` menos `ESTADOS_SOLO_EQUIPO_NUEVO`, en el mismo orden — los 21 desde F1C-01. */
+/** `ESTADOS` menos `ESTADOS_SOLO_EQUIPO_NUEVO`, en el mismo orden — los 23 desde F1C-07 (21 desde F1C-01). */
 export const ESTADOS_SERVICIO: EstadoServicio[] = ESTADOS.filter(
   (e): e is EstadoServicio => !(ESTADOS_SOLO_EQUIPO_NUEVO as readonly string[]).includes(e) && !(ESTADOS_SOLO_SOPORTE_REMOTO as readonly string[]).includes(e),
 )

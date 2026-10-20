@@ -834,3 +834,7 @@ ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS aviso_sin_etiqueta_at tim
 -- avisada (una sola vez por ticket y fecha). La escribe solo el servicio de la alarma. Fuera de TICKET_COLS para que el
 -- sincronizador no la pise. NULL-able y SIN relleno. AL FINAL para no desplazar citas. SIN calificar: tickets es de DESK_TABLES.
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS facturacion_avisada_para date;
+-- control-calidad-liberacion (F1C-07, RQ-TZ-22): quien ejecuto cada transicion, por id de usuario y no por nombre (users.name no es unico),
+-- lo lee la regla de "quien intervino no firma". NULL-able y SIN relleno (las filas viejas se comparan por nombre). AL FINAL para no
+-- desplazar citas. SIN calificar: ticket_transitions es de DESK_TABLES.
+ALTER TABLE ticket_transitions ADD COLUMN IF NOT EXISTS performed_by_id text;

@@ -22,10 +22,10 @@ const tk = (over: Partial<TicketParaMigrar> = {}): TicketParaMigrar => ({
 })
 
 describe('equivalenciaDeEstado (RQ-TC-40)', () => {
-  it('los 25 de ESTADOS salvo «Pendiente» son identidad y no cambian el status_type', () => {
+  it('los 26 de ESTADOS salvo «Pendiente» son identidad y no cambian el status_type', () => {
     const resto = ESTADOS.filter((e) => e !== 'Pendiente')
-    expect(ESTADOS).toHaveLength(25)
-    expect(resto).toHaveLength(24)
+    expect(ESTADOS).toHaveLength(26)
+    expect(resto).toHaveLength(25)
     for (const e of resto) {
       expect(equivalenciaDeEstado(e, null)).toEqual({ destino: e, regla: 'identidad', statusTypeDestino: null })
     }

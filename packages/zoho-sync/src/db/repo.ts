@@ -280,7 +280,7 @@ async function writeTransition(
   transition: Transitionish,
   plan: TransitionApply,
   actor: string,
-  values: unknown,
+  values: unknown, actorId: string | null = null,
 ): Promise<void> {
   // 1) Comentario (si lo hay) → conversations
   let commentId: string | null = null
@@ -312,9 +312,9 @@ async function writeTransition(
 
   // 3) Historial
   await q.query(
-    `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-    [ticketId, transition.id, transition.name, fromStatus, plan.status, transition.area, actor, JSON.stringify(values), commentId],
+    `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id,performed_by_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [ticketId, transition.id, transition.name, fromStatus, plan.status, transition.area, actor, JSON.stringify(values), commentId, actorId ?? null],
   )
 }
 
@@ -326,17 +326,17 @@ export async function applyTransition(
   transition: Transitionish,
   plan: TransitionApply,
   actor: string,
-  values: unknown,
+  values: unknown, actorId: string | null = null,
 ): Promise<void> {
   const pool = db as PoolLike
   if (typeof pool.connect !== 'function') {
-    await writeTransition(db, ticketId, fromStatus, transition, plan, actor, values)
+    await writeTransition(db, ticketId, fromStatus, transition, plan, actor, values, actorId)
     return
   }
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
-    await writeTransition(client, ticketId, fromStatus, transition, plan, actor, values)
+    await writeTransition(client, ticketId, fromStatus, transition, plan, actor, values, actorId)
     await client.query('COMMIT')
   } catch (e) {
     try { await client.query('ROLLBACK') } catch { /* ignora fallo de rollback */ }

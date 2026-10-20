@@ -26,7 +26,7 @@ export const FASES: Fase[] = [
 ]
 
 /**
- * La fase de cada uno de los 21 estados. `satisfies Record<EstadoServicio, FaseId>` es la guarda de
+ * La fase de cada uno de los 23 estados. `satisfies Record<EstadoServicio, FaseId>` es la guarda de
  * COMPILACIÓN de las dos que pide D-1 del diseño: una clave que falte o que sobre es error de
  * `tsc` en esta misma declaración, antes de que el generador (Unidad B) llegue a ejecutarse. La
  * otra guarda —el `throw` de `mapaBlueprint.ts` ante una tabla inyectada e incompleta— es la que
@@ -52,7 +52,7 @@ export const FASE_POR_ESTADO = {
   'Notificación a Compras': 'diagnostico',
   'Notificación Comercial': 'diagnostico',
   'Notificación cliente': 'diagnostico',
-  'En Proceso': 'diagnostico',
+  'En Proceso': 'diagnostico', 'Control de calidad': 'diagnostico', // F1C-07 (RQ-TS-46, S-14): QA es trabajo técnico, antes de la frontera 2→3
   'Continuación del proceso': 'diagnostico',
   // Pendiente: sin clave desde F1C-09. No es estado de servicio, sólo existe en soporte remoto.
   'En Espera de Repuestos': 'diagnostico',

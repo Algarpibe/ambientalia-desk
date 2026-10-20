@@ -125,3 +125,15 @@ export async function destinatariosDeCargoPermiso(
   const r = await db.query('SELECT id, email, name FROM users WHERE active = true AND cargo_permiso = $1', [cargo])
   return filas(r.rows).map((x) => ({ id: String(x.id), email: String(x.email), name: String(x.name) }))
 }
+
+/**
+ * Quién recibe el aviso de «control de calidad sin firmante libre» (F1C-07, RQ-AV-24): los ADMINISTRADORES activos, sin el actor
+ * (S-12). No mira cargos: el Director Técnico no recibe el aviso por serlo. Vacío si no hay ninguno; no falla.
+ */
+export async function destinatariosAdministradores(
+  db: Queryable,
+  actorId: string,
+): Promise<Array<{ id: string; email: string; name: string }>> {
+  const r = await db.query('SELECT id, email, name FROM users WHERE active = true AND is_admin = true')
+  return filas(r.rows).filter((x) => String(x.id) !== actorId).map((x) => ({ id: String(x.id), email: String(x.email), name: String(x.name) }))
+}

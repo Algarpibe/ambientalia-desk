@@ -772,3 +772,30 @@ variable pide un redespliegue. Las líneas que hay que añadir al fichero de eje
 > # DECISIONALES_POR_CARGO: con `true`, las transiciones Decisionales sólo las ejecutan el Director o el Coordinador de su área (y el Especialista técnico con el Coordinador Técnico vacante); no encender antes del 14/12/2026 ni sin asignar antes los cargos de permiso. Ausente o con otro valor, todo como antes.
 > DECISIONALES_POR_CARGO=
 > ```
+
+## 16. `CONTROL_CALIDAD_LIBERACION`: el interruptor del Control de calidad antes de liberar (F1C-07, `decision/f1c07-firma-control-calidad`)
+
+**Qué enciende:** con `CONTROL_CALIDAD_LIBERACION=true` en el servicio App, el taller envía el equipo a «Control de calidad»
+(`envio_control_calidad`) y deja de poder usar «Finalización del servicio» (`finalizacion_servicio`), que responde `409`; el
+equipo sólo sale de ese estado por la aprobación (hacia «Por Facturar») o por el rechazo (de vuelta a «En Proceso», con la
+prioridad en `High` salvo que ya sea `Urgent`). Firman la aprobación y el rechazo únicamente el Coordinador Técnico activo o, con
+la plaza vacante, el Director Técnico y el Especialista técnico; quien intervino en el ticket no firma, y un administrador sólo
+firma de respaldo, con motivo, si no queda ningún habilitado libre. Quien no pueda firmar recibe `403` y el panel
+deja de enseñarle el botón de envío o de finalización según el interruptor (`packages/zoho-sync/src/config.ts:125`,
+`apps/desk/server/services/ticketService.ts:128`, `apps/desk/server/services/ticketService.ts:131`,
+`apps/desk/server/routes/permisosControlCalidad.ts:16`). Apagada —ausente o con cualquier otro valor— todo funciona como antes:
+el envío responde `409` y «Finalización del servicio» sigue siendo la salida.
+**Qué se rompe si se pone mal:** encendida sin haber asignado antes el «cargo de permiso» de cada persona en la consola de
+usuarios, nadie está habilitado y sólo firman los administradores, cada vez con su motivo, mientras el taller espera; si se
+enciende sin `DECISIONALES_POR_CARGO`, las dos firmas se exigen igual pero el resto de las Decisionales vuelven a ser de todo
+Servicio Técnico; encendida antes de tiempo, contradice la decisión de Gerencia. Si el aviso a los administradores falla, se
+registra y el envío responde `200` (supuesto S-18).
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). **Se enciende en enero, junto con
+`DECISIONALES_POR_CARGO` (§15), y nunca antes del 14/12/2026.** Antes de encenderla, el administrador asigna el cargo de permiso
+al Coordinador Técnico (o, mientras no lo haya, al Director Técnico y al Especialista técnico). Cada cambio de la variable pide un
+redespliegue. La línea de entorno que corresponde, tal cual:
+
+> ```
+> CONTROL_CALIDAD_LIBERACION=
+> ```

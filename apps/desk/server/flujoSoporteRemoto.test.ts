@@ -109,7 +109,7 @@ describe('serie P · ejecución del flujo de soporte remoto (guarda 3, estado y 
       if (res.status === 200) ok.push(t.id)
       else expect(res.status, `${t.id} desde Solicitud Soporte`).toBe(409)
     }
-    expect(n, 'transiciones recorridas (33 + 7 + 5 = 45)').toBe(45)
+    expect(n, 'transiciones recorridas (36 + 7 + 5 = 48)').toBe(48)
     expect(ok).toEqual(['asignacion_soporte'])
   }, 60_000)
 

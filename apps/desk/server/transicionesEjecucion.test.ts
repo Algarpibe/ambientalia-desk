@@ -182,10 +182,10 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   diagnostico_complementario: { desde: ['En Proceso'], a: 'Continuación del proceso' },
   entrega_al_cliente: { desde: ['Por Entregar'], a: 'Finalizado' },
   habilitado_para_entrega: { desde: ['Liberación Comercial'], a: 'Por Entregar' },
-  notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' }, anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' }, facturar: { desde: ['Pendiente de facturar'], a: 'Finalizado' }, // F1C-02 (RQ-TS-42): «Facturar». F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
+  notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' }, anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' }, facturar: { desde: ['Pendiente de facturar'], a: 'Finalizado' }, envio_control_calidad: { desde: ['En Proceso'], a: 'Control de calidad' }, aprobacion_control_calidad: { desde: ['Control de calidad'], a: 'Por Facturar' }, rechazo_control_calidad: { desde: ['Control de calidad'], a: 'En Proceso' }, // F1C-07 (RQ-TS-46): las tres de control de calidad. F1C-02 (RQ-TS-42): «Facturar». F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
 }
 
-describe('las 33 transiciones, ejecutadas contra el servidor', () => {
+describe('las 36 transiciones, ejecutadas contra el servidor', () => {
   /**
    * EL GUARDIÁN DE COBERTURA: el conjunto de huérfanas tiene que estar VACÍO.
    *
@@ -247,9 +247,9 @@ describe('las 33 transiciones, ejecutadas contra el servidor', () => {
    * lo que la decisión dice. Se afirma que hay UNA fila —ni cero ni dos— con su id, sus dos
    * extremos, su área y su actor.
    */
-  it('las 33 salen de su origen, llegan a su destino y dejan traza', async () => {
+  it('las 36 salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
-    const { app } = appWith()
+    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre
 
     const observado: Record<string, string[]> = {}
     const esperado: Record<string, string[]> = {}
@@ -263,7 +263,7 @@ describe('las 33 transiciones, ejecutadas contra el servidor', () => {
         await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)',
           [id, 70000 + n, 'Barrido de ejecución', origen]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
 
-        const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+        const res = await request(t.id === 'envio_control_calidad' ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
 
         const ticket = await db.query('SELECT status FROM tickets WHERE id = $1', [id])
@@ -280,9 +280,9 @@ describe('las 33 transiciones, ejecutadas contra el servidor', () => {
     }
 
     expect(observado).toEqual(esperado)
-    // Y que el barrido no se haya quedado corto: 33 transiciones y 39 ejecuciones, porque
+    // Y que el barrido no se haya quedado corto: 36 transiciones y 42 ejecuciones, porque
     // `habilitar_servicio` sale de tres estados y `anulacion` de cinco. Un barrido sobre un grafo vacío también daría verde.
-    expect(n, 'ejecuciones del barrido').toBe(39)
+    expect(n, 'ejecuciones del barrido').toBe(42)
   }, 60_000)
 })
 
