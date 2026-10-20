@@ -35,7 +35,7 @@ Se construye apagado (`CONTROL_CALIDAD_LIBERACION`) y se enciende en enero junto
 
 | # | Pieza | Dónde |
 |---|---|---|
-| D1 | Interruptor `CONTROL_CALIDAD_LIBERACION`, nace cerrado (`=== 'true'`), junto a `decisionalesPorCargo` | `packages/zoho-sync/src/config.ts:66` (campo), `:124` (lectura); `DEPLOY.md` §16 nueva tras §15 (`:754-775`) |
+| D1 | Interruptor `CONTROL_CALIDAD_LIBERACION`, nace cerrado (`=== 'true'`), junto a `decisionalesPorCargo` | `packages/zoho-sync/src/config.ts:66` (campo), `:124` (lectura); `DEPLOY.md` §16 nueva tras §15 (`:754-774`) |
 | D2 | Estado `Control de calidad` (`'ninguna'`) y tres transiciones en la MISMA línea final de los arrays | `estados.ts:99`, `transitions.ts:262`, `fasesBlueprint.ts:67`, `columns.ts:33` |
 | D3 | El interruptor gobierna sólo la ENTRADA: apagado → `envio_control_calidad` da `409`; encendido → `finalizacion_servicio` da `409`. Las dos salidas no dependen de él | escalón B, tras el `from` (`ticketService.ts:126-128`) |
 | D4 | Regla pura de firmante, servidor y cliente | `packages/shared/src/controlCalidad.ts` (nuevo); `403` B tras Decisionales (`ticketService.ts:131`) |
@@ -153,7 +153,7 @@ su vecina (regla de mutación 1). Funciones auxiliares al final de `ticketServic
 |---|---|---|
 | R-1 | Homónimos en filas viejas: `users.name` no es único (`schema.sql:85`) | Falla cerrada: un homónimo bloquea, nunca habilita; desde hoy se compara por id |
 | R-2 | Encender sin asignar `cargo_permiso` deja sin habilitados: sólo firman administradores, con motivo | La segunda frase de §16 de `DEPLOY.md` lo dice; encendido junto con F1C-05, que exige lo mismo (`DEPLOY.md:766-768`) |
-| R-3 | Desplazamiento de citas en ficheros muy citados | Inserción en la misma línea (`estados.ts:99`, `transitions.ts:262`, `fasesBlueprint.ts:67`, `columns.ts:33`, `config.ts:66`, `ticketService.ts:131/:134`); barrido de la regla de mutación 4 al cierre |
+| R-3 | Desplazamiento de citas en ficheros muy citados | Inserción en la misma línea (`estados.ts:99`, `transitions.ts:262`, `fasesBlueprint.ts:67`, `columns.ts:33`, `config.ts:66`, `ticketService.ts:131` y `:134`); barrido de la regla de mutación 4 al cierre |
 | R-4 | El mapa del blueprint tiene prueba anti-desfase contra `docs/artefactos/` | Regenerar con `scripts/generar-mapa-blueprint.ts` en el lote 1 |
 | R-5 | Una caída entre la transición y el aviso pierde el aviso | Aceptado, mismo molde que `ticketService.ts:157-164` |
 | R-6 | El día del encendido, M1.7 (`R08.4.md:1843`) y el glosario (`:5907`) quedan desactualizados | Anotarlo para el expediente del maestro al encender, no en esta tanda |
