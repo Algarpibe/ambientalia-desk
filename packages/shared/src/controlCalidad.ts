@@ -109,3 +109,6 @@ export function motivoQuitadaPorInterruptor(transitionId: string, activo: boolea
 export function visibleConControlCalidad(transitionId: string, activo: boolean): boolean {
   return motivoQuitadaPorInterruptor(transitionId, activo) === null
 }
+
+// Las claves y etiquetas del acto las leen el servidor y el cliente por aquí (F1C-07, lote 2b): una sola puerta, sin tocar `index.ts`.
+export * from './camposControlCalidad'

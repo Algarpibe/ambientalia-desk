@@ -47,14 +47,14 @@ línea base, detector tras el commit), `apply-progress.md`, commit y la medida `
 
 ## Lote 2b — servicio de firma (intento I6; ~380 × 1,8 = 684; si mide > 720, RQ-TS-48 sale a un intento propio)
 
-- [ ] 2b.1 ROJO: `controlCalidad.test.ts` HTTP, segunda parte: RQ-PM-34..36, RQ-TS-48, RQ-TZ-23, CC-3..CC-6 (cada prueba de posición
+- [x] 2b.1 ROJO: `controlCalidad.test.ts` HTTP, segunda parte: RQ-PM-34..36, RQ-TS-48, RQ-TZ-23, CC-3..CC-6 (cada prueba de posición
       activa las dos guardas a la vez), M3/M4 por HTTP. Rojo por `403` y `422` ausentes.
-- [ ] 2b.2 VERDE: `apps/desk/server/services/controlCalidad.ts` (`contextoFirma`, `veredictoFirmaControlCalidad`, `erroresControlCalidad`,
+- [x] 2b.2 VERDE: `apps/desk/server/services/controlCalidad.ts` (`contextoFirma`, `veredictoFirmaControlCalidad`, `erroresControlCalidad`,
       `leerContextoGas` con `hoyEnZona()`); guardas `ticketService.ts:131`, `:133` (claves de QA fuera de `custom_fields`), `:134` (`422`
       agregado) y envoltorio `exigirFirmaControlCalidad` al final; imports en `:6`/`:7`.
-- [ ] 2b.3 Barrido HTTP de las de firma: esperado `403` sin cargo en `permisos.test.ts:43-109`; `appHarness.ts:74` rellena
+- [x] 2b.3 Barrido HTTP de las de firma: esperado `403` sin cargo en `permisos.test.ts:43-109`; `appHarness.ts:74` rellena
       `CLAVE_MOTIVO_FIRMA_ADMIN` para que el administrador firme de respaldo (`transicionesEjecucion.test.ts:250-286`).
-- [ ] 2b.4 Mutaciones: P3 (firma antes del área) cae en CC-3; P4 (tras `valoresConFechasDerivadas`) cae en CC-4; P5 (`errCC` tras la
+- [x] 2b.4 Mutaciones: P3 (firma antes del área) cae en CC-3; P4 (tras `valoresConFechasDerivadas`) cae en CC-4; P5 (`errCC` tras la
       persona derivada `:138-142`) cae en CC-5/CC-6. Confirmar de nuevo M3/M4 contra «quien intervino no firma» por HTTP.
 
 ## Lote 2c — prioridad, aviso y ruta (intento I7; ~200 × 1,8 = 360)

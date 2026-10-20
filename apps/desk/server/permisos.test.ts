@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import type { Request, Response, NextFunction } from 'express'
 import type { UserPublic } from '@ambientalia/shared'
-import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, canExecuteTransition, puedeEjecutarTransicion, CARGOS, EXCEPCIONES_POR_CARGO } from '@ambientalia/shared'
+import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, canExecuteTransition, puedeEjecutarTransicion, esFirmaControlCalidad, CARGOS, EXCEPCIONES_POR_CARGO } from '@ambientalia/shared'
 import { requireAuth, requireAdmin, requireArea } from './auth/middleware'; import { conRemisionVigente } from './testing/remisionDePrueba'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
@@ -61,7 +61,7 @@ describe('matriz área × transición, contra el servidor', () => {
       // El esperado sale de la regla, no de una lista copiada: el área del usuario cubre —o no— el
       // área de la transición. Un 404 o un 409 colado aquí revienta la comparación y se ve cuál.
       const esperado: Record<string, number> = {}
-      for (const t of TRANSITIONS) esperado[t.id] = puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso: null }, t) ? 200 : 403
+      for (const t of TRANSITIONS) esperado[t.id] = puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso: null }, t) && !esFirmaControlCalidad(t.id) ? 200 : 403 // F1C-07 (2b): las dos de firma piden cargo habilitado, y este usuario no lo tiene
       expect(observado).toEqual(esperado)
     }, 60_000)
   }

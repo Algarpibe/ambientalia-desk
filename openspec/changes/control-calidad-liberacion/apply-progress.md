@@ -144,3 +144,70 @@ Nuevo: `apps/desk/server/controlCalidad.test.ts` (95 líneas). Modificados: `pac
 ### Medida (antes de estos dos ficheros de documentación)
 
 `git diff --shortstat --no-renames HEAD`: 11 ficheros, 73 inserciones, 36 borrados (109) + 95 líneas nuevas sin trackear = **204**; techo 800.
+
+## Lote 2b — servicio de firma (intento I6) · HECHO
+
+Tareas 2b.1 a 2b.4 marcadas en `tasks.md`.
+
+### Evidencia TDD
+
+| Tarea | ROJO (visto) | VERDE |
+|---|---|---|
+| 2b.1 | `Failed to load url ./services/controlCalidad ... Does the file exist?` (módulo inexistente); con un esqueleto que devuelve `null`: `controlCalidad.test.ts` **13 rojos de 32**: 7 × `expected 200 to be 403`, 2 × `expected 200 to be 422`, `expected 422 to be 403` (CC-4), `expected [ Array(1) ] to have a length of 3 but got 1`, `c1: expected 200 to be 422` y `Puntos que fallaron en el diagnóstico revisados: expected { …(4) } to not have property` (S-17). Verdes de entrada, anotados: el Coordinador que aprueba, «Decisional/Compras/Administrativa no cuentan», Coordinador inactivo, administrador de respaldo con motivo, gas sin patrón vigente, CC-3, CC-5 y CC-6 (las guardas anteriores ya contestaban) | — |
+| 2b.2 | — | `controlCalidad.test.ts` 33/33 (se añadió la de M14 por HTTP): `services/controlCalidad.ts` (nuevo, 40 líneas), `:131`, `:133`, `:134` en su línea, `exigirFirmaControlCalidad` al final de `ticketService.ts`, `export * from './camposControlCalidad'` al final de `controlCalidad.ts` (shared) |
+| 2b.3 | `npx vitest run apps/desk/server packages/shared`: 4 rojos esperados — `permisos.test.ts` (Servicio Técnico sin cargo y administrador sin motivo), `cargoPermiso.test.ts` S21 (3 diferencias en vez de 1), `transicionesEjecucion.test.ts` (el administrador sin motivo da 422) | `appHarness.ts:74` rellena `CLAVE_MOTIVO_FIRMA_ADMIN`; `permisos.test.ts:64` espera 403 en las de firma para el usuario sin cargo; S21 espera TRES diferencias; 69/69 en los tres ficheros |
+
+### Mutaciones (una a una con un script de la sesión: copia, mutación, prueba, restauración y comparación de bytes; `git diff` idéntico al final)
+
+| Mutación | Prueba que la caza | Rojo |
+|---|---|---|
+| P3 · el 403 de firmante antes del de área (tras el `409` del interruptor) | CC-3 | sí (1) |
+| P4 · el 403 de firmante tras el `422` agregado | CC-4 | sí (1) |
+| P4b · el 403 de firmante tras `valoresConFechasDerivadas` pero antes del `422` | — | **no cae (33/33): NO observable**, ver abajo |
+| P5 · `errCC` fuera del agregado, lanzado aparte tras la persona derivada (`:138-142`) | «los errores van juntos» | sí (1); ver nota |
+| P6 · el `409` del interruptor tras el `422` | CC-2 y CC-6 | sí (2) |
+| P7 · el `409` de estado tras el `422` | CC-1 y CC-5 | sí (2) (la primera versión de CC-5 llevaba un cuerpo válido y no discriminaba: se corrigió y se repitió) |
+| M3 · `intervino` sin `derivadoA` | «M3 · el técnico asignado…» y «el administrador firma de respaldo si el único Coordinador intervino» | sí (2) |
+| M4 · `intervino` sin traza | «M4 · quien envió…» y «el administrador que intervino no firma» | sí (2) |
+| M14 · quitar `\|\| IDS_FIRMA_CC.has(t.id)` (`decisionales.ts:46`) | «M14 · con Decisionales por cargo encendido el 403 es el de firmante» | sí (1) |
+| Mact · usuarios sin `WHERE active = true` | «con el Coordinador inactivo la plaza está vacante…» | sí (1) |
+| Msolo · el veredicto consulta también fuera de las de firma | «sólo se consulta para las dos de firma» | sí (1) |
+| Mgas0 / Mgas1 · gas nunca / siempre exigido (servicio) | «M15 · con patrón vigente…» y «errores juntos» / siete pruebas | sí (2) / sí (7) |
+| Mvia · la vía de firma siempre `null` | M9 y «errores juntos» | sí (2) |
+| Mtraza · sin borrar `CLAVES_SOLO_TRAZA_CC` de `custom_fields` | «las claves del acto no se escriben en tickets.custom_fields» | sí (1) |
+| Mfirma · `exigirFirmaControlCalidad` no lanza | nueve pruebas (M3, M4, Especialista, Técnico, M8, intervino, sin cargo, M14, CC-4) | sí (9) |
+| Mdec · `esFirmaControlCalidad` sólo la aprobación | rechazo sin cargo, M4, rechazo en blanco | sí (3) |
+
+**No observable, y se declara (regla de mutación 1):** (a) P4b: entre la firma y el `422` sólo está `valoresConFechasDerivadas`, que devuelve errores y no lanza, así que su posición relativa a las de firma no cambia ninguna respuesta. (b) La forma literal de P5 del diseño (`errCC` DESPUÉS de la persona derivada, `:138-142`) no puede probarse por HTTP con una persona derivada inválida: `aprobacion_control_calidad` y `rechazo_control_calidad` no declaran el campo de derivación (`transitions.ts:98`), así que `plan.columns[CLAVE_DERIVACION]` nunca existe en ellas. Lo que sí se fija es que `errCC` va DENTRO del agregado (la variante «lanzar `errCC` aparte» cae en «los errores van juntos»). (c) Del `409` del interruptor frente a un `422` de contenido de las de firma: el interruptor sólo quita el envío y `finalizacion_servicio`, que no tienen contenido de firma; se probó frente a un `422` genérico del envío (CC-6). (d) La firma frente a la prioridad, la OVI y la verificación: declarada en el diseño (D6), orden escrito, no probado.
+
+### Códigos de salida
+
+- `npm run typecheck`: 0. `npm run lint`: 0 errores, **165 avisos** (línea base intacta; las pruebas nuevas no usan `as any`: la única conversión es `as unknown as Queryable`).
+- Suites (`apps/desk/server`, `packages/shared`, `packages/zoho-sync`): código real al pie.
+
+### Supuestos (reversibles) y desvíos
+
+- **`export * from './camposControlCalidad'`** al final de `packages/shared/src/controlCalidad.ts` (3 líneas): el servidor necesita `CLAVES_SOLO_TRAZA_CC`, `CLAVE_MOTIVO_FIRMA_ADMIN`, etc. y 1a no las reexportó por `index.ts`; así `index.ts` no cambia y no hay colisión de nombres (`tsc -b` en 0).
+- **La vía de firma no tiene columna**: RQ-TZ-23 se cumple con `performed_by`/`performed_by_id` (de 2a) y el motivo del administrador en `values`; el diseño no pide una columna `via` y no se añadió.
+- **`valoresValidos` rellena el motivo del administrador siempre** (`appHarness.ts:74`): las pruebas que quieren la ausencia lo ponen a `''` explícito.
+- **Interpretación de P4**: el diseño dice «tras `valoresConFechasDerivadas`»; como esa posición no es observable (P4b), P4 se ejerció como «tras el `422` agregado», que es la que protege el criterio «el 403 de firmante gana a un 422 de checklist».
+- `contextoFirma` hace tres consultas por firma (usuarios activos, `derivado_a`, traza); no se relee tras escribir (eso es 2c).
+- El 403 de firmante usa `user.id ?? ''` si el usuario no trae id (no ocurre con sesión real): sin id nadie puede ser «habilitado», sólo el administrador por su vía.
+
+### Citas desplazadas (para el barrido del lote 3)
+
+- `ticketService.ts` (14/5 contra HEAD): ninguna línea se mueve. Cambia el TEXTO de `:6` (import: +`mensajeSinFirma`, `CLAVES_SOLO_TRAZA_CC`, `VeredictoFirma`), `:7` (import del servicio), `:131` (+ `firmaCC` y `exigirFirmaControlCalidad`, tras el comentario de Decisionales), `:133` (+ el `for` que borra `CLAVES_SOLO_TRAZA_CC`) y `:134` (+ `errCC`, en la condición y en el agregado); +9 líneas AL FINAL (`exigirFirmaControlCalidad`). Las citas a `:128`, `:131`, `:133-134` y `:155` conservan número; releerlas por su texto.
+- `appHarness.ts`: 2/2 (`:5` import y `:74` misma línea). `controlCalidad.ts` (shared): +3 al final. `permisos.test.ts`: 2/2 (`:5`, `:64`). `cargoPermiso.test.ts`: 2/2 (título y esperado de S21). Nada más se mueve.
+- El fichero tiene finales de línea mixtos (CRLF y LF) desde antes del lote; los edité sin tocar ninguno.
+
+### Ficheros tocados
+
+Nuevo: `apps/desk/server/services/controlCalidad.ts` (40 líneas). Modificados: `apps/desk/server/services/ticketService.ts`, `apps/desk/server/testing/appHarness.ts`, `apps/desk/server/controlCalidad.test.ts` (+230), `apps/desk/server/permisos.test.ts`, `apps/desk/server/cargoPermiso.test.ts`, `packages/shared/src/controlCalidad.ts`, `tasks.md`, este fichero. `transicionesEjecucion.test.ts` no necesitó cambios (lo arregló `appHarness.ts:74`).
+
+### Medida (antes de estos dos ficheros de documentación)
+
+`git diff --shortstat --no-renames HEAD`: 6 ficheros, 253 inserciones, 12 borrados (265) + 40 líneas nuevas sin trackear (`services/controlCalidad.ts`) = **305**; techo 800, válvula 720. RQ-TS-48 se quedó en este lote.
+
+### Códigos al cierre del lote 2b
+
+`npx vitest run apps/desk/server packages/shared packages/zoho-sync`: código **0**, 277 ficheros pasan (3 omitidos), 4.853 pruebas pasan (11 omitidas). `npm run typecheck`: 0. `npm run lint`: 0 errores, 165 avisos.
