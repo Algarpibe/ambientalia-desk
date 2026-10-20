@@ -107,8 +107,8 @@ Con la configuración de `permissions` RQ-PM-32, `executeTransition` **SHALL** r
 
 #### Scenario: el 422 va junto a los demás de contenido — ROJO
 - GIVEN el mismo ticket
-- WHEN se ejecuta con la descripción en blanco y con otro campo obligatorio ausente
-- THEN un único `422` lista los dos
+- WHEN se ejecuta con la descripción en blanco (su único obligatorio: «ausente» y «en blanco» son excluyentes, así que no cabe un segundo error de contenido)
+- THEN el error va en el `422` agregado de contenido, en un único `errors` que es exactamente el mensaje de blanco (medido en el lote 2)
 
 #### Scenario: el escape sin tomar el atajo — ROJO
 - GIVEN un ticket «Calibración» llegado a `En Proceso` por `ingreso_a_servicio`, cotización y aprobación

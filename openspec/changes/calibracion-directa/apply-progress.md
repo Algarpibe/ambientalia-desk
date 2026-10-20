@@ -123,3 +123,69 @@ El recorrido HTTP (atajo → `envio_control_calidad` → `aprobacion_control_cal
 ### Desviación (aclaración de RQ-TS-56, no de su fondo)
 El encargo y la spec dicen «apagado, además `finalizacion_servicio`». Medido: apagado el conjunto es `rechazo_comercial`, `rechazo_cliente` y `finalizacion_servicio`
 (tres): `rechazo_revision` NO entra, porque el escape `falla_calibracion` también cuelga del interruptor (`controlCalidad.ts:105`) y apagado no es visible. «Además» es válido sólo respecto de los dos rechazos del catálogo previo. La prueba fija esos tres; la redacción de la delta podría decir «apagado, `finalizacion_servicio` en lugar de `rechazo_revision`» (pendiente de ajuste por el orquestador; no toqué la spec).
+
+## Lote 2 — servidor (2.1 a 2.7; la 2.8, códigos en serie, la ejecuta el orquestador)
+
+Intento I4. Base del worktree `0f33d25a`. Ficheros: `apps/desk/server/calibracionDirecta.test.ts` (nuevo, 288), `apps/desk/server/services/ticketService.ts` (19/5), `apps/desk/server/db/sla.ts` (1/1).
+
+### 2.1 Línea base
+Los barridos del lote 1a (`permisos`, `cargoPermiso`, `transicionesEjecucion`, `flujoSoporteRemoto`, `db/sla`, `controlCalidad`) se corrieron con la guarda ya puesta (ver 2.5), 6 ficheros / 157 pruebas en verde. No se corrió una base aislada ANTES de tocar `ticketService.ts` (el estado de partida es el que el orquestador dio por verde al cerrar 1a).
+
+### 2.2 y 2.3 ROJO (antes de tocar `ticketService.ts`)
+`npx vitest run apps/desk/server/calibracionDirecta.test.ts` → **10 caen de 26 (16 verdes)**; causa común: la guarda nueva no existe.
+- `expected 200 to be 409`: «sin OV» (M1), «asociación LIBERADA no cuenta», «otro tipo no pasa» (`c1` Mantenimiento: `[ 'c1', 200 ]`), «otro tipo, el escape», CD-4.
+- `expected 200 to be 422`: descripción en blanco (`[ 'en blanco', 200 ]`), «el 422 es UNO», y la mitad 422 de la prueba de control.
+- `expected { Object (Descripción de la falla) } to not have property` (S-15: la descripción seguía en `tickets.custom_fields`).
+- `expected 403 to be 409` (CD-3: condición (1) incumplida Y sin área contestaba el 403).
+Verdes ya antes del servidor, por la cláusula del lote 1a (`controlCalidad.ts:105`): los dos «apagado → 409», CD-1, CD-2, CD-5, CD-6, las tres vías de OV, S-2, el recorrido a `Por Facturar`, el encadenado de cotización y S-16. **CD-2 y CD-6 sólo se prueban de verdad con las mutaciones P1/M2** (abajo): el rojo previo no es posible porque el interruptor ya existía.
+
+### 2.4 VERDE
+- `sla.ts:105`: `export` en `conAsociacionVigente` (1/1).
+- `ticketService.ts`: `:5` import `tieneOrdenVenta, conAsociacionVigente` de `../db/sla`; `:6` suma `motivoNoCalibracionDirecta, erroresDescripcionFalla, CLAVE_DESCRIPCION_FALLA`; `:128` `; await exigirCalibracionDirecta(db, t, current.row)` tras `exigirInterruptorControlCalidad`; `:133` `delete plan.customFields[CLAVE_DESCRIPCION_FALLA]`; `:134` `errFalla` en el `if` y en `errors`; `exigirCalibracionDirecta` al FINAL (consulta de asociación sólo en el atajo y con las dos columnas vacías). Inserciones 19, borrados 5: las 5 son las líneas editadas dentro de sí mismas; el resto es el auxiliar final. Nada se desplaza.
+- Resultado: `calibracionDirecta.test.ts` 26/26; `tsc -p apps/desk/tsconfig.server.json --noEmit` limpio.
+
+### Códigos y mensajes de las guardas nuevas
+| Guarda | Código | Mensaje |
+|---|---|---|
+| Atajo, tipo ≠ `Calibración` (exacto) | `409` | La calibración directa es sólo para tickets de tipo de servicio Calibración |
+| Atajo, sin OV por ninguna de las tres vías | `409` | La calibración directa exige una orden de venta asignada al ticket |
+| Escape, tipo ≠ `Calibración` | `409` | "Falla en calibración" es sólo para tickets de tipo de servicio Calibración |
+| Interruptor apagado (las dos; ya del lote 1a) | `409` | La calibración directa y su escape dependen de control de calidad, que está apagado |
+| Descripción de sólo espacios | `422` (`errors`) | "Descripción de la falla" no puede estar en blanco |
+| Descripción ausente o vacía (ya existía) | `422` | Falta el campo obligatorio: Descripción de la falla |
+
+### 2.5 Barridos
+No hizo falta tocar nada más: `permisos.test.ts` (38 × 3, 114/1.026), `cargoPermiso.test.ts` S21 (114), `transicionesEjecucion.test.ts` (44) y `flujoSoporteRemoto.test.ts` ya siembran tipo y OV y encienden la app (lote 1a) y siguen verdes con la guarda. Además `db/sla.test.ts`, `controlCalidad.test.ts`, `comentariosVigilados.test.ts`, `ordenVentaUnTicket.test.ts`: verdes.
+
+### 2.6 S-16
+Dos pruebas en `calibracionDirecta.test.ts`: un ticket que tomó el atajo (traza real por HTTP) da el indicador 49 `sin_dato`; contraste con `ingreso_a_servicio` y la misma revisión, que da `valor`.
+
+### 2.7 Mutaciones (`herramientas/mut.mjs`, todas `restaurado=true`; `git status` tras todas: sólo los 3 ficheros del lote)
+| Id | Mutación | Cae |
+|---|---|---|
+| M1 | `tieneOrdenVenta: true` | «sin OV» (M1), «asociación liberada», CD-3 |
+| M1b | sólo `orden_venta` y sin asociación | «la OV por cualquiera de las tres vías» |
+| M1c | sin la vía de asociación | la misma |
+| M7a | `errFalla` fuera del `if` | «ausente, vacía o en blanco», «el 422 es UNO», control 422 |
+| M7b | `errFalla` fuera de `errors` | las dos primeras |
+| M7c | `required: false` en el catálogo | «ausente…» (servidor) y «único obligatorio» (compartido) |
+| M8 | sin el `delete` | «la descripción va a la traza y NO al ticket» |
+| M2 | sin la cláusula de `controlCalidad.ts:105` | 2 «apagado → 409», CD-2, CD-6 y la pura del lote 1a |
+| P1 | guarda nueva antes del interruptor | CD-2 |
+| P2 | guarda nueva tras el `403` de área | CD-3 |
+| P3 | guarda nueva tras el `422` agregado | CD-3 y CD-4 |
+| M5 | `tipoServicio: 'Calibración'` fijo | «otro tipo no pasa», «otro tipo, el escape», CD-4 |
+| M3 | atajo `Ingresado` → `Por Facturar` | recorrido HTTP (RQ-TS-56), «encendido, el atajo deja… En Proceso», «apagar con un ticket ya en el atajo…», catálogo |
+| M3b | atajo también desde `En Proceso` a `Por Facturar` | la propiedad D6 (2: «los tres rechazos» y «son dos») además de lo anterior |
+| M4 | sin `falla_calibracion` | 20 (grafo, cifras, «apagado, el escape»…) |
+| M4b | escape → `Por Facturar` | «el grafo ofrece el escape y su destino cotiza», D6, «el destino lleva a cotizar» (HTTP) |
+Observación: M3 puro (atajo `Ingresado` → `Por Facturar`) NO lo ve la propiedad D6 porque `Ingresado` no se alcanza desde `En Proceso`; lo ve el recorrido HTTP. M3b sí cae en la propiedad.
+
+### Desviaciones del diseño
+1. **«Un único 422 lista los dos» no es realizable con `falla_calibracion`**: su único obligatorio es la descripción, y ausente (`plan.errors`) y en blanco (`errFalla`) son excluyentes; no hay segundo error de contenido posible para una Calibración. La prueba afirma `errors` igual a `["\"Descripción de la falla\" no puede estar en blanco"]` y M7a/M7b/M7c la hacen caer. La spec (RQ-TS-55, escenario) pide «otro campo obligatorio ausente»: queda para ajuste del orquestador.
+2. La firma del auxiliar recibe `row` con `salesorder_id?` opcional (`TicketRow` lo declara opcional).
+3. «Escape sin tomar el atajo» se siembra directo en `En Proceso` (tipo Calibración), no recorriendo ingreso/cotización/aprobación.
+4. 2.1 sin base aislada previa (ver arriba).
+
+### Medida del lote (`git diff --shortstat --no-renames 0f33d25a` + `wc -l` de lo nuevo sin trackear)
+Trackeado: 2 ficheros, 20 inserciones, 6 borrados (26). Sin trackear: `calibracionDirecta.test.ts` 288. **Código y pruebas: 314**; con este apartado y las marcas de `tasks.md` (~+75) queda en ~390, por debajo de 720.

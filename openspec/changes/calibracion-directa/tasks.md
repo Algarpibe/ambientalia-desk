@@ -47,24 +47,24 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
 
 ## Lote 2 — servidor (intento I4; ~310 × 1,8 = 558)
 
-- [ ] 2.1 Línea base: suite del servidor en verde con el lote 1 aplicado.
-- [ ] 2.2 ROJO: `apps/desk/server/calibracionDirecta.test.ts` HTTP (RQ-TS-53/54/55, RQ-PM-38/40/41): apagado, atajo y escape dan `409`
+- [x] 2.1 Línea base: suite del servidor en verde con el lote 1 aplicado.
+- [x] 2.2 ROJO: `apps/desk/server/calibracionDirecta.test.ts` HTTP (RQ-TS-53/54/55, RQ-PM-38/40/41): apagado, atajo y escape dan `409`
       (distinto del de estado); encendido, el atajo deja `En Proceso` con traza; sin OV `409`; OV por cada una de las tres vías (sólo
       `orden_venta`, sólo `salesorder_id`, sólo asociación vigente); otro tipo `409`; contenido de la OV no se lee (S-2); apagar con
       un ticket ya en `En Proceso` no vara `diagnostico_complementario` ni `notif_recotizacion`; escape con descripción (queda en
       `Rev./Diagnostico`, descripción en la traza y NO en el ticket, S-15); ausente, vacía y en blanco → `422`; un único `422` lista dos errores;
       encadenado `escalado_a_revision` → `escalado_a_comercial` → `notif_cliente_comercial`; atajo → `envio_control_calidad` →
       `aprobacion_control_calidad` → `Por Facturar` y `finalizacion_servicio` `409` (RQ-TS-56). Rojo por `404`/ids inexistentes en servidor.
-- [ ] 2.3 ROJO de posición, cada una activando DOS guardas a la vez (regla de mutación 1): CD-1 (estado < interruptor), CD-2 (interruptor <
+- [x] 2.3 ROJO de posición, cada una activando DOS guardas a la vez (regla de mutación 1): CD-1 (estado < interruptor), CD-2 (interruptor <
       condición (1)), CD-3 (condición (1) < `403` de área), CD-4 (tipo del escape < `422`), CD-5 (`403` de área < `422` de la descripción),
       CD-6 (interruptor < `422`). Rojo porque la guarda nueva aún no existe.
-- [ ] 2.4 VERDE: `export ` en `apps/desk/server/db/sla.ts:105` (`conAsociacionVigente`); `exigirCalibracionDirecta` al final de `ticketService.ts`
+- [x] 2.4 VERDE: `export ` en `apps/desk/server/db/sla.ts:105` (`conAsociacionVigente`); `exigirCalibracionDirecta` al final de `ticketService.ts`
       (molde `:285-288`) y llamada en `:128` tras `exigirInterruptorControlCalidad`; `delete plan.customFields[CLAVE_DESCRIPCION_FALLA]` en `:133`;
       `errFalla` en el `if` y en `errors` de `:134`; imports al final de `:5` y `:6`. Consulta de asociación sólo en el atajo y con las dos columnas vacías (D3).
-- [ ] 2.5 Barridos HTTP: `permisos.test.ts` (matriz de transiciones × áreas con las dos nuevas; vigilantes de recuento) y
+- [x] 2.5 Barridos HTTP: `permisos.test.ts` (matriz de transiciones × áreas con las dos nuevas; vigilantes de recuento) y
       `transicionesEjecucion.test.ts` (sembrar tipo «Calibración» y OV; app encendida para las dos).
-- [ ] 2.6 Caracterización de S-16: el indicador 49 «Tiempo de diagnóstico» queda sin dato en tickets del atajo (`bodegaje.ts:94`, `:225-226`; `indicadores.ts:54`, `:133`).
-- [ ] 2.7 Mutaciones: M1 (el servidor pasa `tieneOrdenVenta: true`) y M1b (sólo `orden_venta`): caen «sin OV…» y los casos de una sola vía; M7
+- [x] 2.6 Caracterización de S-16: el indicador 49 «Tiempo de diagnóstico» queda sin dato en tickets del atajo (`bodegaje.ts:94`, `:225-226`; `indicadores.ts:54`, `:133`).
+- [x] 2.7 Mutaciones: M1 (el servidor pasa `tieneOrdenVenta: true`) y M1b (sólo `orden_venta`): caen «sin OV…» y los casos de una sola vía; M7
       (`errFalla` fuera del agregado, o `required: false` en el catálogo): cae «descripción en blanco, 422» y «un único 422»; M8 (sin el `delete` de
       `:133`): cae «la descripción vive en la traza, no en el ticket»; M2 por HTTP: caen CD-2 y CD-6; **P1** (la guarda nueva antes del interruptor)
       cae en CD-2; **P2** (tras el `403` de área, `:129`) cae en CD-3; **P3** (tras el `422` agregado, `:134`) cae en CD-4 y CD-3; atajo para otro tipo (M5): cae «otro tipo no pasa»; atajo que se salta Control de calidad (M3): cae la propiedad y el recorrido HTTP; sin escape (M4) o escape que no cotiza: cae «el destino lleva a cotizar».
