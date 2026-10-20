@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import type { Repo, LineaFuente } from '../citas/detector'
@@ -102,13 +102,11 @@ export interface RepoGitDePrueba {
   borrar(): void
 }
 
-/**
- * Repositorio git temporal y aislado (§8 del diseño): sin las variables de repositorio del padre, sin
- * configuración de sistema ni global, con techo de directorios, identidad por entorno y
- * `core.autocrlf=false`. El `env` que devuelve es el que el CLI tiene que usar.
- */
-export function repoGitTemporal(): RepoGitDePrueba {
-  const raiz = mkdtempSync(path.join(tmpdir(), 'citas-'))
+/** Directorio temporal con su `repo/` vacío y el entorno aislado (§8 del diseño): sin las variables de
+ *  repositorio del padre, sin configuración de sistema ni global, con techo de directorios e identidad
+ *  por entorno. */
+function directorioAislado(prefijo: string): { raiz: string; dir: string; env: NodeJS.ProcessEnv } {
+  const raiz = mkdtempSync(path.join(tmpdir(), prefijo))
   const dir = path.join(raiz, 'repo')
   mkdirSync(dir)
   const configVacia = path.join(raiz, 'gitconfig')
@@ -124,13 +122,61 @@ export function repoGitTemporal(): RepoGitDePrueba {
     GIT_COMMITTER_NAME: 'Autora Única',
     GIT_COMMITTER_EMAIL: 'autora@example.com',
   })
-  const git = (...args: string[]): string => {
+  return { raiz, dir, env }
+}
+
+function lanzadorGit(dir: string, env: NodeJS.ProcessEnv): (...args: string[]) => string {
+  return (...args) => {
     const r = spawnSync('git', args, { cwd: dir, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
     if (r.status !== 0) throw new Error(`git ${args.join(' ')} salió ${r.status}: ${r.stderr}`)
     return r.stdout.trim()
   }
-  git('init', '-q', '-b', 'main')
-  git('config', 'core.autocrlf', 'false')
+}
+
+/**
+ * El molde: un repositorio recién iniciado y configurado UNA vez por fichero de pruebas, cuyo `.git`
+ * copia cada `repoGitTemporal()` en vez de repetir `git init` y `git config`. En Windows cada proceso
+ * git cuesta del orden de una décima de segundo, y los ficheros del hook rozaban el RPC de vitest
+ * (60 s). El molde nunca recibe un commit: cada copia es el mismo repositorio vacío, y ninguna prueba
+ * ve nada de otra.
+ *
+ * `maintenance.auto=false`: sin él, cada `git commit` lanza un `git maintenance run --auto` hijo que
+ * cuesta más que el propio commit, y un repositorio de pruebas nunca llega a su umbral.
+ */
+let molde: string | null = null
+
+function gitDelMolde(): string {
+  if (molde === null) {
+    const { raiz, dir, env } = directorioAislado('citas-molde-')
+    const git = lanzadorGit(dir, env)
+    git('init', '-q', '-b', 'main')
+    git('config', 'core.autocrlf', 'false')
+    git('config', 'maintenance.auto', 'false')
+    molde = dir
+    process.on('exit', () => rmSync(raiz, { recursive: true, force: true }))
+  }
+  return path.join(molde, '.git')
+}
+
+/** El sha de HEAD leído del fichero de su referencia, sin lanzar un `git rev-parse`. `null` si la
+ *  referencia no está como fichero suelto (otro formato de referencias): entonces se le pregunta a git. */
+function shaDeHead(dir: string): string | null {
+  const head = readFileSync(path.join(dir, '.git', 'HEAD'), 'utf8').trim()
+  const referencia = /^ref: (\S+)$/.exec(head)
+  const fichero = path.join(dir, '.git', referencia ? referencia[1] : 'HEAD')
+  if (!existsSync(fichero)) return null
+  const sha = readFileSync(fichero, 'utf8').trim()
+  return /^[0-9a-f]{40}$/.test(sha) ? sha : null
+}
+
+/**
+ * Repositorio git temporal y aislado (§8 del diseño), copiado del molde: `core.autocrlf=false` y el
+ * entorno de `directorioAislado`. El `env` que devuelve es el que el CLI tiene que usar.
+ */
+export function repoGitTemporal(): RepoGitDePrueba {
+  const { raiz, dir, env } = directorioAislado('citas-')
+  cpSync(gitDelMolde(), path.join(dir, '.git'), { recursive: true })
+  const git = lanzadorGit(dir, env)
   return {
     dir,
     env,
@@ -144,7 +190,7 @@ export function repoGitTemporal(): RepoGitDePrueba {
     commit(mensaje) {
       git('add', '-A')
       git('commit', '-q', '--allow-empty', '-m', mensaje)
-      return git('rev-parse', 'HEAD')
+      return shaDeHead(dir) ?? git('rev-parse', 'HEAD')
     },
     borrar() {
       rmSync(raiz, { recursive: true, force: true })
