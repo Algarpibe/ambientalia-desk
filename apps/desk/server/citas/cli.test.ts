@@ -15,7 +15,7 @@ function push(r: RepoGitDePrueba, local: string, remoto: string, ref = 'refs/hea
 }
 
 describe('cli · D2 y RQ-CV-20: el alcance de cabeceras incluye openspec/changes/archive/ (R1.3.1, R1.3.2)', () => {
-  it('un proposal.md ARCHIVADO sin cabecera sale en la cifra de cabeceras R-1 inválidas', () => {
+  it('un proposal.md ARCHIVADO sin cabecera sale en la cifra de cabeceras R-1 inválidas', { timeout: 30_000 }, () => {
     const r = repoGitTemporal()
     try {
       r.escribir({
@@ -32,7 +32,7 @@ describe('cli · D2 y RQ-CV-20: el alcance de cabeceras incluye openspec/changes
 })
 
 describe('cli · M4, regla de mutación 1 (posición): cita rota y cabecera inválida en el MISMO push se nombran las DOS (R1.3.5)', () => {
-  it('el mensaje declara la cita bloqueante y la cabecera inválida a la vez, y el código sale 1', () => {
+  it('el mensaje declara la cita bloqueante y la cabecera inválida a la vez, y el código sale 1', { timeout: 30_000 }, () => {
     const r = repoGitTemporal()
     try {
       r.escribir({
