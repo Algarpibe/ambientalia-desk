@@ -69,17 +69,17 @@ línea base, detector tras el commit), `apply-progress.md`, commit y la medida `
 
 ## Lote 3 — cliente, DEPLOY.md y cierre de citas (intento I8; ~70 × 1,8 = 126)
 
-- [ ] 3.1 Cliente (D4): `getContextoControlCalidad` al final de `api/client.ts`; `TransitionPanel.tsx:3`, `:8`, `:55`, `:57`. Sin prueba
+- [x] 3.1 Cliente (D4): `getContextoControlCalidad` al final de `api/client.ts`; `TransitionPanel.tsx:3`, `:8`, `:55`, `:57`. Sin prueba
       (`.tsx` fuera de la red, F0-00); lo cubre `npm run typecheck`.
-- [ ] 3.2 `DEPLOY.md` §16 al final, tras `:754-774`: qué enciende `CONTROL_CALIDAD_LIBERACION` y qué se rompe; y su prueba de presencia.
-- [ ] 3.3 Tabla de la regla 13 (D5) cerrada decisión a decisión, con línea del servidor, en `apply-progress.md`.
-- [ ] 3.4 Barrido de la regla de mutación 4: `git diff --numstat` con inserciones = borrados en `estados.ts`, `transitions.ts`,
+- [x] 3.2 `DEPLOY.md` §16 al final, tras `:754-774`: qué enciende `CONTROL_CALIDAD_LIBERACION` y qué se rompe; y su prueba de presencia.
+- [x] 3.3 Tabla de la regla 13 (D5) cerrada decisión a decisión, con línea del servidor, en `apply-progress.md`.
+- [x] 3.4 Barrido de la regla de mutación 4: `git diff --numstat` con inserciones = borrados en `estados.ts`, `transitions.ts`,
       `fasesBlueprint.ts`, `columns.ts`, `decisionales.ts`, `ticketService.ts` (salvo el final), `repo.ts`, `app.ts`, `appHarness.ts`,
       `TransitionPanel.tsx`, `schema.sql`, `avisos.ts` y los que se toquen; `config.ts` mueve sólo `:125-126`. Para cada uno,
       `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` con cada resultado leído contra el fichero, más el pase de las abreviadas.
-- [ ] 3.5 Caso A: `estados.ts:111` («24»→26), `:187` («21»→23), `fasesBlueprint.ts:29` («21»→23); releer las citas a `ticketService.ts:128`,
+- [x] 3.5 Caso A: `estados.ts:111` («24»→26), `:187` («21»→23), `fasesBlueprint.ts:29` («21»→23); releer las citas a `ticketService.ts:128`,
       `:131`, `:133-134`, `:155` y `repo.ts:315-317`, `:322-330`.
-- [ ] 3.6 `npm run build` y diferencia del paquete del cliente; cuatro códigos y commit; verify (I9) y archive (I10) con la regla del archivo.
+- [x] 3.6 `npm run build` y diferencia del paquete del cliente; cuatro códigos y commit del lote 3. (Verify, I9, y archive, I10, son fases del ciclo, no tareas de este recuento.)
 
 ## Fuera del recuento (Regla del ciclo 1; **archivar no las da por hechas**)
 

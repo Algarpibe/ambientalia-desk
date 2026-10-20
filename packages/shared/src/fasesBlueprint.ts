@@ -26,7 +26,7 @@ export const FASES: Fase[] = [
 ]
 
 /**
- * La fase de cada uno de los 21 estados. `satisfies Record<EstadoServicio, FaseId>` es la guarda de
+ * La fase de cada uno de los 23 estados. `satisfies Record<EstadoServicio, FaseId>` es la guarda de
  * COMPILACIÓN de las dos que pide D-1 del diseño: una clave que falte o que sobre es error de
  * `tsc` en esta misma declaración, antes de que el generador (Unidad B) llegue a ejecutarse. La
  * otra guarda —el `throw` de `mapaBlueprint.ts` ante una tabla inyectada e incompleta— es la que

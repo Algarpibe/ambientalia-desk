@@ -262,3 +262,92 @@ Nuevo: `apps/desk/server/routes/permisosControlCalidad.ts`. Modificados: `apps/d
 ### Medida
 
 `git diff --shortstat --no-renames HEAD`: 5 ficheros, 159 inserciones, 8 borrados (167) + 18 líneas nuevas sin trackear = **185**; techo 800, válvula 720.
+
+## Lote 3 — cliente, DEPLOY.md y cierre de citas (intento I8) · HECHO
+
+Tareas 3.1 a 3.5 marcadas en `tasks.md`; 3.6 (build, cuatro códigos, commit, verify y archive) queda a cargo de quien cierra. El build ya se corrió (abajo).
+
+### Evidencia TDD
+
+| Tarea | ROJO | VERDE |
+|---|---|---|
+| 3.1 cliente | N/A por decisión de Gerencia (`.tsx` fuera de la red, F0-00): sin prueba. Lo cubren `npm run typecheck` (tipo de `getContextoControlCalidad`, import de `visibleConControlCalidad`), la lógica de `visibleConControlCalidad` (`packages/shared/src/controlCalidad.test.ts`) y la ruta (`apps/desk/server/controlCalidad.test.ts`) | `client.ts` +5 líneas AL FINAL; `TransitionPanel.tsx` 4/4 en `:3`, `:8`, `:55`, `:57` (misma línea); `typecheck` 0 |
+| 3.2 `DEPLOY.md` §16 | Rojo NO visto antes de escribir el texto (la sección se redactó primero). Se obtuvo después por la regla de mutación 2, ensuciando el FICHERO VIGILADO: `**Nace cerrado**` → `**Nace abierto**` en `DEPLOY.md` pone en rojo «nace cerrado, se enciende en enero…» (1 rojo de 5); restaurado, `cmp` idéntico | `apps/desk/server/deployControlCalidad.test.ts` (nuevo, 43 líneas): 5/5 |
+
+Cliente, en sus líneas: `TransitionPanel.tsx:55` pide una vez `getContextoControlCalidad()` (`useState(false)`; si falla, apagado y decide el `409`); `:57` añade `&& visibleConControlCalidad(t.id, controlCalidad)`; `:3` y `:8` importan. Nada más en el cliente: firma, checklist, gas, motivos y prioridad los impone el servidor.
+
+**No observable, y se declara (regla de mutación 1):** el orden de los dos filtros de `:57` (cargo/área y interruptor) es un `&&` de dos booleanos puros: moverlos no cambia ninguna respuesta, y el cliente no tiene prueba que lo vigile.
+
+### Regla 13 — tabla cerrada decisión a decisión (regla de mutación 3)
+
+Líneas del servidor verificadas contra el árbol de este lote.
+
+| Decisión que toma el cliente | Línea del servidor que la impone |
+|---|---|
+| Oculta `envio_control_calidad` con `activo` falso (`TransitionPanel.tsx:57`) | `apps/desk/server/services/ticketService.ts:128` llama a `exigirInterruptorControlCalidad` (`ticketService.ts:285-288`): `409` con `motivoQuitadaPorInterruptor` |
+| Oculta `finalizacion_servicio` con `activo` verdadero (`TransitionPanel.tsx:57`) | `ticketService.ts:128`, la misma función: `409` |
+| Sin respuesta de la ruta, `activo = false` (`TransitionPanel.tsx:55`) | Ninguna: degradación de comodidad. Decide el `409` de `ticketService.ts:128`. La ruta (`apps/desk/server/routes/permisosControlCalidad.ts:16`) lee `config.controlCalidadLiberacion === true`, igual que la guarda |
+| Ofrece las dos de firma a todo Servicio Técnico, sin filtrar firmante (`TransitionPanel.tsx:57`) | No decide: `403` de área en `ticketService.ts:129-130` y `403` de firmante en `ticketService.ts:131` (`exigirFirmaControlCalidad`, `ticketService.ts:295-297`) |
+| Asterisco en las tres casillas del checklist y en «Motivo del rechazo» (`TransitionPanel.tsx:209`, `f.required`) | `apps/desk/server/transitionExec.ts:76-77` (obligatorio; un checkbox debe estar marcado) traducido a `422` en `ticketService.ts:134`; los espacios del motivo del rechazo, `erroresControlCalidad` en `ticketService.ts:134` |
+| Casilla de gas y «Motivo de la firma del administrador» sin asterisco (se ven para todos) | No decide: `ticketService.ts:134` los exige cuando tocan (gas con patrón vigente; motivo con la vía de administrador) |
+| No pide prioridad en el rechazo | `ticketService.ts:133` (`prioridadTrasRechazo`: `High`, sin bajar `Urgent`) |
+| No hay motivo heredado que bloquear en el envío tras un rechazo (no se guarda en el ticket) | `ticketService.ts:133` (borra `CLAVES_SOLO_TRAZA_CC` de `custom_fields`) |
+| Enseña «Fecha Finalización ST» bloqueada con la del primer envío (S-16; mecanismo previo, `TransitionPanel.tsx:32-36`) | Comodidad, no guarda: el campo es reentrante (`packages/shared/src/invariantesGrafo.test.ts:137`) y la traza guarda todos los valores; no hay decisión que imponer |
+
+Ninguna decisión del cliente queda sin contrapartida o sin declarar que no decide.
+
+### Barrido de la regla de mutación 4
+
+`barrido.mjs` y `citas.mjs` de `herramientas/` sólo comparan citas a `openspec/specs/*/spec.md` y a un `.md` dado: no sirven para citas a código. Se escribió un barrido propio en el directorio de trabajo de la sesión, fuera del repositorio: `git diff -U0 --no-renames e8eaea23` da, por fichero de código tocado, las líneas de PARTIDA cambiadas y las desplazadas; `git grep --untracked --exclude-standard` recoge toda cita `ruta:N(-M)` y la abreviada heredada en la misma línea física, más un segundo pase de abreviadas a ±4 líneas de una completa. Se descartan las citas escritas por la propia rama (162, en líneas que ella añadió) y las que apuntan más allá del final del fichero de partida. Se barrió TODO el repositorio, con `openspec/`, `docs/`, `CLAUDE.md` y `openspec/changes/archive/`.
+
+**Fichero a fichero (inserciones : borrados contra `e8eaea23`):** `estados.ts` 1:1 (más 2:2 de este lote, comentarios), `fasesBlueprint.ts` 1:1 (más 1:1), `columns.ts` 1:1, `transitions.ts` 2:2, `decisionales.ts` 2:2, `appHarness.ts` 4:4, `app.ts` 2:2, `TransitionPanel.tsx` 4:4, `repo.ts` 7:7: ninguna línea se mueve. `ticketService.ts` 28:8: las 20 de más están AL FINAL (`:285` en adelante). `config.ts` 2:1: SÓLO `:125-126` bajan a `:126-127`. `schema.sql` +4, `avisos.ts` +12, `client.ts` +5, todo al final. `repo.test.ts` +13 en mitad del fichero (la prueba de `performed_by_id`): es el único fichero que desplaza líneas y sólo lo citan registros archivados.
+
+**Resultado:** 1.169 citas con una línea citada cambiada de contenido o desplazada: **987 en `openspec/changes/archive/`** y **182 fuera**.
+
+| Grupo (fuera del archivo) | Citas | Qué afirma la frase | Caso | Acción |
+|---|---|---|---|---|
+| `ticketService.ts:125-134`, `:128`, `:131`, `:133`, `:134`, `:155` y rangos que los contienen (specs vivas, pruebas, `DEPLOY.md`, `config.yaml`, `CLAUDE.md`, partes) | 96 | Dónde está una guarda o el `422` agregado, o que X va antes que Y | **A, sigue cierta**: la línea conserva su texto y gana el de F1C-07 en la misma línea (comprobado: el texto de partida es subsecuencia del de hoy) | Ninguna. Las frases que cuentan lo que hace la línea se leyeron: ninguna dice «sólo» ni cuenta los errores del agregado |
+| `ticketService.ts:238` | 2 (`F1B-09`, `ENTRADA.md`) | «en las otras 43 transiciones», «hoy son 40» | **B**, fechado | Ninguna; `ENTRADA.md` está vedado |
+| `app.ts:22`, `:55-61`, `:61` | 11 | Que las rutas se montan en esa línea, antes del 404 de `/api` | A, cierta (la línea añade `registerPermisosControlCalidadRoutes`); `:55-61` es B anclada | Ninguna |
+| `TransitionPanel.tsx:56-57`, `:57` | 19 | Que el filtro por área vive ahí; es comodidad bajo la regla 13 | A, cierta (`:57` conserva el filtro y añade el del interruptor); las de `F0-00` y `F0-01` son B | Ninguna |
+| `transitions.ts:74`, `:262`, `:65-74`, `:73-74`, `:74-75` | 11 | `cfDate` obligatorio por defecto; el docblock «las otras 32» | A (`:74` sólo añade un import) / B (la cuenta «32» la corrigió F0-01 y no es de esta rama) | Ninguna |
+| `estados.ts:99` | 1 | `Anulado` va en la línea de `Ticket creado` para no desplazar citas | A, cierta (`Control de calidad` entra en la misma línea) | Ninguna |
+| `repo.ts:283-286`, `:315`, `:315-317`, `:317` | 9 (4 con ancla `en 17ddfec`) | `performed_by` y `values` van en esa sentencia | A / B anclada; siguen ciertas (`performed_by_id` entra en la misma sentencia) | Ninguna |
+| `appHarness.ts:46`, `:49` | 2 | Andamiaje de pruebas | A, cierta | Ninguna |
+| `invariantesGrafo.test.ts:50-54`, `:137`, `:137-149`, `:172`, `:172-174` | 12 | Dónde se fija el recuento / la lista de reentrantes | A, cierta (el lugar es el mismo; cambian los números); las de `docs/` y `bodegaje.ts:13` son B | Ninguna. **Anotado, no de esta rama:** `bodegaje.test.ts:105` dice «once hoy» y a la partida ya eran nueve |
+| `permisos.test.ts:43`, `:72-73`, `:77-82`, `:89-90`, `:89-109`; `transicionesEjecucion.test.ts:272-285`; `cifrasAncladas.test.ts:24`; `mapaBlueprint.test.ts:46`; `registro.test.ts:218-220`; `bodegaje.test.ts:111-116`; `migrate.test.ts:374-376` | 18 | Dónde está la matriz o el recuento de una prueba | A, cierta (mismo lugar, otros números) o B (anclada o de un parte fechado: `F1B-09`, `F0-01`) | Ninguna |
+| `config.ts:125` | 1 | **Falso positivo del barrido**: el `:125` abreviado de `openspec/specs/zoho-sync/spec.md:755` es de `DEPLOY.md`, no de `config.ts` | — | Ninguna |
+| `openspec/changes/archive/**` (987: `ticketService.ts` 372, `migrate.test.ts` 113, `permisos.test.ts` 78, `registro.test.ts` 72, `app.ts` 65, `repo.test.ts` 48, `TransitionPanel.tsx` 37 y el resto) | 987 | Registros archivados, cada uno de SU momento | **B por naturaleza** | Ninguna: vedado y, además, renumerar volvería falsa la frase |
+
+Las 30 citas con ancla `en <sha>` quedan fuera de toda reparación (se leen en su revisión). **Segundo pase de abreviadas** (`:N` sin fichero a ±4 líneas de una completa, fuera del archivo): `cargoPermiso.test.ts:18`/`:207`, `controlCalidad.test.ts:106`/`:329`, specs vivas, `config.yaml:474`/`:602` y partes fechados; todas de tipo A cierto o B fechado.
+
+**Reparadas (caso A, falsas hoy, en ficheros de la rama):** tres, las que el diseño nombraba; son comentarios con una cuenta mal, cada una en su línea, sin desplazar nada:
+- `packages/shared/src/estados.ts:111`: «Los 24 estados» → «Los 26 estados (25 hasta F1C-07)». La partida ya decía 24 sobre 25: la cifra era caduca antes de esta rama.
+- `packages/shared/src/estados.ts:187`: «los 21 desde F1C-01» → «los 23 desde F1C-07 (21 desde F1C-01)».
+- `packages/shared/src/fasesBlueprint.ts:29`: «los 21 estados» → «los 23 estados».
+Medido con `tsx`: `ESTADOS.length` 26 y `ESTADOS_SERVICIO.length` 23. `estados.ts:3` («Hasta F0-04 los 21 estados») es B, fechada, y se queda.
+
+**Para Supervisión (ficheros vedados):** ninguna reparación obligatoria. Anotaciones sin urgencia: (1) `CLAUDE.md:363` y `openspec/config.yaml:474` citan `ticketService.ts:132`/`:134` para las fechas derivadas y siguen ciertas; (2) `docs/sdd/ENTRADA.md:2148` cita `ticketService.ts:238` («las otras 43… hoy son 40»): registro fechado, no se renumera (la cifra del comentario es hoy 47); (3) la línea `.env.example` de `CONTROL_CALIDAD_LIBERACION` sigue pendiente (fuera del recuento).
+
+**Lo que el barrido NO caza (se declara):** el detector del proyecto comprueba que la línea EXISTA y no esté vacía, no que DIGA lo que la frase afirma; el barrido propio compara contra la partida y mira si el texto se conserva, no si la frase sigue siendo verdad. Las 96 de `ticketService.ts` se leyeron por muestreo de sus frases (todas las de código, specs vivas y `config.yaml`; las de `docs/` por título), no una a una.
+
+### Códigos de salida
+
+- `npm run typecheck`: **0**. `npm run lint`: **0** errores, **165** avisos (línea base intacta).
+- `npm run build`: **0**; `dist/assets/index-CVU9N07K.js` **422,92 kB** (gzip 121,32 kB). La producción de hoy es `index-JtLEpPmB.js` (medida el 2026-10-18); el nombre cambia por el contenido.
+- `npx vitest run packages/shared apps/desk/server/deployControlCalidad.test.ts apps/desk/server/controlCalidad.test.ts`: código **0**, 61 ficheros, 1.632 pruebas.
+- `npx vitest run apps/desk/server packages/zoho-sync --maxWorkers=4`: código **0**, 219 ficheros pasan (3 omitidos), 3.290 pruebas (11 omitidas). **Declarado:** dos pasadas (ocho trabajadores por defecto, y una de cuatro) terminaron en código 1 SIN ninguna prueba fallida, por un `Timeout calling "onTaskUpdate"` del trabajador de vitest (carga de la máquina); la misma suite dio código 0 con y sin la prueba nueva.
+
+### Supuestos (reversibles)
+
+- Se añadió `deployControlCalidad.test.ts` (la tarea 3.2 pedía «su prueba de presencia»); no vigila `.env.example`.
+- `getContextoControlCalidad` devuelve `{ activo: boolean }` sin tipo compartido: la ruta del servidor es la única fuente.
+- §16 remite a §15 para el orden con `DECISIONALES_POR_CARGO` y nombra el aviso a administradores (S-18).
+
+### Ficheros tocados
+
+Nuevo: `apps/desk/server/deployControlCalidad.test.ts`. Modificados: `apps/desk/src/api/client.ts`, `apps/desk/src/components/TransitionPanel.tsx`, `DEPLOY.md`, `packages/shared/src/estados.ts` (comentarios `:111`, `:187`), `packages/shared/src/fasesBlueprint.ts` (comentario `:29`), `tasks.md`, este fichero.
+
+### Medida
+
+`git diff --shortstat --no-renames HEAD` (antes de este fichero y de `tasks.md`): 5 ficheros, 39 inserciones, 7 borrados (46) + 43 líneas nuevas sin trackear = **89** de código, prueba y `DEPLOY.md`; techo 800, válvula 720.
