@@ -107,7 +107,7 @@ capabilities:
     status_at_start: "as-built parcial"
 
   - name: transitions-st
-    covers: "Las 33 transiciones y 22 estados del flujo de servicio técnico (transitions.ts, transitionExec.ts)"
+    covers: "Las 36 transiciones y 23 estados del flujo de servicio técnico (transitions.ts, transitionExec.ts)"
     status_at_start: "as-built completo"
 
   - name: transitions-equipo-nuevo
