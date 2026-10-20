@@ -35,14 +35,14 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
 
 ## Lote 1b — condición (3) como propiedad del grafo (intento I3b; ~60 × 1,8 = 108)
 
-- [ ] 1b.1 ROJO: `entradasAPorFacturarSinControlCalidad` en la prueba de `invariantesGrafo.test.ts` (RQ-TS-56, D6): con `activo = true` el
+- [x] 1b.1 ROJO: `entradasAPorFacturarSinControlCalidad` en la prueba de `invariantesGrafo.test.ts` (RQ-TS-56, D6): con `activo = true` el
       conjunto es exactamente `rechazo_comercial`, `rechazo_cliente`, `rechazo_revision`, las tres Decisionales; con `activo = false`, además
       `finalizacion_servicio`; sin `falla_calibracion` en memoria, son dos. Rojo por función inexistente.
-- [ ] 1b.2 VERDE: función al final de `controlCalidad.ts` (tras el `export *` de `:114`), BFS por transiciones visibles sin entrar en `Control de calidad`.
-- [ ] 1b.3 Mutación 2 sobre el catálogo en memoria (M3): añadir `{ ...finalizacion_servicio, id: 'atajo_sucio' }` o una Operativa de
+- [x] 1b.2 VERDE: función al final de `controlCalidad.ts` (tras el `export *` de `:114`), BFS por transiciones visibles sin entrar en `Control de calidad`.
+- [x] 1b.3 Mutación 2 sobre el catálogo en memoria (M3): añadir `{ ...finalizacion_servicio, id: 'atajo_sucio' }` o una Operativa de
       `Rev./Diagnostico` a `Por Facturar`: el conjunto gana una id y la prueba cae. Y la variante «el interruptor deja de quitar
       `finalizacion_servicio`» (M2 en la propiedad). Rojas y restauradas.
-- [ ] 1b.4 Escenario de RQ-TS-56 «recorre atajo, `envio_control_calidad` y `aprobacion_control_calidad` hasta `Por Facturar`» queda para el HTTP del lote 2; aquí sólo el grafo.
+- [x] 1b.4 Escenario de RQ-TS-56 «recorre atajo, `envio_control_calidad` y `aprobacion_control_calidad` hasta `Por Facturar`» queda para el HTTP del lote 2; aquí sólo el grafo.
 - [ ] 1b.5 Códigos EN SERIE: typecheck, lint, detector, test. Estimación: **~108 líneas (bajo 800)**.
 
 ## Lote 2 — servidor (intento I4; ~310 × 1,8 = 558)

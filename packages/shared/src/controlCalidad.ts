@@ -4,7 +4,7 @@ import {
   CLAVE_GAS_CC, CLAVE_MOTIVO_FIRMA_ADMIN, CLAVE_MOTIVO_RECHAZO_CC, ID_APROBACION_CC, ID_ENVIO_CC, ID_RECHAZO_CC, IDS_FIRMA_CC,
 } from './camposControlCalidad'
 import { tienePatronVigente, type GasPatronLeido } from './gasPatron'
-import { tipoEventoDeTransicion } from './tipoEvento'; import { IDS_CALIBRACION_DIRECTA } from './calibracionDirecta' // F1C-08: en esta línea para no desplazar citas
+import { tipoEventoDeTransicion } from './tipoEvento'; import { IDS_CALIBRACION_DIRECTA } from './calibracionDirecta'; import type { Transition } from './transitions' // F1C-08: en esta línea para no desplazar citas
 
 /**
  * control-calidad-liberacion (F1C-07, D2): regla pura de quién firma el control de calidad, qué contenido exige la firma,
@@ -112,3 +112,22 @@ export function visibleConControlCalidad(transitionId: string, activo: boolean):
 
 // Las claves y etiquetas del acto las leen el servidor y el cliente por aquí (F1C-07, lote 2b): una sola puerta, sin tocar `index.ts`.
 export * from './camposControlCalidad'
+
+/**
+ * F1C-08 (RQ-TS-56, D6, S-14): ids de las transiciones visibles con `activo` cuyo destino es `Por Facturar` y alguno de cuyos
+ * orígenes se alcanza desde `En Proceso` por transiciones visibles SIN entrar en `Control de calidad` (BFS). Es la condición (3)
+ * como propiedad del grafo: encendido son sólo los rechazos Decisionales; apagado, además `finalizacion_servicio`.
+ */
+export function entradasAPorFacturarSinControlCalidad(ts: readonly Transition[], activo: boolean): string[] {
+  const visibles = ts.filter((t) => visibleConControlCalidad(t.id, activo))
+  const alcanzados = new Set<string>(['En Proceso'])
+  const cola = ['En Proceso']
+  for (let e = cola.shift(); e !== undefined; e = cola.shift()) {
+    for (const t of visibles) {
+      if (!t.from.includes(e) || t.to === 'Control de calidad' || alcanzados.has(t.to)) continue
+      alcanzados.add(t.to)
+      cola.push(t.to)
+    }
+  }
+  return visibles.filter((t) => t.to === 'Por Facturar' && t.from.some((f) => alcanzados.has(f))).map((t) => t.id)
+}

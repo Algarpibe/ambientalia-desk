@@ -137,7 +137,7 @@ La condición (3) se lee como «el trabajo terminado pasa por Control de calidad
 #### Scenario: las entradas sin Control de calidad son los tres rechazos — ROJO
 - GIVEN el catálogo real y el interruptor encendido
 - WHEN se calculan las transiciones a `Por Facturar` alcanzables desde `En Proceso` sin entrar en `Control de calidad`
-- THEN son exactamente `rechazo_comercial`, `rechazo_cliente` y `rechazo_revision`, las tres Decisionales; apagado, además `finalizacion_servicio`
+- THEN son exactamente `rechazo_comercial`, `rechazo_cliente` y `rechazo_revision`, las tres Decisionales; apagado, `rechazo_comercial`, `rechazo_cliente` y `finalizacion_servicio` (el escape también cuelga del interruptor, así que `rechazo_revision` no se alcanza; medido en el lote 1b)
 
 #### Scenario: ensuciar el catálogo pone la propiedad en rojo — ROJO (mutación 3)
 - GIVEN el catálogo con un atajo de prueba cuyo destino es `Por Facturar` (o con `finalizacion_servicio` sin quitar por el interruptor)

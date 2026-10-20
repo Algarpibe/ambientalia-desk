@@ -94,3 +94,32 @@ Todos editados dentro de su línea (ins = del); en cada caso las dos nuevas se e
 - `flujoSoporteRemoto.test.ts` P8 (1/1): era sólo el contador (`expected 50 to be 48`), no un defecto del catálogo ni de la regla: las nuevas dan 409 desde `Solicitud Soporte`, y sólo `asignacion_soporte` da 200. Verde.
 - `reconciliacion/registro.test.ts` 11f/05g (2/2): «en curso» pasa de NUEVE a DIEZ con F1C-08 (`calibracion-directa`, `cierra: si`, sin archivar). Verde.
 Tras esto: `typecheck` 0, eslint limpio sobre los cinco ficheros.
+
+## Lote 1b — hecho (1b.1 a 1b.4; la 1b.5, códigos en serie, la ejecuta el orquestador)
+
+Intento I3b. Base del worktree `4f835bd0`. Ficheros: `packages/shared/src/controlCalidad.ts` (+función al FINAL; el import de tipo `Transition` en la línea 7, ya existente) y `packages/shared/src/invariantesGrafo.test.ts` (import en la línea 6 y describe nuevo al final).
+
+### 1b.1 ROJO
+Antes de escribir la función: `npx vitest run packages/shared/src/invariantesGrafo.test.ts` → 5 caen de 35 (30 verdes), todas con
+`TypeError: (0 , entradasAPorFacturarSinControlCalidad) is not a function or its return value is not iterable`. Causa: función inexistente.
+Cinco pruebas: encendido (tres rechazos, los tres Decisionales), apagado, sin `falla_calibracion` (dos), y las dos de catálogo ensuciado en memoria (M3).
+
+### 1b.2 VERDE
+`entradasAPorFacturarSinControlCalidad(ts, activo)` al final de `controlCalidad.ts` (tras el `export *`): BFS desde `En Proceso` por transiciones visibles
+(`visibleConControlCalidad`) sin entrar en `Control de calidad`; devuelve las ids visibles con `to === 'Por Facturar'` y algún `from` alcanzado. Sin ciclo de módulos (`import type`).
+Resultado: `invariantesGrafo.test.ts` 35/35 y `controlCalidad*` verdes.
+
+### 1b.3 Mutaciones (`herramientas/mut.mjs`, restauradas, `restaurado=true`)
+| Id | Mutación | Cae |
+|---|---|---|
+| M2 (propiedad) | `finalizacion_servicio && activo` → `&& false` (el interruptor deja de quitarla) | 2: «encendido: exactamente los tres rechazos…» y «sin falla_calibracion… son dos» |
+| BFS entra en QA | el BFS deja de excluir `Control de calidad` | 2: las mismas |
+| M3 en memoria | atajo sucio (`{ ...finalizacion_servicio, id: 'atajo_sucio' }`) sumado al catálogo de la prueba «son dos» | 1: «sin falla_calibracion… son dos» |
+Las dos pruebas M3 propias del describe (atajo sucio desde `En Proceso`; Operativa desde `Rev./Diagnostico`) ensucian el catálogo en memoria y afirman que el conjunto gana la id: están en verde porque la función SÍ detecta el crecimiento.
+
+### 1b.4
+El recorrido HTTP (atajo → `envio_control_calidad` → `aprobacion_control_calidad` → `Por Facturar`) queda para el lote 2; aquí sólo el grafo.
+
+### Desviación (aclaración de RQ-TS-56, no de su fondo)
+El encargo y la spec dicen «apagado, además `finalizacion_servicio`». Medido: apagado el conjunto es `rechazo_comercial`, `rechazo_cliente` y `finalizacion_servicio`
+(tres): `rechazo_revision` NO entra, porque el escape `falla_calibracion` también cuelga del interruptor (`controlCalidad.ts:105`) y apagado no es visible. «Además» es válido sólo respecto de los dos rechazos del catálogo previo. La prueba fija esos tres; la redacción de la delta podría decir «apagado, `finalizacion_servicio` en lugar de `rechazo_revision`» (pendiente de ajuste por el orquestador; no toqué la spec).
