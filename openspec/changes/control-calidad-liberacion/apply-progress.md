@@ -49,3 +49,44 @@ Modificados: `packages/shared/src/{estados,fasesBlueprint,columns,decisionales,t
 - **Rojo anterior, fuera del lote:** `registro.test.ts` «11f/05g» espera ocho «en curso» y ve F1C-07 (nueve) desde que existe `openspec/changes/control-calidad-liberacion/proposal.md`; se arregla al decidir cómo cuenta la reconciliación una tanda en curso (la regla de avance exige archivo). No lo toqué: no está en el lote 1a.
 - **Supuesto reversible:** `IDS_FIRMA_CC` y las constantes viven en `camposControlCalidad.ts` y no se reexportan por `index.ts` en 1a (el diseño sólo exporta `controlCalidad.ts`, lote 1b); `controlCalidad.ts` las reexportará o el servidor las importará de la ruta del fichero.
 - `Fecha Finalización ST` pasa a campo reentrante obligatorio (S-16 ya lo preveía): tres vigilantes lo cuentan.
+
+## Lote 1b — regla pura `controlCalidad.ts` (intento I4) · HECHO
+
+Tareas 1b.1 a 1b.3 marcadas en `tasks.md`.
+
+### Evidencia TDD
+
+| Tarea | ROJO (visto) | VERDE |
+|---|---|---|
+| 1b.1 prueba | `Failed to load url ./controlCalidad ... Does the file exist?`, `Tests no tests` (módulo inexistente) | — |
+| 1b.2 código | — | `controlCalidad.test.ts` 35/35; `controlCalidad.ts` (111 líneas) y `export * from './controlCalidad'` al final de `index.ts` |
+
+### Mutaciones (una a una con `node`, restauración comprobada por igualdad de contenido; ninguna en paralelo)
+
+| Mutación | Prueba que la caza | Rojo |
+|---|---|---|
+| M3 sin `derivadoA` | «el técnico asignado intervino»; «quedaHabilitadoLibre ignora al habilitado que intervino» | sí (2) |
+| M4 sin traza | «el autor de una fila Operativa intervino» + 4 más | sí (5) |
+| M5 todo tipo conocido interviene | «Decisional, Compras / Logístico, Administrativo… NO son intervención» | sí (1) |
+| M6 vacante siempre | «con un Coordinador activo, sólo el Coordinador» + 7 más | sí (8) |
+| M7 Técnico habilitado | «vacante… nunca un Técnico», «un Técnico nunca firma» + 2 | sí (4) |
+| M8 admin sin `quedaHabilitadoLibre` | «con otro habilitado libre, el administrador no firma» | sí (1) |
+| M9 sin error de motivo | «el administrador de respaldo sin motivo…», «los errores van juntos» | sí (2) |
+| M11b `contarRetrabajos` cuenta todas | «cuenta sólo los rechazos» + 1 | sí (2) |
+| M13 siempre por nombre | «fila con id: se compara por id…» + 3 | sí (4) |
+| M15a gas siempre / M15b gas nunca | «sin patrón vigente… no se exige» / «con patrón vigente se exige» | sí (2) / sí (1) |
+| Prioridad: el rechazo no sube / Urgent baja | «el rechazo sube a High salvo Urgent» | sí / sí |
+| Inactivo cuenta como Coordinador (vacante mal medida) | «la vacante se mide sobre los activos» + 1 | sí (2) |
+| Admin que intervino firma | «si el administrador intervino, no firma» | sí (1) |
+| Visibilidad: `finalizacion_servicio` siempre visible | «el envío sólo se ve…», «motivoQuitada…» | sí (2) |
+
+### Códigos de salida
+
+`npm run typecheck`: 0. `npx vitest run packages/shared`: 59 ficheros, 1581 pruebas, 0. `npx eslint` sobre `controlCalidad.ts`, `controlCalidad.test.ts`, `index.ts`: 0.
+
+### Supuestos (reversibles)
+
+- «Inactivo» se modela como ausente de `usuariosActivos` (el servidor sólo le pasa activos); la regla pura no filtra por activo. La prueba lo fija por ausencia.
+- Mensajes de `mensajeSinFirma` y `motivoQuitadaPorInterruptor` son texto propio de 1b (el diseño no los fija); 2b/3 pueden afinarlos.
+- `erroresContenidoControlCalidad`: «Motivo del rechazo» ausente NO da error (lo da `transitionExec.ts:76-77`); sólo el de espacios.
+- `index.ts`: una línea al final; no se desplaza ninguna cita.

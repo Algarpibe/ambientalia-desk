@@ -23,10 +23,10 @@ línea base, detector tras el commit), `apply-progress.md`, commit y la medida `
 
 ## Lote 1b — regla pura (intento I4; ~340 × 1,8 = 612)
 
-- [ ] 1b.1 ROJO: `packages/shared/src/controlCalidad.test.ts` (RQ-PM-33, -34 pura, -37 visibilidad, RQ-TZ-24, gas, prioridad, D2).
+- [x] 1b.1 ROJO: `packages/shared/src/controlCalidad.test.ts` (RQ-PM-33, -34 pura, -37 visibilidad, RQ-TZ-24, gas, prioridad, D2).
       Rojo por módulo inexistente.
-- [ ] 1b.2 VERDE: `packages/shared/src/controlCalidad.ts` (firma de D2) y `export * from './controlCalidad'` al final de `index.ts`.
-- [ ] 1b.3 Mutaciones en shared: M3 (sin `derivadoA`) y M4 (sin traza): «quien intervino no firma». M5 (`!== null`): «Decisional,
+- [x] 1b.2 VERDE: `packages/shared/src/controlCalidad.ts` (firma de D2) y `export * from './controlCalidad'` al final de `index.ts`.
+- [x] 1b.3 Mutaciones en shared: M3 (sin `derivadoA`) y M4 (sin traza): «quien intervino no firma». M5 (`!== null`): «Decisional,
       Compras / Logístico y Administrativo no son intervención». M6 (vacante siempre): «con Coordinador activo, ni el Especialista ni
       el Director». M7 (Técnico habilitado): «vacante… no un Técnico». M8 (admin sin `quedaHabilitadoLibre`): «con un habilitado libre
       el administrador no firma». M9 (sin error de motivo): «sin motivo, 422». M11b (`contarRetrabajos` cuenta todas): «cuenta sólo los
