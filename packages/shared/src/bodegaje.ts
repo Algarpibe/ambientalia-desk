@@ -9,7 +9,7 @@
 // escrita en `reentrancia.ts:24` —«Los KPIs de G.6 se calculan sobre `ticket_transitions.values`, no
 // sobre `tickets.*`»— y éste es el primer módulo obligado a obedecerla. CUATRO de los cinco
 // operandos que ya existían son reentrantes: `Fecha Orden De Venta`, `Fecha Orden de Compra`,
-// `Fecha de Cotización` y `Fecha Remisión de Salida` están en los diez del invariante 6
+// `Fecha de Cotización` y `Fecha Remisión de Salida` están en los doce del invariante 6
 // (`invariantesGrafo.test.ts:137-149`), y los cuatro son además OBLIGATORIOS, así que la segunda
 // pasada por el ciclo PISA SIEMPRE. La columna guarda el último valor; el historial, todos.
 //

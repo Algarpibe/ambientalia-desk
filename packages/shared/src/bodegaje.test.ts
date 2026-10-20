@@ -102,7 +102,7 @@ describe('C9 · los tres bodegajes de M1.10', () => {
    *
    * `habilitado_para_entrega` va de `Liberación Comercial` a `Por Entregar`, y ninguno de los dos
    * está en los tres ciclos del grafo (`reentrancia.ts:189`). Por eso el campo nuevo NO entra en los
-   * reentrantes del invariante 6 (diez hasta F1C-05, once hoy) y `invariantesGrafo.test.ts:137-149` sigue verde sin tocarlo.
+   * reentrantes del invariante 6 (diez hasta F1C-05, doce hoy) y `invariantesGrafo.test.ts:137-149` sigue verde sin tocarlo.
    *
    * Se afirma aquí porque el que añade un campo de fecha es esta tanda: si mañana alguien mueve esa
    * transición dentro de un ciclo, el rojo tiene que salir junto al campo, no a tres ficheros de

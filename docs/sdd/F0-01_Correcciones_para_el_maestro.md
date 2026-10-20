@@ -1706,3 +1706,36 @@ no se cierra. No afirma que esté en producción: depende del despliegue y de la
 **Lo que esta entrada NO pide.** No toca los tickets ya creados (conservan su prefijo, sin migración). No cambia el prefijo que escribe la transición «Ingreso a
 Servicio» (`packages/shared/src/transitions.ts:191`), que sigue pudiendo reescribir el código con cualquier prefijo: es una segunda vía de escritura que queda como
 punto abierto para Gerencia. No afirma que esté en producción: depende del despliegue y de la tarea P-1 de `openspec/changes/prefijo-deducido-en-el-alta/tasks.md`.
+
+## La de F1C-08, calibración directa (36)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `calibracion-directa`, `cierra: si`, y de la
+> respuesta de Gerencia del 2026-10-20, `decision/f1c08-ov-calibracion` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`).
+
+### 36 · M2.1 y Anexo D nº 15 — el tipo de servicio de F1B-03 NO oculta ningún paso: la calibración directa es un atajo propio del grafo, con la condición (1) leída del tipo de servicio y de la orden de venta asignada *(F1C-08)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2287` (párrafo «Calibración directa: sí», en M2.1) y
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5729` (Anexo D nº 15, columna de resolución).
+
+**Texto actual:**
+
+- Línea 2287, última frase: «Se construye preferentemente con el tipo de servicio de F1B-03, que ya oculta los pasos que no aplican; F1C-08 se queda con lo que F1B-03 no
+  cubra.»
+- Línea 5729: «RESUELTO 23/09 — R08.4: equipo sin novedad, no (recorre las etapas macro, como se decidió el 03/09); calibración directa, sí, con OV de calibración asignada,
+  salida a la ruta completa si aparece una falla y paso por Control de calidad.»
+
+**Por qué no es cierto.** El tipo de servicio de F1B-03 sólo deduce el prefijo del código de servicio; no filtra transiciones. El flujo de un ticket se elige por
+clasificación y estado (`packages/shared/src/flujos.ts:12-15`, que no recibe el tipo de servicio), así que no había paso que F1B-03 ocultara y F1C-08 construye el atajo
+entero.
+
+**Texto propuesto:**
+
+1. En la línea 2287, sustituir la última frase por: «[CONSTRUIDO] (F1C-08) Es un atajo propio del flujo de servicio, no una consecuencia del tipo de servicio: la
+   transición «Calibración directa» lleva el ticket de «Ingresado» a «En Proceso», y «Falla en calibración» (con la descripción de la falla obligatoria) lo devuelve a
+   «Rev./Diagnostico» para cotizar por la ruta completa. Las dos cuelgan del mismo interruptor que el Control de calidad. [DECIDIDO 20/10/2026] La condición (1) la
+   comprueba el servidor con dos datos del ticket: tipo de servicio «Calibración» y una orden de venta asignada; no se lee el contenido de la orden.»
+2. En la línea 5729, sustituir «con OV de calibración asignada» por «con tipo de servicio Calibración y una orden de venta asignada al ticket».
+
+**Lo que esta entrada NO pide.** No cambia las condiciones (2) y (3) del maestro, que se cumplen tal cual: la falla sale a la ruta completa y el ticket pasa por el Control
+de calidad. No afirma que esté en producción: depende del despliegue y de que Gerencia encienda `CONTROL_CALIDAD_LIBERACION`. Tampoco da por cierto que la orden de venta
+sea de calibración: un ticket con tipo «Calibración» y una orden de otro tipo tomaría el atajo (supuesto reversible de la propuesta de F1C-08).

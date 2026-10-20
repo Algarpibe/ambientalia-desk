@@ -5,7 +5,7 @@ import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/p
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarTransicionConDecisionales, DECISIONALES_APAGADO, type ContextoDecisionales, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, seRegistraEnCadaFactura, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION, visibleConControlCalidad } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
+import { puedeEjecutarTransicionConDecisionales, DECISIONALES_APAGADO, type ContextoDecisionales, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, seRegistraEnCadaFactura, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION, visibleConControlCalidad, visibleCalibracionDirecta } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -54,7 +54,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
   const boton = botonRemision(status, remisiones ?? null); const sugerida = sugerenciaPorGarantia(status, garantia)
   const { user } = useAuth(); const [decisionales, setDecisionales] = useState<ContextoDecisionales>(DECISIONALES_APAGADO); useEffect(() => { getContextoDecisionales().then(setDecisionales).catch(() => {}) }, []); const [controlCalidad, setControlCalidad] = useState(false); useEffect(() => { getContextoControlCalidad().then((c) => setControlCalidad(c.activo)).catch(() => {}) }, []) // F1C-05 (RQ-PM-31): el contexto lo da el servidor; si falla, apagado y decide el 403. F1C-07 (RQ-PM-37): el interruptor del control de calidad también; sin respuesta, apagado y decide el 409
   const transitions = transicionesDelTicket({ classification: clasificacion, status }).filter(
-    (t) => !!user && puedeEjecutarTransicionConDecisionales(user, t, decisionales) && visibleConControlCalidad(t.id, controlCalidad),
+    (t) => !!user && puedeEjecutarTransicionConDecisionales(user, t, decisionales) && visibleConControlCalidad(t.id, controlCalidad) && visibleCalibracionDirecta(t.id, { tipoServicio: delTicket['Tipo de Servicio'] ?? null, tieneOrdenVenta: (delTicket['Orden de Venta'] ?? '').trim() !== '' }), // F1C-08 (RQ-PM-39): una sola vía de OV (S-12); el servidor lee tres y decide el 409
   )
   const [active, setActive] = useState<Transition | null>(null);
   const [values, setValues] = useState<Record<string, unknown>>({});

@@ -72,15 +72,15 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
 
 ## Lote 3 — cliente, DEPLOY.md y cierre de citas (intento I5; ~45 × 1,8 = 81)
 
-- [ ] 3.1 Cliente (D7): `TransitionPanel.tsx:57` gana `&& visibleCalibracionDirecta(...)` con `delTicket['Tipo de Servicio']` y `delTicket['Orden de Venta']`; import al final de `:3`. Sin prueba (`.tsx` fuera de la red, F0-00); lo cubre `npm run typecheck`.
-- [ ] 3.2 ROJO y VERDE: `DEPLOY.md` §16 (`:776`), al final: la ruta directa y su escape cuelgan de `CONTROL_CALIDAD_LIBERACION`; qué enciende y qué se rompe. Si existe vigilante de presencia
+- [x] 3.1 Cliente (D7): `TransitionPanel.tsx:57` gana `&& visibleCalibracionDirecta(...)` con `delTicket['Tipo de Servicio']` y `delTicket['Orden de Venta']`; import al final de `:3`. Sin prueba (`.tsx` fuera de la red, F0-00); lo cubre `npm run typecheck`.
+- [x] 3.2 ROJO y VERDE: `DEPLOY.md` §16 (`:776`), al final: la ruta directa y su escape cuelgan de `CONTROL_CALIDAD_LIBERACION`; qué enciende y qué se rompe. Si existe vigilante de presencia
       (molde de F1C-07), ROJO mutando el FICHERO vigilado (borrar la mención): se pone rojo; sin vigilante, se anota.
-- [ ] 3.3 Tabla de la regla 13 (D8) cerrada decisión a decisión con la línea del servidor, en `apply-progress.md` (regla de mutación 3).
-- [ ] 3.4 Barrido de la regla de mutación 4 (M9): `git diff --numstat` con inserciones = borrados en `transitions.ts`, `ticketService.ts` (salvo
+- [x] 3.3 Tabla de la regla 13 (D8) cerrada decisión a decisión con la línea del servidor, en `apply-progress.md` (regla de mutación 3).
+- [x] 3.4 Barrido de la regla de mutación 4 (M9): `git diff --numstat` con inserciones = borrados en `transitions.ts`, `ticketService.ts` (salvo
       el final), `controlCalidad.ts` (salvo el final), `ticketCreate.ts`, `sla.ts`, `estados.test.ts`, `TransitionPanel.tsx` y los demás que se toquen; para cada uno
       `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` con cada resultado leído contra el fichero, más el pase de las abreviadas. Releer las citas a `ticketService.ts:128`, `:133-134`,
       `controlCalidad.ts:103-107`, `:105`, `transitions.ts:262`, `sla.ts:105-110`, cuyo TEXTO cambia.
-- [ ] 3.5 Caso A: comentarios y citas con cifras (`estados.test.ts:142-144` «diez»); `npm run build` y diferencia del paquete.
+- [x] 3.5 Caso A: comentarios y citas con cifras (`estados.test.ts:142-144` «diez»); `npm run build` y diferencia del paquete.
 - [ ] 3.6 Códigos EN SERIE: typecheck, lint, detector, test. Estimación: **~81 líneas (bajo 800)**. (Verify, I6, y archive, I7, son fases del ciclo, no tareas de este recuento.)
 
 ## Fuera del recuento — de personas (Regla del ciclo 1; **archivar no las da por hechas**)
@@ -88,7 +88,7 @@ la máquina), `apply-progress.md` y la medida `git diff --shortstat --no-renames
 - Gerencia: corregir en una semana la lista de supuestos S-1..S-16 (S-10..S-16 nuevos; en especial S-5/S-13 destino del escape y S-14 lectura de la condición (3)). Destino: parte semanal, grupo F1C-08.
 - Gerencia: encender `CONTROL_CALIDAD_LIBERACION` (también enciende el atajo y el escape) junto con `DECISIONALES_POR_CARGO`.
 - Supervisión: añadir la línea del interruptor a `.env.example` (esta sesión no puede editarlo).
-- Supervisión: corrección de M2.1 del maestro (`R08.4.md:2285-2288`) como texto en `docs/sdd/F0-01_Correcciones_para_el_maestro.md`, para que Gerencia la pegue.
+- Gerencia: pegar en el maestro la corrección 36 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md` (M2.1 y Anexo D nº 15: el tipo de servicio de F1B-03 no oculta pasos). El texto ya está escrito; el maestro no se edita desde el repositorio.
 
 ## Review Workload Forecast
 

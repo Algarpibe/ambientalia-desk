@@ -40,4 +40,13 @@ describe('DEPLOY.md §16 · CONTROL_CALIDAD_LIBERACION', () => {
     const config = readFileSync(path.join(RAIZ, 'packages/zoho-sync/src/config.ts'), 'utf8')
     expect(config).toContain("env.CONTROL_CALIDAD_LIBERACION === 'true'")
   })
+
+  // F1C-08 (RQ-TS-54, RQ-PM-40): la calibración directa y su escape cuelgan de la MISMA variable; no hay otra.
+  it('la calibración directa y su escape cuelgan del mismo interruptor, y la sección lo dice con las dos frases', () => {
+    expect(seccion).toContain('`calibracion_directa`')
+    expect(seccion).toContain('`falla_calibracion`')
+    expect(seccion).toContain('**Qué enciende la calibración directa:**')
+    expect(seccion).toContain('**Qué se rompe si se pone mal la calibración directa:**')
+    expect(seccion).toContain('No tiene variable propia')
+  })
 })

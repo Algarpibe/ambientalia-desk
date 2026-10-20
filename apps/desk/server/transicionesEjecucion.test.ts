@@ -280,7 +280,7 @@ describe('las 38 transiciones, ejecutadas contra el servidor', () => {
     }
 
     expect(observado).toEqual(esperado)
-    // Y que el barrido no se haya quedado corto: 36 transiciones y 42 ejecuciones, porque
+    // Y que el barrido no se haya quedado corto: 38 transiciones y 44 ejecuciones, porque
     // `habilitar_servicio` sale de tres estados y `anulacion` de cinco. Un barrido sobre un grafo vacío también daría verde.
     expect(n, 'ejecuciones del barrido').toBe(44)
   }, 60_000)

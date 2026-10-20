@@ -189,3 +189,71 @@ Observación: M3 puro (atajo `Ingresado` → `Por Facturar`) NO lo ve la propied
 
 ### Medida del lote (`git diff --shortstat --no-renames 0f33d25a` + `wc -l` de lo nuevo sin trackear)
 Trackeado: 2 ficheros, 20 inserciones, 6 borrados (26). Sin trackear: `calibracionDirecta.test.ts` 288. **Código y pruebas: 314**; con este apartado y las marcas de `tasks.md` (~+75) queda en ~390, por debajo de 720.
+
+## Lote 3 — cliente, DEPLOY.md y cierre de citas (3.1 a 3.5; la 3.6, códigos en serie, y el `npm run build` de la 3.5 los ejecuta el orquestador)
+
+Intento I5. Base del worktree `5e47b33b`. Ficheros: `apps/desk/src/components/TransitionPanel.tsx` (2/2), `DEPLOY.md` (+9 al final), `apps/desk/server/deployControlCalidad.test.ts` (+9 al final), `docs/sdd/F0-01_Correcciones_para_el_maestro.md` (+33 al final), y cuatro comentarios con cifras dentro de su línea (1/1 cada uno): `apps/desk/server/transicionesEjecucion.test.ts:283`, `packages/shared/src/bodegaje.test.ts:105`, `packages/shared/src/bodegaje.ts:12`, `openspec/config.yaml:110`.
+
+### Evidencia TDD
+
+| Tarea | ROJO | VERDE |
+|---|---|---|
+| 3.1 cliente | N/A por decisión de Gerencia (`.tsx` fuera de la red, F0-00): sin prueba. Lo cubre `npm run typecheck` (firma de `visibleCalibracionDirecta`, tipo de `delTicket`) y la lógica pura (`packages/shared/src/calibracionDirecta.test.ts`, lote 1a) | `TransitionPanel.tsx` 2/2: `:8` (import, junto a `visibleConControlCalidad`, que es del mismo paquete) y `:57` (misma línea); `typecheck` 0 |
+| 3.2 `DEPLOY.md` §16 | El vigilante de F1C-07 EXISTE (`apps/desk/server/deployControlCalidad.test.ts`, 5 pruebas). Se añadió la prueba nueva ANTES del texto y se vio rojo: `expected '## 16. ...' to contain '`calibracion_directa`'` (1 de 6). Causa: el texto no existía | texto escrito AL FINAL de §16 (`DEPLOY.md:803-810`); 6/6. **Regla de mutación 2, sobre el FICHERO vigilado:** `**Qué enciende la calibración directa:**` → `**Qué enciende la ruta directa:**` en `DEPLOY.md` pone en rojo la prueba nueva (`expected ... to contain '**Qué enciende la calibración directa...'`); restaurado, `cmp` idéntico y 6/6 |
+
+`DEPLOY.md` no desplaza nada: las líneas se añaden DESPUÉS de la 801 (el final de §16, que es el final del fichero). Citas `DEPLOY.md:NNN` posteriores a §16: ninguna (§16 empieza en `:776` y es la última sección).
+
+### Regla 13 — tabla cerrada decisión a decisión (regla de mutación 3)
+
+Líneas del servidor verificadas contra el árbol de este lote (`ticketService.ts` tras las ediciones del lote 2).
+
+| Decisión que toma el cliente | Línea del servidor que la impone |
+|---|---|
+| Oculta las dos con `activo` falso (`TransitionPanel.tsx:57`, `visibleConControlCalidad`) | `apps/desk/server/services/ticketService.ts:128` llama a `exigirInterruptorControlCalidad` (`ticketService.ts:285`): `409` con `motivoQuitadaPorInterruptor`, ampliada con la cláusula de `packages/shared/src/controlCalidad.ts:105` |
+| Oculta el atajo si el tipo de servicio no es «Calibración» (`TransitionPanel.tsx:57`, `visibleCalibracionDirecta`) | `ticketService.ts:128`: `exigirCalibracionDirecta` (`ticketService.ts:305-311`), `409`, tras el interruptor y antes del `403` de área (`ticketService.ts:129`) |
+| Oculta el atajo sin «Orden de Venta» (`TransitionPanel.tsx:57`) | La misma guarda (`ticketService.ts:305-311`): el servidor lee las TRES vías (columna `orden_venta`, `salesorder_id`, asociación vigente, `ticketService.ts:307-308`) y el cliente UNA: oculta de más, nunca de menos (S-12) |
+| Oculta el escape si el tipo de servicio no es «Calibración» (`TransitionPanel.tsx:57`) | La misma guarda (`ticketService.ts:305-311`, `409`) |
+| Asterisco en «Descripción de la falla» (`TransitionPanel.tsx:209`, `f.required`) | `apps/desk/server/transitionExec.ts:77` (campo obligatorio ausente o vacío, `422`, traducido en `ticketService.ts:134`); sólo espacios: `erroresDescripcionFalla` → `errFalla` en `ticketService.ts:134` |
+| Bloquea y prellena «Fecha creación ticket» y «Fecha Remisión Entrada» (mecanismo previo, `fechasDerivadas`) | `ticketService.ts:132` (`valoresConFechasDerivadas`, por etiqueta: `packages/shared/src/fechasDerivadas.ts:17-18`) |
+| Sin respuesta de la ruta del interruptor, `activo = false` (`TransitionPanel.tsx:55`) | Ninguna: degradación de comodidad. Decide el `409` de `ticketService.ts:128`. La ruta (`apps/desk/server/routes/permisosControlCalidad.ts:16`) lee `config.controlCalidadLiberacion === true`, igual que la guarda |
+| No enseña la descripción anterior en una segunda falla (`yaLoTraeElTicket`, `TransitionPanel.tsx:32-36`) | `ticketService.ts:133` (`delete plan.customFields[CLAVE_DESCRIPCION_FALLA]`): la descripción va a la traza y no a `custom_fields`, así que el ticket nunca la devuelve |
+| Ofrece las dos a todo Servicio Técnico, sin mirar más que el área y el cargo (`TransitionPanel.tsx:57`) | No decide: `403` de área en `ticketService.ts:129-130`; ninguna de las dos es Decisional (`packages/shared/src/transitions.ts:262`, `tipoEvento: 'Operativo'`), así que ningún cargo las restringe |
+
+Ninguna decisión del cliente queda sin contrapartida o sin declarar que no decide.
+
+**No observable, y se declara (regla de mutación 1):** el orden de los TRES filtros de `TransitionPanel.tsx:57` (área/cargo, interruptor, calibración directa) es un `&&` de booleanos puros: moverlos no cambia ninguna respuesta, y el cliente no tiene prueba que lo vigile. El orden que sí importa, el del servidor, está fijado por CD-1..CD-6 (lote 2).
+
+### Barrido de la regla de mutación 4 (3.4)
+
+Herramientas FUERA del repositorio: `C:\dev\Desk_2_R1.023-worktrees\herramientas\barrido-citas-codigo.mjs` y `abreviadas.mjs`. El barrido toma `git diff -U0 --no-renames 96e35cf9` por fichero de código existente en la partida: líneas de PARTIDA cambiadas (texto) y líneas desplazadas (las que quedan tras un hunk con distinto número de líneas). Después recoge con `git grep --untracked --exclude-standard` toda cita `ruta:N(-M)` y la abreviada heredada en la misma línea física, y un segundo pase recoge las abreviadas a ±4 líneas de una completa; descarta las que escribió la propia rama (la carpeta del cambio y las líneas que añadió).
+
+**Desplazamientos reales:** ninguno en fichero existente. Las inserciones de línea están TODAS al final (`DEPLOY.md` +9 desde la línea 802, `ticketService.ts` +14 desde la línea 298, `controlCalidad.ts` +19 desde la línea 115, `invariantesGrafo.test.ts` +38 desde la línea 373, `reentrancia.test.ts` +29 desde la línea 219, `deployControlCalidad.test.ts` +9 desde la línea 43, `index.ts` +1 desde la línea 51, tres mapas `docs/artefactos/blueprint-*.md` en sus bloques), y el resto es ins = del. Los ficheros muy citados (`transitions.ts`, `estados.ts`, `ticketCreate.ts`, `sla.ts`, `TransitionPanel.tsx`) dan inserciones = borrados.
+
+**Texto de línea cambiado, y si es inserción pura** (la línea vieja es subsecuencia de la nueva, comprobado por script): `ticketService.ts:5`, `:6`, `:128`, `:133`, `:134` sí; `controlCalidad.ts:7`, `:105` sí; `transitions.ts:262` sí; `sla.ts:105` sí; `ticketCreate.ts:51` sí; `TransitionPanel.tsx:8`, `:57` sí. NO lo son (cambia una cifra): `ticketService.ts:238` («47» → «49») y los vigilantes del lote 1a.
+
+**Citas leídas** (todo el repositorio, con `docs/`, `openspec/`, `CLAUDE.md` y el archivo): 961 con una línea citada cambiada o desplazada; 62 son falsos positivos por nombre homónimo (`index.ts` de otro paquete: citas a `:58-:93` en un fichero de 50 líneas), así que **899 citas reales: 744 en `openspec/changes/archive/` (registros inmutables, no se tocan) y 155 fuera**. Las 155 de fuera: 54 en specs vivas, 71 en `docs/`, 16 en código y pruebas, 10 en `config.yaml`/`CLAUDE.md`/`DEPLOY.md`, 4 en cambios no archivados. Segundo pase de abreviadas a ±4 líneas sobre las líneas de producción de texto cambiado: **0**.
+
+| Caso | Citas (fuera del archivo) | Qué afirman | Acción |
+|---|---|---|---|
+| **A · presente, sigue cierta** | 63 | Dónde está una guarda o el `422` agregado (`ticketService.ts:126-128`, `:128`, `:132-134`, `:133`, `:134`), que la línea es el filtro de botones del panel (`TransitionPanel.tsx:56-58`, `:57`), la cláusula del interruptor (`controlCalidad.ts:105`), la línea del catálogo (`transitions.ts:262`, `sla.ts:104-110`), el bloque de «sin salida única» (`estados.ts:142-147`), la matriz de permisos y el barrido de ejecución (`permisos.test.ts:53`, `:89-109`, `transicionesEjecucion.test.ts:272-285`, sin ancla). La línea conserva su texto y gana el de F1C-08 EN LA MISMA línea; ninguna frase dice «sólo» ni cuenta lo que añadimos | Ninguna |
+| **A · presente, FALSA por esta rama** | 2 citas (+2 cifras sueltas) | `bodegaje.test.ts:105` («once hoy» los reentrantes del invariante 6; hoy son doce) y `bodegaje.ts:12` («los diez del invariante 6»; son doce). No son citas, pero sí cifras vivas en comentario y de la misma causa: `transicionesEjecucion.test.ts:283` («36 transiciones y 42 ejecuciones») y `openspec/config.yaml:110` («Las 36 transiciones»; son 38) | **Reparadas**, dentro de su línea (1/1 cada una) |
+| **B · histórico: con revisión o en un documento fechado** | 90 | 75 en paquetes de despliegue, auditorías, partes, planes y cambios no archivados (todos fechados) y 15 con ancla `en `fd253aa``/`a26ed48`/`3187e42`/`hasta F1C-..`: «34 transiciones × 3 áreas», «44 transiciones» de la unión, «35 aristas», «las otras 43», «contaba DIEZ tandas» | Ninguna: renumerarlas las volvería falsas |
+| **C · superado por otra tanda** | 0 | — | — |
+
+Citas ya rotas ANTES de la rama, que el barrido vio y que NO causó ni repara (no son de esta tanda): `openspec/specs/transitions-st/spec.md:44` («exactamente 31 entradas», `invariantesGrafo.test.ts:50-54`, que ya decía 36 desde F1C-07) y las citas a `transitions.ts:262` como «las otras 32» (`openspec/specs/derivacion-avisos/spec.md:46`, `:674`, `:726`; `openspec/specs/transitions-st/spec.md:1396`, `:1483`): en la partida `transitions.ts:262` ya no contenía ese comentario.
+Cifras que NO se tocan por ser historia del propio comentario: `packages/shared/src/reentrancia.ts:7` y `:27` (describen el origen de la regla, «tres ciclos, nueve casos» y «los diez campos» de P34).
+
+### 3.5 Caso A de comentarios con cifras
+
+`estados.test.ts:142-144` y `estados.ts:142` («diez») se corrigieron en el lote 1a. En este lote: `bodegaje.test.ts:105`, `bodegaje.ts:12`, `transicionesEjecucion.test.ts:283`, `openspec/config.yaml:110` (arriba). `npm run build` y la diferencia del paquete: los ejecuta el orquestador.
+
+### Extra · corrección de M2.1 del maestro (Regla del ciclo 1, reverso)
+
+Escrita como entrada 36 AL FINAL de `docs/sdd/F0-01_Correcciones_para_el_maestro.md` (+33), con el formato de la 35 (el fichero sigue siendo el destino de estas correcciones: la 35 es de F1B-03, 2026-10-14). Cita `R08.4.md:2287` y `R08.4.md:5729` (Anexo D nº 15) y `packages/shared/src/flujos.ts:12-15`. El maestro (`.md`/`.docx`) NO se edita. Sale de «Fuera del recuento» en `tasks.md`; pegarla sigue siendo de Gerencia, y archivar no la da por hecha.
+
+### Desviaciones
+
+1. El import de `visibleCalibracionDirecta` va en `TransitionPanel.tsx:8` (el import de `@ambientalia/shared` donde ya vive `visibleConControlCalidad`), no «al final de `:3`»: la línea 3 importa de `../api/client`, no de `shared`. Misma regla de fondo (dentro de una línea existente, sin desplazar).
+2. El texto de `DEPLOY.md` §16 va como dos frases, `**Qué enciende la calibración directa:**` y `**Qué se rompe si se pone mal la calibración directa:**`; la prueba exige además «No tiene variable propia».
+3. Cuatro ediciones de cifras de comentario que no estaban en la lista literal de 3.5 (arriba); `openspec/config.yaml:110` queda fuera del bloque `cifras_ancladas`, es de un carácter y no mueve líneas.
+4. El barrido tuvo un fallo propio: el patrón de fila no casaba las líneas de ficheros con fin de línea CRLF y la primera pasada dio 3 citas en vez de 961. Se corrigió el patrón (`[\s\S]*`) y se pasó completo otra vez. Queda anotado porque es el molde de siempre: un detector que no caza todo lo que la afirmación abarca.
