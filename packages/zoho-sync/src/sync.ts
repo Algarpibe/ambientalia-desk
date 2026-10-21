@@ -287,36 +287,36 @@ export function createSync({ zohoFetch, db, config, alDiscrepanciaOV }: Deps): S
       return total
     },
     /**
-     * Trae la historia de los tickets cuya copia puede estar desfasada: los que nunca se han traído
-     * (`history_synced_at` nulo) y los que Zoho ha modificado después de la última vez
-     * (`history_synced_at` anterior a `modified_time`). Lo corre el worker en cada ciclo.
+     * Trae la historia de los tickets cuya copia puede estar desfasada: los que nunca se han traído (`history_synced_at`
+     * nulo), los que han cambiado de FASE desde la última vez (`history_synced_status` distinto de `status`) y los que
+     * Zoho ha modificado después (`history_synced_at` anterior a `modified_time`). Lo corre el worker en cada ciclo.
      *
-     * No reutiliza `backfillTicketHistory` porque ese solo mira si el ticket tiene ALGUNA historia: un
-     * ticket que cambia de fase después del barrido no volvería a pedirse nunca.
-     *
-     * - La marca es el `modified_time` LEÍDO al elegir el ticket, no `now()`: si Zoho lo cambia
-     *   mientras se trae su historia, su `modified_time` avanza y la pasada siguiente lo vuelve a elegir.
-     * - Un ticket sin `modified_time` se marca con el epoch: se trae una vez y no vuelve a salir hasta
-     *   que Zoho le ponga fecha. Marcarlo con nulo lo haría salir en todas las pasadas.
-     * - Tolerante, como el barrido: un fallo se cuenta, se guarda el motivo del primero y se sigue. El
-     *   ticket fallido no se marca, así que vuelve a salir en la pasada siguiente.
-     * - Una sola consulta simple: pg-mem, el motor de los tests, no resuelve subconsultas correlacionadas.
+     * Manda la fase porque la LISTA de tickets de Zoho Desk no trae `modifiedTime`: en el hub `modified_time` queda nulo,
+     * la marca de hora es el epoch y cada historia se traía UNA vez, así que los cambios de fase posteriores —lo que mide
+     * el KPI de plazos de Servicio Técnico— no llegaban. La rama de `modified_time` se queda por si Zoho llega a mandarlo.
+     * No reutiliza `backfillTicketHistory`: ese solo mira si el ticket tiene ALGUNA historia.
+     * - Las marcas son lo LEÍDO al elegir (`status`, y `modified_time` o el epoch si es nulo), no `now()`: si cambian
+     *   mientras se trae la historia, la pasada siguiente lo vuelve a elegir. No caza un A→B→A entre dos pasadas.
+     * - Una marca de fase nula cuenta como distinta: al nacer la columna se re-barren TODOS en tandas de `limite`, que es
+     *   la recuperación buscada. Releer es inocuo: la historia entra con `ON CONFLICT (id) DO NOTHING` (`db/history.ts`).
+     * - Tolerante: un fallo se cuenta, se guarda el motivo del primero y se sigue. El fallido no se marca y vuelve a salir.
+     * - Una sola consulta simple: pg-mem no resuelve subconsultas correlacionadas ni `IS DISTINCT FROM` (`status` es NOT NULL).
      */
     async syncPendingHistory({ limite, pausaMs = 500 }: HistoriaPendienteOpts): Promise<ResultadoHistoriaPendiente> {
       const r = await db.query(
-        `SELECT id, modified_time FROM tickets
-         WHERE id NOT LIKE $1 AND (history_synced_at IS NULL OR history_synced_at < modified_time)
+        `SELECT id, status, modified_time FROM tickets
+         WHERE id NOT LIKE $1 AND (history_synced_at IS NULL OR history_synced_status IS NULL OR history_synced_status <> status OR history_synced_at < modified_time)
          ORDER BY modified_time DESC NULLS LAST LIMIT $2`,
         [`${PREFIJO_TICKET_APP}%`, limite],
       )
-      const tanda = r.rows as { id: string; modified_time: Date | null }[]
+      const tanda = r.rows as { id: string; status: string; modified_time: Date | null }[]
       let poblados = 0, fallidos = 0
       let motivoPrimerFallo: string | undefined
       for (const [i, t] of tanda.entries()) {
         if (i > 0 && pausaMs > 0) await new Promise((res) => setTimeout(res, pausaMs))
         try {
           await traerHistoria(t.id)
-          await db.query('UPDATE tickets SET history_synced_at = $1 WHERE id = $2', [t.modified_time ?? new Date(0), t.id])
+          await db.query('UPDATE tickets SET history_synced_at = $1, history_synced_status = $2 WHERE id = $3', [t.modified_time ?? new Date(0), t.status, t.id])
           poblados++
         } catch (e) {
           fallidos++
