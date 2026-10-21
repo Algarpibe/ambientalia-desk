@@ -3,7 +3,7 @@ import { applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { vigenciaDeRemisiones } from '../db/remisiones'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente, baseSiNaceBajoTop5 } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'; import { tieneOrdenVenta, conAsociacionVigente } from '../db/sla'
-import { buildSubject, buildCodigoServicio, prefijoDeducido, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, cargosQueFaltanParaDecisional, mensajeDecisional, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, erroresPrioridadPedida, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, erroresAnulacion, erroresFacturar, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, esNitExento, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, motivoQuitadaPorInterruptor, mensajeSinFirma, prioridadTrasRechazo, CLAVES_SOLO_TRAZA_CC, motivoNoCalibracionDirecta, erroresDescripcionFalla, CLAVE_DESCRIPCION_FALLA, type VeredictoFirma, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, prefijoDeducido, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, cargosQueFaltanParaDecisional, mensajeDecisional, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, erroresPrioridadPedida, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, erroresAnulacion, erroresFacturar, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, esNitExento, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, motivoQuitadaPorInterruptor, mensajeSinFirma, prioridadTrasRechazo, CLAVES_SOLO_TRAZA_CC, motivoNoCalibracionDirecta, erroresDescripcionFalla, CLAVE_DESCRIPCION_FALLA, type VeredictoFirma, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo, motivoQuitadaPorSalidasEsperas } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'; import { contextoDecisionales } from './decisionales'; import { veredictoFirmaControlCalidad, erroresControlCalidad, avisarSinFirmanteLibre } from './controlCalidad'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -125,7 +125,7 @@ export async function executeTransition(
   if (!current) throw new HttpError(404, { error: 'Ticket no encontrado' }); exigirMismoFlujo(t, current.row)
   if (!t.from.includes(current.row.status)) {
     throw new HttpError(409, { error: `La transición "${t.name}" no aplica desde el estado "${current.row.status}"` })
-  } exigirInterruptorControlCalidad(t, config); await exigirCalibracionDirecta(db, t, current.row) /* F1C-08 (RQ-TS-54): condición (1), tras el interruptor y antes del área */ /* F1C-07 (RQ-PM-32): escalón B, tras el estado y ANTES del área */
+  } exigirInterruptorControlCalidad(t, config); exigirInterruptorSalidasEsperas(t, config) /* F1C-03 (RQ-TS-61): el interruptor de las salidas de las esperas, junto al de control de calidad */; await exigirCalibracionDirecta(db, t, current.row) /* F1C-08 (RQ-TS-54): condición (1), tras el interruptor y antes del área */ /* F1C-07 (RQ-PM-32): escalón B, tras el estado y ANTES del área */
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
   } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); const faltanDecisional = config?.decisionalesPorCargo ? cargosQueFaltanParaDecisional(t, user, await contextoDecisionales(db, true)) : null; if (faltanDecisional) throw new HttpError(403, { error: mensajeDecisional(t.name, faltanDecisional) }) /* F1C-05 (RQ-PM-30): Decisionales por cargo, sólo con DECISIONALES_POR_CARGO; tras el cargo de la lista corta */; const firmaCC = await veredictoFirmaControlCalidad(db, t, id, user); exigirFirmaControlCalidad(t, firmaCC) /* F1C-07 (RQ-PM-36): 403 de firmante, escalón B, tras Decisionales y antes de la prioridad y de todo 422 */; if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const entran = await entrantesDeTransicion(db, t, b.values, id, current.row); exigirCargoOVI(entran, user); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas); await exigirAltaValidada(db, t, current.row); await exigirRemisionVigente(db, t, id) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422; F1B-03: el cargo de la OVI que ENTRA, tras la prioridad y antes de la verificación
@@ -235,7 +235,7 @@ function exigirMismoFlujo(t: Transition, row: TicketDeFlujo): void {
 
 /**
  * F1A-03 (RQ-EN-08, RQ-EN-09, RQ-EN-10): el veredicto de `liberacion`, que mira el compuesto del equipo y los gases
- * patrón. Sólo `liberacion` lo calcula: en las otras 49 transiciones devuelve `null` SIN consultar nada. Al FINAL del
+ * patrón. Sólo `liberacion` lo calcula: en las otras 51 transiciones devuelve `null` SIN consultar nada. Al FINAL del
  * fichero, como `exigirMismoFlujo`, para no desplazar las citas vivas a `ticketService.ts`. «Hoy» es el día de Bogotá.
  */
 async function veredictoDeLiberacion(db: Queryable, t: Transition, row: { status: string; equipo_id?: string | null }): Promise<VeredictoLiberacion | null> {
@@ -307,5 +307,15 @@ async function exigirCalibracionDirecta(db: Queryable, t: Transition, row: { tip
   const enColumnas = tieneOrdenVenta({ orden_venta: row.orden_venta, salesorder_id: row.salesorder_id ?? null }, false)
   const asociada = t.id === 'calibracion_directa' && !enColumnas ? (await conAsociacionVigente(db, [{ id: row.id }])).has(row.id) : false
   const motivo = motivoNoCalibracionDirecta(t.id, { tipoServicio: row.tipo_servicio, tieneOrdenVenta: enColumnas || asociada })
+  if (motivo) throw new HttpError(409, { error: motivo })
+}
+
+/**
+ * F1C-03 (RQ-TS-61, RQ-TS-64): con `SALIDAS_ESPERAS` apagado, `cobro_diagnostico_espera` y `sin_pieza_en_almacen` dan `409` y no escriben
+ * (regla pura `motivoQuitadaPorSalidasEsperas`, de `@ambientalia/shared`). Llamada en `:128`, junto a la de control de calidad: escalón B,
+ * tras el `409` de estado y ANTES del `403` de área. Función hermana, no cláusula de la otra. Al FINAL del fichero para no desplazar citas.
+ */
+function exigirInterruptorSalidasEsperas(t: Transition, config?: AppConfig): void {
+  const motivo = motivoQuitadaPorSalidasEsperas(t.id, config?.salidasEsperas === true)
   if (motivo) throw new HttpError(409, { error: motivo })
 }

@@ -75,6 +75,9 @@ stateDiagram-v2
     e22 --> e15 : Control de calidad rechazado [ST]
     e12 --> e15 : Calibración directa [ST]
     e15 --> e13 : Falla en calibración [ST]
+    e01 --> e17 : Cobro de diagnóstico [C]
+    e02 --> e17 : Cobro de diagnóstico [C]
+    e09 --> e01 : Sin pieza en almacén [ST]
     e20 --> e11 : Remisión creada (sin botón) [ST]
     e11 --> e20 : Remisión anulada (sin botón) [ST]
 ```

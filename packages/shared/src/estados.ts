@@ -139,10 +139,10 @@ export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
  * que esperar: hay una persona que todavía no ha entrado. Los cuatro de abajo esperan un camión, un
  * laboratorio o un alta en otro sistema.
  *
- * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay DIEZ
+ * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay NUEVE
  * estados con una sola transición de salida —entre ellos `Ingresado` y `Ticket creado`, que son
  * trabajo corriente y no esperan a nadie—. Y cruzarla con `en_espera`, que es el intento fino,
- * tampoco: da SEIS, con `Liberación Comercial`, `Remisión creada` y los dos `Por Entregar` dentro. Por eso la prueba de
+ * tampoco: da CINCO, con `Liberación Comercial`, `Remisión creada` y los dos `Por Entregar` dentro. Por eso la prueba de
  * coherencia de `estados.test.ts` sólo comprueba que los cuatro son estados DECLARADOS, y no intenta
  * derivarlos.
  *
@@ -151,11 +151,11 @@ export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
 export const ESTADOS_SIN_SALIDA: Estado[] = [
   // Esperamos al proveedor: los repuestos llegan o no llegan, y no depende de nosotros.
   'En Espera de Repuestos',
-  // Esperamos el alta del SKU en el otro sistema, que es un hecho que ocurre fuera de esta app.
+  // Esperamos a nuestro almacén: la pieza se entrega o, si no hay, vuelve a En Espera de Repuestos (c3)
   'Solicitado',
   // Esperamos el retorno del laboratorio externo con el equipo o el sensor.
   'Servicio externo',
-  // Esperamos a que el inventario del otro sistema tenga el SKU disponible.
+  // Esperamos un trámite nuestro: que Comercial dé de alta el SKU (c3)
   'En espera de SKU inventario',
 ]
 

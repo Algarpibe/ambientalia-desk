@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
-import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, ESTADOS_SIN_SALIDA, IDS_CALIBRACION_DIRECTA } from '@ambientalia/shared'
+import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, ESTADOS_SIN_SALIDA, IDS_CALIBRACION_DIRECTA, IDS_SALIDAS_NUEVAS } from '@ambientalia/shared'
 import { db, instalarArnes, appWith, adminCookie, valoresValidos } from './testing/appHarness'; import { conRemisionVigente } from './testing/remisionDePrueba'
 
 instalarArnes()
@@ -143,7 +143,7 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   llegada_repuestos: { desde: ['En Espera de Repuestos'], a: 'En Proceso' },
   entrega_repuestos: { desde: ['Solicitado'], a: 'En Proceso' },
   retorno_servicio_externo: { desde: ['Servicio externo'], a: 'En Proceso' },
-  notif_cliente_sku: { desde: ['En espera de SKU inventario'], a: 'Notificación cliente' },
+  notif_cliente_sku: { desde: ['En espera de SKU inventario'], a: 'Notificación cliente' }, cobro_diagnostico_espera: { desde: ['En Espera de Repuestos', 'Servicio externo'], a: 'Por Facturar' }, sin_pieza_en_almacen: { desde: ['Solicitado'], a: 'En Espera de Repuestos' }, // F1C-03 (RQ-TS-60): las dos salidas nuevas, en esta línea para no desplazar citas
 
   // ── 2 · LAS DOS RAMAS DEL CICLO DE FACTURACIÓN — gate de F1C-02 ───────────────────────────────
   // El componente C1 de la tabla de reentrancia: `Por Facturar` ⇄ `Por Entregar / Sin facturar`. La
@@ -185,7 +185,7 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' }, anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' }, facturar: { desde: ['Pendiente de facturar'], a: 'Finalizado' }, envio_control_calidad: { desde: ['En Proceso'], a: 'Control de calidad' }, aprobacion_control_calidad: { desde: ['Control de calidad'], a: 'Por Facturar' }, rechazo_control_calidad: { desde: ['Control de calidad'], a: 'En Proceso' }, // F1C-07 (RQ-TS-46): las tres de control de calidad. F1C-02 (RQ-TS-42): «Facturar». F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
 }
 
-describe('las 38 transiciones, ejecutadas contra el servidor', () => {
+describe('las 40 transiciones, ejecutadas contra el servidor', () => {
   /**
    * EL GUARDIÁN DE COBERTURA: el conjunto de huérfanas tiene que estar VACÍO.
    *
@@ -227,9 +227,9 @@ describe('las 38 transiciones, ejecutadas contra el servidor', () => {
     const salidas: Record<string, string[]> = {}
     for (const e of ESTADOS_SIN_SALIDA) salidas[e] = TRANSITIONS.filter((t) => t.from.includes(e)).map((t) => t.id)
     expect(salidas).toEqual({
-      'En Espera de Repuestos': ['llegada_repuestos', 'anulacion'],
-      'Solicitado': ['entrega_repuestos'],
-      'Servicio externo': ['retorno_servicio_externo', 'anulacion'],
+      'En Espera de Repuestos': ['llegada_repuestos', 'anulacion', 'cobro_diagnostico_espera'],
+      'Solicitado': ['entrega_repuestos', 'sin_pieza_en_almacen'],
+      'Servicio externo': ['retorno_servicio_externo', 'anulacion', 'cobro_diagnostico_espera'],
       'En espera de SKU inventario': ['notif_cliente_sku'],
     })
   })
@@ -247,9 +247,9 @@ describe('las 38 transiciones, ejecutadas contra el servidor', () => {
    * lo que la decisión dice. Se afirma que hay UNA fila —ni cero ni dos— con su id, sus dos
    * extremos, su área y su actor.
    */
-  it('las 38 salen de su origen, llegan a su destino y dejan traza', async () => {
+  it('las 40 salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
-    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre
+    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas, con salidasEsperas (I4: sembrar aquí derivado_a = usuario de la sesión cuando entre la regla del ejecutor)
 
     const observado: Record<string, string[]> = {}
     const esperado: Record<string, string[]> = {}
@@ -263,7 +263,7 @@ describe('las 38 transiciones, ejecutadas contra el servidor', () => {
         await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)',
           [id, 70000 + n, 'Barrido de ejecución', origen, ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-EJE'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
 
-        const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+        const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id) || IDS_SALIDAS_NUEVAS.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
 
         const ticket = await db.query('SELECT status FROM tickets WHERE id = $1', [id])
@@ -280,9 +280,9 @@ describe('las 38 transiciones, ejecutadas contra el servidor', () => {
     }
 
     expect(observado).toEqual(esperado)
-    // Y que el barrido no se haya quedado corto: 38 transiciones y 44 ejecuciones, porque
+    // Y que el barrido no se haya quedado corto: 40 transiciones y 47 ejecuciones, porque
     // `habilitar_servicio` sale de tres estados y `anulacion` de cinco. Un barrido sobre un grafo vacío también daría verde.
-    expect(n, 'ejecuciones del barrido').toBe(44)
+    expect(n, 'ejecuciones del barrido').toBe(47)
   }, 60_000)
 })
 

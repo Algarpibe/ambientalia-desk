@@ -99,7 +99,7 @@ describe('serie P · ejecución del flujo de soporte remoto (guarda 3, estado y 
 
   it('P8 · un SR en Solicitud Soporte, con Servicio Técnico: de TODAS las transiciones de los tres catálogos sólo asignacion_soporte da 200', async () => {
     const cookie = await userCookie(SERVICIO)
-    const { app } = appWith()
+    const { app } = appWith({ salidasEsperas: true })   // F1C-03: con el interruptor encendido el 409 sigue siendo el de flujo (I4: derivado_a = usuario de la sesión cuando entre la regla del ejecutor)
     const ok: string[] = []
     let n = 0
     for (const t of todas) {
@@ -109,7 +109,7 @@ describe('serie P · ejecución del flujo de soporte remoto (guarda 3, estado y 
       if (res.status === 200) ok.push(t.id)
       else expect(res.status, `${t.id} desde Solicitud Soporte`).toBe(409)
     }
-    expect(n, 'transiciones recorridas (38 + 7 + 5 = 50)').toBe(50)
+    expect(n, 'transiciones recorridas (40 + 7 + 5 = 52)').toBe(52)
     expect(ok).toEqual(['asignacion_soporte'])
   }, 60_000)
 

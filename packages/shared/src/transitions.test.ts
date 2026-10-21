@@ -119,11 +119,11 @@ describe('transitions', () => {
 })
 
 describe('derivación por defecto del catálogo', () => {
-  // Caracterización (derivacion-repuestos-director-tecnico): cinco proponen, el resto hereda.
-  it('exactamente 5 transiciones llevan propuesta por defecto y 33 heredan', () => {
+  // Caracterización (derivacion-repuestos-director-tecnico): cinco proponen, el resto hereda (33 hasta F1C-03, que añade dos que heredan).
+  it('exactamente 5 transiciones llevan propuesta por defecto y 35 heredan', () => {
     const propone = TRANSITIONS.filter((t) => t.fields.some((f) => f.key === CLAVE_DERIVACION && f.porDefecto))
     expect(propone).toHaveLength(5)
-    expect(TRANSITIONS.length - propone.length).toBe(33)
+    expect(TRANSITIONS.length - propone.length).toBe(35)
   })
 })
 

@@ -201,8 +201,8 @@ describe('el cargo SÓLO restringe · barrido área × cargo × acción (RQ-PM-2
       }
     }
     expect(violaciones).toEqual([])
-    // 5 subconjuntos × 11 valores de cargo (8 + 3) × (38 transiciones + 2 primitivas) = 2.200, a mano.
-    expect(casos).toBe(2200)
+    // 5 subconjuntos × 11 valores de cargo (8 + 3) × (40 transiciones + 2 primitivas) = 2.310, a mano.
+    expect(casos).toBe(2310)
     expect(concedidos).toBeGreaterThan(0) // no pasa en vacío
   })
 })

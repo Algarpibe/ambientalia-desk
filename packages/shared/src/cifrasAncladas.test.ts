@@ -21,7 +21,7 @@ import { FASES, FASE_POR_ESTADO } from './fasesBlueprint'
  */
 const RUTA = fileURLToPath(new URL('../../../openspec/config.yaml', import.meta.url))
 
-const DECIDIDAS = { transiciones: 38, estados: 23, pasos_del_mapa: 46 } as const
+const DECIDIDAS = { transiciones: 40, estados: 23, pasos_del_mapa: 49 } as const
 
 const INICIO_SECCION = '\ncifras_ancladas:\n'
 
@@ -55,7 +55,7 @@ function aristasDelMapaCompleto(): number {
 }
 
 describe('cifras ancladas · openspec/config.yaml contra el código', () => {
-  it('transiciones: el registro dice 38 y TRANSITIONS tiene 38', () => {
+  it('transiciones: el registro dice 40 y TRANSITIONS tiene 40', () => {
     expect(cifraDelRegistro('transiciones')).toBe(DECIDIDAS.transiciones)
     expect(TRANSITIONS).toHaveLength(DECIDIDAS.transiciones)
     expect(cifraDelRegistro('transiciones')).toBe(TRANSITIONS.length)
@@ -67,7 +67,7 @@ describe('cifras ancladas · openspec/config.yaml contra el código', () => {
     expect(cifraDelRegistro('estados')).toBe(ESTADOS_SERVICIO.length)
   })
 
-  it('pasos_del_mapa: el registro dice 46 y el diagrama completo tiene 46 aristas', () => {
+  it('pasos_del_mapa: el registro dice 49 y el diagrama completo tiene 49 aristas', () => {
     expect(cifraDelRegistro('pasos_del_mapa')).toBe(DECIDIDAS.pasos_del_mapa)
     expect(aristasDelMapaCompleto()).toBe(DECIDIDAS.pasos_del_mapa)
     expect(cifraDelRegistro('pasos_del_mapa')).toBe(aristasDelMapaCompleto())

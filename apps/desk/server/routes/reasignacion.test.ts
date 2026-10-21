@@ -337,7 +337,7 @@ describe('barrido HTTP de estados por áreas contra la guarda (RQ-PM-27, RQ-TC-5
       for (const status of new Set(catalogo.flatMap((t) => [...t.from, t.to]))) {
         const id = `s${n}`; await ticketDe(id, 9600 + n, null, status, CLASIFICACION[flujo]); n++
         for (const area of AREAS) {
-          const esperado = catalogo.some((t) => t.from.includes(status) && t.to !== ESTADO_ANULADO && areasForTransition(t.area).includes(area)) // F1C-01 (S-8): anular no da el testigo
+          const esperado = catalogo.some((t) => t.from.includes(status) && t.to !== ESTADO_ANULADO && t.id !== 'cobro_diagnostico_espera' && areasForTransition(t.area).includes(area)) // F1C-01 (S-8): anular no da el testigo; F1C-03 (S-22): el cobro del diagnóstico tampoco
           const res = await reasignar(app, sesiones.get(area)!, id, {})
           expect(res.status, `${flujo} · ${status} · ${area}`).toBe(esperado ? 422 : 403)
           if (esperado) permitidos++; else negados++

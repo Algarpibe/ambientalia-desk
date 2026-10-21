@@ -115,9 +115,9 @@ describe('priority deja de ser obligatorio (RQ-TS-20, S-2)', () => {
       expect(campo, id).toMatchObject({ key: 'priority', kind: 'select', required: false, options: ['High', 'Medium'] })
     }
   })
-  it('TS20-4 · los obligatorios de las 38 son los de antes SALVO priority en esas dos, la liberación sin factura (F1C-05: ya no hay casilla), la anulación (F1C-01: el motivo) y «Facturar» (F1C-02: número y fecha)', () => {
-    expect(TRANSITIONS).toHaveLength(38)
-    const esperado = Object.fromEntries(Object.entries({ ...OBLIGATORIOS_ANTES, liberacion_sin_factura: ['Motivo de liberación sin factura', 'Fecha prevista de facturación'], anulacion: ['Motivo de anulación'], facturar: ['Número de factura', 'Fecha De Factura'], aprobacion_control_calidad: ['Puntos que fallaron en el diagnóstico revisados', 'Funcionamiento verificado', 'Equipo completo, limpio y listo para embalar'], rechazo_control_calidad: ['Motivo del rechazo'], envio_control_calidad: [...(OBLIGATORIOS_ANTES.finalizacion_servicio ?? [])], calibracion_directa: [...(OBLIGATORIOS_ANTES.ingreso_a_servicio ?? [])], falla_calibracion: ['Descripción de la falla'] }).map(([id, ks]) => [id, ks.filter((k) => k !== 'priority')]))
+  it('TS20-4 · los obligatorios de las 40 son los de antes SALVO priority en esas dos, la liberación sin factura (F1C-05: ya no hay casilla), la anulación (F1C-01: el motivo) y «Facturar» (F1C-02: número y fecha)', () => {
+    expect(TRANSITIONS).toHaveLength(40)
+    const esperado = Object.fromEntries(Object.entries({ ...OBLIGATORIOS_ANTES, liberacion_sin_factura: ['Motivo de liberación sin factura', 'Fecha prevista de facturación'], anulacion: ['Motivo de anulación'], facturar: ['Número de factura', 'Fecha De Factura'], aprobacion_control_calidad: ['Puntos que fallaron en el diagnóstico revisados', 'Funcionamiento verificado', 'Equipo completo, limpio y listo para embalar'], rechazo_control_calidad: ['Motivo del rechazo'], envio_control_calidad: [...(OBLIGATORIOS_ANTES.finalizacion_servicio ?? [])], calibracion_directa: [...(OBLIGATORIOS_ANTES.ingreso_a_servicio ?? [])], falla_calibracion: ['Descripción de la falla'], cobro_diagnostico_espera: [], sin_pieza_en_almacen: [] }).map(([id, ks]) => [id, ks.filter((k) => k !== 'priority')]))
     const hoy = Object.fromEntries(TRANSITIONS.map((t) => [t.id, t.fields.filter((f) => f.required).map((f) => f.key)]))
     expect(hoy).toEqual(esperado)
   })

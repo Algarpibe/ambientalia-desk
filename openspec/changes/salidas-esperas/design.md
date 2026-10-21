@@ -166,6 +166,7 @@ f={CAMPO_MOTIVO_RESPALDO}>` más. Imports al final de `:3` y `:8`. `derivadoActu
 | `cargos.test.ts:204-205` | 2.200 → 2.310 (5 × 11 × (40 + 2)) |
 | `prioridad.test.ts:118-120` | 38 → 40; esperado gana `cobro_diagnostico_espera: []`, `sin_pieza_en_almacen: []` |
 | `transitionsSoporteRemoto.test.ts:57-58` · `cifrasAncladas.test.ts:24`, `:58`, `:70` | 50 → 52 · `{ 40, 23, 49 }` |
+| `decisionales.test.ts:21`, `:32-33` · `reasignacion.test.ts:28` | **Medido en rojo en I3a, fuera de la lista original:** 16 → 17 Decisionales (`cobro_diagnostico_espera: CO`, en la línea de `anulacion`) · el barrido de `puedeReasignar` gana `&& t.id !== 'cobro_diagnostico_espera'` (S-22, misma línea). Las demás cifras de esta tabla coincidieron con la medida |
 | `apps/desk/server/permisos.test.ts:43-57`, `:72-81`, `:89-103` | 114 → 120 (73 prohibidos, 47 permitidos) |
 | `permisos.test.ts:349-353` · `:356-368`, `:446`, `:458` | 114 → 120 (74 / 46) · 1.026 → 1.080 (40 × 3 × 9) |
 | `cargoPermiso.test.ts:250-266` | 114 → 120; `diferencias` sin cambio |

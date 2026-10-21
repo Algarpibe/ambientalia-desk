@@ -18,7 +18,7 @@ const DECISIONALES: Record<string, AreaDeDecision | typeof LISTA_CORTA | typeof 
   escalado_a_revision: ST, devolucion_a_correccion: ST, rechazo_revision: ST,
   producto_no_conforme: ST, liberacion: ST, rechazo_verificacion: ST,
   aprobacion: CO, rechazo_garantia: CO, rechazo_comercial: CO, rechazo_cliente: CO,
-  anulacion: CO, anulacion_equipo_nuevo: CO, anulacion_soporte: CO,
+  anulacion: CO, anulacion_equipo_nuevo: CO, anulacion_soporte: CO, cobro_diagnostico_espera: CO, // F1C-03: el cobro del diagnóstico de las esperas, en esta línea para no desplazar la tabla
   liberacion_sin_factura: LISTA_CORTA, aprobacion_control_calidad: FIRMA_CC, rechazo_control_calidad: FIRMA_CC,
 }
 
@@ -29,8 +29,8 @@ const sujeto = (areas: string[], cargoPermiso?: unknown, isAdmin = false): Sujet
 const t = (id: string) => transicionPorId(id)!
 const AMBAS = ['Comercial', 'Servicio Técnico']
 
-describe('las 16 Decisionales y su área de decisión (RQ-PM-29, RQ-PM-35)', () => {
-  it('el barrido de los tres catálogos da exactamente las 16 de la tabla: las 14 de F1C-05 y las dos de firma de control de calidad', () => {
+describe('las 17 Decisionales y su área de decisión (RQ-PM-29, RQ-PM-35)', () => {
+  it('el barrido de los tres catálogos da exactamente las 17 de la tabla: las 14 de F1C-05, las dos de firma de control de calidad y el cobro del diagnóstico de F1C-03', () => {
     const barridas = Object.values(CATALOGO_POR_FLUJO).flat().filter((x) => x.tipoEvento === 'Decisional').map((x) => x.id)
     expect(barridas.sort()).toEqual(Object.keys(DECISIONALES).sort())
   })

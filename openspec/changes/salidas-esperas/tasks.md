@@ -17,27 +17,27 @@ Ficheros: `transitions.ts:262` y `:330`, `config.ts:66`/`:125`, `appHarness.ts:4
 `motivoQuitada…`/`visibleConSalidasEsperas`), `plazosEsperas.ts`, `controlCalidad.ts:121-122` y `:7`, `index.ts:52`, `estados.ts:142`/`:145`/`:154`/`:158`,
 `ticketService.ts:238` (comentario), vigilantes de D6 de `shared`, `cifras_ancladas` en `openspec/config.yaml`, mapa del blueprint.
 
-- [ ] I3a.1 Línea base: `npx vitest run packages/shared` en verde y `npm run typecheck` en 0, antes de tocar nada.
-- [ ] I3a.2 ROJO `packages/shared/src/salidasEsperas.test.ts` (RQ-TS-60, RQ-TS-61 pura): ids, áreas (`Comercial`/`Servicio Técnico`), `tipoEvento`
+- [x] I3a.1 Línea base: `npx vitest run packages/shared` en verde y `npm run typecheck` en 0, antes de tocar nada.
+- [x] I3a.2 ROJO `packages/shared/src/salidasEsperas.test.ts` (RQ-TS-60, RQ-TS-61 pura): ids, áreas (`Comercial`/`Servicio Técnico`), `tipoEvento`
       (`Decisional`/`Compras / Logístico`), `fields: [comment()]`, ninguna en `DERIVACION_POR_DEFECTO` (heredan), `IDS_SALIDAS_NUEVAS`,
       `motivoQuitadaPorSalidasEsperas` (apagado → texto del D2; encendido o id ajena → `null`), disjunción `IDS_SALIDAS_NUEVAS ∩
       (IDS_CALIBRACION_DIRECTA ∪ {envio_control_calidad, finalizacion_servicio}) = ∅`. Rojo por módulo inexistente.
-- [ ] I3a.3 ROJO (RQ-TS-62/63 y c3): `invariantesGrafo.test.ts` (`:50-53`, `:172-174`, bloque nuevo al final: encendido, 4 entradas a `Por Facturar` sin CC con
+- [x] I3a.3 ROJO (RQ-TS-62/63 y c3): `invariantesGrafo.test.ts` (`:50-53`, `:172-174`, bloque nuevo al final: encendido, 4 entradas a `Por Facturar` sin CC con
       `cobro_diagnostico_espera`, tercer parámetro por defecto `false`), `mapaBlueprint.test.ts:52`/`:184`, `tipoEvento.test.ts`, `transitions.test.ts:123`/`:126`,
       `estados.test.ts:142-147`/`:177-179`, `cargos.test.ts:204-205`, `prioridad.test.ts:118-120`, `transitionsSoporteRemoto.test.ts`, `cifrasAncladas.test.ts`
       (40/23/49), `comentariosVigilados.test.ts`. **Se corren en rojo ANTES de escribir un número**; se anota lo medido y, si difiere de D6, gana la medida
       (se corrige D6 y la spec en el mismo commit). Confirmar por ejecución `reentrancia.test.ts` y `bodegaje.test.ts` (hipótesis sin cambio de D6).
-- [ ] I3a.4 ROJO `plazosEsperas.test.ts` (RQ-AV-25): plazos literales ER 79, `Solicitado` 13, SE 31, SKU 20; `MEDICION_PLAZOS_ESPERAS`; `diasEnEspera`; `esperaVencida = dias >= plazo`;
+- [x] I3a.4 ROJO `plazosEsperas.test.ts` (RQ-AV-25): plazos literales ER 79, `Solicitado` 13, SE 31, SKU 20; `MEDICION_PLAZOS_ESPERAS`; `diasEnEspera`; `esperaVencida = dias >= plazo`;
       disjunción `ESTADOS_SIN_SALIDA ∩ claves(SLA_HORAS_POR_ESTADO) = ∅` y `∩ claves(ALARMAS_SLA) = ∅`; prueba de fuente: el módulo no importa `sla.ts`.
-- [ ] I3a.5 VERDE: las dos transiciones en `transitions.ts:262` (misma línea, comentario «F1C-03 (RQ-TS-60)»); `|| t.id === 'cobro_diagnostico_espera'` en `areasSiguientes`
+- [x] I3a.5 VERDE: las dos transiciones en `transitions.ts:262` (misma línea, comentario «F1C-03 (RQ-TS-60)»); `|| t.id === 'cobro_diagnostico_espera'` en `areasSiguientes`
       (`:330`, S-22); `salidasEsperas` en `config.ts` (`=== 'true'`, nace cerrado); `appHarness` lo acepta en `false`; `salidasEsperas.ts` parcial; `plazosEsperas.ts`;
       tercer parámetro en `controlCalidad.ts:121`; `index.ts:52`; comentarios en sitio de `estados.ts` y `ticketService.ts:238`. Confirmar que `tsc -b` no da ciclo.
-- [ ] I3a.6 `cifras_ancladas` y `config.yaml:1361-1362`/`:1368` (46 → 49, 38 → 40) sólo en esos bloques; `npm run generar-mapa-blueprint`; su prueba anti-desfase en verde.
-- [ ] I3a.7 Mutación M5 (RQ-TS-60/63): añadir al catálogo en memoria una salida `anulacion` o de abandono desde `Solicitado` o desde SKU (o quitar `sin_pieza_en_almacen`):
+- [x] I3a.6 `cifras_ancladas` y `config.yaml:1361-1362`/`:1368` (46 → 49, 38 → 40) sólo en esos bloques; `npm run generar-mapa-blueprint`; su prueba anti-desfase en verde.
+- [x] I3a.7 Mutación M5 (RQ-TS-60/63): añadir al catálogo en memoria una salida `anulacion` o de abandono desde `Solicitado` o desde SKU (o quitar `sin_pieza_en_almacen`):
       debe caer el bloque de c3 de `invariantesGrafo.test.ts` (las cuatro entradas) y `estados.test.ts` (nueve/cinco). Roja y restaurada.
-- [ ] I3a.8 Mutación M6 (RQ-AV-25): hacer que `PLAZO_DIAS_ESPERA` se derive de `SLA_HORAS_POR_ESTADO` (importarlo): debe caer la prueba de fuente de I3a.4 y la
+- [x] I3a.8 Mutación M6 (RQ-AV-25): hacer que `PLAZO_DIAS_ESPERA` se derive de `SLA_HORAS_POR_ESTADO` (importarlo): debe caer la prueba de fuente de I3a.4 y la
       disjunción. Roja y restaurada.
-- [ ] I3a.9 Mutación sobre el catálogo en memoria (RQ-TS-63): añadir `{ ...finalizacion_servicio, id: 'atajo_sucio' }` a `Por Facturar`: cae `entradasAPorFacturarSinControlCalidad`. Roja y restaurada.
+- [x] I3a.9 Mutación sobre el catálogo en memoria (RQ-TS-63): añadir `{ ...finalizacion_servicio, id: 'atajo_sucio' }` a `Por Facturar`: cae `entradasAPorFacturarSinControlCalidad`. Roja y restaurada.
 - [ ] I3a.c Cierre de lote. Estimación: **~576 líneas (bajo 720)**.
 
 ## Lote I3b — ejecutor, motivo del respaldo, compuesta, despliegue (~255 × 1,8 = 459; ≤ 720)
@@ -66,16 +66,16 @@ Ficheros: `ticketService.ts:128`/`:131`/`:134` y auxiliares al final y de `:6`, 
 `transicionesEjecucion.test.ts`, `flujoSoporteRemoto.test.ts`.
 
 - [ ] I4.1 Línea base: suite del servidor en verde con I3a/I3b aplicados.
-- [ ] I4.2 ROJO `apps/desk/server/salidasEsperas.test.ts` HTTP (RQ-TS-61/64, RQ-PM-42..45): apagado → `409` distinto del de estado en las dos nuevas; encendido, `cobro` desde `Servicio externo`
+- [ ] I4.2 (parcial, adelantado en I3a: interruptor 409 y encendido pasa por el área) ROJO `apps/desk/server/salidasEsperas.test.ts` HTTP (RQ-TS-61/64, RQ-PM-42..45): apagado → `409` distinto del de estado en las dos nuevas; encendido, `cobro` desde `Servicio externo`
       y `sin_pieza` desde `Solicitado` dejan la traza con `performed_by_id`; `anulacion` desde ER/SE: persona a cargo sin motivo pasa, respaldo sin motivo `422`, respaldo con motivo pasa
       y el texto llega a la traza y NO a `custom_fields` (S-13); persona a cargo con motivo `422` (S-14); extraño `403` con el mensaje del ejecutor; DPC encendido: persona a cargo sin cargo
       pasa `cobro`, `rechazo_comercial` sigue igual (RQ-PM-43); vacante del Coordinador Técnico (S-21); `anulacion` desde `Rev./Diagnostico` sigue Decisional por cargo. Rojo por ids/guardas inexistentes.
-- [ ] I4.3 ROJO de posición, cada par activando DOS guardas a la vez (regla de mutación 1): SE-0 estado < interruptor; SE-1 interruptor < área; SE-2 área < ejecutor; SE-2b ejecutor < Decisionales
+- [ ] I4.3 (parcial, adelantado en I3a: SE-0 y SE-1) ROJO de posición, cada par activando DOS guardas a la vez (regla de mutación 1): SE-0 estado < interruptor; SE-1 interruptor < área; SE-2 área < ejecutor; SE-2b ejecutor < Decisionales
       (DPC encendido, Comercial sin cargo ni derivado en `cobro` → mensaje del ejecutor, no `mensajeDecisional`); SE-3 ejecutor < `422`; SE-5 un único `422` con `anulacion` sin «Motivo de anulación» y sin motivo del respaldo.
       Pares sin prueba posible declarados en el test (D3: lista corta, firma CC, prioridad, CC/calibración).
-- [ ] I4.4 ROJO de la ruta `GET /api/permisos/salidas-esperas` (activo + vacante, misma función que la guarda) y de los barridos HTTP de D6 (`permisos` ×2 → 120 / 1.080, `cargoPermiso`,
+- [ ] I4.4 (parcial, adelantado en I3a: sólo los barridos HTTP con salidasEsperas: true, sin derivado_a) ROJO de la ruta `GET /api/permisos/salidas-esperas` (activo + vacante, misma función que la guarda) y de los barridos HTTP de D6 (`permisos` ×2 → 120 / 1.080, `cargoPermiso`,
       `transicionesEjecucion` 44 → 47, `flujoSoporteRemoto`) con `salidasEsperas: true` y `derivado_a` = usuario de la sesión; `anulacion` sigue en la app apagada.
-- [ ] I4.5 VERDE: guardas en `ticketService.ts:128`, `:131` y `:134` y auxiliares (`exigirInterruptorSalidasEsperas`, `veredictoEjecutorSalida`, `exigirEjecutorSalida`); `contextoSalidasEsperas`; ruta y registro
+- [ ] I4.5 (parcial, adelantado en I3a: sólo exigirInterruptorSalidasEsperas en ticketService.ts:128) VERDE: guardas en `ticketService.ts:128`, `:131` y `:134` y auxiliares (`exigirInterruptorSalidasEsperas`, `veredictoEjecutorSalida`, `exigirEjecutorSalida`); `contextoSalidasEsperas`; ruta y registro
       en `app.ts`; `getContextoSalidasEsperas`; `TransitionPanel` (estado `salidas`, compuesta, `visibleConSalidasEsperas`, campo del motivo). Imports al final de su línea.
 - [ ] I4.6 Mutaciones de posición (M7, regla de mutación 1): mover cada guarda nueva antes y después de su vecina: `exigirInterruptorSalidasEsperas` antes de `exigirInterruptorControlCalidad`
       (cae SE-0), antes del área (SE-1), `exigirEjecutorSalida` antes de `cargoFalta` (SE-2), después de Decisionales (SE-2b), `errRespaldo` antes del `403` (SE-3), fuera del agregado (SE-5). Cada una debe poner roja su prueba.

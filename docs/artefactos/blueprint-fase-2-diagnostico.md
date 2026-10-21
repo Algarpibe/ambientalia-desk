@@ -57,4 +57,7 @@ stateDiagram-v2
     e22 --> e15 : Control de calidad rechazado [ST]
     e12 --> e15 : Calibración directa [frontera] [ST]
     e15 --> e13 : Falla en calibración [ST]
+    e01 --> e17 : Cobro de diagnóstico [frontera] [C]
+    e02 --> e17 : Cobro de diagnóstico [frontera] [C]
+    e09 --> e01 : Sin pieza en almacén [ST]
 ```

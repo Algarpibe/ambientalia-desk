@@ -63,7 +63,7 @@ export interface AppConfig {
   sweepMaxRows: number
   sweepMaxPct: number
   migracionTicketsHabilitada: boolean   // E-231: permite APLICAR la migración de F1F-01 (`aplicar=true`); nace cerrada
-  decisionalesPorCargo: boolean; controlCalidadLiberacion: boolean }   // F1C-05 (RQ-PM-28): exige el cargo en las Decisionales; nace cerrado. F1C-07 (RQ-PM-32): control de calidad antes de liberar; nace cerrado. En esta línea para no desplazar citas
+  decisionalesPorCargo: boolean; controlCalidadLiberacion: boolean; salidasEsperas: boolean }   // F1C-05 (RQ-PM-28): exige el cargo en las Decisionales; nace cerrado. F1C-07 (RQ-PM-32): control de calidad antes de liberar; nace cerrado. F1C-03 (RQ-TS-61): las salidas de las esperas; nace cerrado. En esta línea para no desplazar citas
 type Env = Record<string, string | undefined>
 
 function required(env: Env, key: string): string {
@@ -122,6 +122,6 @@ export function loadConfig(env: Env = process.env): AppConfig {
     sweepMaxPct: env.SWEEP_MAX_PCT ? Number(env.SWEEP_MAX_PCT) : 0.1,
     migracionTicketsHabilitada: env.MIGRACION_TICKETS_HABILITADA === 'true',   // default OFF (E-231)
     decisionalesPorCargo: env.DECISIONALES_POR_CARGO === 'true',   // default OFF (F1C-05); no se enciende antes del 14/12
-    controlCalidadLiberacion: env.CONTROL_CALIDAD_LIBERACION === 'true',   // default OFF (F1C-07, RQ-PM-32); se enciende junto con DECISIONALES_POR_CARGO
+    controlCalidadLiberacion: env.CONTROL_CALIDAD_LIBERACION === 'true', salidasEsperas: env.SALIDAS_ESPERAS === 'true',   // default OFF (F1C-07, RQ-PM-32); se enciende junto con DECISIONALES_POR_CARGO. salidasEsperas: default OFF (F1C-03, RQ-TS-61), independiente de los otros dos
   }
 }
