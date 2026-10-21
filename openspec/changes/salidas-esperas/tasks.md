@@ -89,19 +89,19 @@ Ficheros: `ticketService.ts:128`/`:131`/`:134` y auxiliares al final y de `:6`, 
 
 Ficheros: `db/esperasVencidas.ts`, `services/avisoSalidasEsperas.ts` (nuevos), `index.ts:88`/`:15`, `plazosEsperas.ts` (textos `textoAvisoEspera`, `ALARMA_ESPERA`), sus pruebas, corrección del maestro (D13).
 
-- [ ] I5.1 ROJO `esperasVencidas.test.ts` y `avisoSalidasEsperas.test.ts` (RQ-AV-26/27, BD real o harness): entrada = último paso de `secuenciaDelReloj` (funde app y Zoho; sin secuencia no se mide, S-16);
+- [x] I5.1 ROJO `esperasVencidas.test.ts` y `avisoSalidasEsperas.test.ts` (RQ-AV-26/27, BD real o harness): entrada = último paso de `secuenciaDelReloj` (funde app y Zoho; sin secuencia no se mide, S-16);
       vencida a `dias >= plazo` y no antes; un aviso por (ticket, estado, `entrada_at`) vía `marcarYAvisarAlarma`; reentrada da otra `entrada_at` y otro aviso; destinatarios por cargo (+ derivado de Comercial en externas;
       área de respaldo sólo sin cargos, S-19); lista vacía no marca y se reintenta (S-18); apagado no consume el día; una pasada por día civil; un fallo en un ticket no para a los demás; sólo bandeja (S-17).
-- [ ] I5.2 ROJO de textos (D4 d): externas nombran la decisión («cobrar el diagnóstico o anular»); internas (`Solicitado`, SKU) NO nombran `Anulado`, `Por Facturar`, «anular» ni «cobrar»; la clase sale de `enEsperaDe`, sin redeclararla.
-- [ ] I5.3 ROJO «nunca ejecuta»: dos pasadas sobre un vencido en cada espera, ningún `status` cambia y `ticket_transitions` no gana filas; prueba de fuente (molde `comentariosVigilados.test.ts:22`): los dos ficheros
+- [x] I5.2 ROJO de textos (D4 d): externas nombran la decisión («cobrar el diagnóstico o anular»); internas (`Solicitado`, SKU) NO nombran `Anulado`, `Por Facturar`, «anular» ni «cobrar»; la clase sale de `enEsperaDe`, sin redeclararla.
+- [x] I5.3 ROJO «nunca ejecuta»: dos pasadas sobre un vencido en cada espera, ningún `status` cambia y `ticket_transitions` no gana filas; prueba de fuente (molde `comentariosVigilados.test.ts:22`): los dos ficheros
       nuevos no importan `ticketService`, `applyTransition` ni `writeTransition` y no contienen `UPDATE tickets` ni `INSERT INTO ticket_transitions`.
-- [ ] I5.4 VERDE: `ticketsEnEspera(db)` (tres consultas fijas, molde `relojSla.ts:75-85`), `pasadaSalidasEsperas` (molde `avisoFacturacionVencida.ts:53-81`), cableado en `index.ts:88` tras `pasadaFacturacionVencida`.
-- [ ] I5.5 Mutación M1 (RQ-AV-26): hacer que la pasada llame a `applyTransition`/cambie el `status` al vencer: cae «nunca ejecuta» (comportamiento y fuente). Roja y restaurada.
-- [ ] I5.6 Mutación M2 (RQ-AV-26): `esperaVencida` con `dias >= plazo - 1` (aviso antes del plazo): cae el escenario «un día antes no avisa». Roja y restaurada.
-- [ ] I5.7 Mutación M3 (RQ-AV-27): quitar el `INSERT` de `marcarYAvisarAlarma` (o avisar sin marcar) en la segunda pasada: cae «un solo aviso por vencimiento». Roja y restaurada.
-- [ ] I5.8 Mutación M4 (RQ-AV-26): texto de `Solicitado`/SKU con «anular» o «cobrar» (espera interna que sugiere salida en vez de escalar): cae la prueba de textos. Roja y restaurada.
-- [ ] I5.9 Corrección del maestro (D13) y nota R-7 de `estados.ts:131-140` para el `archive-report`; sin tocar el `.docx`.
-- [ ] I5.10 **Barrido de citas (regla de mutación 4)** al cerrar, sobre los muy citados que se tocaron: `transitions.ts`, `estados.ts`, `ticketService.ts`, `config.ts`, `controlCalidad.ts`, `DEPLOY.md`
+- [x] I5.4 VERDE: `ticketsEnEspera(db)` (tres consultas fijas, molde `relojSla.ts:75-85`), `pasadaSalidasEsperas` (molde `avisoFacturacionVencida.ts:53-81`), cableado en `index.ts:88` tras `pasadaFacturacionVencida`.
+- [x] I5.5 Mutación M1 (RQ-AV-26): hacer que la pasada llame a `applyTransition`/cambie el `status` al vencer: cae «nunca ejecuta» (comportamiento y fuente). Roja y restaurada.
+- [x] I5.6 Mutación M2 (RQ-AV-26): `esperaVencida` con `dias >= plazo - 1` (aviso antes del plazo): cae el escenario «un día antes no avisa». Roja y restaurada.
+- [x] I5.7 Mutación M3 (RQ-AV-27): quitar el `INSERT` de `marcarYAvisarAlarma` (o avisar sin marcar) en la segunda pasada: cae «un solo aviso por vencimiento». Roja y restaurada.
+- [x] I5.8 Mutación M4 (RQ-AV-26): texto de `Solicitado`/SKU con «anular» o «cobrar» (espera interna que sugiere salida en vez de escalar): cae la prueba de textos. Roja y restaurada.
+- [x] I5.9 Corrección del maestro (D13) y nota R-7 de `estados.ts:131-140` para el `archive-report`; sin tocar el `.docx`.
+- [x] I5.10 **Barrido de citas (regla de mutación 4)** al cerrar, sobre los muy citados que se tocaron: `transitions.ts`, `estados.ts`, `ticketService.ts`, `config.ts`, `controlCalidad.ts`, `DEPLOY.md`
       (y `schema.sql` sólo si se tocara). Para cada uno: `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"`, cada resultado leído contra el fichero (qué AFIRMA la frase, principio y final del rango por separado),
       segundo pase de abreviadas en los ficheros que ya citan el módulo, casos A/B/C; el detector no basta.
 - [ ] I5.c Cierre de lote. Estimación: **~603 líneas (bajo 720)**.

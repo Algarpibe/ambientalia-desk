@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
-import { ESTADOS_SIN_SALIDA } from './estados'
+import { ESTADOS_SIN_SALIDA, enEsperaDe } from './estados'
 import { SLA_HORAS_POR_ESTADO, ALARMAS_SLA } from './sla'
-import { MEDICION_PLAZOS_ESPERAS, PLAZO_DIAS_ESPERA, diasEnEspera, esperaVencida } from './plazosEsperas'
+import { MEDICION_PLAZOS_ESPERAS, PLAZO_DIAS_ESPERA, ALARMA_ESPERA, diasEnEspera, esperaVencida, textoAvisoEspera } from './plazosEsperas'
 
 /**
  * salidas-esperas (F1C-03, RQ-AV-25): el registro de plazos de las cuatro esperas. Los números son literales de la medición
@@ -52,5 +52,47 @@ describe('RQ-AV-25 · registro de plazos de las cuatro esperas', () => {
     const fuente = readFileSync(fileURLToPath(new URL('./plazosEsperas.ts', import.meta.url)), 'utf8')
     expect(fuente).not.toMatch(/from\s+['"]\.\/sla['"]/)
     expect(fuente).not.toContain('SLA_HORAS_POR_ESTADO')
+  })
+})
+
+/**
+ * RQ-AV-26 (D4 c y d): quién recibe cada alarma y qué dice. Las externas SUGIEREN la decisión de Comercial; las internas ESCALAN y no
+ * nombran ninguna salida (mutación 4). La clase sale de `enEsperaDe`, no se redeclara.
+ */
+describe('RQ-AV-26 · textos de la alarma de caducidad', () => {
+  it('las externas nombran la decisión: cobrar el diagnóstico o anular', () => {
+    expect(textoAvisoEspera('En Espera de Repuestos', 5001, 79))
+      .toBe('El ticket #5001 lleva 79 días en «En Espera de Repuestos» (plazo: 79). Comercial decide su salida: cobrar el diagnóstico o anular.')
+    expect(textoAvisoEspera('Servicio externo', 5002, 40))
+      .toBe('El ticket #5002 lleva 40 días en «Servicio externo» (plazo: 31). Comercial decide su salida: cobrar el diagnóstico o anular.')
+  })
+
+  it('las internas escalan: Solicitado al área técnica y SKU a crear el SKU', () => {
+    expect(textoAvisoEspera('Solicitado', 5003, 13))
+      .toBe('El ticket #5003 lleva 13 días en «Solicitado» (plazo: 13) sin entregarse la pieza: se escala a Servicio Técnico.')
+    expect(textoAvisoEspera('En espera de SKU inventario', 5004, 20))
+      .toBe('El ticket #5004 lleva 20 días en «En espera de SKU inventario» (plazo: 20): hay que crear el SKU.')
+  })
+
+  it('los textos de las internas no nombran ninguna salida (ni Anulado, ni Por Facturar, ni anular, ni cobrar)', () => {
+    for (const e of ESTADOS_SIN_SALIDA.filter((x) => enEsperaDe(x) === 'interna')) {
+      expect(textoAvisoEspera(e, 1, 99), e).not.toMatch(/anul|cobr|por facturar/i)
+    }
+  })
+
+  it('la clase sale de enEsperaDe: sugiere la salida exactamente en las externas', () => {
+    for (const e of ESTADOS_SIN_SALIDA) {
+      expect(textoAvisoEspera(e, 1, 99).includes('cobrar el diagnóstico'), e).toBe(enEsperaDe(e) === 'externa')
+    }
+    const fuente = readFileSync(fileURLToPath(new URL('./plazosEsperas.ts', import.meta.url)), 'utf8')
+    expect(fuente).toContain('enEsperaDe(')
+  })
+
+  it('ALARMA_ESPERA: cargos y área de respaldo por espera, con las claves de los plazos', () => {
+    expect(Object.keys(ALARMA_ESPERA).sort()).toEqual(Object.keys(PLAZO_DIAS_ESPERA).sort())
+    expect(ALARMA_ESPERA['En Espera de Repuestos']).toEqual({ cargos: ['Director Comercial', 'Coordinador Comercial'], areaRespaldo: 'Comercial' })
+    expect(ALARMA_ESPERA['Servicio externo']).toEqual({ cargos: ['Director Comercial', 'Coordinador Comercial'], areaRespaldo: 'Comercial' })
+    expect(ALARMA_ESPERA['Solicitado']).toEqual({ cargos: ['Director Técnico', 'Coordinador Técnico'], areaRespaldo: 'Servicio Técnico' })
+    expect(ALARMA_ESPERA['En espera de SKU inventario']).toEqual({ cargos: ['Director Comercial', 'Coordinador Comercial'], areaRespaldo: 'Comercial' })
   })
 })

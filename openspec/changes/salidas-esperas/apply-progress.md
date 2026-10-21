@@ -177,3 +177,61 @@ En serie, logs en `C:\dev\Desk_2_R1.023-worktrees\sal-i4-*.log`: `npm run typech
 Después de esos códigos sólo se tocaron `tasks.md` y este informe (sin código).
 Medida: `git diff --shortstat --no-renames 3d33f071` 10 ficheros +280 −35 (antes de `tasks.md` y de este informe) y 19 de `routes/permisosSalidasEsperas.ts` sin trackear: ~335 de código y pruebas, ~400 con este informe; bajo 650. Sin binarios.
 Citas (`cli.ts --sha HEAD`) y commit: orquestador. Ninguna línea de `ticketService.ts`, `app.ts` ni `TransitionPanel.tsx` se desplazó; los muy citados de esta tanda se barren en I5.10.
+
+## Lote I5 — alarma de caducidad, cableado, barrido de citas
+
+Estado: I5.1 a I5.10 hechas; I5.c (citas del hook, medida final, commit) la hace el orquestador. Base del lote `59c8b76e`. `strict_tdd`.
+
+### Rojo visto antes del verde
+
+- **I5.1-I5.3 (38 pruebas en 3 ficheros):** `plazosEsperas.test.ts` (+5 RQ-AV-26: textos, clase por `enEsperaDe`, `ALARMA_ESPERA`) cayó 5 de 12 con `textoAvisoEspera is not a function` / `Cannot convert undefined or null to object`;
+  `esperasVencidas.test.ts` y `avisoSalidasEsperas.test.ts` no cargaban (`Cannot find module './esperasVencidas'` / `'./avisoSalidasEsperas'`). Verde al primer intento tras el código: 38/38.
+- **Un solo ajuste tras el verde:** `tsc` (no vitest) rechazó `desde: ultimo.desde` (`string | Date`); se envolvió en `new Date(...)`. Se re-corrieron los tres ficheros y la serie entera.
+
+### Verde
+
+`packages/shared/src/plazosEsperas.ts` (al final: `ALARMA_ESPERA`, `textoAvisoEspera`; la clase sale de `enEsperaDe`, sin importar `sla.ts`); `apps/desk/server/db/esperasVencidas.ts` (`ticketsEnEspera`: tres consultas fijas, la entrada es el último paso de
+`secuenciaDelReloj`; sin secuencia no se mide, S-16); `apps/desk/server/services/avisoSalidasEsperas.ts` (`avisarSalidasEsperas`, `pasadaSalidasEsperas(db, config, hoy)`: apagado sale sin consumir el día; un fallo en un ticket no para a los demás;
+`marcarYAvisarAlarma` reutilizada; cargos y, sólo sin cargos, el área de respaldo; el derivado de Comercial se suma sólo en las externas). Cableado en `apps/desk/server/index.ts` en sus dos líneas (`:15` import al final, `:88` tras `pasadaFacturacionVencida`):
+`git diff -U0` da sólo `@@ -15 +15` y `@@ -88 +88`, ninguna línea desplazada. Sin migración: se reutiliza `public.alarmas_avisadas`.
+El pg-mem no honra el `ROLLBACK`: «el primero se reintenta en la pasada siguiente» no se puede ver en la prueba y descansa en que `marcarYAvisarAlarma` pone la marca dentro de la transacción (estructura heredada de F1B-08).
+El filtro por flujo `servicio` de `ticketsEnEspera` es defensivo: ninguna de las cuatro esperas está en los catálogos de `equipo-nuevo` ni de `soporte-remoto`, así que ninguna prueba real lo ejercita (declarado en el test).
+
+### Mutaciones (script `mut_i5.mjs` del scratchpad: copia, reemplazo exacto una vez, las tres pruebas, restauración por copia; todas con hash igual; log `sal-i5-mut.log`)
+
+| Mutación | Qué se hizo | Prueba(s) que cayó |
+|---|---|---|
+| M1a | tras avisar, `UPDATE  tickets SET status = 'Finalizado'` (con dos espacios, para no tocar la prueba de fuente) | «nunca ejecuta… ningún estado cambia» y «la reentrada» |
+| M1b | tras avisar, `INSERT INTO ticket_transitions` | «nunca ejecuta» (comportamiento), la prueba de FUENTE y «la reentrada» |
+| M2 | `esperaVencida` con `dias >= plazo - 1` | `plazosEsperas` «dia del plazo vence», las cuatro «un día antes no avisa» y «la reentrada» (6) |
+| M3 | avisar sin marcar (`INSERT INTO avisos` directo, sin `marcarYAvisarAlarma`) | «dos pasadas, un aviso», «la reentrada» y «una vez por día civil» (3) |
+| M4a | texto de `Solicitado` con «o anular» | 3: pura «internas escalan», pura «no nombran salida» y la integración «internas escalan» |
+| M4b | texto de SKU con «o cobrar» | las mismas 3 |
+
+La primera ejecución del script abortó en M2 por una cadena no única (`dias >= plazo }`): el `finally` restauró (hash igual) y se volvió a lanzar con la cadena `plazo !== undefined && dias >= plazo`. M1 corrió antes del aborto.
+
+### I5.9 Corrección del maestro (D13)
+
+`docs/sdd/F0-01_Correcciones_para_el_maestro.md`, entrada **37** al final (la última era la 36): M1.3.4, citando `R08.4.md:1338-1340` y las filas `:1327`, `:1330`, `:1333`, `:1336` (leídas una a una). Plazos 79/31/20/13 provisionales (21/10/2026), la caducidad sugiere o escala y nunca ejecuta,
+persona a cargo con respaldo y motivo, y las dos transiciones nuevas («Cobro de diagnóstico», «Sin pieza en almacén»). No se tocó el `.docx`.
+
+**Nota R-7 para el `archive-report` (expediente, no se corrige aquí):** `estados.ts:131-140` sigue describiendo «la única salida» y «un alta en otro sistema» para las esperas, desfasado con c3 (D10 sólo corrigió `:154`/`:158`).
+
+### I5.10 Barrido de citas (regla de mutación 4)
+
+Método: `git diff -U0 --no-renames 24b86092` por fichero; en los doce muy citados que tocó la rama (`transitions.ts`, `estados.ts`, `ticketService.ts`, `config.ts` de zoho-sync, `controlCalidad.ts`, `app.ts`, `TransitionPanel.tsx`, `index.ts`, `deployControlCalidad.test.ts`, `openspec/config.yaml`,
+`decisionales.ts`, `appHarness.ts`; `DEPLOY.md`, `.env.example`, `client.ts` y `shared/index.ts` sólo AÑADEN al final, base 810/43/918/51 líneas) **ninguna línea se desplazó**: los hunks son de una línea (`-N +N`) o inserciones tras el final. Se comprobó por script (`subseq_i5.mjs`, la línea vieja es subsecuencia de la nueva):
+- **Inserción pura (caso A, siguen ciertas):** `transitions.ts:262` y `:330`; `ticketService.ts:6`, `:7`, `:128`, `:131`; `config.ts:66`, `:125`; `controlCalidad.ts:7`, `:119`, `:121`, `:122`; `app.ts:22`, `:61`; `TransitionPanel.tsx:3`, `:55`, `:179`; `index.ts:15`, `:88`; `deployControlCalidad.test.ts:14`, `:17`; `decisionales.ts:2`; `appHarness.ts:46`, `:49`.
+- **Texto reemplazado (las únicas que pueden volver falsa una cita):** `estados.ts:142`, `:145`, `:154`, `:158`; `ticketService.ts:134` (sólo añade `...errRespaldo` al agregado) y `:238` (49 → 51); `TransitionPanel.tsx:8` y `:57` (la compuesta sustituye a `puedeEjecutarTransicionConDecisionales`); `openspec/config.yaml:1361`, `:1362`, `:1364`, `:1368` (cifras ancladas).
+- **Cifras del barrido (`barrido_i5.mjs`, citas completas `fichero:N(-M)` sobre todo lo trackeado, antes de filtrar):** 948 abarcan alguna de las líneas cambiadas; con sólo las 12 de texto reemplazado, 339 (46 `estados.ts`, 177 `ticketService.ts`, 100 `TransitionPanel.tsx`, 16 `config.yaml`; el nombre pelado `index.ts`/`app.ts`/`config.ts` mezcla ficheros homónimos, así que son cota superior).
+  Se leyeron las ~75 vivas (fuera de `openspec/changes/archive/`, de los `Paquete_de_Despliegue_*` y de esta carpeta): 1 reparada, el resto ciertas (A) o registros fechados.
+- **Segundo pase de abreviadas** (`:N` a ≤3 líneas del nombre del fichero, `abrev_i5.mjs`): 48 coincidencias, todas ciertas (`:134`, `:132-134`, `:127-165` siguen siendo el agregado de `422`) o propias de esta carpeta; `CLAUDE.md:349 :158` es de `remision.ts`, falso positivo.
+- **Reparada (caso B, 1):** `docs/sdd/ENTRADA.md:2148`, `estados.ts:144-145` citaba «da SEIS», que la rama cambió a «da CINCO»: ahora lleva `en 24b86092`, donde la línea 145 todavía lo decía.
+- **No aplican, ya desfasadas ANTES de esta rama (pre-existentes, no se tocan):** `ENTRADA.md:2148 ticketService.ts:238` («las otras 43»; en la base ya decía 49); `openspec/specs/transitions-st/spec.md:2591` `estados.ts:145` («da OCHO»; en la base decía SEIS); `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:173` `config.yaml:1360-1361`/`:1367-1368`
+  (plan fechado: «34 a 31», «38 a 35»); las citas de `transitions.ts:262` que describen el docblock de `DERIVACION_POR_DEFECTO` (F0-01, specs `derivacion-avisos` y `transitions-st`, caso B de la R08.1); todo `openspec/changes/archive/` y los `Paquete_de_Despliegue_*` (registros fechados, caso B por construcción).
+- Resultado de `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`: salida 0, 0 bloqueantes, 13 abreviadas rotas informativas (ninguna de las tocadas aquí); se repetirá tras el commit.
+
+### Códigos y medida
+
+En serie, logs en `C:\dev\Desk_2_R1.023-worktrees\sal-i5-*.log`: `npm run typecheck` 0 (tras el ajuste de `new Date`); `npm run lint` 0 (0 errores, 165 avisos preexistentes); `npm test` 0 (313 ficheros pasan, 3 omitidos; 5.323 pruebas pasan, 11 omitidas); `npm run build` 0.
+Medida: `git diff --shortstat --no-renames 59c8b76e` 5 ficheros +104 −5 (antes de `tasks.md` y de este informe) y 457 líneas sin trackear (`esperasVencidas.ts` 60 y su prueba 87, `avisoSalidasEsperas.ts` 86 y su prueba 224): ~566 de código y pruebas; con este informe y `tasks.md` (`git diff --shortstat --no-renames 59c8b76e` final: 7 ficheros +172 −15, más las 457), **644**; bajo 650 por poco. Sin binarios.
