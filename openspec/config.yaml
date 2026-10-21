@@ -5268,3 +5268,61 @@ cierres_declarados_por_commit:
     asunto: "feat(tickets): F1B-01 — el serial es la llave: obligatorio en la remision y abre las OV"
     prueba: "apps/desk/server/remisiones.test.ts:913 · docs/sdd/F1B-01_Serial_llave_de_entrada.md:1"
     declarado_por: "decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4"
+
+mediciones_de_produccion:
+  # Mediciones que Gerencia ejecuta contra producción y que la construcción registra (R-5, directo en main).
+  # Bloque propio al FINAL del fichero para no desplazar ninguna línea citada. Se remiten SIEMPRE por su
+  # clave, nunca por número de línea. Una medición es un dato fechado: no se reescribe, se remide con clave nueva.
+  - clave: "medicion/p90-esperas-2026-10-21"
+    fecha: "2026-10-21"
+    quien: "Gerencia, en desk-db (base `desk`), consulta de sólo lectura (READ ONLY + ROLLBACK)"
+    para_que: "fijar el plazo de caducidad de cada espera con datos, como pide `decision/c3-salida-esperas` (consecuencia 4)"
+    metodo: |
+      Fuentes: `desk.ticket_transitions` (transiciones de la aplicación) y los eventos TicketUpdated de Status de
+      `desk.ticket_history` (cambios de estado venidos de Zoho). Estancia = desde la entrada en el estado hasta el
+      siguiente cambio de estado del mismo ticket. Unidad: días naturales. Una estancia sin cambio posterior cuenta
+      como «abierta» y no entra en los percentiles.
+    resultados:
+      - estado: "En Espera de Repuestos"
+        estancias: 40
+        de_la_app: 0
+        de_zoho: 40
+        p50_dias: 30.9
+        p90_dias: 78.4
+        max_dias: 109.8
+        abiertas: 2
+        abierta_mas_antigua_dias: 69.0
+      - estado: "Servicio externo"
+        estancias: 17
+        de_la_app: 0
+        de_zoho: 17
+        p50_dias: 14.9
+        p90_dias: 30.3
+        max_dias: 30.3
+        abiertas: 1
+        abierta_mas_antigua_dias: 68.7
+      - estado: "En espera de SKU inventario"
+        estancias: 12
+        de_la_app: 0
+        de_zoho: 12
+        p50_dias: 3.5
+        p90_dias: 19.6
+        max_dias: 26.1
+        abiertas: 0
+      - estado: "Solicitado"
+        estancias: 17
+        de_la_app: 0
+        de_zoho: 17
+        p50_dias: 0.0
+        p90_dias: 12.7
+        max_dias: 19.0
+        abiertas: 0
+    consecuencias: |
+      (1) APLICA EL MÉTODO DE c3 tal cual: el plazo de cada espera es «lo que hoy tarda el 90 % de los tickets en ese
+      estado», medido en el historial (`decision/c3-salida-esperas`).
+      (2) MUESTRAS PEQUEÑAS (12 a 40 estancias) Y TODAS DE ZOHO (0 de la aplicación): el plazo es PROVISIONAL y se
+      recalcula con una medición nueva, con clave propia, cuando haya historial de la aplicación.
+      (3) SUPUESTO: los plazos se redondean hacia arriba a días naturales enteros — En Espera de Repuestos 79,
+      Servicio externo 31, En espera de SKU inventario 20, Solicitado 13.
+    registro: "openspec/config.yaml → mediciones_de_produccion (medicion/p90-esperas-2026-10-21)"
+    tanda_que_abre: "F1C-03 (la consume como registro propio de plazos en packages/shared, con la fecha de esta medición)"
