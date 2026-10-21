@@ -139,13 +139,13 @@ describe('estados sin salida (M1.3.4)', () => {
   /**
    * LA LECCIÓN DE MÉTODO, en prueba: «salida única» NO es proxy de nada.
    *
-   * Once estados tienen una sola transición de salida (diez hasta F1C-02, que añade `Pendiente de facturar`; doce hasta F1C-01: `Anulado` da una segunda salida a `En Espera de Repuestos` y a `Servicio externo`). Entre ellos `Ingresado` y `Ticket creado`, que
+   * Diez estados tienen una sola transición de salida (once hasta F1C-08, que da a `Ingresado` una segunda salida, `calibracion_directa`; diez hasta F1C-02, que añade `Pendiente de facturar`; doce hasta F1C-01: `Anulado` da una segunda salida a `En Espera de Repuestos` y a `Servicio externo`). Entre ellos `Ingresado` y `Ticket creado`, que
    * son fases de trabajo corriente y no esperas de nadie. Quien intente derivar `sin_salida` contando
-   * salidas se lleva estos once, y no cuatro.
+   * salidas se lleva estos diez, y no cuatro.
    */
-  it('once estados tienen una sola salida, así que contar salidas no clasifica nada', () => {
-    expect(conUnaSolaSalida()).toHaveLength(11)
-    expect(conUnaSolaSalida()).toContain('Ingresado')
+  it('diez estados tienen una sola salida, así que contar salidas no clasifica nada', () => {
+    expect(conUnaSolaSalida()).toHaveLength(10)
+    expect(conUnaSolaSalida()).not.toContain('Ingresado')
     expect(conUnaSolaSalida()).toContain('Ticket creado')
   })
 

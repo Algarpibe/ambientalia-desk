@@ -799,3 +799,12 @@ redespliegue. La línea de entorno que corresponde, tal cual:
 > ```
 > CONTROL_CALIDAD_LIBERACION=
 > ```
+
+**Qué enciende la calibración directa:** la misma variable `CONTROL_CALIDAD_LIBERACION` enciende también la ruta abreviada
+`calibracion_directa` («Calibración directa», de «Ingresado» a «En Proceso», sólo para tickets de tipo de servicio «Calibración» con orden de
+venta asignada) y su escape `falla_calibracion` («Falla en calibración», de «En Proceso» a «Rev./Diagnostico», con la descripción de la falla
+obligatoria), F1C-08 (`decision/f1c08-ov-calibracion`). No tiene variable propia: apagada, las dos responden `409` y se ocultan del panel
+(`packages/shared/src/controlCalidad.ts:105`, `apps/desk/server/services/ticketService.ts:128`).
+**Qué se rompe si se pone mal la calibración directa:** encendida, una calibración puede llegar a «En Proceso» sin pasar por el diagnóstico y
+sólo sale hacia «Por Facturar» por el control de calidad, así que sin firmantes habilitados (ver arriba) el equipo queda esperando la firma; apagada con
+tickets ya en «En Proceso» por el atajo, éstos siguen su camino y sólo se oculta el escape. Cambiar la variable pide un redespliegue.

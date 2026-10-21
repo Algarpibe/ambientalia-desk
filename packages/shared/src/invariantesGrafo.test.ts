@@ -3,7 +3,7 @@ import {
   TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA, type Transition,
 } from './transitions'
 import { ESTADOS, ESTADOS_SERVICIO, ESTADOS_SOLO_EQUIPO_NUEVO, ESTADOS_SOLO_SOPORTE_REMOTO, CLASIFICACION_EN_ESPERA, ESTADOS_SIN_SALIDA } from './estados'
-import { camposFechaReentrantes, componentesFuertementeConexos } from './reentrancia'; import { FASE_POR_ESTADO } from './fasesBlueprint'; import { CLAVE_NUMERO_FACTURA, CLAVE_FECHA_FACTURA } from './facturar'; import { estadoInicialDelAlta, transicionesDelTicket } from './flujos'; import { CLASIFICACIONES } from './ticketCreate'; import { CLAVE_CERTIFICADO_FABRICA } from './gasPatron'
+import { camposFechaReentrantes, componentesFuertementeConexos } from './reentrancia'; import { FASE_POR_ESTADO } from './fasesBlueprint'; import { CLAVE_NUMERO_FACTURA, CLAVE_FECHA_FACTURA } from './facturar'; import { estadoInicialDelAlta, transicionesDelTicket } from './flujos'; import { CLASIFICACIONES } from './ticketCreate'; import { CLAVE_CERTIFICADO_FABRICA } from './gasPatron'; import { entradasAPorFacturarSinControlCalidad } from './controlCalidad'; import { tipoEventoDeTransicion } from './tipoEvento' // F1C-08 (RQ-TS-56): en esta línea para no desplazar citas
 
 /**
  * LOS SIETE INVARIANTES DEL GRAFO (§2 del proposal F0-04).
@@ -47,10 +47,10 @@ describe('invariantes del grafo de transiciones', () => {
    * Vale menos que los demás y por eso va acompañado: un número solo no dice QUÉ se perdió. Va con
    * el conjunto de ids, que sí lo dice.
    */
-  it('2 · 36 transiciones sobre 23 estados', () => {
-    expect(TRANSITIONS).toHaveLength(36)
+  it('2 · 38 transiciones sobre 23 estados', () => {
+    expect(TRANSITIONS).toHaveLength(38)
     expect(ESTADOS_SERVICIO).toHaveLength(23)
-    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(36)
+    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(38)
   })
 
   /**
@@ -129,20 +129,20 @@ describe('invariantes del grafo de transiciones', () => {
   /**
    * INVARIANTE 6 — la lista de campos de fecha reentrantes no crece sin declararlo.
    *
-   * Los diez (nueve hasta F1C-07, once hasta F1C-02, diez hasta F1C-05) son la entrada de F1C-02, F1C-06, C9 y la spec `kpis`: cada uno es un campo que una
+   * Los doce (diez hasta F1C-07, once hasta F1C-02, diez hasta F1C-05) son la entrada de F1C-02, F1C-06, C9 y la spec `kpis`: cada uno es un campo que una
    * segunda pasada por su ciclo vuelve a escribir. La tabla completa —componente por componente y
    * cruzada con G.6— está en `reentrancia.test.ts`; aquí va sólo el conjunto, que es lo que no puede
    * crecer en silencio.
    */
-  it('6 · los campos de fecha reentrantes son exactamente estos diez', () => {
+  it('6 · los campos de fecha reentrantes son exactamente estos doce (diez hasta F1C-07; F1C-08 suma los dos del escape, RQ-TS-57)', () => {
     expect(camposFechaReentrantes()).toEqual([
       'Fecha Recepción de repuestos',
       'Fecha Orden de Compra',
       'Fecha Orden De Venta',
       'Fecha Orden de Compra Final',
-      'Fecha Orden de Venta Final',
+      'Fecha Orden de Venta Final', 'Fecha Notificación por garantía',
       'Fecha de Cotización',
-      'Fecha solicitud SKU',
+      'Fecha solicitud SKU', 'Fecha Revisión Informe',
       'Fecha Salida Servicio externo',
       'Fecha Entrada de servicio externo', 'Fecha Finalización ST', // F1C-07 (S-16): el envío a control de calidad entra en el ciclo En Proceso ⇄ Control de calidad; en la misma línea para no desplazar citas
       // 'Fecha prevista de facturación' y 'Fecha Remisión de Salida' salieron con F1C-02: el ciclo de cierre ya no existe (RQ-TS-43)
@@ -169,9 +169,9 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect([...derivados].sort()).toEqual([...ESTADOS].sort())
   })
 
-  it('la unión tiene 48 entradas (36 + 7 + 5), con ids únicos', () => {
-    expect(UNION).toHaveLength(48)
-    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(48)
+  it('la unión tiene 50 entradas (38 + 7 + 5), con ids únicos', () => {
+    expect(UNION).toHaveLength(50)
+    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(50)
   })
 
   it('3 · sin salida en la unión es exactamente Finalizado y Anulado (F1C-01)', () => {
@@ -368,5 +368,43 @@ describe('las dos ramas de cierre (F1C-02)', () => {
     const atras = [...TRANSITIONS, { ...TRANSITIONS.find((t) => t.id === 'facturar')!, id: 'reabrir', to: 'Por Facturar' }]
     expect(cicloEnElCierre(atras)).not.toEqual([])
     expect(salidasDe(atras, 'Pendiente de facturar').map((t) => t.to)).not.toEqual(['Finalizado'])
+  })
+})
+
+/**
+ * calibracion-directa (F1C-08, RQ-TS-56, D6, S-14) · la condición (3) como PROPIEDAD DEL GRAFO: con el interruptor encendido, las
+ * únicas entradas a `Por Facturar` alcanzables desde `En Proceso` sin cruzar `Control de calidad` son los tres rechazos Decisionales
+ * (el cliente no aprueba y no hay trabajo que liberar). Apagado, además `finalizacion_servicio`. Se rompe ensuciando el CATÁLOGO en
+ * memoria (regla de mutación 2), no la prueba. El recorrido HTTP del atajo hasta `Por Facturar` es del lote 2.
+ */
+describe('F1C-08 · entradas a Por Facturar sin pasar por Control de calidad (RQ-TS-56)', () => {
+  const ordenadas = (ts: Transition[], activo: boolean) => [...entradasAPorFacturarSinControlCalidad(ts, activo)].sort()
+  const RECHAZOS = ['rechazo_cliente', 'rechazo_comercial', 'rechazo_revision']
+
+  it('encendido: exactamente los tres rechazos, y los tres son Decisionales', () => {
+    expect(ordenadas(TRANSITIONS, true)).toEqual(RECHAZOS)
+    for (const id of RECHAZOS) expect(tipoEventoDeTransicion(id), `${id} no es Decisional`).toBe('Decisional')
+  })
+
+  it('apagado: finalizacion_servicio sí cuenta (el interruptor la quita al encender) y rechazo_revision no, porque el escape también cuelga del interruptor', () => {
+    expect(ordenadas(TRANSITIONS, false)).toEqual(['finalizacion_servicio', 'rechazo_cliente', 'rechazo_comercial'])
+  })
+
+  it('rechazo_revision entra por el escape: sin falla_calibracion en memoria son dos', () => {
+    const sinEscape = TRANSITIONS.filter((t) => t.id !== 'falla_calibracion')
+    expect(ordenadas(sinEscape, true)).toEqual(['rechazo_cliente', 'rechazo_comercial'])
+  })
+
+  it('M3 · un atajo sucio a Por Facturar desde En Proceso hace crecer el conjunto', () => {
+    const sucio = [...TRANSITIONS, { ...TRANSITIONS.find((t) => t.id === 'finalizacion_servicio')!, id: 'atajo_sucio' }]
+    expect(ordenadas(sucio, true)).toContain('atajo_sucio')
+    expect(ordenadas(sucio, true)).not.toEqual(RECHAZOS)
+  })
+
+  it('M3 · una Operativa de Rev./Diagnostico a Por Facturar también lo hace crecer', () => {
+    const base = TRANSITIONS.find((t) => t.id === 'finalizacion_servicio')!
+    const sucio = [...TRANSITIONS, { ...base, id: 'atajo_desde_diagnostico', from: ['Rev./Diagnostico'], to: 'Por Facturar' }]
+    expect(tipoEventoDeTransicion('atajo_desde_diagnostico')).not.toBe('Decisional')
+    expect(ordenadas(sucio, true)).toContain('atajo_desde_diagnostico')
   })
 })

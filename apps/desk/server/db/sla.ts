@@ -102,7 +102,7 @@ export async function entradasActuales(
 }
 
 /** Los tickets de `tickets` con una asociación VIGENTE en `ov_asociaciones`, en una sola consulta. */
-async function conAsociacionVigente(db: Queryable, tickets: ReadonlyArray<{ id: string }>): Promise<Set<string>> {
+export async function conAsociacionVigente(db: Queryable, tickets: ReadonlyArray<{ id: string }>): Promise<Set<string>> {
   if (tickets.length === 0) return new Set()
   const m = tickets.map((_, i) => `$${i + 1}`).join(', ')
   const r = await db.query(`SELECT ticket_id FROM ov_asociaciones WHERE liberada_at IS NULL AND ticket_id IN (${m})`, tickets.map((t) => t.id))

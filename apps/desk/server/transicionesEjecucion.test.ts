@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
-import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, ESTADOS_SIN_SALIDA } from '@ambientalia/shared'
+import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, ESTADOS_SIN_SALIDA, IDS_CALIBRACION_DIRECTA } from '@ambientalia/shared'
 import { db, instalarArnes, appWith, adminCookie, valoresValidos } from './testing/appHarness'; import { conRemisionVigente } from './testing/remisionDePrueba'
 
 instalarArnes()
@@ -156,7 +156,7 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   // Las tres formas de entrar: los dos nombres de la fase inicial —el de Zoho y el de la app— y la
   // fase de la remisión, que sin este tercer origen dejaría al ticket en un callejón.
   habilitar_servicio: { desde: ['OV asignada', 'Ticket creado', 'Remisión creada'], a: 'Ingresado' },
-  ingreso_a_servicio: { desde: ['Ingresado'], a: 'Rev./Diagnostico' },
+  ingreso_a_servicio: { desde: ['Ingresado'], a: 'Rev./Diagnostico' }, calibracion_directa: { desde: ['Ingresado'], a: 'En Proceso' }, falla_calibracion: { desde: ['En Proceso'], a: 'Rev./Diagnostico' }, // F1C-08 (RQ-TS-52): con el interruptor encendido y, el atajo, tipo Calibración y OV
   escalado_a_revision: { desde: ['Rev./Diagnostico'], a: 'Notificado' },
   devolucion_a_correccion: { desde: ['Notificado'], a: 'Rev./Diagnostico' },
   aprobacion_y_repuestos: { desde: ['Notificación cliente'], a: 'En Espera de Repuestos' },
@@ -185,7 +185,7 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' }, anulacion: { desde: ['En Espera de Repuestos', 'Servicio externo', 'Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'], a: 'Anulado' }, facturar: { desde: ['Pendiente de facturar'], a: 'Finalizado' }, envio_control_calidad: { desde: ['En Proceso'], a: 'Control de calidad' }, aprobacion_control_calidad: { desde: ['Control de calidad'], a: 'Por Facturar' }, rechazo_control_calidad: { desde: ['Control de calidad'], a: 'En Proceso' }, // F1C-07 (RQ-TS-46): las tres de control de calidad. F1C-02 (RQ-TS-42): «Facturar». F1C-01: la anulación, desde las dos esperas externas y los tres orígenes de Rechazo (`decision/c3-salida-esperas`).
 }
 
-describe('las 36 transiciones, ejecutadas contra el servidor', () => {
+describe('las 38 transiciones, ejecutadas contra el servidor', () => {
   /**
    * EL GUARDIÁN DE COBERTURA: el conjunto de huérfanas tiene que estar VACÍO.
    *
@@ -247,7 +247,7 @@ describe('las 36 transiciones, ejecutadas contra el servidor', () => {
    * lo que la decisión dice. Se afirma que hay UNA fila —ni cero ni dos— con su id, sus dos
    * extremos, su área y su actor.
    */
-  it('las 36 salen de su origen, llegan a su destino y dejan traza', async () => {
+  it('las 38 salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
     const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre
 
@@ -260,10 +260,10 @@ describe('las 36 transiciones, ejecutadas contra el servidor', () => {
       for (const origen of CASOS[t.id].desde) {
         n += 1
         const id = `eje-${n}`
-        await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)',
-          [id, 70000 + n, 'Barrido de ejecución', origen]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
+        await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)',
+          [id, 70000 + n, 'Barrido de ejecución', origen, ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-EJE'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
 
-        const res = await request(t.id === 'envio_control_calidad' ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+        const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
 
         const ticket = await db.query('SELECT status FROM tickets WHERE id = $1', [id])
@@ -280,9 +280,9 @@ describe('las 36 transiciones, ejecutadas contra el servidor', () => {
     }
 
     expect(observado).toEqual(esperado)
-    // Y que el barrido no se haya quedado corto: 36 transiciones y 42 ejecuciones, porque
+    // Y que el barrido no se haya quedado corto: 38 transiciones y 44 ejecuciones, porque
     // `habilitar_servicio` sale de tres estados y `anulacion` de cinco. Un barrido sobre un grafo vacío también daría verde.
-    expect(n, 'ejecuciones del barrido').toBe(42)
+    expect(n, 'ejecuciones del barrido').toBe(44)
   }, 60_000)
 })
 
