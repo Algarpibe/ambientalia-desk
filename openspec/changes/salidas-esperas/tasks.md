@@ -45,17 +45,17 @@ Ficheros: `transitions.ts:262` y `:330`, `config.ts:66`/`:125`, `appHarness.ts:4
 Ficheros: `salidasEsperas.ts` (resto), `salidasEsperas.test.ts` ampliada, `DEPLOY.md` §17, `.env.example`, `deploySalidasEsperas.test.ts` (nuevo),
 `deployControlCalidad.test.ts:14`/`:17-20`.
 
-- [ ] I3b.1 ROJO (RQ-PM-42/43 puras): `ejecutorDeSalida` — `null` apagado o fuera de alcance; `persona_a_cargo` (id = `derivadoA` y área); `respaldo` (admin o cargo de
+- [x] I3b.1 ROJO (RQ-PM-42/43 puras): `ejecutorDeSalida` — `null` apagado o fuera de alcance; `persona_a_cargo` (id = `derivadoA` y área); `respaldo` (admin o cargo de
       `cargosDecisionales(areaDeDecision(t), vacante)`); `denegado` con el mensaje de D2; derivado nulo/inactivo/ajeno = sólo pasa (b) (S-2); `areaDeDecision` no es `null` para las tres;
       `anulacion` desde `Rev./Diagnostico` NO es salida de espera; `erroresMotivoRespaldo` (ausente, en blanco, persona a cargo con texto → mensaje; `null`/`denegado` → `[]`);
       `puedeEjecutarConSalidasEsperas` frente a `puedeEjecutarTransicionConDecisionales` intacta. Rojo por funciones inexistentes.
-- [ ] I3b.2 VERDE: `ejecutorDeSalida`, `erroresMotivoRespaldo`, `CAMPO_MOTIVO_RESPALDO` (fuera del catálogo), `puedeEjecutarConSalidasEsperas`, `SALIDAS_ESPERAS_APAGADO`.
-- [ ] I3b.3 ROJO `deploySalidasEsperas.test.ts` (molde `deployControlCalidad.test.ts`): `DEPLOY.md` §17 con «**Qué enciende:**», «**Qué se rompe si se pone mal:**», «**Nace cerrado**»
+- [x] I3b.2 VERDE: `ejecutorDeSalida`, `erroresMotivoRespaldo`, `CAMPO_MOTIVO_RESPALDO` (fuera del catálogo), `puedeEjecutarConSalidasEsperas`, `SALIDAS_ESPERAS_APAGADO`.
+- [x] I3b.3 ROJO `deploySalidasEsperas.test.ts` (molde `deployControlCalidad.test.ts`): `DEPLOY.md` §17 con «**Qué enciende:**», «**Qué se rompe si se pone mal:**», «**Nace cerrado**»
       y `> SALIDAS_ESPERAS=`; `.env.example` con la variable tras `:43` y sus dos frases; `deployControlCalidad.test.ts` deja de exigir que §16 sea la última (se acota hasta §17).
-- [ ] I3b.4 VERDE: §17 tras §16 (`DEPLOY.md:776`) y `.env.example`; texto en español neutro.
-- [ ] I3b.5 Mutación 2 sobre el FICHERO VIGILADO (regla de mutación 2): ensuciar `DEPLOY.md` (quitar «Nace cerrado» de §17, o poner la variable sin `>`) y `.env.example` (borrar la variable,
+- [x] I3b.4 VERDE: §17 tras §16 (`DEPLOY.md:776`) y `.env.example`; texto en español neutro.
+- [x] I3b.5 Mutación 2 sobre el FICHERO VIGILADO (regla de mutación 2): ensuciar `DEPLOY.md` (quitar «Nace cerrado» de §17, o poner la variable sin `>`) y `.env.example` (borrar la variable,
       o dejarla en `=true`): debe ponerse roja `deploySalidasEsperas.test.ts`. Restaurar los dos ficheros.
-- [ ] I3b.6 Mutaciones de la regla pura: (M7a) cambiar `s.id === tk.derivadoA` por `!== `: cae «persona a cargo»; quitar el chequeo de área de (a): cae «derivado de otra área»;
+- [x] I3b.6 Mutaciones de la regla pura: (M7a) cambiar `s.id === tk.derivadoA` por `!== `: cae «persona a cargo»; quitar el chequeo de área de (a): cae «derivado de otra área»;
       (M7b) dejar `esSalidaDeEspera` aceptando `anulacion` desde `Rev./Diagnostico`: cae «fuera de alcance».
 - [ ] I3b.c Cierre de lote. Estimación: **~459 líneas (bajo 720)**.
 

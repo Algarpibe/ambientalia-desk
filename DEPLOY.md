@@ -808,3 +808,24 @@ obligatoria), F1C-08 (`decision/f1c08-ov-calibracion`). No tiene variable propia
 **Qué se rompe si se pone mal la calibración directa:** encendida, una calibración puede llegar a «En Proceso» sin pasar por el diagnóstico y
 sólo sale hacia «Por Facturar» por el control de calidad, así que sin firmantes habilitados (ver arriba) el equipo queda esperando la firma; apagada con
 tickets ya en «En Proceso» por el atajo, éstos siguen su camino y sólo se oculta el escape. Cambiar la variable pide un redespliegue.
+
+## 17. `SALIDAS_ESPERAS`: el interruptor de las salidas de las esperas (F1C-03, `decision/c3-salida-esperas`)
+
+**Qué enciende:** con `SALIDAS_ESPERAS=true` en el servicio App, las esperas externas dejan de ser un callejón sin salida. Desde
+«En Espera de Repuestos» y «Servicio externo» Comercial puede cobrar el diagnóstico (`cobro_diagnostico_espera`, hacia «Por Facturar»),
+y desde «Solicitado» el taller puede declarar que no hay pieza en el almacén (`sin_pieza_en_almacen`, hacia «En Espera de Repuestos»).
+Además, la anulación desde las dos esperas externas la ejecuta la persona a cargo del ticket (el `derivado_a`) sin más trámite, y el
+Director o el Coordinador del área sólo con el «Motivo del respaldo» escrito; ese motivo queda en la traza de la transición
+(`packages/zoho-sync/src/config.ts:125`, `apps/desk/server/services/ticketService.ts:128`). Apagada —ausente o con cualquier otro
+valor— las dos transiciones nuevas responden `409` y el panel no las ofrece, y la anulación desde las esperas sigue como antes.
+**Qué se rompe si se pone mal:** encendida antes de tiempo, contradice la decisión de Gerencia; encendida con tickets sin persona a
+cargo (por ejemplo, tickets traídos de Zoho sin derivado), sólo las salidas de respaldo, cada una con su motivo, funcionan, y quien no
+sea persona a cargo ni respaldo recibe `403`. Es independiente de `CONTROL_CALIDAD_LIBERACION` (§16) y de `DECISIONALES_POR_CARGO`
+(§15): encenderla no enciende ninguna de las dos, ni al revés.
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). **No se enciende antes del 14/12/2026, y lo decide
+Gerencia.** Cada cambio de la variable pide un redespliegue; la vuelta atrás es quitarla. La línea de entorno que corresponde, tal cual:
+
+> ```
+> SALIDAS_ESPERAS=
+> ```

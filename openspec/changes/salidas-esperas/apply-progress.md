@@ -68,3 +68,43 @@ Adelanta de I4 lo mínimo (marcado «parcial» en `tasks.md`: I4.2, I4.3, I4.4, 
 - `apps/desk/server/routes/reasignacion.test.ts:340`: el predicado del barrido HTTP excluye `cobro_diagnostico_espera` (S-22), como el puro.
 - `reconciliacion/registro.test.ts:218-220`: «en curso» pasa de NUEVE a **DIEZ** con F1C-03 (`salidas-esperas`, `cierra: si`, sin archivar). **Tarea para I7:** al archivar el cambio vuelve a NUEVE (quitar `F1C-03` del arreglo y restituir el título).
 - Mutación de posición SE-1 no ejecutada con herramienta: su prueba se vio ROJA antes de existir la guarda (403 en lugar de 409), que es la evidencia de que discrimina la posición.
+
+## Lote I3b — ejecutor, motivo del respaldo, despliegue
+
+Estado: I3b.1 a I3b.6 hechas; I3b.c (citas, medida final, commit) la hace el orquestador. Base del lote `df53227f`. `strict_tdd`.
+
+### Rojo visto antes del verde
+
+- **I3b.1:** `salidasEsperas.test.ts` ampliada (+17 pruebas, RQ-PM-42/43/44 puras): **16 rojas, 9 en verde** (las 9 de I3a); causa, `TypeError: … is not a function` (las funciones no existían).
+  Verde: 25/25. `tsc -b` sin ciclo (`salidasEsperas.ts` ahora importa `permissions`, `decisionales`, `cargos`).
+- **I3b.3:** `deploySalidasEsperas.test.ts` (nuevo, 9 pruebas): **7 rojas, 2 en verde** (la ausencia de `true` y la lectura `=== 'true'`); causa, sin §17 ni variable en `.env.example`.
+  Tras añadir la §17 se vio la tercera roja prevista: `deployControlCalidad.test.ts` «es la última» (la §16 ya no cierra el fichero); se acotó la §16 hasta la §17, en una sola línea (+0 líneas, sin desplazar `:17`/`:35`).
+- Verde: 15/15 en los dos ficheros.
+
+### Verde
+
+`salidasEsperas.ts`: `ORIGENES_ANULACION_EN_ESPERA`, `CLAVE_MOTIVO_RESPALDO`, `CAMPO_MOTIVO_RESPALDO` (fuera del catálogo), `ContextoSalidasEsperas`, `SALIDAS_ESPERAS_APAGADO`, `EjecutorSalida`,
+`esSalidaDeEspera`, `ejecutorDeSalida`, `erroresMotivoRespaldo`, `puedeEjecutarConSalidasEsperas`. `DEPLOY.md` §17 (tras la §16, solo añade al final: no desplaza líneas).
+`.env.example`: comentario de dos frases y `SALIDAS_ESPERAS=` vacío tras `CONTROL_CALIDAD_LIBERACION=` (la edición NO fue denegada: no hay parte bloqueada).
+
+### Mutaciones (scripts de copia + `sed` + restauración por copia y hash; todas restauradas con hash igual)
+
+| Mutación | Qué se hizo | Prueba(s) que cayó |
+|---|---|---|
+| I3b.5 A | `DEPLOY.md` §17 sin «**Nace cerrado**» | `deploySalidasEsperas` «nace cerrado, lo decide Gerencia…» |
+| I3b.5 B | `DEPLOY.md` §17 con `SALIDAS_ESPERAS=` sin `>` | `deploySalidasEsperas` «lleva la línea de entorno, vacía» |
+| I3b.5 C | `.env.example` sin la variable | `deploySalidasEsperas` «la variable está…» y «la línea anterior es su comentario» |
+| I3b.5 D | `.env.example` con `SALIDAS_ESPERAS=true` | las dos anteriores y «no hay ninguna línea que la deje en true» |
+| M7a-1 | `s.id === tk.derivadoA` → `!==` | 6: persona a cargo, respaldo, denegado, S-2 y dos de RQ-PM-43 |
+| M7a-2 | quitar el chequeo de área de (a) | «el derivado de otra área no es persona a cargo» |
+| M7b | `esSalidaDeEspera` acepta `anulacion` de cualquier origen | 3: «esSalidaDeEspera…», «apagado o fuera de alcance» y «idéntica a la compuesta de Decisionales» |
+| M7c (extra) | compuesta sin `v.via !== 'denegado'` | «rige aunque DPC esté apagado…» |
+
+Scripts: `mut_i3b5.sh` y `mut_i3b6.sh` en el scratchpad de la sesión (no se versionan).
+
+### Códigos y medida
+
+`npm run typecheck` 0; `npm run lint` 0; `npm test` 0 (311 ficheros pasan, 3 omitidos; 5.271 pruebas pasan, 11 omitidas). Citas (`cli.ts --sha HEAD`) y commit: orquestador.
+Tras esos códigos sólo se tocó una línea de `deployControlCalidad.test.ts` (fusión en una línea); se volvió a correr su fichero (6/6) y eslint sobre él.
+Medida: `git diff --shortstat --no-renames df53227f` 5 ficheros +239 −7 (más este informe y `tasks.md`) y 73 de `deploySalidasEsperas.test.ts` sin trackear: ~350, bajo 650. Sin binarios.
+Aviso para el barrido de citas: `deployControlCalidad.test.ts:17` y `:35` (verify-report archivado de control-calidad-liberacion) siguen en su línea.
