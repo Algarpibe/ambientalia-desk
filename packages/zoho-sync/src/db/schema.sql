@@ -838,3 +838,11 @@ ALTER TABLE tickets ADD COLUMN IF NOT EXISTS facturacion_avisada_para date;
 -- lo lee la regla de "quien intervino no firma". NULL-able y SIN relleno (las filas viejas se comparan por nombre). AL FINAL para no
 -- desplazar citas. SIN calificar: ticket_transitions es de DESK_TABLES.
 ALTER TABLE ticket_transitions ADD COLUMN IF NOT EXISTS performed_by_id text;
+-- historial-tickets-por-cambio-de-fase: segunda marca de la historia de Zoho que trae el worker hub-sync, junto a history_synced_at.
+-- Guarda el status LEIDO al elegir el ticket, y un status distinto lo vuelve a elegir. Hace falta porque la LISTA de tickets de
+-- Zoho Desk no trae modifiedTime: en el hub modified_time queda nulo, history_synced_at se queda en el epoch y sin esta marca
+-- cada historia se traia una sola vez, asi que los cambios de fase posteriores no llegaban a ticket_history. Nace nula para
+-- todos, y nula cuenta como distinta: el worker re-barre todos los tickets en tandas, que es la recuperacion buscada.
+-- Fuera de TICKET_COLS para que el sincronizador no la pise. En desk-db queda sin usar. AL FINAL para no desplazar citas.
+-- SIN calificar: tickets es de DESK_TABLES. Y sin el caracter de punto y coma en este comentario, que migrate parte el fichero por el
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS history_synced_status text;
