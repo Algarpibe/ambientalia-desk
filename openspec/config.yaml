@@ -5159,6 +5159,29 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "Anexo D nº 15 (R08.4.md:5726-5730) · M2.1 (R08.4.md:2287)"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1C-08"
+
+  - clave: "decision/f1c03-quien-ejecuta-salidas"
+    fecha: "2026-10-21"
+    pregunta: |
+      F1C-03 (`salidas-esperas`, rama sin fusionar) construyó la regla del ejecutor de las salidas de las esperas como
+      «persona a cargo» (`tickets.derivado_a`) con respaldo del Director o Coordinador del área y «motivo del respaldo»
+      obligatorio (supuestos S-1, S-2, S-3 y S-12). ¿Quién ejecuta el cobro del diagnóstico y la anulación desde las dos
+      esperas externas?
+    respuesta_textual: |
+      «Opción 3: con SALIDAS_ESPERAS encendido, el cobro del diagnóstico y la anulación desde las dos esperas externas los ejecutan sólo el Director Comercial o la Coordinadora Comercial. Se retira la regla de «persona a cargo» y el «motivo del respaldo». La anulación conserva su motivo obligatorio de F1C-01; el cobro del diagnóstico pide un motivo corto, que queda en el historial. El interruptor sigue apagado hasta enero, junto con las Decisionales de F1C-05.»
+    consecuencias: |
+      (1) RETIRA los supuestos S-1, S-2 y S-3 (`proposal.md` §10) y S-12 (`design.md` D8) de `salidas-esperas`: dejan de
+      existir la persona a cargo, el respaldo y el «motivo del respaldo» con sus 422.
+      (2) PRECISA `decision/salida-emergencia-quien-la-ejecuta` para las dos esperas externas: donde aquélla decía «la
+      persona a quien está derivado el ticket» con respaldo del Director o Coordinador, en las externas manda ésta.
+      (3) SUPUESTO DEL ANALISTA, reversible: «Sin pieza en almacén» (Solicitado → Repuestos) queda como cualquier
+      transición de Servicio Técnico, sin regla de ejecutor.
+      (4) Con `SALIDAS_ESPERAS` apagado, todo como hoy: la anulación, de cualquiera de Comercial.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c03-quien-ejecuta-salidas)"
+    precisa: "decision/salida-emergencia-quien-la-ejecuta (en las dos esperas externas)"
+    maestro_pasaje: "M1.3 · C3 · Anexo D nº 31"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1C-03 (corrección antes de fusionar)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
