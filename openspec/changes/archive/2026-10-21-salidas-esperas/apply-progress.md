@@ -130,8 +130,8 @@ Estado: I4.1 a I4.8 hechas; I4.c (citas, medida final, commit) la hace el orques
 
 - `ticketService.ts` sin desplazar una línea (la guarda, el motivo y las llamadas van dentro de `:131` y `:134`; imports al final de `:6` y `:7`; auxiliares al final del fichero):
   `:131` `const ejecutor = await veredictoEjecutorSalida(…); exigirEjecutorSalida(ejecutor)` tras `cargoFalta` y antes de Decisionales, que gana `&& !ejecutor`; `:134` `errRespaldo = erroresMotivoRespaldo(ejecutor, values)`
-  en el `if` y en `errors` del mismo agregado; `:329` `veredictoEjecutorSalida` (sale sin consultar nada con el interruptor apagado o fuera de alcance) y `:335` `exigirEjecutorSalida`.
-- `services/decisionales.ts:20` `contextoSalidasEsperas` (la vacante por `contextoDecisionales`, también con DPC apagado, S-21); `routes/permisosSalidasEsperas.ts` (nuevo) y `app.ts:22`/`:61` (registro al final de las dos líneas).
+  en el `if` y en `errors` del mismo agregado; `:329` `veredictoEjecutorSalida` (sale sin consultar nada con el interruptor apagado o fuera de alcance) y `:335` `exigirEjecutorSalida` (líneas en `6b18fcc3`; `f00c9c68`, por `decision/f1c03-quien-ejecuta-salidas`, retiró `errRespaldo`, hizo síncrono el veredicto y llevó `exigirEjecutorSalida` a `:334`).
+- `services/decisionales.ts:20` `contextoSalidasEsperas` (en `6b18fcc3`, la vacante por `contextoDecisionales`, también con DPC apagado, S-21; `f00c9c68` la retiró y la dejó síncrona); `routes/permisosSalidasEsperas.ts` (nuevo) y `app.ts:22`/`:61` (registro al final de las dos líneas).
 - Cliente: `client.ts:921` `getContextoSalidasEsperas`; `TransitionPanel.tsx` `:3`, `:8` (la compuesta sustituye a `puedeEjecutarTransicionConDecisionales`, que ya no se usa ahí), `:55` (estado `salidas`, apagado si falla), `:57` (compuesta +
   `visibleConSalidasEsperas`) y `:179` (campo «Motivo del respaldo» sólo cuando `ejecutorDeSalida` da `respaldo`). Las cinco son ediciones dentro de su línea: ninguna línea se desplaza.
 - Barridos HTTP con `salidasEsperas: true` y `derivado_a` = usuario de la sesión en la línea del `INSERT` (`permisos.test.ts:54`/`:100`, `cargoPermiso.test.ts:260`, `transicionesEjecucion.test.ts:263`); `anulacion` sigue en la app apagada.
@@ -162,11 +162,11 @@ Aviso para el verify: las tres mutaciones «equivalentes» no son un detector qu
 | Decisión que toma el cliente (`TransitionPanel.tsx`) | Línea del servidor que la impone | Cómo se prueba |
 |---|---|---|
 | Oculta `cobro_diagnostico_espera` y `sin_pieza_en_almacen` con el interruptor apagado (`:57`, `visibleConSalidasEsperas`) | `ticketService.ts:128` (`409`, `exigirInterruptorSalidasEsperas`, definida `:318`) | `salidasEsperas.test.ts` «interruptor» y SE-0/SE-1 |
-| Oculta las tres salidas a quien no es persona a cargo ni respaldo (`:57`, `puedeEjecutarConSalidasEsperas`) | `ticketService.ts:131` (`403`, `exigirEjecutorSalida`, `:335`; veredicto `:329`); el área precede en `:129` y la lista corta en `:131` | extraño `403`, S-2, SE-2, I4.7b |
+| Oculta las tres salidas a quien no es persona a cargo ni respaldo (`:57`, `puedeEjecutarConSalidasEsperas`) | `ticketService.ts:131` (`403`, `exigirEjecutorSalida`, `:335`; veredicto `:329`, en `6b18fcc3`; superado por `f00c9c68`); el área precede en `:129` y la lista corta en `:131` | extraño `403`, S-2, SE-2, I4.7b |
 | Ofrece `cobro` a la persona a cargo sin cargo con Decisionales encendido (`:57`) | `ticketService.ts:131` (`faltanDecisional` sólo con `!ejecutor`) | RQ-PM-43 HTTP; I4.7a |
-| Pide «Motivo del respaldo» al respaldo (`:179`) | `ticketService.ts:134` (`422`, `errRespaldo`, regla `salidasEsperas.ts:70`) | respaldo sin motivo `422`, con motivo pasa; SE-5 |
+| Pide «Motivo del respaldo» al respaldo (`:179`) | `ticketService.ts:134` (`422`, `errRespaldo`, regla `salidasEsperas.ts:70` en `6b18fcc3`; retirado por `f00c9c68`) | respaldo sin motivo `422`, con motivo pasa; SE-5 |
 | No lo pide a la persona a cargo (`:179`) | `ticketService.ts:134` (`422` si llega con texto, S-14) | S-14 |
-| Vacante del Coordinador Técnico (contexto de `:55`) | `services/decisionales.ts:20` (`contextoSalidasEsperas`) usada por `ticketService.ts:329` y por `routes/permisosSalidasEsperas.ts:17`: la misma función | S-21 HTTP y prueba de la ruta; mutación «vacante siempre false» |
+| Vacante del Coordinador Técnico (contexto de `:55`) | `services/decisionales.ts:20` (`contextoSalidasEsperas`) usada por `ticketService.ts:329`, en `6b18fcc3` (la vacante la retiró `f00c9c68`), y por `routes/permisosSalidasEsperas.ts:17`: la misma función | S-21 HTTP y prueba de la ruta; mutación «vacante siempre false» |
 | Sin respuesta de la ruta, el panel asume apagado (`:55`, S-20) | **ninguna: degradación declarada.** Puede ofrecer `anulacion` desde ER/SE que el servidor encendido rechace con `403`/`422`; las dos nuevas no se ofrecen (apagado) | sin prueba (la interfaz queda fuera de la red) |
 
 `visibleConSalidasEsperas` NO oculta `anulacion` (sólo las dos nuevas dependen del interruptor): quien la ve desde ER/SE sin ser persona a cargo ni respaldo es filtrado por la compuesta, y si el panel fallara, recibe el `403` del ejecutor.

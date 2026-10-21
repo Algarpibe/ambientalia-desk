@@ -3309,13 +3309,13 @@ Sólo se añade; nada existente cambia ni se reordena, y `anulacion` desde `En E
 
 | id | Nombre | De → a | Área | Tipo (S-8) | Campos |
 |---|---|---|---|---|---|
-| `cobro_diagnostico_espera` | Cobro de diagnóstico | `En Espera de Repuestos`, `Servicio externo` → `Por Facturar` | Comercial | Decisional | comentario opcional |
+| `cobro_diagnostico_espera` | Cobro de diagnóstico | `En Espera de Repuestos`, `Servicio externo` → `Por Facturar` | Comercial | Decisional | comentario opcional y «Motivo del cobro de diagnóstico», texto obligatorio (`decision/f1c03-quien-ejecuta-salidas`; `packages/shared/src/transitions.ts:262`) |
 | `sin_pieza_en_almacen` | Sin pieza en almacén | `Solicitado` → `En Espera de Repuestos` | Servicio Técnico | Compras / Logístico | comentario opcional |
 
 #### Scenario: tipos, áreas, recorridos y campos — ROJO
 - GIVEN el catálogo de servicio
 - WHEN se consultan los dos ids
-- THEN tienen área, tipo, `from`, `to` y campos de la tabla, y ningún campo es obligatorio
+- THEN tienen área, tipo, `from`, `to` y campos de la tabla; el único obligatorio es el motivo del cobro (`packages/shared/src/salidasEsperas.test.ts:20`, `:28`)
 
 #### Scenario: `cobro_diagnostico_espera` es Decisional — ROJO
 - GIVEN `tipoEventoDeTransicion`
@@ -3347,9 +3347,9 @@ Sólo se añade; nada existente cambia ni se reordena, y `anulacion` desde `En E
 - THEN las dos se ocultan; la otra siempre se ve
 
 #### Scenario: encendido pasan — ROJO
-- GIVEN el interruptor encendido y la persona a cargo (`permissions` RQ-PM-42)
-- WHEN ejecuta `cobro_diagnostico_espera` o `sin_pieza_en_almacen`
-- THEN `200`, el ticket llega a `Por Facturar` o a `En Espera de Repuestos` y queda una fila en `ticket_transitions`
+- GIVEN el interruptor encendido, el Director Comercial o el administrador para el cobro y un usuario de Servicio Técnico para `sin_pieza_en_almacen` (`permissions` RQ-PM-42)
+- WHEN ejecuta `cobro_diagnostico_espera`, con su motivo, o `sin_pieza_en_almacen`
+- THEN `200`, el ticket llega a `Por Facturar` o a `En Espera de Repuestos` y queda una fila en `ticket_transitions` (`apps/desk/server/salidasEsperas.test.ts:75`, `:83`, `:118`, `:241`)
 
 ### RQ-TS-62 · Cifras: servicio 40 transiciones, 23 estados, 49 pasos
 
@@ -3381,7 +3381,7 @@ Con las dos, el catálogo de servicio **SHALL** pasar de 38 a 40 transiciones y 
 
 ### RQ-TS-64 · Orden de las guardas nuevas, fijado por pruebas de posición
 
-Orden (A < B < C < D, RQ-TS-06, F1B-10): `409` de estado (A/B); `409` de `SALIDAS_ESPERAS` (B, junto al de Control de calidad, `ticketService.ts:128`); `403` de área (B, `:129-130`); `403` del ejecutor (B, sustituye a Decisionales por cargo para estos orígenes, `permissions` RQ-PM-43); `422` del «Motivo del respaldo» en blanco (C, en el agregado de `:134`). Las posiciones exactas las fija el diseño. Cada posición **MUST** tener una prueba que active DOS guardas a la vez y se ponga roja si se mueve (regla de mutación 1).
+Orden (A < B < C < D, RQ-TS-06, F1B-10): `409` de estado (A/B); `409` de `SALIDAS_ESPERAS` (B, junto al de Control de calidad, `ticketService.ts:128`); `403` de área (B, `:129-130`); `403` del ejecutor (B, tras la lista corta y antes de Decisionales por cargo, a la que sustituye para estos orígenes, `:131`, `permissions` RQ-PM-43); `422` del «Motivo del cobro de diagnóstico» ausente o en blanco (C, en el agregado de `:134`, antes de la persona derivada; corregido por `decision/f1c03-quien-ejecuta-salidas`). Las posiciones exactas las fija el diseño. Cada posición **MUST** tener una prueba que active DOS guardas a la vez y se ponga roja si se mueve (regla de mutación 1).
 
 #### Scenario: SE-1 el 409 del interruptor gana al 403 de área — ROJO por posición
 - GIVEN el interruptor apagado y un usuario sin el área de Comercial
@@ -3389,16 +3389,16 @@ Orden (A < B < C < D, RQ-TS-06, F1B-10): `409` de estado (A/B); `409` de `SALIDA
 - THEN `409`, no `403`
 
 #### Scenario: SE-2 el 403 de área gana al 403 del ejecutor — ROJO por posición
-- GIVEN el interruptor encendido y un usuario de otra área que no es persona a cargo
-- WHEN ejecuta `sin_pieza_en_almacen`
-- THEN `403` cuyo mensaje es el de área
+- GIVEN el interruptor encendido y un usuario de Servicio Técnico sin cargo (`apps/desk/server/salidasEsperas.test.ts:255`)
+- WHEN ejecuta `cobro_diagnostico_espera` desde `Servicio externo`
+- THEN `403` cuyo mensaje es el de área, no el del ejecutor
 
 #### Scenario: SE-3 el 403 del ejecutor gana al 422 del motivo — ROJO por posición
-- GIVEN el interruptor encendido, un usuario del área que no es persona a cargo ni respaldo y el motivo en blanco
-- WHEN ejecuta `anulacion` desde `En Espera de Repuestos`
+- GIVEN el interruptor encendido, un Comercial sin cargo y el «Motivo» de anulación ausente o el del cobro en blanco (`apps/desk/server/salidasEsperas.test.ts:273`)
+- WHEN ejecuta `anulacion` o `cobro_diagnostico_espera` desde `Servicio externo`
 - THEN `403`, no `422`
 
 #### Scenario: SE-4 el 422 del motivo llega cuando las demás pasan — ROJO
-- GIVEN el interruptor encendido y un respaldo del área
-- WHEN ejecuta `cobro_diagnostico_espera` con el motivo en blanco
+- GIVEN el interruptor encendido y el Director Comercial (`apps/desk/server/salidasEsperas.test.ts:174`)
+- WHEN ejecuta `cobro_diagnostico_espera` sin motivo o con el motivo en blanco
 - THEN `422` y el ticket no cambia

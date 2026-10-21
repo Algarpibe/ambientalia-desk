@@ -3,7 +3,7 @@
 Base: el commit de propuesta y deltas de la rama `salidas-esperas`. Requisitos: RQ-TS-56 (modificado), RQ-TS-60..64, RQ-PM-42..45,
 RQ-AV-25..27 (`specs/*/spec.md`). Ningún fichero muy citado desplaza líneas: lo nuevo va en ficheros nuevos, al final de los
 existentes o dentro de una línea que ya existe (regla de mutación 4). Matriz de amenazas: **N/A** (sin shell, subprocesos, VCS ni
-clasificación de ejecutables). **Sin migración** (D7). Supuestos nuevos: S-12..S-22 (D8), reversibles, a la lista semanal.
+clasificación de ejecutables). **Sin migración** (D7). Supuestos nuevos: S-12..S-22 (D8), reversibles, a la lista semanal; S-12 retirado y S-13, S-14, S-15 y S-21 sin objeto desde `decision/f1c03-quien-ejecuta-salidas`, que trae S-23 y S-24 (`f00c9c68`).
 
 ## D1 · Dónde va cada pieza, sin desplazar citas
 
@@ -19,43 +19,43 @@ clasificación de ejecutables). **Sin migración** (D7). Supuestos nuevos: S-12.
 | Comentario de c3 | `estados.ts:154`, `:158` | en sitio: `:154` «Esperamos a nuestro almacén: la pieza se entrega o, si no hay, vuelve a En Espera de Repuestos (c3)»; `:158` «Esperamos un trámite nuestro: que Comercial dé de alta el SKU (c3)». Mismo número de líneas |
 | Cifras vigiladas en comentario | `estados.ts:142` «Hay DIEZ» → «Hay NUEVE»; `:145` «da SEIS,» → «da CINCO,»; `ticketService.ts:238` «49» → «51» | las vigila `comentariosVigilados.test.ts:36-37`, `:51` |
 
-## D2 · Regla pura (`packages/shared/src/salidasEsperas.ts`)
+## D2 · Regla pura (`packages/shared/src/salidasEsperas.ts`) — corregida por `decision/f1c03-quien-ejecuta-salidas` (`f00c9c68`)
 
 ```ts
 export const ID_COBRO_DIAGNOSTICO = 'cobro_diagnostico_espera', ID_SIN_PIEZA = 'sin_pieza_en_almacen'
 export const IDS_SALIDAS_NUEVAS: ReadonlySet<string>                 // las dos; dependen del interruptor
 export const ORIGENES_ANULACION_EN_ESPERA: ReadonlySet<string>       // 'En Espera de Repuestos', 'Servicio externo'
-export const CLAVE_MOTIVO_RESPALDO = 'Motivo del respaldo'
-export const CAMPO_MOTIVO_RESPALDO: TransitionField                  // text, required, label = clave; NO va en el catálogo
-export interface ContextoSalidasEsperas { activo: boolean; coordinadorTecnicoVacante: boolean }
+export const CARGOS_EJECUTORES_SALIDA: readonly Cargo[]              // 'Director Comercial', 'Coordinador Comercial' (antes, CLAVE_MOTIVO_RESPALDO)
+export const CLAVE_MOTIVO_COBRO = 'Motivo del cobro de diagnóstico'  // cfText obligatorio, SÍ va en el catálogo (antes, CAMPO_MOTIVO_RESPALDO)
+export interface ContextoSalidasEsperas { activo: boolean }           // sin la vacante del Coordinador Técnico
 export const SALIDAS_ESPERAS_APAGADO: ContextoSalidasEsperas
-export type EjecutorSalida = { via: 'persona_a_cargo' } | { via: 'respaldo' } | { via: 'denegado'; mensaje: string }
-export function esSalidaDeEspera(transitionId: string, origen: string): boolean   // anulacion desde ER/SE, o una de las dos
+export type EjecutorSalida = { via: 'permitido' } | { via: 'denegado'; mensaje: string }   // antes persona_a_cargo | respaldo | denegado
+export function esSalidaDeEspera(transitionId: string, origen: string): boolean   // el cobro, y anulacion desde ER/SE (sin_pieza ya no, S-23)
 export function motivoQuitadaPorSalidasEsperas(transitionId: string, activo: boolean): string | null
 export function visibleConSalidasEsperas(transitionId: string, activo: boolean): boolean   // (… === null)
-export function ejecutorDeSalida(t: Pick<Transition, 'id' | 'name' | 'area'>, tk: { status: string; derivadoA: string | null },
-  s: SujetoDePermiso & { id?: string | null }, ctx: ContextoSalidasEsperas): EjecutorSalida | null
-export function erroresMotivoRespaldo(v: EjecutorSalida | null, values: Record<string, unknown>): string[]
+export function ejecutorDeSalida(t: Pick<Transition, 'id' | 'name'>, tk: { status: string },
+  s: Pick<SujetoDePermiso, 'isAdmin' | 'cargoPermiso'>, ctx: ContextoSalidasEsperas): EjecutorSalida | null
+export function erroresMotivoCobro(transitionId: string, values: Record<string, unknown>): string[]   // antes erroresMotivoRespaldo
 export function puedeEjecutarConSalidasEsperas(s, t, tk, dec: ContextoDecisionales, sal: ContextoSalidasEsperas): boolean
 ```
 
-- `ejecutorDeSalida`: `null` si `!ctx.activo` o `!esSalidaDeEspera(t.id, tk.status)` (fuera de su alcance no opina). Si no, en
-  orden: (a) `s.id` igual a `tk.derivadoA` y `canExecuteTransition(s.areas, s.isAdmin, t.area)` → `persona_a_cargo`; (b) `s.isAdmin`
-  o `cargoPermiso` en `cargosDecisionales(areaDeDecision(t)!, ctx.coordinadorTecnicoVacante)` (`decisionales.ts:21-32`, reutilizada,
-  sin copia) → `respaldo`; (c) `denegado`, «"<nombre>" desde «<origen>» la ejecuta la persona a cargo del ticket o, con motivo, el
-  Director o el Coordinador del área». Una prueba fija que `areaDeDecision` no es `null` para las tres.
-- **«Activo» no se consulta (S-12):** quien ejecuta ya está activo, porque la sesión lo exige (`apps/desk/server/auth/sessions.ts:21`);
+- `ejecutorDeSalida` (`salidasEsperas.ts:56-65`): `null` si `!ctx.activo` o `!esSalidaDeEspera(t.id, tk.status)` (fuera de su alcance no opina,
+  y `sin_pieza_en_almacen` está fuera, S-23). Si no, `permitido` al administrador o a un `cargoPermiso` de `CARGOS_EJECUTORES_SALIDA`; cualquier otro,
+  `denegado`, «"<nombre>" desde «<origen>» la ejecutan sólo el Director Comercial o la Coordinadora Comercial». `derivado_a` no cuenta.
+  *Antes de `decision/f1c03-quien-ejecuta-salidas`:* (a) persona a cargo = `s.id === tk.derivadoA` con el área; (b) respaldo con motivo, Director
+  o Coordinador del área por `cargosDecisionales` (`decisionales.ts:21-32`) o administrador; (c) `denegado`. Retirado con S-1, S-2, S-3 y S-12.
+- **[RETIRADO por `decision/f1c03-quien-ejecuta-salidas`, `f00c9c68`]** **«Activo» no se consulta (S-12):** quien ejecuta ya está activo, porque la sesión lo exige (`apps/desk/server/auth/sessions.ts:21`);
   y si el derivado está inactivo o es de otra área, nadie puede ser él. Por eso S-2 sale sola: derivado nulo, inactivo o ajeno =
   nadie cumple (a) y sólo pasa (b). Cero consultas sobre el derivado en la guarda.
-- `erroresMotivoRespaldo` (escalón C): `respaldo` con la clave ausente o en blanco tras `trim()` → «"Motivo del respaldo" es
-  obligatorio: no eres la persona a cargo del ticket»; `persona_a_cargo` con texto no vacío → «"Motivo del respaldo" sólo lo da el
-  respaldo: eres la persona a cargo del ticket» (RQ-PM-44: se acepta sólo en el caso (b) y no se descarta en silencio, S-14);
-  `null` o `denegado` → `[]`.
+- `erroresMotivoCobro` (escalón C, `salidasEsperas.ts:68-72`): el cobro con «Motivo del cobro de diagnóstico» de sólo espacios →
+  «"Motivo del cobro de diagnóstico" no puede estar en blanco»; ausente o vacío lo dice `buildTransitionPlan` (campo obligatorio); otra transición → `[]`.
+  *Antes:* `erroresMotivoRespaldo` pedía «Motivo del respaldo» al respaldo y lo rechazaba a la persona a cargo (S-14); retirado con
+  el respaldo.
 - `puedeEjecutarConSalidasEsperas` es la **excepción explícita** a Decisionales por cargo (molde `IDS_FIRMA_CC`, `decisionales.ts:46`):
   si `ejecutorDeSalida` da veredicto, `puedeEjecutarTransicion(s, t) && v.via !== 'denegado'`; si no,
   `puedeEjecutarTransicionConDecisionales(s, t, dec)` intacta. No se mete en `cargosQueFaltanParaDecisional`: la excepción depende
   del ORIGEN (`anulacion` desde `Rev./Diagnostico` sigue siendo Decisional por cargo) y esa función no lo recibe.
-- **«Motivo del respaldo» NO entra en el catálogo.** Rechazado como campo opcional para todos: lo vería la persona a cargo, movería
+- **[SIN OBJETO desde `decision/f1c03-quien-ejecuta-salidas`: no hay motivo del respaldo; el del cobro SÍ es campo del catálogo y `ticketService.ts:133` lo quita de `custom_fields`]** **«Motivo del respaldo» NO entra en el catálogo.** Rechazado como campo opcional para todos: lo vería la persona a cargo, movería
   los campos de `anulacion` (contra la caracterización de RQ-TS-60) y `buildTransitionPlan` lo escribiría en `tickets.custom_fields`.
   Fuera del catálogo llega a la traza sin más: `valoresEfectivos` conserva las claves ajenas (`fechasDerivadas.ts:115-117`),
   `buildTransitionPlan` sólo recorre `t.fields` (`apps/desk/server/transitionExec.ts:42`) y `writeTransition` guarda `values` entero
@@ -70,15 +70,15 @@ export function puedeEjecutarConSalidasEsperas(s, t, tk, dec: ContextoDecisional
 | Guarda | Escalón · código | Dónde, en la misma línea | Fija el par (regla de mutación 1) |
 |---|---|---|---|
 | Interruptor (las dos nuevas) | B · `409` | `:128`, `exigirInterruptorSalidasEsperas(t, config);` justo tras `exigirInterruptorControlCalidad(t, config);` | SE-0 estado < interruptor (`cobro` desde `Solicitado`, apagado → texto de estado); SE-1 interruptor < área |
-| Ejecutor | B · `403` | `:131`, tras `if (cargoFalta) throw …;`: `const ejecutor = await veredictoEjecutorSalida(db, t, current.row, user, config); exigirEjecutorSalida(ejecutor);` | SE-2 área < ejecutor (mensaje de área); SE-2b ejecutor < Decisionales (DPC encendido, Comercial sin cargo ni derivado en `cobro` → mensaje del ejecutor, no `mensajeDecisional`) |
-| Decisionales por cargo | B · `403` | `:131`, `config?.decisionalesPorCargo && !ejecutor ? … : null` | RQ-PM-43: persona a cargo sin cargo pasa con DPC encendido; `rechazo_comercial` sigue igual |
-| Motivo del respaldo | C · `422` agregado | `:134`, `const errRespaldo = erroresMotivoRespaldo(ejecutor, values)` en el `if` y en `errors` | SE-3 ejecutor < `422`; SE-5 «un único 422» con `anulacion` sin «Motivo de anulación» y sin motivo del respaldo |
+| Ejecutor | B · `403` | `:131`, tras `if (cargoFalta) throw …;`: `const ejecutor = veredictoEjecutorSalida(t, current.row, user, config); exigirEjecutorSalida(ejecutor);` (síncrona desde `f00c9c68`) | SE-2 área < ejecutor (mensaje de área); SE-2b ejecutor < Decisionales (DPC encendido, Comercial sin cargo en `cobro` → mensaje del ejecutor, no `mensajeDecisional`) |
+| Decisionales por cargo | B · `403` | `:131`, `config?.decisionalesPorCargo && !ejecutor ? … : null` | RQ-PM-43: con veredicto no se evalúa (el Director Comercial cobra con DPC encendido); `rechazo_comercial` y `anulacion` desde `Rev./Diagnostico` siguen igual |
+| Motivo del cobro (antes, del respaldo) | C · `422` agregado | `:134`, `const errMotivoCobro = erroresMotivoCobro(t.id, values)` en el `if` y en `errors`; `:133` lo quita de `custom_fields` | SE-3 ejecutor < `422`; SE-5 agregado < persona derivada (motivo en blanco y derivado inexistente → sólo el `422` del motivo) |
 
 - Auxiliares al FINAL del fichero (molde `:285-311`): `exigirInterruptorSalidasEsperas` (`motivoQuitadaPorSalidasEsperas(t.id,
   config?.salidasEsperas === true)` → `409`); `veredictoEjecutorSalida`, que sale sin consultar nada si el interruptor está
-  apagado o `!esSalidaDeEspera(t.id, row.status)`, y si no pide `contextoDecisionales(db, true)` (`services/decisionales.ts:10-13`)
-  sólo para la vacante —también con DPC apagado, S-10— y llama a `ejecutorDeSalida` con `derivadoA: row.derivado_a ?? null`
-  (`getTicketWithRefs` hace `SELECT t.*`, molde de F1C-08); `exigirEjecutorSalida` (`denegado` → `403` con su mensaje). Imports al
+  apagado o `!esSalidaDeEspera(t.id, row.status)`; desde `f00c9c68` no consulta nada: `contextoSalidasEsperas(config?.salidasEsperas === true)`
+  (`services/decisionales.ts:20`, síncrona, sin vacante) y `ejecutorDeSalida` con el cargo de la sesión, sin `derivado_a` (antes, `contextoDecisionales(db, true)` y `derivadoA`)
+  (`ticketService.ts:329-331`); `exigirEjecutorSalida` (`denegado` → `403` con su mensaje, `:334-336`). Imports al
   final de `:6`.
 - Pares SIN prueba posible, declarados: ejecutor frente a la lista corta (`cargoFalta`), a la firma de control de calidad y a la
   prioridad: conjuntos de transiciones disjuntos. Interruptor frente a `exigirInterruptorControlCalidad` y `exigirCalibracionDirecta`:
@@ -135,23 +135,23 @@ diasEntre(diaEnZona(desde)!, hoy)` (`contratos.ts:123`, `fechasDerivadas.ts`); `
 
 `TransitionPanel.tsx:55` gana `const [salidas, setSalidas] = useState(SALIDAS_ESPERAS_APAGADO); useEffect(() => {
 getContextoSalidasEsperas().then(setSalidas).catch(() => {}) }, [])`. `:57`: `puedeEjecutarTransicionConDecisionales(user, t,
-decisionales)` pasa a `puedeEjecutarConSalidasEsperas(user, t, { status, derivadoA: derivadoActual?.id ?? null }, decisionales,
-salidas)` y se añade `&& visibleConSalidasEsperas(t.id, salidas.activo)`. `:179`: si `ejecutorDeSalida(...)` da `respaldo`, un `<Field
-f={CAMPO_MOTIVO_RESPALDO}>` más. Imports al final de `:3` y `:8`. `derivadoActual` ya llega (`TicketDetailView.tsx:338`).
+decisionales)` pasa a `puedeEjecutarConSalidasEsperas(user, t, { status }, decisionales,
+salidas)` y se añade `&& visibleConSalidasEsperas(t.id, salidas.activo)`. Desde `f00c9c68` no hay `<Field` propio en `:179`: el motivo del cobro
+sale del catálogo como cualquier campo (antes, `<Field f={CAMPO_MOTIVO_RESPALDO}>` al respaldo, con `derivadoActual` de `TicketDetailView.tsx:338`). Imports al final de `:3` y `:8`.
 **Interruptor al cliente:** ruta nueva `GET /api/permisos/salidas-esperas` (`routes/permisosSalidasEsperas.ts`, molde
-`permisosControlCalidad.ts:12-18`) con `contextoSalidasEsperas(db, config.salidasEsperas === true)`, añadida al final de
-`services/decisionales.ts` (misma vacante que la guarda); registro en las dos líneas que nombran
+`permisosControlCalidad.ts:12-18`) con `contextoSalidasEsperas(config.salidasEsperas === true)` (`permisosSalidasEsperas.ts:17`; sin `db` desde `f00c9c68`), añadida al final de
+`services/decisionales.ts` (la misma función que la guarda; la vacante salió con `f00c9c68`); registro en las dos líneas que nombran
 `registerPermisosControlCalidadRoutes` (`app.ts:22`, `:61`); `getContextoSalidasEsperas` al final de `apps/desk/src/api/client.ts`.
 
 | Decisión que toma el cliente | Línea del servidor que la impone |
 |---|---|
-| Oculta las dos nuevas con el interruptor apagado | `ticketService.ts:128` (`409`, `exigirInterruptorSalidasEsperas`) |
-| Oculta las tres salidas a quien no es persona a cargo ni respaldo | `:131` (`403`, `exigirEjecutorSalida`) |
-| Ofrece `cobro` a la persona a cargo sin cargo con DPC encendido | `:131` (Decisionales sólo con `!ejecutor`) |
-| Pide «Motivo del respaldo» al respaldo | `:134` (`422`, `errRespaldo`) |
-| No lo pide a la persona a cargo | `:134` (`422` si llega con texto) |
-| Vacante del Coordinador Técnico | `services/decisionales.ts:10-13`, la misma función en la ruta y en la guarda |
-| Sin respuesta de la ruta, apagado | ninguna: degradación; puede mostrar `anulacion` desde ER/SE que el servidor encendido rechace (S-20) |
+| Oculta el cobro y la anulación desde ER/SE, con el interruptor encendido, a quien no es administrador, Director Comercial ni Coordinador Comercial (`TransitionPanel.tsx:57`, compuesta `puedeEjecutarConSalidasEsperas`) | `ticketService.ts:131`, `exigirEjecutorSalida` → `403` |
+| Oculta otras Decisionales a quien no tiene el cargo (`:57`, rama sin veredicto de la compuesta) | `ticketService.ts:131`, `faltanDecisional` → `403`, sólo con `DECISIONALES_POR_CARGO` |
+| Oculta el cobro y `sin_pieza_en_almacen` con el interruptor apagado (`:57`, `visibleConSalidasEsperas`) | `ticketService.ts:128`, `exigirInterruptorSalidasEsperas` → `409` |
+| Lee el contexto del interruptor (`:55`) | `permisosSalidasEsperas.ts:17` y `services/decisionales.ts:20`, la misma función que usa `ticketService.ts` (`:330`) |
+| Pide el «Motivo del cobro de diagnóstico» (campo obligatorio del catálogo, `transitions.ts:262`) | `transitionExec.ts:77` (ausente o vacío) y `ticketService.ts:134` (`erroresMotivoCobro`, en blanco) → `422` |
+| Pide el motivo de anulación (sin cambios, F1C-01) | `transitionExec.ts:77` y `ticketService.ts:134`, `erroresAnulacion` → `422` |
+| Sin respuesta de la ruta, asume apagado | ninguna: degradación declarada (S-20); puede mostrar la `anulacion` desde ER/SE que el servidor encendido rechace con el `403` de `:131` |
 
 ## D6 · Vigilantes y cifras (lista cerrada contra el grep de hoy; un rojo fuera de ella se anota como desviación)
 
@@ -175,8 +175,8 @@ f={CAMPO_MOTIVO_RESPALDO}>` más. Imports al final de `:3` y `:8`. `derivadoActu
 | `openspec/config.yaml:1361-1362`, `:1368` · `docs/artefactos/blueprint-*.md` | 46 → 49, 38 → 40 · `npm run generar-mapa-blueprint` |
 
 **Barridos HTTP con las dos nuevas** (permisos ×2, `cargoPermiso`, `transicionesEjecucion`): app con `salidasEsperas: true` y el
-ticket sembrado con `derivado_a` = el usuario de la sesión, en la línea del `INSERT` (molde `conRemisionVigente`): el área sigue
-decidiendo el esperado y nadie manda motivo. `anulacion` sigue en la app apagada. Hipótesis sin cambio (lo confirma el lote 1a):
+ticket sembrado sin `derivado_a` desde `f00c9c68` (antes, con el usuario de la sesión), en la línea del `INSERT`: el área decide el esperado, salvo
+Comercial sin cargo × `cobro_diagnostico_espera`, `403` del ejecutor (`permisos.test.ts:64`). `anulacion` sigue en la app apagada. Hipótesis sin cambio (lo confirma el lote 1a):
 `reentrancia.test.ts` y `bodegaje.test.ts` (`sin_pieza` no tiene fecha y `cobro` sale del ciclo), `decisionales.test.ts`.
 
 ## D7 · Migración: no
@@ -188,12 +188,12 @@ y `> SALIDAS_ESPERAS=`), `.env.example` tras `:43` con sus dos frases, y `deploy
 
 ## D8 · Supuestos nuevos, riesgos y lotes
 
-- **S-12** Persona a cargo = `s.id === derivado_a` con el área; «activo» lo da la sesión (D2). **S-13** «Motivo del respaldo» fuera
-  del catálogo, sólo en la traza. **S-14** La persona a cargo con motivo recibe `422`. **S-15** Apagado, la clave se trata como
-  cualquier ajena y llega a la traza (hoy). **S-16** Entrada = último paso de `secuenciaDelReloj`; sin historia, no se mide.
+- **S-12** Persona a cargo = `s.id === derivado_a` con el área; «activo» lo da la sesión (D2) — **RETIRADO por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21)**: ejecutan sólo el Director o el Coordinador Comercial, y el administrador.
+  **S-13** «Motivo del respaldo» fuera del catálogo, sólo en la traza. **S-14** La persona a cargo con motivo recibe `422`. **S-15** Apagado, la clave se trata como cualquier ajena y llega a la traza (hoy) — los tres **sin objeto desde `decision/f1c03-quien-ejecuta-salidas`**: no hay motivo del respaldo (`packages/shared/src/salidasEsperas.test.ts:158`).
+  **S-16** Entrada = último paso de `secuenciaDelReloj`; sin historia, no se mide.
   **S-17** Bandeja sin correo; una pasada por día civil. **S-18** Sin destinatarios no se marca. **S-19** El área de respaldo sólo
   sin cargos; el derivado de Comercial se suma en las externas. **S-20** Sin la ruta, el panel asume apagado. **S-21** Vacante del
-  Coordinador Técnico por `contextoDecisionales`, también con DPC apagado. **S-22** `cobro` no cuenta en `areasSiguientes`.
+  Coordinador Técnico por `contextoDecisionales`, también con DPC apagado — **sin objeto desde `decision/f1c03-quien-ejecuta-salidas`**: el contexto es sólo el interruptor (`apps/desk/server/services/decisionales.ts:20`). **S-22** `cobro` no cuenta en `areasSiguientes`. **S-23** (`f00c9c68`, supuesto del analista de esa decisión) `sin_pieza_en_almacen` queda como cualquier transición de Servicio Técnico, sin regla de ejecutor: área, lista corta y el `409` del interruptor (`apps/desk/server/salidasEsperas.test.ts:241`). **S-24** La alarma de las externas no cambia sus destinatarios (S-6; `apps/desk/server/services/avisoSalidasEsperas.ts:26-48`): encendido, un derivado de Comercial sin cargo recibe «Comercial decide su salida: cobrar el diagnóstico o anular» (`packages/shared/src/plazosEsperas.ts:51`) y no la puede ejecutar. Reversible; a la lista semanal.
 - **R-7** `estados.ts:131-140` sigue describiendo «la única salida» y «un alta en otro sistema», desfasado con c3; fuera de D10, se
   anota en el `archive-report` para el expediente. **R-8** Una espera con SLA futuro compartiría tabla de marcas: lo vigila D4 (b).
 

@@ -38,7 +38,7 @@ Los cinco códigos salen en 0; las mutaciones del encargo (M1-M6, SE-2, SE-3 y l
 
 ## 3. Matriz requisito · escenario · prueba · resultado
 
-Todas las pruebas citadas pasan (`npm test` en 0). Abreviaturas: `S` = `apps/desk/server/salidasEsperas.test.ts`; `SH` = `packages/shared/src/salidasEsperas.test.ts`; `P` = `packages/shared/src/plazosEsperas.test.ts`; `I` = `packages/shared/src/invariantesGrafo.test.ts`; `A` = `apps/desk/server/services/avisoSalidasEsperas.test.ts`; `V` = `apps/desk/server/db/esperasVencidas.test.ts`; `D` = `apps/desk/server/deploySalidasEsperas.test.ts`.
+Todas las pruebas citadas pasan (`npm test` en 0). Abreviaturas (los números de `S`, `SH` y `D` se leen en `6b18fcc3`: `f00c9c68` reescribió esos tres ficheros): `S` = `apps/desk/server/salidasEsperas.test.ts`; `SH` = `packages/shared/src/salidasEsperas.test.ts`; `P` = `packages/shared/src/plazosEsperas.test.ts`; `I` = `packages/shared/src/invariantesGrafo.test.ts`; `A` = `apps/desk/server/services/avisoSalidasEsperas.test.ts`; `V` = `apps/desk/server/db/esperasVencidas.test.ts`; `D` = `apps/desk/server/deploySalidasEsperas.test.ts`.
 
 ### transitions-st
 
@@ -126,17 +126,17 @@ Método: script de copia, reemplazo exacto una vez, `vitest run` de 7 ficheros (
 
 ## 5. Tabla de la regla 13 contrastada contra el código de hoy
 
-Comprobado por lectura en `ticketService.ts`: `:128` llama a `exigirInterruptorSalidasEsperas` (definida `:318`); `:131` calcula `ejecutor` con `veredictoEjecutorSalida` (`:329`), llama a `exigirEjecutorSalida` (`:335`) y deja a Decisionales con `&& !ejecutor`; `:134` construye `errRespaldo = erroresMotivoRespaldo(ejecutor, values)` dentro del `if` y de `errors`. `decisionales.ts:20` es `contextoSalidasEsperas`; `routes/permisosSalidasEsperas.ts:16` sirve `GET /api/permisos/salidas-esperas` con esa misma función; `salidasEsperas.ts:70` es `erroresMotivoRespaldo`.
+Comprobado por lectura en `ticketService.ts`, en `6b18fcc3`: `:128` llama a `exigirInterruptorSalidasEsperas` (definida `:318`); `:131` calcula `ejecutor` con `veredictoEjecutorSalida` (`:329`), llama a `exigirEjecutorSalida` (`:335`) y deja a Decisionales con `&& !ejecutor`; `:134` construye `errRespaldo = erroresMotivoRespaldo(ejecutor, values)` dentro del `if` y de `errors`. `decisionales.ts:20` es `contextoSalidasEsperas`; `routes/permisosSalidasEsperas.ts:16` sirve `GET /api/permisos/salidas-esperas` con esa misma función; `salidasEsperas.ts:70` es `erroresMotivoRespaldo`. Superado por `f00c9c68` (`decision/f1c03-quien-ejecuta-salidas`): hoy `:134` construye `errMotivoCobro`, `exigirEjecutorSalida` está en `ticketService.ts:334` y `erroresMotivoCobro` ocupa `salidasEsperas.ts:68-72`.
 
 | Decisión del cliente (`TransitionPanel.tsx`, `api/client.ts`) | Línea del servidor que la impone (hoy) | Estado |
 |---|---|---|
 | Oculta las dos nuevas con el interruptor apagado (`TransitionPanel.tsx:57`, `visibleConSalidasEsperas`) | `ticketService.ts:128` → `:318` (409) | Línea comprobada |
-| Oculta las tres salidas a quien no es persona a cargo ni respaldo (`:57`, `puedeEjecutarConSalidasEsperas`) | `ticketService.ts:131` → `:329`/`:335` (403), tras el área `:129-130` | Línea comprobada |
+| Oculta las tres salidas a quien no es persona a cargo ni respaldo (`:57`, `puedeEjecutarConSalidasEsperas`) | `ticketService.ts:131` → `:329`/`:335` en `6b18fcc3` (403; superado por `f00c9c68`), tras el área `:129-130` | Línea comprobada |
 | Ofrece `cobro` a la persona a cargo sin cargo con DPC encendido (`:57`) | `ticketService.ts:131` (`!ejecutor` en `faltanDecisional`) | Línea comprobada |
-| Pide «Motivo del respaldo» sólo al respaldo (`:179`, `ejecutorDeSalida` con vía respaldo) | `ticketService.ts:134` → `salidasEsperas.ts:70`/`:74` (422 si el respaldo no lo da) | Línea comprobada |
-| No lo pide a la persona a cargo (`:179`) | `ticketService.ts:134` → `salidasEsperas.ts:75` (422 si llega con texto, S-14) | Línea comprobada |
-| Vacante del Coordinador Técnico (`TransitionPanel.tsx:55`, `client.ts:921`) | `decisionales.ts:20`, usada por `ticketService.ts:329` y `routes/permisosSalidasEsperas.ts:17`: la misma función | Línea comprobada |
-| Persona a cargo = `derivadoActual?.id` del ticket que ve el panel (`:57`, `:179`) | `ticketService.ts:329`/`:131` lee `current.row.derivado_a` de la base: el servidor no se fía del navegador | Línea comprobada |
+| Pide «Motivo del respaldo» sólo al respaldo (`:179`, `ejecutorDeSalida` con vía respaldo) | `ticketService.ts:134` → `salidasEsperas.ts:70`/`:74` en `6b18fcc3`, retirado por `f00c9c68` (422 si el respaldo no lo da) | Línea comprobada |
+| No lo pide a la persona a cargo (`:179`) | `ticketService.ts:134` → `salidasEsperas.ts:75` en `6b18fcc3`, retirado por `f00c9c68` (422 si llega con texto, S-14) | Línea comprobada |
+| Vacante del Coordinador Técnico (`TransitionPanel.tsx:55`, `client.ts:921`) | `decisionales.ts:20`, usada por `ticketService.ts:329`, en `6b18fcc3` (la vacante la retiró `f00c9c68`), y `routes/permisosSalidasEsperas.ts:17`: la misma función | Línea comprobada |
+| Persona a cargo = `derivadoActual?.id` del ticket que ve el panel (`:57`, `:179`) | `ticketService.ts:329`/`:131` en `6b18fcc3` lee `current.row.derivado_a` de la base: el servidor no se fía del navegador (retirado por `f00c9c68`: el derivado ya no decide) | Línea comprobada |
 | Sin respuesta de la ruta, el panel asume apagado (`:55`, S-20) | Ninguna, **declarada**: oculta de más las dos nuevas (el servidor las rechazaría con 409) y puede ofrecer `anulacion` que el servidor encendido rechace con 403/422 | Degradación declarada, no guarda |
 
 **Resultado: 0 decisiones del cliente sin línea del servidor.** Ninguna actúa como guarda única; el cliente sólo puede ocultar de más, nunca abrir una vía que el servidor cierre. No se prueba mecánicamente la propia interfaz (fuera de la red por decisión de Gerencia); sí el servidor y la regla pura.
@@ -166,8 +166,8 @@ Cabecera de `proposal.md:1-9` con los **siete** campos: `tanda: F1C-03`, `motivo
 
 | Decisión | ¿Seguida? | Nota |
 |---|---|---|
-| D1 sin desplazar líneas de ficheros muy citados | Sí | `transitions.ts:262` y `:330`, `ticketService.ts:128/131/134` editadas dentro de su línea; los auxiliares van al final (`:318`, `:329`, `:335`) |
-| D2/D3 interruptor hermano (`salidasEsperas.ts:21-28`) y conjuntos disjuntos | Sí | Disjunción en `S:278` y `SH:71` |
+| D1 sin desplazar líneas de ficheros muy citados | Sí | `transitions.ts:262` y `:330`, `ticketService.ts:128/131/134` editadas dentro de su línea; los auxiliares van al final (`:318`, `:329`, `:334`) |
+| D2/D3 interruptor hermano (`salidasEsperas.ts:20-27`) y conjuntos disjuntos | Sí | Disjunción en `S:278` y `SH:71` |
 | D4 alarma sobre `secuenciaDelReloj` y `alarmas_avisadas`, sin migración | Sí | `esperasVencidas.ts:54`; `marcarYAvisarAlarma` reutilizada; sin DDL |
 | D5 guardas en servidor: 409 B, 403 B, 422 C en el agregado | Sí | `ticketService.ts:128`, `:131`, `:134`; SE-0..SE-5 las fijan |
 | D7 plazos propios, no derivados del SLA | Sí | `plazosEsperas.ts` no importa `sla.ts` (`P:51`) |

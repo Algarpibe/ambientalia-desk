@@ -6,10 +6,10 @@ Archivado el 2026-10-21 en `openspec/changes/archive/2026-10-21-salidas-esperas/
 **Qué cubre de la fila (sostiene `cierra: si`):** F1C-03 (plan R01.4, fila de F1C-03 y fila de E-101) queda construida
 entera: las cuatro esperas tienen la salida que fija `decision/c3-salida-esperas` (Repuestos y Servicio externo: cobro de
 diagnóstico o anulación, decide Comercial; Solicitado vuelve a Repuestos; SKU sin abandono), la caducidad por plazos
-medidos sugiere o escala y nunca ejecuta, y las salidas las ejecuta la persona a cargo o su respaldo con motivo
-(`decision/salida-emergencia-quien-la-ejecuta`), todo detrás de `SALIDAS_ESPERAS`, que nace cerrado. **Deja fuera, y no es
+medidos sugiere o escala y nunca ejecuta, y el cobro y la anulación desde las dos esperas externas los ejecutan sólo el Director o el Coordinador Comercial, y el administrador
+(`decision/salida-emergencia-quien-la-ejecuta`, precisada por `decision/f1c03-quien-ejecuta-salidas`), todo detrás de `SALIDAS_ESPERAS`, que nace cerrado. **Deja fuera, y no es
 contenido de la fila:** el nivel general «propietario del registro» para el resto de transiciones (fila de permisos), las
-ausencias por persona (F4-01) y el importe del cobro del diagnóstico.
+ausencias por persona (F4-01) y el importe del cobro del diagnóstico. **Corrección 1 (`f00c9c68`, `decision/f1c03-quien-ejecuta-salidas`, 2026-10-21):** cambia sólo quién ejecuta —el cargo comercial en lugar de la persona a cargo o el respaldo con motivo—, añade al cobro su «Motivo del cobro de diagnóstico» obligatorio y deja `sin_pieza_en_almacen` sin regla de ejecutor; las salidas, la caducidad y el interruptor siguen como estaban, así que `cierra: si` sigue sostenido: la fila F1C-03 queda terminada con la regla nueva.
 
 ## 1. Commits de la rama
 
@@ -75,16 +75,16 @@ es equivalente por construcción; esa posición la fija la condición `!ejecutor
 
 ## 5. Regla 13, decisión a decisión
 
-| Decisión del cliente (`TransitionPanel.tsx`) | Línea del servidor que la impone |
+| Decisión del cliente (`TransitionPanel.tsx`), contra `f00c9c68` | Línea del servidor que la impone |
 |---|---|
-| Oculta las dos nuevas con el interruptor apagado | `apps/desk/server/services/ticketService.ts:128` (`409`) |
-| Oculta las tres salidas a quien no es persona a cargo ni respaldo | `ticketService.ts:131` (`403` del ejecutor; el área precede en `:129`) |
-| Ofrece el cobro a la persona a cargo sin cargo, con Decisionales encendido | `ticketService.ts:131` (Decisionales sólo sin ejecutor) |
-| Pide «Motivo del respaldo» al respaldo y no a la persona a cargo | `ticketService.ts:134` (`422`) |
-| Vacante del Coordinador Técnico | `apps/desk/server/services/decisionales.ts:20`, la misma función en la guarda y en la ruta |
-| Sin respuesta de la ruta, asume apagado | ninguna: degradación declarada (S-20); el cliente sólo puede ocultar de más |
+| Oculta el cobro y la anulación desde ER/SE, con el interruptor encendido, a quien no es administrador, Director Comercial ni Coordinador Comercial (`:57`, compuesta) | `apps/desk/server/services/ticketService.ts:131`, `exigirEjecutorSalida` → `403` |
+| Oculta otras Decisionales a quien no tiene el cargo (`:57`, rama sin veredicto) | `ticketService.ts:131`, `faltanDecisional` → `403`, sólo con `DECISIONALES_POR_CARGO` |
+| Oculta el cobro y `sin_pieza_en_almacen` con el interruptor apagado (`:57`, `visibleConSalidasEsperas`) | `ticketService.ts:128` → `409` |
+| Lee el contexto del interruptor (`:55`) | `apps/desk/server/routes/permisosSalidasEsperas.ts:17` y `apps/desk/server/services/decisionales.ts:20`, la misma función que usa `ticketService.ts` |
+| Pide el «Motivo del cobro de diagnóstico» (catálogo) | `apps/desk/server/transitionExec.ts:77` y `ticketService.ts:134` → `422` |
+| Pide el motivo de anulación (sin cambios) | `transitionExec.ts:77` y `ticketService.ts:134`, `erroresAnulacion` → `422` |
 
-El servidor lee `derivado_a` de la base, nunca del navegador.
+Sin respuesta de la ruta, el panel asume apagado (S-20, degradación declarada): sólo puede ofrecer de más. El cargo lo lee el servidor de la sesión, en la base (`apps/desk/server/auth/sessions.ts:17`), nunca del navegador.
 
 ## 6. Archivo
 
@@ -101,9 +101,9 @@ El servidor lee `derivado_a` de la base, nunca del navegador.
 
 ## 7. Supuestos reversibles
 
-S-1..S-11 en `proposal.md` §10 y S-12..S-22 en `design.md` D8. **S-1, S-2, S-3 y S-12 tocan permisos** (quién es la
-persona a cargo, qué pasa con un derivado nulo o de otra área, el administrador como respaldo): suben al apartado 06 del
-panel (E-237). No frenaron la construcción porque el interruptor nace cerrado. El resto va a la lista semanal.
+S-1..S-11 en `proposal.md` §10 y S-12..S-24 en `design.md` D8. **S-1, S-2, S-3 y S-12 tocaban permisos** (quién es la
+persona a cargo, qué pasa con un derivado nulo o de otra área, el administrador como respaldo): **RETIRADOS por `decision/f1c03-quien-ejecuta-salidas`**; S-13, S-14, S-15 y S-21, sin objeto desde
+esa decisión. S-23 (`sin_pieza_en_almacen` sin regla de ejecutor) y S-24 (la alarma sugiere al derivado sin cargo), nuevos. El resto va a la lista semanal.
 
 ## 8. Notas para el expediente y la supervisión
 
@@ -119,7 +119,7 @@ panel (E-237). No frenaron la construcción porque el interruptor nace cerrado. 
 
 | Qué | Dueño | Dónde queda escrito |
 |---|---|---|
-| Preguntas S-1, S-2, S-3 y S-12 al apartado 06 del panel | Gerencia | `decisiones_de_gerencia` cuando responda |
+| Corregir S-23 y S-24 en la lista semanal, si no se aceptan | Gerencia | `design.md` D8 |
 | Encender `SALIDAS_ESPERAS=true` (no antes del 14/12/2026) | Gerencia | `DEPLOY.md` §17 |
 | Prueba en la app (lista acumulada) | Gerencia / verificación | lista de pruebas pendientes |
 | Recalcular los plazos con medición nueva | Gerencia mide; la construcción aplica | `mediciones_de_produccion` |

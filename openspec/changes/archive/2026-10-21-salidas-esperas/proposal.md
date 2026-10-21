@@ -43,12 +43,12 @@ Faltan dos salidas, la caducidad y la regla de quién ejecuta: hoy no existe nin
 
 | # | Pieza | Dónde |
 |---|---|---|
-| D1 | `cobro_diagnostico_espera` «Cobro de diagnóstico»: from [`En Espera de Repuestos`, `Servicio externo`] → `Por Facturar`, Comercial, Decisional, `[comment()]` | en la línea física de `anulacion` (`transitions.ts:262`), como hizo F1C-01, sin desplazar citas |
+| D1 | `cobro_diagnostico_espera` «Cobro de diagnóstico»: from [`En Espera de Repuestos`, `Servicio externo`] → `Por Facturar`, Comercial, Decisional, `[comment()]` y, desde `decision/f1c03-quien-ejecuta-salidas` (`f00c9c68`), «Motivo del cobro de diagnóstico», texto obligatorio | en la línea física de `anulacion` (`transitions.ts:262`), como hizo F1C-01, sin desplazar citas |
 | D2 | `sin_pieza_en_almacen` «Sin pieza en almacén»: from [`Solicitado`] → `En Espera de Repuestos`, Servicio Técnico, Compras / Logístico, `[comment()]` | misma línea |
 | D3 | Interruptor propio `SALIDAS_ESPERAS`, nace cerrado (`=== 'true'`). Apagado: D1 y D2 dan `409` y el panel no las ofrece (molde `motivoQuitadaPorInterruptor`/`visibleConControlCalidad`, `packages/shared/src/controlCalidad.ts:103-111`); la alarma no corre; `anulacion` desde ER/SE sigue como hoy | `packages/zoho-sync/src/config.ts`, campo en la línea de `:66` y lectura junto a `:124-125`; `DEPLOY.md` §17 tras §16 (`DEPLOY.md:776`); `.env.example` |
-| D4 | Regla pura del ejecutor de las «salidas de las esperas» (`anulacion` con origen ER o SE, D1, D2), consumida por el servidor y espejada en el cliente. Encendido: (a) sin motivo, el usuario que es `tickets.derivado_a`, activo y del área de la transición; (b) con «Motivo del respaldo» obligatorio, el Director o Coordinador del área por `cargo_permiso` (`cargosDecisionales`, `packages/shared/src/decisionales.ts:27-32`, con la vacante del Coordinador Técnico de F1C-05); (c) cualquier otro, `403` | módulo nuevo en `packages/shared` |
+| D4 | Regla pura del ejecutor de las salidas de las esperas externas (`cobro_diagnostico_espera` y `anulacion` con origen ER o SE), consumida por el servidor y espejada en el cliente. **Corregida por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21, `f00c9c68`):** encendido, sólo el Director o el Coordinador Comercial por `cargo_permiso`, y el administrador; cualquier otro, `403`. `sin_pieza_en_almacen` sin regla de ejecutor. *Antes:* (a) la persona a cargo (`tickets.derivado_a`) sin motivo; (b) el Director o Coordinador del área con «Motivo del respaldo»; (c) `403` | módulo nuevo en `packages/shared` |
 | D5 | Guardas del servidor: `409` del interruptor en escalón B, en la línea de `ticketService.ts:128`; `403` del ejecutor tras el `403` de área (`:129-130`) y, para esos orígenes, SUSTITUYE a Decisionales por cargo (`:131`) como excepción explícita, molde `IDS_FIRMA_CC` (`decisionales.ts:46`); `422` del motivo vacío en el agregado de `:134` | funciones auxiliares al final de `ticketService.ts` |
-| D6 | Traza: `performed_by_id` y el motivo del respaldo en `values` de `ticket_transitions` | `applyTransition` ya los recibe (`ticketService.ts:155`) |
+| D6 | Traza: `performed_by_id` y el motivo del cobro (antes, el del respaldo) en `values` de `ticket_transitions` | `applyTransition` ya los recibe (`ticketService.ts:155`) |
 | D7 | Registro de plazos propio (hipótesis de nombre: `plazosEsperas.ts`): ER 79, SE 31, SKU 20, `Solicitado` 13 días naturales, con la clave y la fecha de la medición; sus claves son EXACTAMENTE `ESTADOS_SIN_SALIDA` (`packages/shared/src/estados.ts:151-160`); NUNCA derivado de `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32-35`). Función pura de vencimiento | `packages/shared` |
 | D8 | Alarma de caducidad (molde `apps/desk/server/services/avisoFacturacionVencida.ts`, F1C-02) en la pasada de `apps/desk/server/index.ts:88`. Externas: SUGIERE la salida a Comercial. Internas: ESCALA al área responsable. Un aviso por vencimiento (ticket, estado, entrada). Sólo crea avisos y su marca: nunca ejecuta una transición | `apps/desk/server/services/` |
 | D9 | Invariantes de c3 fijadas por prueba: `Solicitado` y SKU sin salida a `Anulado` ni a `Por Facturar` | junto a `invariantesGrafo.test.ts` |
@@ -86,7 +86,7 @@ ANTES (y DESPUÉS con SALIDAS_ESPERAS apagado; D1 y D2 dan 409)
   Solicitado ──entrega_repuestos──► En Proceso
   En espera de SKU inventario ──notif_cliente_sku──► Notificación cliente
 
-DESPUÉS, encendido (ejecuta la persona a cargo o el respaldo con motivo)
+DESPUÉS, encendido (ejecutan el Director o el Coordinador Comercial, o el administrador; antes, la persona a cargo o el respaldo con motivo)
   En Espera de Repuestos / Servicio externo ──cobro_diagnostico_espera (Decisional)──► Por Facturar
   En Espera de Repuestos / Servicio externo ──anulacion (regla del ejecutor)──► Anulado
   Solicitado ──sin_pieza_en_almacen──► En Espera de Repuestos
@@ -119,7 +119,7 @@ igual que los tres rechazos ya aceptados por F1C-08. Supuesto S-11.
 
 A existencia < B estado y permiso < C contenido < D unicidad. El `409` de `SALIDAS_ESPERAS` va en escalón B, en la
 línea de `ticketService.ts:128`, junto al de Control de calidad. El `403` del ejecutor va en B tras el `403` de área y
-el de cargo, en el lugar de Decisionales por cargo. El `422` del motivo del respaldo entra en el agregado de `:134`. Cada
+el de cargo, en el lugar de Decisionales por cargo. El `422` del motivo del cobro (antes, del respaldo) entra en el agregado de `:134`. Cada
 guarda nueva lleva prueba de POSICIÓN frente a su vecina (regla de mutación 1).
 
 ## 9. Regla 13
@@ -127,18 +127,18 @@ guarda nueva lleva prueba de POSICIÓN frente a su vecina (regla de mutación 1)
 | Decisión del cliente | Imposición del servidor |
 |---|---|
 | No ofrecer D1 y D2 con el interruptor apagado | `409` de D5 |
-| No ofrecer las salidas de las esperas a quien no es persona a cargo ni respaldo | `403` de D5 |
-| Pedir «Motivo del respaldo» al respaldo | `422` de D5 |
+| No ofrecer el cobro ni la anulación desde ER/SE a quien no es administrador, Director ni Coordinador Comercial (antes, persona a cargo o respaldo) | `403` de D5 |
+| Pedir «Motivo del cobro de diagnóstico» (antes, «Motivo del respaldo» al respaldo) | `422` de D5 |
 
-El cliente consume la misma regla pura de D4. La tabla con línea, en el diseño.
+El cliente consume la misma regla pura de D4. Corregida por `decision/f1c03-quien-ejecuta-salidas`; la tabla con línea, en el diseño (D5) y en el `archive-report.md` (§5).
 
 ## 10. Supuestos reversibles
 
-- **S-1** Persona a cargo = `tickets.derivado_a`, usuario activo y con el área de la transición.
-- **S-2** `derivado_a` nulo, inactivo o de otra área = «no disponible»: sólo ejecuta el respaldo con motivo. Muchos
+- **S-1** Persona a cargo = `tickets.derivado_a`, usuario activo y con el área de la transición. **RETIRADO por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21).**
+- **S-2** **RETIRADO por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21).** `derivado_a` nulo, inactivo o de otra área = «no disponible»: sólo ejecuta el respaldo con motivo. Muchos
   tickets de Zoho llegan sin derivado. En `Solicitado` el derivado es el encargado de inventario (`R08.4.md:2027`, cuya
   figura sigue `[ABIERTO]`): si no es de Servicio Técnico, la salida la ejecuta el respaldo.
-- **S-3** El administrador cuenta como respaldo y aporta motivo (molde de F1C-07, `openspec/config.yaml:5125`).
+- **S-3** El administrador cuenta como respaldo y aporta motivo (molde de F1C-07, `openspec/config.yaml:5125`). **RETIRADO por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21)**: el administrador ejecuta sin motivo propio.
 - **S-4** Días naturales; vence cuando lo transcurrido es ≥ plazo, nunca antes.
 - **S-5** Plazos provisionales (`openspec/config.yaml:5323-5326`): se recalculan con una medición nueva con clave propia.
 - **S-6** Destinatarios de §3.
@@ -149,7 +149,7 @@ El cliente consume la misma regla pura de D4. La tabla con línea, en el diseño
 - **S-10** Con `SALIDAS_ESPERAS` encendido, la regla del ejecutor rige aunque `DECISIONALES_POR_CARGO` esté apagado.
 - **S-11** `cobro_diagnostico_espera` entra a `Por Facturar` sin `Control de calidad` (§7).
 
-S-1 y S-2 tocan permisos: suben al apartado 06 del panel (E-237); no frenan la construcción, porque el interruptor nace
+S-1 y S-2 tocan permisos: suben al apartado 06 del panel (E-237; respondidas, y retiradas, por `decision/f1c03-quien-ejecuta-salidas`); no frenan la construcción, porque el interruptor nace
 cerrado. El resto, a la lista semanal agrupada por tanda.
 
 ## 11. Riesgos
@@ -160,7 +160,7 @@ cerrado. El resto, a la lista semanal agrupada por tanda.
 | R-2 | La alarma no ve la entrada de los tickets de Zoho (`db/sla.ts:88`) | Fusión con `ticket_history` (§3, diseño) |
 | R-3 | Barrido de citas de `transitions.ts`, `estados.ts`, `ticketService.ts`, `config.ts` | Inserción en líneas existentes; regla de mutación 4 al cierre |
 | R-4 | Encendido, `anulacion` desde ER/SE se endurece para quien hoy la ejecuta: 2 + 1 estancias abiertas el 21/10 (`openspec/config.yaml:5293`, `:5302`) | Interruptor cerrado; `DEPLOY.md` §17 lo dice |
-| R-5 | S-2 deja sin persona a cargo a la mayoría de tickets de Zoho | El respaldo siempre existe; es una pregunta al panel 06 |
+| R-5 | S-2 deja sin persona a cargo a la mayoría de tickets de Zoho | **Sin objeto desde `decision/f1c03-quien-ejecuta-salidas`**: el ejecutor ya no depende del derivado |
 | R-6 | Muestras pequeñas (12 a 40) para los plazos | S-5 |
 
 ## 12. Mutaciones obligatorias
@@ -194,7 +194,7 @@ de hoy. Segunda: revertir los commits de la rama; sin migración (preferencia de
 ## 15. Criterios de éxito
 
 - [ ] Apagado: la suite de hoy pasa sin cambio de comportamiento; D1 y D2 dan `409`.
-- [ ] Encendido: la persona a cargo ejecuta sin motivo; el respaldo, sólo con motivo; cualquier otro, `403`.
+- [ ] Encendido: la persona a cargo ejecuta sin motivo; el respaldo, sólo con motivo; cualquier otro, `403`. **Superado por `decision/f1c03-quien-ejecuta-salidas`:** el Director o el Coordinador Comercial y el administrador ejecutan; cualquier otro, `403`.
 - [ ] Un ticket vencido recibe un solo aviso, y ninguna transición se ejecuta sola.
 - [ ] `Solicitado` y SKU no tienen salida a `Anulado` ni a `Por Facturar`.
 - [ ] Cada mutación de §12 pone la suite en rojo.

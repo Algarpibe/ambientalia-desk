@@ -1743,9 +1743,9 @@ sea de calibración: un ticket con tipo «Calibración» y una orden de otro tip
 ## La de F1C-03, salidas de las esperas (37)
 
 > **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `salidas-esperas`, `cierra: si`, de la decisión
-> `decision/c3-salida-esperas` y de la medición `medicion/p90-esperas-2026-10-21` (`openspec/config.yaml` → `mediciones_de_produccion`).
+> `decision/c3-salida-esperas`, de `decision/f1c03-quien-ejecuta-salidas` y de la medición `medicion/p90-esperas-2026-10-21` (`openspec/config.yaml` → `mediciones_de_produccion`).
 
-### 37 · M1.3.4 — los plazos de las cuatro esperas están medidos (provisionales), la caducidad sugiere o escala y nunca ejecuta, y la salida la ejecuta la persona a cargo con respaldo y motivo *(F1C-03)*
+### 37 · M1.3.4 — los plazos de las cuatro esperas están medidos (provisionales), la caducidad sugiere o escala y nunca ejecuta, y en las esperas externas la salida la ejecutan sólo el Director o la Coordinadora Comercial *(F1C-03)*
 
 **Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1338-1340` (reglas comunes a las cuatro esperas, en M1.3.4) y las filas de la tabla
 de salidas (`:1327`, `:1330`, `:1333` y `:1336`).
@@ -1755,8 +1755,8 @@ de salidas (`:1327`, `:1330`, `:1333` y `:1336`).
 - Línea 1339: «El plazo de cada espera se fija con datos: lo que hoy tarda el 90 % de los tickets en ese estado, medido en el historial.»
 - Línea 1340: «La salida la ejecuta únicamente la persona a cargo de esa etapa, […] Si no está disponible, puede ejecutarla el Director o el Coordinador del área, dejando registro.»
 
-**Por qué hay que precisarlo.** El P90 ya se midió (21/10/2026) y el registro de plazos existe; la regla del respaldo se construyó con un campo de motivo, y las dos salidas
-nuevas tienen nombre propio en el catálogo. El texto no lo dice.
+**Por qué hay que precisarlo.** El P90 ya se midió (21/10/2026) y el registro de plazos existe; Gerencia fijó quién ejecuta las salidas de las esperas externas (`decision/f1c03-quien-ejecuta-salidas`,
+21/10/2026), que retira la persona a cargo y el respaldo, y las dos salidas nuevas tienen nombre propio en el catálogo. El texto no lo dice.
 
 **Texto propuesto:**
 
@@ -1766,8 +1766,8 @@ nuevas tienen nombre propio en el catálogo. El texto no lo dice.
 2. En la línea 1338, añadir al final: «[CONSTRUIDO] (F1C-03) La alarma crea un aviso en la bandeja, una sola vez por cada entrada al estado; no ejecuta ninguna transición ni
    cambia el estado del ticket. En las esperas externas avisa a Comercial (la persona a cargo, si es de Comercial, y el Director y el Coordinador Comercial) y sugiere cobrar
    el diagnóstico o anular; en Solicitado escala al Director y al Coordinador Técnico, y en la espera de SKU al Director y al Coordinador Comercial, sin sugerir ninguna salida.»
-3. En la línea 1340, añadir al final: «[CONSTRUIDO] (F1C-03) Quien no es la persona a cargo y ejecuta la salida como respaldo (el administrador, el Director o el
-   Coordinador del área) debe escribir el motivo del respaldo; la persona a cargo no lo escribe. La regla vale con el interruptor de las salidas de las esperas encendido.»
+3. En la línea 1340, sustituir la regla de la persona a cargo y del respaldo por: «[CONSTRUIDO] (F1C-03) Con el interruptor de las salidas de las esperas encendido, el cobro del diagnóstico y la anulación desde las dos esperas externas los ejecutan sólo el Director Comercial
+   o la Coordinadora Comercial (y el administrador); la anulación conserva su motivo de lista y el cobro pide un motivo corto, que queda en el historial. «Sin pieza en almacén» la ejecuta Servicio Técnico como cualquier transición suya.»
 4. En las filas de salida decididas (`:1327`, `:1330`, `:1333`, `:1336`), nombrar las dos transiciones nuevas: «Cobro de diagnóstico» (Comercial) desde En Espera de
    Repuestos y Servicio externo, y «Sin pieza en almacén» (Servicio Técnico) desde Solicitado hacia En Espera de Repuestos.
 
