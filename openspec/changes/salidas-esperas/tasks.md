@@ -65,22 +65,22 @@ Ficheros: `ticketService.ts:128`/`:131`/`:134` y auxiliares al final y de `:6`, 
 `apps/desk/src/api/client.ts` (final), `TransitionPanel.tsx:3`/`:8`/`:55`/`:57`/`:179`, `salidasEsperas.test.ts` HTTP, barridos de `permisos.test.ts`, `cargoPermiso.test.ts`,
 `transicionesEjecucion.test.ts`, `flujoSoporteRemoto.test.ts`.
 
-- [ ] I4.1 Línea base: suite del servidor en verde con I3a/I3b aplicados.
-- [ ] I4.2 (parcial, adelantado en I3a: interruptor 409 y encendido pasa por el área) ROJO `apps/desk/server/salidasEsperas.test.ts` HTTP (RQ-TS-61/64, RQ-PM-42..45): apagado → `409` distinto del de estado en las dos nuevas; encendido, `cobro` desde `Servicio externo`
+- [x] I4.1 Línea base: suite del servidor en verde con I3a/I3b aplicados.
+- [x] I4.2 (parcial, adelantado en I3a: interruptor 409 y encendido pasa por el área) ROJO `apps/desk/server/salidasEsperas.test.ts` HTTP (RQ-TS-61/64, RQ-PM-42..45): apagado → `409` distinto del de estado en las dos nuevas; encendido, `cobro` desde `Servicio externo`
       y `sin_pieza` desde `Solicitado` dejan la traza con `performed_by_id`; `anulacion` desde ER/SE: persona a cargo sin motivo pasa, respaldo sin motivo `422`, respaldo con motivo pasa
       y el texto llega a la traza y NO a `custom_fields` (S-13); persona a cargo con motivo `422` (S-14); extraño `403` con el mensaje del ejecutor; DPC encendido: persona a cargo sin cargo
       pasa `cobro`, `rechazo_comercial` sigue igual (RQ-PM-43); vacante del Coordinador Técnico (S-21); `anulacion` desde `Rev./Diagnostico` sigue Decisional por cargo. Rojo por ids/guardas inexistentes.
-- [ ] I4.3 (parcial, adelantado en I3a: SE-0 y SE-1) ROJO de posición, cada par activando DOS guardas a la vez (regla de mutación 1): SE-0 estado < interruptor; SE-1 interruptor < área; SE-2 área < ejecutor; SE-2b ejecutor < Decisionales
+- [x] I4.3 (parcial, adelantado en I3a: SE-0 y SE-1) ROJO de posición, cada par activando DOS guardas a la vez (regla de mutación 1): SE-0 estado < interruptor; SE-1 interruptor < área; SE-2 área < ejecutor; SE-2b ejecutor < Decisionales
       (DPC encendido, Comercial sin cargo ni derivado en `cobro` → mensaje del ejecutor, no `mensajeDecisional`); SE-3 ejecutor < `422`; SE-5 un único `422` con `anulacion` sin «Motivo de anulación» y sin motivo del respaldo.
       Pares sin prueba posible declarados en el test (D3: lista corta, firma CC, prioridad, CC/calibración).
-- [ ] I4.4 (parcial, adelantado en I3a: sólo los barridos HTTP con salidasEsperas: true, sin derivado_a) ROJO de la ruta `GET /api/permisos/salidas-esperas` (activo + vacante, misma función que la guarda) y de los barridos HTTP de D6 (`permisos` ×2 → 120 / 1.080, `cargoPermiso`,
+- [x] I4.4 (parcial, adelantado en I3a: sólo los barridos HTTP con salidasEsperas: true, sin derivado_a) ROJO de la ruta `GET /api/permisos/salidas-esperas` (activo + vacante, misma función que la guarda) y de los barridos HTTP de D6 (`permisos` ×2 → 120 / 1.080, `cargoPermiso`,
       `transicionesEjecucion` 44 → 47, `flujoSoporteRemoto`) con `salidasEsperas: true` y `derivado_a` = usuario de la sesión; `anulacion` sigue en la app apagada.
-- [ ] I4.5 (parcial, adelantado en I3a: sólo exigirInterruptorSalidasEsperas en ticketService.ts:128) VERDE: guardas en `ticketService.ts:128`, `:131` y `:134` y auxiliares (`exigirInterruptorSalidasEsperas`, `veredictoEjecutorSalida`, `exigirEjecutorSalida`); `contextoSalidasEsperas`; ruta y registro
+- [x] I4.5 (parcial, adelantado en I3a: sólo exigirInterruptorSalidasEsperas en ticketService.ts:128) VERDE: guardas en `ticketService.ts:128`, `:131` y `:134` y auxiliares (`exigirInterruptorSalidasEsperas`, `veredictoEjecutorSalida`, `exigirEjecutorSalida`); `contextoSalidasEsperas`; ruta y registro
       en `app.ts`; `getContextoSalidasEsperas`; `TransitionPanel` (estado `salidas`, compuesta, `visibleConSalidasEsperas`, campo del motivo). Imports al final de su línea.
-- [ ] I4.6 Mutaciones de posición (M7, regla de mutación 1): mover cada guarda nueva antes y después de su vecina: `exigirInterruptorSalidasEsperas` antes de `exigirInterruptorControlCalidad`
+- [x] I4.6 Mutaciones de posición (M7, regla de mutación 1): mover cada guarda nueva antes y después de su vecina: `exigirInterruptorSalidasEsperas` antes de `exigirInterruptorControlCalidad`
       (cae SE-0), antes del área (SE-1), `exigirEjecutorSalida` antes de `cargoFalta` (SE-2), después de Decisionales (SE-2b), `errRespaldo` antes del `403` (SE-3), fuera del agregado (SE-5). Cada una debe poner roja su prueba.
-- [ ] I4.7 Mutación de condición: Decisionales aplicado también con `ejecutor` (quitar `!ejecutor`): cae RQ-PM-43; `denegado` tratado como `respaldo`: cae el `403`.
-- [ ] I4.8 Tabla de la regla 13 por escrito (regla de mutación 3), decisión a decisión, con la línea REAL del servidor tras editar: oculta las dos con interruptor apagado → `ticketService.ts:128`;
+- [x] I4.7 Mutación de condición: Decisionales aplicado también con `ejecutor` (quitar `!ejecutor`): cae RQ-PM-43; `denegado` tratado como `respaldo`: cae el `403`.
+- [x] I4.8 Tabla de la regla 13 por escrito (regla de mutación 3), decisión a decisión, con la línea REAL del servidor tras editar: oculta las dos con interruptor apagado → `ticketService.ts:128`;
       oculta a quien no es persona a cargo ni respaldo → `:131`; ofrece `cobro` a la persona a cargo sin cargo → `:131`; pide/no pide «Motivo del respaldo» → `:134`; vacante → `services/decisionales.ts`;
       sin respuesta de la ruta, apagado (S-20, degradación declarada). Se pega en `apply-progress.md` y en el `verify`.
 - [ ] I4.c Cierre de lote. Estimación: **~585 líneas (bajo 720)**.

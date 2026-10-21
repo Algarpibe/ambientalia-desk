@@ -41,8 +41,8 @@ instalarArnes()
 describe('matriz área × transición, contra el servidor', () => {
   for (const area of AREAS) {
     it(`las 40 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
-      const cookie = await userCookie([area])
-      const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas con salidasEsperas (I4: derivado_a = usuario de la sesión cuando entre la regla del ejecutor)
+      const cookie = await userCookie([area]); const uid = ((await db.query('SELECT id FROM users')).rows[0] as { id: string }).id   // F1C-03 (I4): la persona a cargo de las salidas de las esperas es el usuario de la sesión
+      const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas con salidasEsperas (I4: el ticket sembrado lleva derivado_a = usuario de la sesión: es la persona a cargo y nadie manda motivo)
 
       const observado: Record<string, number> = {}
       let n = 0
@@ -51,8 +51,8 @@ describe('matriz área × transición, contra el servidor', () => {
         const id = `mtx-${n}`
         // El estado de origen: el primero de los `from` de ESTA transición. Con cualquier otro, el
         // 409 de `ticketService.ts:126-128` contesta antes y la casilla no llega a probar permisos.
-        await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)',
-          [id, 90000 + n, 'Matriz de permisos', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-MTX'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
+        await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta, derivado_a) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+          [id, 90000 + n, 'Matriz de permisos', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-MTX'] : [null, null]), IDS_SALIDAS_NUEVAS.has(t.id) ? uid : null]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
         const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id) || IDS_SALIDAS_NUEVAS.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
         observado[t.id] = res.status
@@ -90,15 +90,15 @@ describe('matriz área × transición, contra el servidor', () => {
     // Su rol NO cubre ninguna transición: lo único que le abre las 33 es ser administrador.
     const u = await createUser(db, { email: 'jefa@x.co', name: 'Jefa', passwordHash: await hashPassword('password123'), isAdmin: true })
     const cookie = `sid=${await createSession(db, u.id)}`
-    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas con salidasEsperas (I4: derivado_a = usuario de la sesión cuando entre la regla del ejecutor)
+    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas con salidasEsperas (I4: el ticket sembrado lleva derivado_a = usuario de la sesión: es la persona a cargo y nadie manda motivo)
 
     const observado: Record<string, number> = {}
     let n = 0
     for (const t of TRANSITIONS) {
       n += 1
       const id = `adm-${n}`
-      await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)',
-        [id, 80000 + n, 'Matriz de permisos', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-ADM'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
+      await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta, derivado_a) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+        [id, 80000 + n, 'Matriz de permisos', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-ADM'] : [null, null]), IDS_SALIDAS_NUEVAS.has(t.id) ? u.id : null]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
       const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id) || IDS_SALIDAS_NUEVAS.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
         .send({ transitionId: t.id, values: valoresValidos(t, n) })
       observado[t.id] = res.status

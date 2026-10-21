@@ -248,8 +248,8 @@ describe('las 40 transiciones, ejecutadas contra el servidor', () => {
    * extremos, su área y su actor.
    */
   it('las 40 salen de su origen, llegan a su destino y dejan traza', async () => {
-    const cookie = await adminCookie()
-    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas, con salidasEsperas (I4: sembrar aquí derivado_a = usuario de la sesión cuando entre la regla del ejecutor)
+    const cookie = await adminCookie(); const uid = ((await db.query('SELECT id FROM users')).rows[0] as { id: string }).id   // F1C-03 (I4): derivado_a de las salidas de las esperas
+    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas, con salidasEsperas (I4: el ticket sembrado lleva derivado_a = el administrador de la sesión: es la persona a cargo y nadie manda motivo)
 
     const observado: Record<string, string[]> = {}
     const esperado: Record<string, string[]> = {}
@@ -260,8 +260,8 @@ describe('las 40 transiciones, ejecutadas contra el servidor', () => {
       for (const origen of CASOS[t.id].desde) {
         n += 1
         const id = `eje-${n}`
-        await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)',
-          [id, 70000 + n, 'Barrido de ejecución', origen, ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-EJE'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
+        await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta, derivado_a) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+          [id, 70000 + n, 'Barrido de ejecución', origen, ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-EJE'] : [null, null]), IDS_SALIDAS_NUEVAS.has(t.id) ? uid : null]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
 
         const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id) || IDS_SALIDAS_NUEVAS.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })

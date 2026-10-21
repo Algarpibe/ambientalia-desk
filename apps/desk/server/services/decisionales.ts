@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { DECISIONALES_APAGADO, type ContextoDecisionales } from '@ambientalia/shared'
+import { DECISIONALES_APAGADO, SALIDAS_ESPERAS_APAGADO, type ContextoDecisionales, type ContextoSalidasEsperas } from '@ambientalia/shared'
 import { destinatariosDeCargoPermiso } from '../db/avisos'
 
 /**
@@ -10,4 +10,14 @@ import { destinatariosDeCargoPermiso } from '../db/avisos'
 export async function contextoDecisionales(db: Queryable, activo: boolean): Promise<ContextoDecisionales> {
   if (!activo) return DECISIONALES_APAGADO
   return { activo: true, coordinadorTecnicoVacante: (await destinatariosDeCargoPermiso(db, 'Coordinador Técnico')).length === 0 }
+}
+
+/**
+ * El contexto de las salidas de las esperas (F1C-03, RQ-PM-45), el mismo para la guarda de `ticketService.ts` y para la ruta que lo enseña
+ * al cliente. Apagado no consulta nada. Encendido, pide la vacante del Coordinador Técnico a `contextoDecisionales` (S-21): también con
+ * `DECISIONALES_POR_CARGO` apagado, porque la vacante decide quién es respaldo de `sin_pieza_en_almacen`.
+ */
+export async function contextoSalidasEsperas(db: Queryable, activo: boolean): Promise<ContextoSalidasEsperas> {
+  if (!activo) return SALIDAS_ESPERAS_APAGADO
+  return { activo: true, coordinadorTecnicoVacante: (await contextoDecisionales(db, true)).coordinadorTecnicoVacante }
 }

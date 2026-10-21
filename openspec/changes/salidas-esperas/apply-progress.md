@@ -108,3 +108,72 @@ Scripts: `mut_i3b5.sh` y `mut_i3b6.sh` en el scratchpad de la sesión (no se ver
 Tras esos códigos sólo se tocó una línea de `deployControlCalidad.test.ts` (fusión en una línea); se volvió a correr su fichero (6/6) y eslint sobre él.
 Medida: `git diff --shortstat --no-renames df53227f` 5 ficheros +239 −7 (más este informe y `tasks.md`) y 73 de `deploySalidasEsperas.test.ts` sin trackear: ~350, bajo 650. Sin binarios.
 Aviso para el barrido de citas: `deployControlCalidad.test.ts:17` y `:35` (verify-report archivado de control-calidad-liberacion) siguen en su línea.
+
+## Lote I4 — ejecutor en el servidor, motivo del respaldo, ruta de contexto y cliente
+
+Estado: I4.1 a I4.8 hechas; I4.c (citas, medida final, commit) la hace el orquestador. Base del lote `3d33f071`. `strict_tdd`.
+
+### Rojo visto antes del verde
+
+- **I4.1:** la suite del servidor (`apps/desk/server`) en verde con I3a/I3b aplicados, antes de tocar código de I4.
+- **I4.2/I4.3/I4.4 (`salidasEsperas.test.ts`, +21 pruebas HTTP):** 13 rojas de 28. Causas: sin guarda de ejecutor el extraño, el derivado de otra área y el Especialista técnico daban `200`
+  (esperado `403`); el respaldo sin motivo y la persona a cargo con motivo daban `200` (esperado `422`); con DPC encendido la persona a cargo sin cargo daba `403` de Decisionales (esperado `200`);
+  SE-2b daba el texto de Decisionales y no el del ejecutor; SE-3 daba `422` y no `403`; SE-5 daba el `422` del motivo de anulación SIN el del respaldo (el texto real del plan es «Falta el campo obligatorio: Motivo»,
+  no la clave: la aserción se corrigió a ese texto y a `toHaveLength(2)`); la ruta daba `404` ×3. Las 15 verdes de entrada son las de I3a y las de caracterización (apagado, `Rev./Diagnostico`).
+  SE-2 (área < ejecutor) pasa en verde desde el principio porque el área ya precedía: lo prueba la mutación, no el rojo previo.
+- **Rojo de los barridos (con la guarda ya en su sitio):** 5 rojas en 3 ficheros antes de sembrar `derivado_a`: `permisos.test.ts` (matriz de Comercial, de Servicio Técnico y del administrador),
+  `cargoPermiso.test.ts` S21 y `transicionesEjecucion.test.ts` «las 40 salen de su origen». Causa: sin `derivado_a` el usuario de la matriz no es la persona a cargo y el administrador es respaldo sin motivo
+  (`403`/`422` en lugar de `200`). `flujoSoporteRemoto.test.ts` P8 sigue en verde sin sembrar nada: el `409` de flujo (`:126`) precede al ejecutor.
+- Las dos pruebas de I3a «el administrador ejecuta el cobro / sin_pieza_en_almacen» pasaron a ser respaldo con motivo (un administrador que no es la persona a cargo es respaldo): ver sus títulos.
+
+### Verde
+
+- `ticketService.ts` sin desplazar una línea (la guarda, el motivo y las llamadas van dentro de `:131` y `:134`; imports al final de `:6` y `:7`; auxiliares al final del fichero):
+  `:131` `const ejecutor = await veredictoEjecutorSalida(…); exigirEjecutorSalida(ejecutor)` tras `cargoFalta` y antes de Decisionales, que gana `&& !ejecutor`; `:134` `errRespaldo = erroresMotivoRespaldo(ejecutor, values)`
+  en el `if` y en `errors` del mismo agregado; `:329` `veredictoEjecutorSalida` (sale sin consultar nada con el interruptor apagado o fuera de alcance) y `:335` `exigirEjecutorSalida`.
+- `services/decisionales.ts:20` `contextoSalidasEsperas` (la vacante por `contextoDecisionales`, también con DPC apagado, S-21); `routes/permisosSalidasEsperas.ts` (nuevo) y `app.ts:22`/`:61` (registro al final de las dos líneas).
+- Cliente: `client.ts:921` `getContextoSalidasEsperas`; `TransitionPanel.tsx` `:3`, `:8` (la compuesta sustituye a `puedeEjecutarTransicionConDecisionales`, que ya no se usa ahí), `:55` (estado `salidas`, apagado si falla), `:57` (compuesta +
+  `visibleConSalidasEsperas`) y `:179` (campo «Motivo del respaldo» sólo cuando `ejecutorDeSalida` da `respaldo`). Las cinco son ediciones dentro de su línea: ninguna línea se desplaza.
+- Barridos HTTP con `salidasEsperas: true` y `derivado_a` = usuario de la sesión en la línea del `INSERT` (`permisos.test.ts:54`/`:100`, `cargoPermiso.test.ts:260`, `transicionesEjecucion.test.ts:263`); `anulacion` sigue en la app apagada.
+- Prueba nueva de disjunción (pares sin prueba posible de D3): ninguna de las tres salidas está en la lista corta, ni en la firma de control de calidad, ni en la calibración directa, ni en el envío a control de calidad.
+
+### Mutaciones I4.6 / I4.7 (script `mut_i4.mjs` del scratchpad: copia, reemplazo exacto una vez, `salidasEsperas.test.ts`, restauración por copia; las 13 con hash igual)
+
+| Mutación | Qué se hizo | Prueba(s) que cayó |
+|---|---|---|
+| SE-0 | `exigirInterruptorSalidasEsperas` antes del `409` de estado | SE-0 |
+| I4.6a | el interruptor de salidas ANTES del de control de calidad (misma línea) | **ninguna: equivalente.** Conjuntos de ids disjuntos (declarado en D3; la disjunción la fija la prueba nueva y `salidasEsperas.test.ts` de `shared`) |
+| SE-1 | interruptor después del área | SE-1 |
+| SE-2 | `exigirEjecutorSalida` ANTES del área | «quien no es del área sigue recibiendo el 403 de área» y SE-2 |
+| I4.6b | ejecutor antes de `cargoFalta` (tras el área) | **ninguna: equivalente.** Ninguna de las tres está en la lista corta (prueba de disjunción nueva) |
+| SE-2b (sólo mover) | ejecutor después de Decisionales, conservando `&& !ejecutor` | **ninguna: equivalente por construcción.** Con `!ejecutor`, Decisionales no se evalúa cuando hay veredicto, así que el orden entre las dos no cambia ninguna respuesta; lo que fija esa posición es la condición (I4.7a) |
+| SE-2b+ | ejecutor después de Decisionales Y sin `!ejecutor` | RQ-PM-43 y SE-2b |
+| SE-3 | `exigirEjecutorSalida` después del `422` | SE-3 |
+| SE-5 | `errRespaldo` fuera del agregado (su propio `422`) | SE-5 |
+| I4.7a | quitar `&& !ejecutor` | RQ-PM-43 (persona a cargo sin cargo con DPC) |
+| I4.7b | `denegado` tratado como respaldo (no lanza) | 5: extraño, S-2, Especialista técnico con Coordinador activo, SE-2b y SE-3 |
+| extra | la vacante de la ruta siempre `false` | S-21 (HTTP) y la prueba de la ruta |
+| extra | el ejecutor se calcula aunque el interruptor esté apagado | las dos de «apagado… no mira al ejecutor» |
+
+Aviso para el verify: las tres mutaciones «equivalentes» no son un detector que falta, son pares sin prueba posible declarados (D3). La posición del ejecutor frente a Decisionales descansa en `!ejecutor`.
+
+### TABLA DE LA REGLA 13 (I4.8, regla de mutación 3), decisión a decisión, con la línea REAL del servidor tras editar
+
+| Decisión que toma el cliente (`TransitionPanel.tsx`) | Línea del servidor que la impone | Cómo se prueba |
+|---|---|---|
+| Oculta `cobro_diagnostico_espera` y `sin_pieza_en_almacen` con el interruptor apagado (`:57`, `visibleConSalidasEsperas`) | `ticketService.ts:128` (`409`, `exigirInterruptorSalidasEsperas`, definida `:318`) | `salidasEsperas.test.ts` «interruptor» y SE-0/SE-1 |
+| Oculta las tres salidas a quien no es persona a cargo ni respaldo (`:57`, `puedeEjecutarConSalidasEsperas`) | `ticketService.ts:131` (`403`, `exigirEjecutorSalida`, `:335`; veredicto `:329`); el área precede en `:129` y la lista corta en `:131` | extraño `403`, S-2, SE-2, I4.7b |
+| Ofrece `cobro` a la persona a cargo sin cargo con Decisionales encendido (`:57`) | `ticketService.ts:131` (`faltanDecisional` sólo con `!ejecutor`) | RQ-PM-43 HTTP; I4.7a |
+| Pide «Motivo del respaldo» al respaldo (`:179`) | `ticketService.ts:134` (`422`, `errRespaldo`, regla `salidasEsperas.ts:70`) | respaldo sin motivo `422`, con motivo pasa; SE-5 |
+| No lo pide a la persona a cargo (`:179`) | `ticketService.ts:134` (`422` si llega con texto, S-14) | S-14 |
+| Vacante del Coordinador Técnico (contexto de `:55`) | `services/decisionales.ts:20` (`contextoSalidasEsperas`) usada por `ticketService.ts:329` y por `routes/permisosSalidasEsperas.ts:17`: la misma función | S-21 HTTP y prueba de la ruta; mutación «vacante siempre false» |
+| Sin respuesta de la ruta, el panel asume apagado (`:55`, S-20) | **ninguna: degradación declarada.** Puede ofrecer `anulacion` desde ER/SE que el servidor encendido rechace con `403`/`422`; las dos nuevas no se ofrecen (apagado) | sin prueba (la interfaz queda fuera de la red) |
+
+`visibleConSalidasEsperas` NO oculta `anulacion` (sólo las dos nuevas dependen del interruptor): quien la ve desde ER/SE sin ser persona a cargo ni respaldo es filtrado por la compuesta, y si el panel fallara, recibe el `403` del ejecutor.
+
+### Códigos y medida
+
+En serie, logs en `C:\dev\Desk_2_R1.023-worktrees\sal-i4-*.log`: `npm run typecheck` 0; `npm run lint` 0 (0 errores, 165 avisos preexistentes); `npm test` 0 (311 ficheros pasan, 3 omitidos; 5.292 pruebas pasan, 11 omitidas); `npm run build` 0.
+Después de esos códigos sólo se tocaron `tasks.md` y este informe (sin código).
+Medida: `git diff --shortstat --no-renames 3d33f071` 10 ficheros +280 −35 (antes de `tasks.md` y de este informe) y 19 de `routes/permisosSalidasEsperas.ts` sin trackear: ~335 de código y pruebas, ~400 con este informe; bajo 650. Sin binarios.
+Citas (`cli.ts --sha HEAD`) y commit: orquestador. Ninguna línea de `ticketService.ts`, `app.ts` ni `TransitionPanel.tsx` se desplazó; los muy citados de esta tanda se barren en I5.10.
