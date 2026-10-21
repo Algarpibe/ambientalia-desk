@@ -275,16 +275,16 @@ El permiso **SHALL** calcularse con `canExecuteTransition(userAreas, isAdmin, tr
 
 - Las áreas base **SHALL** ser exactamente tres: `Comercial`, `Servicio Técnico`, `Compras`.
 - Un área compuesta se descompone por el separador `' / '` (`packages/shared/src/transitions.ts:313-315`).
-- **Siete** de las **38** transiciones **SHALL** ser compartidas por dos áreas: cinco `Comercial / Compras` y
+- **Siete** de las **40** transiciones **SHALL** ser compartidas por dos áreas: cinco `Comercial / Compras` y
   dos `Comercial / Servicio Técnico` (`rechazo_comercial` y `rechazo_revision`). El emparejamiento id → área
   está fijado (`invariantesGrafo.test.ts:91-106`).
   (Previously: **ocho** compartidas, cinco `Comercial / Compras` y tres `Comercial / Servicio Técnico`; la
   tercera era `rechazo_cliente`, de área `Comercial` desde F1C-10.)
-- Un administrador **MAY** ejecutar las 38 sin que su área importe (`permissions.ts:5`; probado contra el
+- Un administrador **MAY** ejecutar las 40 sin que su área importe (`permissions.ts:5`; probado contra el
   servidor en `permisos.test.ts:89-109`).
-- La matriz completa **SHALL** ser 38 × 3 = **114 casos: 69 prohibidos y 45 permitidos**
-  (31 transiciones de área simple × 2 áreas prohibidas + 7 compartidas × 1 prohibida).
-  (Previously: 108 casos, 65 prohibidos y 43 permitidos, hasta F1C-08, medidos por `permisos.test.ts` en `96e35cf9` —este texto seguía en 93 desde F1C-10—; 93 casos, 54 prohibidos y 39 permitidos, con 23 de área simple y 8 compartidas, hasta F1C-10;
+- La matriz completa **SHALL** ser 40 × 3 = **120 casos: 73 prohibidos y 47 permitidos**
+  (33 transiciones de área simple × 2 áreas prohibidas + 7 compartidas × 1 prohibida).
+  (Previously: 114 casos, 69 prohibidos y 45 permitidos, hasta F1C-03; 108 casos, 65 prohibidos y 43 permitidos, hasta F1C-08, medidos por `permisos.test.ts` en `96e35cf9` —este texto seguía en 93 desde F1C-10—; 93 casos, 54 prohibidos y 39 permitidos, con 23 de área simple y 8 compartidas, hasta F1C-10;
   y antes de F1C-09, 34 × 3 = 102 casos, 60 prohibidos y 42 permitidos, con 26 de área simple.)
 
 **El espejo del cliente es legítimo desde F0-04.** `TransitionPanel.tsx:56-58` filtra los botones por área
@@ -438,19 +438,19 @@ ejecutó** (`repo.ts:314-318`). Es M1.10 del maestro, `[DECIDIDO — R08]`, «no
 
 - El actor **SHALL** ser el usuario de la sesión, y **MAY** caer a la constante `TRANSITION_ACTOR` sólo si
   la sesión no trae nombre (`ticketService.ts:153`, `transitionActor.ts:3`).
-- La cobertura **SHALL** ser de las **38**: el barrido ejercita **todos** los `from` de cada transición
-  —`habilitar_servicio` tiene tres y `anulacion` cinco—, o sea **44 ejecuciones**, y comprueba en cada una el estado destino y la
+- La cobertura **SHALL** ser de las **40**: el barrido ejercita **todos** los `from` de cada transición
+  —`habilitar_servicio` tiene tres, `anulacion` cinco y `cobro_diagnostico_espera` dos—, o sea **47 ejecuciones**, y comprueba en cada una el estado destino y la
   fila del historial (`transicionesEjecucion.test.ts:105-117`, `:272-285`).
-  (Previously: 36 transiciones en 42 ejecuciones hasta F1C-08 —este texto seguía en 31 y 33—; 34 transiciones, 36 ejecuciones.)
+  (Previously: 38 transiciones en 44 ejecuciones hasta F1C-03; 36 transiciones en 42 ejecuciones hasta F1C-08 —este texto seguía en 31 y 33—; 34 transiciones, 36 ejecuciones.)
 - La fila de la creación del ticket **SHALL** llevar `from_status = '(creación)'`
   (`transitions.ts:100-110`).
 - La fila que añade la migración de `RQ-TS-28` **SHALL** cumplir esta traza (origen, destino, actor que
   nombra la migración, fecha y hora) sin ser una transición del catálogo.
 
-#### Scenario: el barrido ejercita 38 transiciones en 44 ejecuciones
+#### Scenario: el barrido ejercita 40 transiciones en 47 ejecuciones
 - GIVEN el barrido de `transicionesEjecucion.test.ts`
 - WHEN se ejecuta
-- THEN hace 44 ejecuciones, con `diagnostico_complementario` desde `En Proceso`, y cada una deja su fila con destino correcto
+- THEN hace 47 ejecuciones, con `diagnostico_complementario` desde `En Proceso`, y cada una deja su fila con destino correcto
 
 #### Scenario: la fila de migración lleva fecha, hora y actor
 - GIVEN un ticket migrado
@@ -1666,18 +1666,18 @@ una, se quita en esta tanda).
 - WHEN se inspeccionan sus claves
 - THEN son exactamente `Notificado`, `Remisión creada` y `Notificación cliente`
 
-### RQ-TS-26 · La cifra anclada del maestro dice 38 / 46 / 23 en el mismo commit que el código
+### RQ-TS-26 · La cifra anclada del maestro dice 40 / 49 / 23 en el mismo commit que el código
 
-`openspec/config.yaml` **SHALL** declarar en `cifras_ancladas` `transiciones` = 38, `pasos_del_mapa` = 46 y
-`estados` = 23 de servicio. La descripción de la capacidad `transitions-st` en `capabilities` **SHALL** decir «38
+`openspec/config.yaml` **SHALL** declarar en `cifras_ancladas` `transiciones` = 40, `pasos_del_mapa` = 49 y
+`estados` = 23 de servicio. La descripción de la capacidad `transitions-st` en `capabilities` **SHALL** decir «40
 transiciones y 23 estados». Estos valores **SHALL** coincidir con `TRANSITIONS.length`, con las aristas del diagrama
 completo y con `ESTADOS_SERVICIO.length`, y **SHALL** cambiar en el mismo commit que el código. El texto `codigo` de
-`pasos_del_mapa` **SHALL** nombrar las 38 transiciones y la arista de `anulacion` desde sus cinco orígenes. (Previously, hasta F1C-08: 36 / 44 / 23, fijadas por F1C-07; hasta F1C-07: 33 / 41 / 22, fijadas por F1C-02; hasta F1C-02: 32 / 40 / 21, fijadas por F1C-01; hasta F1C-01: 31 / 35 / 20, fijadas por F1C-09.)
+`pasos_del_mapa` **SHALL** nombrar las 40 transiciones y las aristas de `anulacion` desde sus cinco orígenes y de `cobro_diagnostico_espera` desde sus dos. (Previously, hasta F1C-03: 38 / 46 / 23, fijadas por F1C-08; hasta F1C-08: 36 / 44 / 23, fijadas por F1C-07; hasta F1C-07: 33 / 41 / 22, fijadas por F1C-02; hasta F1C-02: 32 / 40 / 21, fijadas por F1C-01; hasta F1C-01: 31 / 35 / 20, fijadas por F1C-09.)
 
 #### Scenario: las tres cifras coinciden con el código
 - GIVEN `cifras_ancladas` y el código tras el cambio
 - WHEN se comparan
-- THEN 38 = `TRANSITIONS.length`, 46 = aristas del diagrama completo y 23 = `ESTADOS_SERVICIO.length`
+- THEN 40 = `TRANSITIONS.length`, 49 = aristas del diagrama completo y 23 = `ESTADOS_SERVICIO.length`
 
 #### Scenario: la mención a `Pendiente` de `esperas` queda coherente
 - GIVEN la entrada `esperas` de `cifras_ancladas`
@@ -2835,13 +2835,13 @@ del servidor, `TRANSICION_REMISION_CONFIRMADA` y `TRANSICION_REMISION_RETIRADA` 
 de la lista, **SHALL NOT** compilar. Además, un barrido en ejecución **SHALL** comprobar que el tipo de cada una de las 47
 pertenece a `TIPOS_EVENTO`, para cazar lo que una conversión forzada dejaría pasar. (Desde F1C-07 son 50, RQ-TS-50.)
 
-**Tabla normativa** (52 filas desde F1C-08, 50 desde F1C-07 y 47 antes: 38 de servicio, 7 de equipo nuevo, 5 de soporte remoto y 2 pasos del servidor). La prueba
+**Tabla normativa** (54 filas desde F1C-03, 52 desde F1C-08, 50 desde F1C-07 y 47 antes: 40 de servicio, 7 de equipo nuevo, 5 de soporte remoto y 2 pasos del servidor). La prueba
 fijada **SHALL** reproducirla fila a fila. Fuente: **L** = lista de actos del maestro (`R08.4.md:1658-1661`, `:1903-1908`);
 **H** = hoja `DF-servicio-tecnico-160226.xlsx`, columna `TIPO_EVENTO`; **N** = Notion «Flujo equipo-nuevo» (03/02/2026);
 **S** = supuesto de la propuesta (S-1 anulaciones, S-2 trabajo de soporte remoto), decidido por Gerencia el 18/10; **G** = corrección de Gerencia del 18/10. Si L nombra el acto sin
 ambigüedad, L gana sobre H (S-3); «L sobre H» marca los nueve conflictos.
 
-*Servicio (38; ni las dos de calibración directa ni las tres de control de calidad están en la tabla de abajo: `calibracion_directa` y `falla_calibracion`, Operativo, las fija RQ-TS-52 (F1C-08); las de control de calidad, RQ-TS-50: `envio_control_calidad` Operativo; `aprobacion_control_calidad` y `rechazo_control_calidad` Decisional; fuente: `decision/c6-qa-liberacion` y `decision/f1c07-supuestos-corregidos`):*
+*Servicio (40; ni las dos salidas de las esperas, ni las dos de calibración directa ni las tres de control de calidad están en la tabla de abajo: `cobro_diagnostico_espera` Decisional y `sin_pieza_en_almacen` Compras / Logístico, las fija RQ-TS-60 (F1C-03); `calibracion_directa` y `falla_calibracion`, Operativo, las fija RQ-TS-52 (F1C-08); las de control de calidad, RQ-TS-50: `envio_control_calidad` Operativo; `aprobacion_control_calidad` y `rechazo_control_calidad` Decisional; fuente: `decision/c6-qa-liberacion` y `decision/f1c07-supuestos-corregidos`):*
 
 | id | Tipo | Fuente | id | Tipo | Fuente |
 |---|---|---|---|---|---|
@@ -3214,20 +3214,20 @@ Con la configuración de `permissions` RQ-PM-32, `executeTransition` **SHALL** r
 
 ### RQ-TS-56 · Condición (3) como propiedad del grafo: el trabajo terminado pasa por Control de calidad
 
-La condición (3) se lee como «el trabajo terminado pasa por Control de calidad» (S-14, supuesto reversible, no hecho). Con el interruptor encendido, las únicas entradas a `Por Facturar` alcanzables desde `En Proceso` sin pasar por `Control de calidad` **SHALL** ser los tres rechazos Decisionales: `rechazo_comercial`, `rechazo_cliente` y `rechazo_revision`, que entran desde `Notificación Comercial`, `Notificación cliente` y `Rev./Diagnostico` (`packages/shared/src/transitions.ts`; el cliente no aprueba y no hay trabajo que liberar). Es propiedad calculada sobre el catálogo real, en una prueba junto a `invariantesGrafo.test.ts`, que **SHALL** ponerse en rojo si se ensucia el catálogo: un atajo cuyo destino sea `Por Facturar`, o el interruptor que deja de quitar `finalizacion_servicio`. El conjunto sin el escape son dos; `rechazo_revision` entra por `falla_calibracion`. Con el interruptor encendido `finalizacion_servicio` sigue dando `409` (RQ-TS-47).
+La condición (3) se lee como «el trabajo terminado pasa por Control de calidad» (S-14, supuesto reversible). Con `CONTROL_CALIDAD_LIBERACION` y `SALIDAS_ESPERAS` encendidos, las únicas entradas a `Por Facturar` alcanzables desde `En Proceso` sin pasar por `Control de calidad` **SHALL** ser cuatro, todas Decisionales sin reparación que liberar: `rechazo_comercial`, `rechazo_cliente`, `rechazo_revision` y `cobro_diagnostico_espera` (S-11 de `salidas-esperas`: desde `En Espera de Repuestos` y `Servicio externo`, que se alcanzan por `solicitud_repuestos` y `cal_sensores_proceso` sin cruzar `Control de calidad`). Es propiedad calculada sobre el catálogo real, en una prueba junto a `invariantesGrafo.test.ts`, que **SHALL** ponerse en rojo si se ensucia el catálogo: un atajo con destino `Por Facturar`, una salida de `Solicitado` o de la espera de SKU a `Por Facturar`, o el interruptor que deja de quitar `finalizacion_servicio`. Con `SALIDAS_ESPERAS` apagado el conjunto es el de F1C-08 (tres). Con el interruptor encendido `finalizacion_servicio` sigue dando `409` (RQ-TS-47).
 
 #### Scenario: el atajo lleva a `Por Facturar` sólo por Control de calidad — ROJO
-- GIVEN el interruptor encendido y un ticket «Calibración» con OV en `Ingresado`
+- GIVEN los dos interruptores encendidos y un ticket «Calibración» con OV en `Ingresado`
 - WHEN recorre `calibracion_directa`, `envio_control_calidad` y `aprobacion_control_calidad`
 - THEN llega a `Por Facturar`; y `finalizacion_servicio` desde `En Proceso` da `409`
 
-#### Scenario: las entradas sin Control de calidad son los tres rechazos — ROJO
-- GIVEN el catálogo real y el interruptor encendido
+#### Scenario: las entradas sin Control de calidad son cuatro — ROJO
+- GIVEN el catálogo real con `SALIDAS_ESPERAS` encendido; y el mismo con ella apagada
 - WHEN se calculan las transiciones a `Por Facturar` alcanzables desde `En Proceso` sin entrar en `Control de calidad`
-- THEN son exactamente `rechazo_comercial`, `rechazo_cliente` y `rechazo_revision`, las tres Decisionales; apagado, `rechazo_comercial`, `rechazo_cliente` y `finalizacion_servicio` (el escape también cuelga del interruptor, así que `rechazo_revision` no se alcanza; medido en el lote 1b)
+- THEN encendido son `rechazo_comercial`, `rechazo_cliente`, `rechazo_revision` y `cobro_diagnostico_espera`, las cuatro Decisionales; apagado, las tres de F1C-08 (`cobro_diagnostico_espera` da `409` y no cuenta)
 
-#### Scenario: ensuciar el catálogo pone la propiedad en rojo — ROJO (mutación 3)
-- GIVEN el catálogo con un atajo de prueba cuyo destino es `Por Facturar` (o con `finalizacion_servicio` sin quitar por el interruptor)
+#### Scenario: ensuciar el catálogo pone la propiedad en rojo — ROJO (mutación 3 y 5)
+- GIVEN el catálogo con un atajo de prueba a `Por Facturar`, o con `Solicitado` o la espera de SKU con salida a `Por Facturar`
 - WHEN corre la propiedad
 - THEN el conjunto gana una id y la prueba falla; sin esa transición pasa
 
@@ -3302,3 +3302,103 @@ Orden (A < B < C < D, RQ-TS-06, F1B-10): `409` del interruptor (B) tras el `409`
 - GIVEN el interruptor apagado y la descripción en blanco
 - WHEN se ejecuta `falla_calibracion`
 - THEN `409`, no `422`
+
+### RQ-TS-60 · Dos salidas nuevas: `cobro_diagnostico_espera` y `sin_pieza_en_almacen`
+
+Sólo se añade; nada existente cambia ni se reordena, y `anulacion` desde `En Espera de Repuestos` y `Servicio externo` sigue en el catálogo. No se crea ningún estado.
+
+| id | Nombre | De → a | Área | Tipo (S-8) | Campos |
+|---|---|---|---|---|---|
+| `cobro_diagnostico_espera` | Cobro de diagnóstico | `En Espera de Repuestos`, `Servicio externo` → `Por Facturar` | Comercial | Decisional | comentario opcional |
+| `sin_pieza_en_almacen` | Sin pieza en almacén | `Solicitado` → `En Espera de Repuestos` | Servicio Técnico | Compras / Logístico | comentario opcional |
+
+#### Scenario: tipos, áreas, recorridos y campos — ROJO
+- GIVEN el catálogo de servicio
+- WHEN se consultan los dos ids
+- THEN tienen área, tipo, `from`, `to` y campos de la tabla, y ningún campo es obligatorio
+
+#### Scenario: `cobro_diagnostico_espera` es Decisional — ROJO
+- GIVEN `tipoEventoDeTransicion`
+- WHEN se resuelve `cobro_diagnostico_espera`
+- THEN `Decisional`; `sin_pieza_en_almacen` da `Compras / Logístico`
+
+#### Scenario: las salidas de hoy no cambian — CARACTERIZACIÓN
+- GIVEN `anulacion`, `llegada_repuestos`, `retorno_servicio_externo`, `entrega_repuestos` y `notif_cliente_sku`
+- WHEN se comparan con el catálogo anterior
+- THEN origen, destino, área, tipo y campos son idénticos
+
+### RQ-TS-61 · El interruptor `SALIDAS_ESPERAS` nace cerrado; apagado, el flujo es el de hoy
+
+`SALIDAS_ESPERAS` **SHALL** valer `true` sólo con `=== 'true'` (`packages/zoho-sync/src/config.ts`). Apagado, `executeTransition` **SHALL** responder `409` a `cobro_diagnostico_espera` y `sin_pieza_en_almacen` sin escribir nada, una función pura de `packages/shared` **SHALL** quitarlas del panel (molde `visibleConControlCalidad`, `packages/shared/src/controlCalidad.ts:103-111`) y la alarma de `derivacion-avisos` RQ-AV-26 **SHALL NOT** correr. Apagado, `anulacion` desde ER/SE sigue con la regla de hoy (`permissions` RQ-PM-43). Es independiente de `CONTROL_CALIDAD_LIBERACION` y de `DECISIONALES_POR_CARGO`.
+
+#### Scenario: apagado, D1 da 409 — ROJO
+- GIVEN el interruptor sin `true` y un ticket en `Servicio externo`
+- WHEN un usuario de Comercial ejecuta `cobro_diagnostico_espera`
+- THEN `409` cuyo mensaje nombra el interruptor y el ticket no cambia
+
+#### Scenario: apagado, D2 da 409 — ROJO
+- GIVEN el interruptor apagado y un ticket en `Solicitado`
+- WHEN un usuario de Servicio Técnico ejecuta `sin_pieza_en_almacen`
+- THEN `409` y el ticket no cambia
+
+#### Scenario: apagado, el panel no las ofrece — ROJO
+- GIVEN la función de visibilidad con el interruptor apagado y con cualquier valor distinto de `'true'`
+- WHEN se evalúan las dos y otra cualquiera
+- THEN las dos se ocultan; la otra siempre se ve
+
+#### Scenario: encendido pasan — ROJO
+- GIVEN el interruptor encendido y la persona a cargo (`permissions` RQ-PM-42)
+- WHEN ejecuta `cobro_diagnostico_espera` o `sin_pieza_en_almacen`
+- THEN `200`, el ticket llega a `Por Facturar` o a `En Espera de Repuestos` y queda una fila en `ticket_transitions`
+
+### RQ-TS-62 · Cifras: servicio 40 transiciones, 23 estados, 49 pasos
+
+Con las dos, el catálogo de servicio **SHALL** pasar de 38 a 40 transiciones y el mapa de 46 a 49 pasos (`cobro_diagnostico_espera` sale de dos estados); los estados quedan en 23. Los vigilantes de tipos de evento, matrices de permisos, salidas únicas y derivación por defecto **SHALL** moverse con los mismos ficheros que movió F1C-08; la lista exacta con sus cifras la fija el diseño contra el árbol (hipótesis).
+
+#### Scenario: las cifras del catálogo — ROJO
+- GIVEN el catálogo de servicio y el mapa del blueprint regenerado
+- WHEN se cuentan
+- THEN 40 transiciones, 23 estados y 49 pasos
+
+#### Scenario: la derivación por defecto no cambia — ROJO
+- GIVEN la tabla de derivación por defecto
+- WHEN se consultan las dos nuevas
+- THEN ninguna propone persona; heredan
+
+### RQ-TS-63 · `Solicitado` y la espera de SKU no se abandonan ni se anulan (invariantes de c3)
+
+`Solicitado` **SHALL** tener como únicas salidas `entrega_repuestos` y `sin_pieza_en_almacen`; `En espera de SKU inventario` **SHALL** tener como única salida `notif_cliente_sku`. Ninguna de las dos **SHALL** tener transición a `Anulado` ni a `Por Facturar`, con o sin interruptor (`decision/c3-salida-esperas`). La propiedad se calcula sobre el catálogo real, junto a `invariantesGrafo.test.ts`.
+
+#### Scenario: las salidas de `Solicitado` y SKU — ROJO
+- GIVEN el catálogo real con y sin interruptor
+- WHEN se listan las transiciones con origen `Solicitado` y con origen `En espera de SKU inventario`
+- THEN `{entrega_repuestos, sin_pieza_en_almacen}` (la segunda sólo encendido) y `{notif_cliente_sku}`; ninguna con destino `Anulado` ni `Por Facturar`
+
+#### Scenario: ensuciar el catálogo lo pone en rojo — ROJO (mutación 5)
+- GIVEN el catálogo con `anulacion` también desde `Solicitado`, o `cobro_diagnostico_espera` también desde la espera de SKU
+- WHEN corre la propiedad
+- THEN la prueba falla; sin esa arista pasa
+
+### RQ-TS-64 · Orden de las guardas nuevas, fijado por pruebas de posición
+
+Orden (A < B < C < D, RQ-TS-06, F1B-10): `409` de estado (A/B); `409` de `SALIDAS_ESPERAS` (B, junto al de Control de calidad, `ticketService.ts:128`); `403` de área (B, `:129-130`); `403` del ejecutor (B, sustituye a Decisionales por cargo para estos orígenes, `permissions` RQ-PM-43); `422` del «Motivo del respaldo» en blanco (C, en el agregado de `:134`). Las posiciones exactas las fija el diseño. Cada posición **MUST** tener una prueba que active DOS guardas a la vez y se ponga roja si se mueve (regla de mutación 1).
+
+#### Scenario: SE-1 el 409 del interruptor gana al 403 de área — ROJO por posición
+- GIVEN el interruptor apagado y un usuario sin el área de Comercial
+- WHEN ejecuta `cobro_diagnostico_espera`
+- THEN `409`, no `403`
+
+#### Scenario: SE-2 el 403 de área gana al 403 del ejecutor — ROJO por posición
+- GIVEN el interruptor encendido y un usuario de otra área que no es persona a cargo
+- WHEN ejecuta `sin_pieza_en_almacen`
+- THEN `403` cuyo mensaje es el de área
+
+#### Scenario: SE-3 el 403 del ejecutor gana al 422 del motivo — ROJO por posición
+- GIVEN el interruptor encendido, un usuario del área que no es persona a cargo ni respaldo y el motivo en blanco
+- WHEN ejecuta `anulacion` desde `En Espera de Repuestos`
+- THEN `403`, no `422`
+
+#### Scenario: SE-4 el 422 del motivo llega cuando las demás pasan — ROJO
+- GIVEN el interruptor encendido y un respaldo del área
+- WHEN ejecuta `cobro_diagnostico_espera` con el motivo en blanco
+- THEN `422` y el ticket no cambia
