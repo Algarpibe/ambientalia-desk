@@ -38,7 +38,7 @@ Ficheros: `transitions.ts:262` y `:330`, `config.ts:66`/`:125`, `appHarness.ts:4
 - [x] I3a.8 Mutación M6 (RQ-AV-25): hacer que `PLAZO_DIAS_ESPERA` se derive de `SLA_HORAS_POR_ESTADO` (importarlo): debe caer la prueba de fuente de I3a.4 y la
       disjunción. Roja y restaurada.
 - [x] I3a.9 Mutación sobre el catálogo en memoria (RQ-TS-63): añadir `{ ...finalizacion_servicio, id: 'atajo_sucio' }` a `Por Facturar`: cae `entradasAPorFacturarSinControlCalidad`. Roja y restaurada.
-- [ ] I3a.c Cierre de lote. Estimación: **~576 líneas (bajo 720)**.
+- [x] I3a.c Cierre de lote. Estimación: **~576 líneas (bajo 720)**.
 
 ## Lote I3b — ejecutor, motivo del respaldo, compuesta, despliegue (~255 × 1,8 = 459; ≤ 720)
 
@@ -57,7 +57,7 @@ Ficheros: `salidasEsperas.ts` (resto), `salidasEsperas.test.ts` ampliada, `DEPLO
       o dejarla en `=true`): debe ponerse roja `deploySalidasEsperas.test.ts`. Restaurar los dos ficheros.
 - [x] I3b.6 Mutaciones de la regla pura: (M7a) cambiar `s.id === tk.derivadoA` por `!== `: cae «persona a cargo»; quitar el chequeo de área de (a): cae «derivado de otra área»;
       (M7b) dejar `esSalidaDeEspera` aceptando `anulacion` desde `Rev./Diagnostico`: cae «fuera de alcance».
-- [ ] I3b.c Cierre de lote. Estimación: **~459 líneas (bajo 720)**.
+- [x] I3b.c Cierre de lote. Estimación: **~459 líneas (bajo 720)**.
 
 ## Lote I4 — servidor, ruta de contexto y cliente (~325 × 1,8 = 585; ≤ 720)
 
@@ -83,7 +83,7 @@ Ficheros: `ticketService.ts:128`/`:131`/`:134` y auxiliares al final y de `:6`, 
 - [x] I4.8 Tabla de la regla 13 por escrito (regla de mutación 3), decisión a decisión, con la línea REAL del servidor tras editar: oculta las dos con interruptor apagado → `ticketService.ts:128`;
       oculta a quien no es persona a cargo ni respaldo → `:131`; ofrece `cobro` a la persona a cargo sin cargo → `:131`; pide/no pide «Motivo del respaldo» → `:134`; vacante → `services/decisionales.ts`;
       sin respuesta de la ruta, apagado (S-20, degradación declarada). Se pega en `apply-progress.md` y en el `verify`.
-- [ ] I4.c Cierre de lote. Estimación: **~585 líneas (bajo 720)**.
+- [x] I4.c Cierre de lote. Estimación: **~585 líneas (bajo 720)**.
 
 ## Lote I5 — alarma de caducidad, cableado, barrido de citas (~335 × 1,8 = 603; ≤ 720)
 
@@ -104,11 +104,11 @@ Ficheros: `db/esperasVencidas.ts`, `services/avisoSalidasEsperas.ts` (nuevos), `
 - [x] I5.10 **Barrido de citas (regla de mutación 4)** al cerrar, sobre los muy citados que se tocaron: `transitions.ts`, `estados.ts`, `ticketService.ts`, `config.ts`, `controlCalidad.ts`, `DEPLOY.md`
       (y `schema.sql` sólo si se tocara). Para cada uno: `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"`, cada resultado leído contra el fichero (qué AFIRMA la frase, principio y final del rango por separado),
       segundo pase de abreviadas en los ficheros que ya citan el módulo, casos A/B/C; el detector no basta.
-- [ ] I5.c Cierre de lote. Estimación: **~603 líneas (bajo 720)**.
+- [x] I5.c Cierre de lote. Estimación: **~603 líneas (bajo 720)**.
 
 ## I6 — verify y I7 — archive
 
-- [ ] I6.1 `sdd-verify` en su intento propio: PASS contra RQ-TS-56/60..64, RQ-PM-42..45, RQ-AV-25..27; las mutaciones M1-M8 reportadas rojas y restauradas; tabla de la regla 13 contrastada línea a línea; códigos en serie; el informe cuenta en la estimación.
+- [x] I6.1 `sdd-verify` en su intento propio: PASS contra RQ-TS-56/60..64, RQ-PM-42..45, RQ-AV-25..27; las mutaciones M1-M8 reportadas rojas y restauradas; tabla de la regla 13 contrastada línea a línea; códigos en serie; el informe cuenta en la estimación.
 - [ ] I7.1 `sdd-archive` con techo 2 × carpeta + 800 (la mudanza cuesta el doble por `--no-renames`). Regla del archivo: lo revisable (fusión del delta en las specs vivas + `archive-report.md`)
       ≤ 800, medido ANTES de aplicar con `git diff --shortstat --no-renames`; si lo supera, se para y se consulta. Fusión por script comparando bloques; informe escrito por mí; códigos de salida antes de asentar.
       `archive-report.md` con UNA línea de qué cubrió de F1C-03 (sostiene `cierra: si`); `git show --numstat` del commit de archivo: sólo el cambio archivado. Sin sacar a nadie del recuento (ver abajo).
