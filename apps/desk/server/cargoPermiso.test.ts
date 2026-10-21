@@ -247,8 +247,8 @@ describe('liberacion_sin_factura: orden de las guardas', () => {
 })
 
 describe('la matriz HTTP de área, con la compuesta', () => {
-  it('S21 · de las 120 celdas (40 transiciones × 3 áreas) difiere de la de área TRES veces: Comercial sin cargo × liberacion_sin_factura y Servicio Técnico sin cargo × las dos de firma de control de calidad (200 → 403)', async () => {
-    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas con salidasEsperas (I4: el ticket sembrado lleva derivado_a = usuario de la sesión: es la persona a cargo y nadie manda motivo)
+  it('S21 · de las 120 celdas (40 transiciones × 3 áreas) difiere de la de área CUATRO veces: Comercial sin cargo × liberacion_sin_factura y × cobro_diagnostico_espera, y Servicio Técnico sin cargo × las dos de firma de control de calidad (200 → 403)', async () => {
+    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas con salidasEsperas (derivado_a ya no decide: el cobro del diagnóstico lo ejecuta sólo el cargo comercial, decision/f1c03-quien-ejecuta-salidas)
     const diferencias: Array<{ area: string; transitionId: string; observado: number }> = []
     let n = 0
     for (const [i, area] of AREAS.entries()) {
@@ -257,14 +257,14 @@ describe('la matriz HTTP de área, con la compuesta', () => {
       const cookie = `sid=${await createSession(db, u.id)}`
       for (const t of TRANSITIONS) {
         n += 1
-        await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta, derivado_a) VALUES ($1,$2,$3,$4,$5,$6,$7)', [`s21-${n}`, 97000 + n, 'S21', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-S21'] : [null, null]), IDS_SALIDAS_NUEVAS.has(t.id) ? u.id : null]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, `s21-${n}`)
+        await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)', [`s21-${n}`, 97000 + n, 'S21', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-S21'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, `s21-${n}`)
         const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id) || IDS_SALIDAS_NUEVAS.has(t.id)) ? encendida : apagada).post(`/api/tickets/s21-${n}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
         if (res.status !== (canExecuteTransition([area], false, t.area) ? 200 : 403)) diferencias.push({ area, transitionId: t.id, observado: res.status })
       }
     }
     expect(n).toBe(120)
-    expect(diferencias).toEqual([{ area: 'Comercial', transitionId: 'liberacion_sin_factura', observado: 403 }, { area: 'Servicio Técnico', transitionId: 'aprobacion_control_calidad', observado: 403 }, { area: 'Servicio Técnico', transitionId: 'rechazo_control_calidad', observado: 403 }]) // F1C-07 (2b): las dos de firma piden cargo
+    expect(diferencias).toEqual([{ area: 'Comercial', transitionId: 'liberacion_sin_factura', observado: 403 }, { area: 'Comercial', transitionId: 'cobro_diagnostico_espera', observado: 403 }, { area: 'Servicio Técnico', transitionId: 'aprobacion_control_calidad', observado: 403 }, { area: 'Servicio Técnico', transitionId: 'rechazo_control_calidad', observado: 403 }]) // F1C-07 (2b): las dos de firma piden cargo. F1C-03: el cobro, el cargo comercial
   }, 90_000)
 })
 

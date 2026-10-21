@@ -5,7 +5,7 @@ import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/p
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarConSalidasEsperas, DECISIONALES_APAGADO, SALIDAS_ESPERAS_APAGADO, type ContextoSalidasEsperas, visibleConSalidasEsperas, ejecutorDeSalida, CAMPO_MOTIVO_RESPALDO, type ContextoDecisionales, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, seRegistraEnCadaFactura, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION, visibleConControlCalidad, visibleCalibracionDirecta } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
+import { puedeEjecutarConSalidasEsperas, DECISIONALES_APAGADO, SALIDAS_ESPERAS_APAGADO, type ContextoSalidasEsperas, visibleConSalidasEsperas, type ContextoDecisionales, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, seRegistraEnCadaFactura, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION, visibleConControlCalidad, visibleCalibracionDirecta } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -54,7 +54,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
   const boton = botonRemision(status, remisiones ?? null); const sugerida = sugerenciaPorGarantia(status, garantia)
   const { user } = useAuth(); const [decisionales, setDecisionales] = useState<ContextoDecisionales>(DECISIONALES_APAGADO); useEffect(() => { getContextoDecisionales().then(setDecisionales).catch(() => {}) }, []); const [controlCalidad, setControlCalidad] = useState(false); useEffect(() => { getContextoControlCalidad().then((c) => setControlCalidad(c.activo)).catch(() => {}) }, []); const [salidas, setSalidas] = useState<ContextoSalidasEsperas>(SALIDAS_ESPERAS_APAGADO); useEffect(() => { getContextoSalidasEsperas().then(setSalidas).catch(() => {}) }, []) // F1C-05 (RQ-PM-31): el contexto lo da el servidor; si falla, apagado y decide el 403. F1C-03 (RQ-PM-45): el de las salidas de las esperas también; sin respuesta, apagado y decide el 409 (S-20). F1C-07 (RQ-PM-37): el interruptor del control de calidad también; sin respuesta, apagado y decide el 409
   const transitions = transicionesDelTicket({ classification: clasificacion, status }).filter(
-    (t) => !!user && puedeEjecutarConSalidasEsperas(user, t, { status, derivadoA: derivadoActual?.id ?? null }, decisionales, salidas) && visibleConSalidasEsperas(t.id, salidas.activo) && visibleConControlCalidad(t.id, controlCalidad) && visibleCalibracionDirecta(t.id, { tipoServicio: delTicket['Tipo de Servicio'] ?? null, tieneOrdenVenta: (delTicket['Orden de Venta'] ?? '').trim() !== '' }), // F1C-08 (RQ-PM-39): una sola vía de OV (S-12); el servidor lee tres y decide el 409
+    (t) => !!user && puedeEjecutarConSalidasEsperas(user, t, { status }, decisionales, salidas) /* F1C-03: el 403 del ejecutor, ticketService.ts:131 */ && visibleConSalidasEsperas(t.id, salidas.activo) && visibleConControlCalidad(t.id, controlCalidad) && visibleCalibracionDirecta(t.id, { tipoServicio: delTicket['Tipo de Servicio'] ?? null, tieneOrdenVenta: (delTicket['Orden de Venta'] ?? '').trim() !== '' }), // F1C-08 (RQ-PM-39): una sola vía de OV (S-12); el servidor lee tres y decide el 409
   )
   const [active, setActive] = useState<Transition | null>(null);
   const [values, setValues] = useState<Record<string, unknown>>({});
@@ -176,7 +176,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
                 opciones={opciones}
                 onElegirOrdenVenta={(n, fecha) => elegirOrdenVenta(f, n, fecha)}
               />
-            ))}{active.id === 'liberacion' && <CertificadoFabricaPdf archivo={pdf} onChange={setPdf} />}{!!user && ejecutorDeSalida(active, { status, derivadoA: derivadoActual?.id ?? null }, user, salidas)?.via === 'respaldo' && <Field f={CAMPO_MOTIVO_RESPALDO} value={values[CAMPO_MOTIVO_RESPALDO.key]} onChange={(v) => setValues((s) => ({ ...s, [CAMPO_MOTIVO_RESPALDO.key]: v }))} bloqueado={false} opciones={opciones} onElegirOrdenVenta={() => {}} />}/* F1C-03 (RQ-PM-44): el respaldo da el motivo; la persona a cargo no ve el campo */
+            ))}{active.id === 'liberacion' && <CertificadoFabricaPdf archivo={pdf} onChange={setPdf} />}{/* F1C-03 (decision/f1c03-quien-ejecuta-salidas): el motivo del cobro sale del catálogo como cualquier campo; lo exigen buildTransitionPlan y ticketService.ts:134 */}
             {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
             <div className="flex justify-end gap-2 mt-1">
               <button onClick={() => setActive(null)} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>

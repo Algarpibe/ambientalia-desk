@@ -39,8 +39,9 @@ describe('DEPLOY.md §17 · SALIDAS_ESPERAS', () => {
     expect(seccion).toMatch(/^> SALIDAS_ESPERAS=\s*$/m)
   })
 
-  it('nombra las dos transiciones nuevas y «Motivo del respaldo»', () => {
-    for (const x of ['`cobro_diagnostico_espera`', '`sin_pieza_en_almacen`', '«Motivo del respaldo»']) expect(seccion, x).toContain(x)
+  it('nombra las dos transiciones nuevas, los dos cargos comerciales y el motivo del cobro; ni persona a cargo ni motivo del respaldo', () => {
+    for (const x of ['`cobro_diagnostico_espera`', '`sin_pieza_en_almacen`', 'Director Comercial', 'Coordinadora Comercial', '«Motivo del cobro de diagnóstico»']) expect(seccion, x).toContain(x)
+    for (const x of ['respaldo', 'persona a cargo', 'derivado_a']) expect(seccion, x).not.toContain(x)
   })
 })
 

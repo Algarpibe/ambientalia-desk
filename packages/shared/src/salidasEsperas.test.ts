@@ -2,12 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { TRANSITIONS, transitionById, CLAVE_DERIVACION } from './transitions'
 import { tipoEventoDeTransicion } from './tipoEvento'
 import { IDS_CALIBRACION_DIRECTA } from './calibracionDirecta'
+import * as modulo from './salidasEsperas'
 import {
   ID_COBRO_DIAGNOSTICO, ID_SIN_PIEZA, IDS_SALIDAS_NUEVAS, motivoQuitadaPorSalidasEsperas, visibleConSalidasEsperas,
-  CLAVE_MOTIVO_RESPALDO, CAMPO_MOTIVO_RESPALDO, SALIDAS_ESPERAS_APAGADO, ORIGENES_ANULACION_EN_ESPERA,
-  esSalidaDeEspera, ejecutorDeSalida, erroresMotivoRespaldo, puedeEjecutarConSalidasEsperas, type ContextoSalidasEsperas,
+  CLAVE_MOTIVO_COBRO, CARGOS_EJECUTORES_SALIDA, SALIDAS_ESPERAS_APAGADO, ORIGENES_ANULACION_EN_ESPERA,
+  esSalidaDeEspera, ejecutorDeSalida, erroresMotivoCobro, puedeEjecutarConSalidasEsperas, type ContextoSalidasEsperas,
 } from './salidasEsperas'
-import { areaDeDecision, puedeEjecutarTransicionConDecisionales, DECISIONALES_APAGADO } from './decisionales'
+import { CLAVE_MOTIVO_ANULACION, CLAVE_DETALLE_ANULACION, MOTIVOS_ANULACION } from './anulacion'
+import { puedeEjecutarTransicionConDecisionales, DECISIONALES_APAGADO } from './decisionales'
 import type { SujetoDePermiso } from './cargos'
 
 /**
@@ -15,11 +17,11 @@ import type { SujetoDePermiso } from './cargos'
  * que leen igual el servidor (que impone) y el cliente (que sólo pinta, regla invariable 13).
  */
 describe('RQ-TS-60 · catálogo de las dos salidas nuevas', () => {
-  it('cobro_diagnostico_espera: Comercial, Decisional, desde las dos esperas externas a Por Facturar, sólo comentario', () => {
+  it('cobro_diagnostico_espera: Comercial, Decisional, de las dos esperas externas a Por Facturar; comentario y motivo del cobro obligatorio', () => {
     const t = transitionById(ID_COBRO_DIAGNOSTICO)!
     expect(t).toMatchObject({ name: 'Cobro de diagnóstico', from: ['En Espera de Repuestos', 'Servicio externo'], to: 'Por Facturar', area: 'Comercial', tipoEvento: 'Decisional' })
-    expect(t.fields.filter((f) => f.key !== CLAVE_DERIVACION).map((f) => f.key)).toEqual(['comment'])
-    expect(t.fields.some((f) => f.required)).toBe(false)
+    expect(t.fields.filter((f) => f.key !== CLAVE_DERIVACION).map((f) => f.key)).toEqual(['comment', CLAVE_MOTIVO_COBRO])
+    expect(t.fields.find((f) => f.key === CLAVE_MOTIVO_COBRO)).toMatchObject({ kind: 'text', required: true, target: 'customField' })
     expect(tipoEventoDeTransicion(ID_COBRO_DIAGNOSTICO)).toBe('Decisional')
   })
 
@@ -75,136 +77,113 @@ describe('RQ-TS-61 · el interruptor, regla pura', () => {
 })
 
 /**
- * RQ-PM-42/43/44 (pura): quién ejecuta una salida de las esperas. Persona a cargo = `derivadoA` con el área; respaldo = administrador o
- * cargo del área (`cargosDecisionales`, con la vacante); cualquier otro, denegado. «Activo» no se consulta (S-12): lo exige la sesión.
+ * La regla del ejecutor (pura), corregida por `decision/f1c03-quien-ejecuta-salidas`: con el interruptor encendido, el cobro del diagnóstico
+ * y la anulación desde las dos esperas externas los ejecutan sólo el Director Comercial o la Coordinadora Comercial (y el administrador).
+ * `derivado_a` ya no decide nada, no hay motivo del respaldo y `sin_pieza_en_almacen` queda fuera de la regla.
  */
-const ENCENDIDO: ContextoSalidasEsperas = { activo: true, coordinadorTecnicoVacante: false }
+const ENCENDIDO: ContextoSalidasEsperas = { activo: true }
 const anulacion = transitionById('anulacion')!
 const cobro = transitionById(ID_COBRO_DIAGNOSTICO)!
 const sinPieza = transitionById(ID_SIN_PIEZA)!
 const sujeto = (id: string, areas: string[], extra: Partial<SujetoDePermiso> = {}): SujetoDePermiso & { id: string } => ({ id, areas, isAdmin: false, cargoPermiso: null, ...extra })
 const comercial = sujeto('u-com', ['Comercial'])
-const tecnico = sujeto('u-tec', ['Servicio Técnico'])
-const tkEr = { status: 'En Espera de Repuestos', derivadoA: 'u-com' }
+const dirCom = sujeto('u-dir', ['Comercial'], { cargoPermiso: 'Director Comercial' })
+const coordCom = sujeto('u-coo', ['Comercial'], { cargoPermiso: 'Coordinador Comercial' })
+const admin = sujeto('u-adm', [], { isAdmin: true })
+const EXTERNAS = ['En Espera de Repuestos', 'Servicio externo']
+const OTROS_ORIGENES_ANULACION = ['Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente']
 
-describe('RQ-PM-42 · ejecutorDeSalida (regla pura)', () => {
-  it('esSalidaDeEspera: anulacion sólo desde ER/SE; las dos nuevas siempre; anulacion desde Rev./Diagnostico NO', () => {
-    expect([...ORIGENES_ANULACION_EN_ESPERA].sort()).toEqual(['En Espera de Repuestos', 'Servicio externo'])
-    expect(esSalidaDeEspera('anulacion', 'En Espera de Repuestos')).toBe(true)
-    expect(esSalidaDeEspera('anulacion', 'Servicio externo')).toBe(true)
-    expect(esSalidaDeEspera('anulacion', 'Rev./Diagnostico')).toBe(false)
-    expect(esSalidaDeEspera(ID_COBRO_DIAGNOSTICO, 'Servicio externo')).toBe(true)
-    expect(esSalidaDeEspera(ID_SIN_PIEZA, 'Solicitado')).toBe(true)
+describe('ejecutorDeSalida (regla pura): sólo el cargo comercial en las esperas externas', () => {
+  it('los dos cargos son exactamente Director Comercial y Coordinador Comercial', () => {
+    expect([...CARGOS_EJECUTORES_SALIDA]).toEqual(['Director Comercial', 'Coordinador Comercial'])
+  })
+
+  it('esSalidaDeEspera: el cobro y la anulación desde ER/SE; la anulación desde los otros tres orígenes y sin_pieza_en_almacen NO', () => {
+    expect([...ORIGENES_ANULACION_EN_ESPERA].sort()).toEqual(EXTERNAS)
+    for (const o of EXTERNAS) {
+      expect(esSalidaDeEspera('anulacion', o), o).toBe(true)
+      expect(esSalidaDeEspera(ID_COBRO_DIAGNOSTICO, o), o).toBe(true)
+    }
+    for (const o of OTROS_ORIGENES_ANULACION) expect(esSalidaDeEspera('anulacion', o), o).toBe(false)
+    expect(esSalidaDeEspera(ID_SIN_PIEZA, 'Solicitado')).toBe(false)
     expect(esSalidaDeEspera('entrega_repuestos', 'Solicitado')).toBe(false)
   })
 
-  it('areaDeDecision no es null para las tres', () => {
-    for (const t of [anulacion, cobro, sinPieza]) expect(areaDeDecision(t), t.id).not.toBeNull()
+  it('apagado o fuera de alcance: null (no opina), también sin_pieza_en_almacen encendido', () => {
+    expect(ejecutorDeSalida(cobro, { status: 'Servicio externo' }, comercial, SALIDAS_ESPERAS_APAGADO)).toBeNull()
+    expect(ejecutorDeSalida(anulacion, { status: 'En Espera de Repuestos' }, comercial, SALIDAS_ESPERAS_APAGADO)).toBeNull()
+    for (const o of OTROS_ORIGENES_ANULACION) expect(ejecutorDeSalida(anulacion, { status: o }, comercial, ENCENDIDO), o).toBeNull()
+    expect(ejecutorDeSalida(sinPieza, { status: 'Solicitado' }, sujeto('u-tec', ['Servicio Técnico']), ENCENDIDO)).toBeNull()
   })
 
-  it('apagado o fuera de alcance: null (no opina)', () => {
-    expect(ejecutorDeSalida(cobro, tkEr, comercial, SALIDAS_ESPERAS_APAGADO)).toBeNull()
-    expect(ejecutorDeSalida(anulacion, { status: 'Rev./Diagnostico', derivadoA: 'u-com' }, comercial, ENCENDIDO)).toBeNull()
-    expect(ejecutorDeSalida(transitionById('entrega_repuestos')!, { status: 'Solicitado', derivadoA: 'u-com' }, comercial, ENCENDIDO)).toBeNull()
-  })
-
-  it('la persona a cargo (id = derivadoA y área) ejecuta como persona_a_cargo, aunque no tenga cargo', () => {
-    expect(ejecutorDeSalida(cobro, tkEr, comercial, ENCENDIDO)).toEqual({ via: 'persona_a_cargo' })
-    expect(ejecutorDeSalida(anulacion, { status: 'Servicio externo', derivadoA: 'u-com' }, comercial, ENCENDIDO)).toEqual({ via: 'persona_a_cargo' })
-    expect(ejecutorDeSalida(sinPieza, { status: 'Solicitado', derivadoA: 'u-tec' }, tecnico, ENCENDIDO)).toEqual({ via: 'persona_a_cargo' })
-  })
-
-  it('el derivado de otra área no es persona a cargo: denegado, aunque tenga el cargo de OTRA área', () => {
-    expect(ejecutorDeSalida(cobro, { ...tkEr, derivadoA: 'u-tec' }, tecnico, ENCENDIDO)).toMatchObject({ via: 'denegado' })
-    const dirTec = sujeto('u-tec', ['Servicio Técnico'], { cargoPermiso: 'Director Técnico' })
-    expect(ejecutorDeSalida(cobro, { ...tkEr, derivadoA: 'u-tec' }, dirTec, ENCENDIDO)).toMatchObject({ via: 'denegado' }) // el cargo es del área de la decisión, Comercial
-  })
-
-  it('el respaldo: administrador o cargo del área; con la vacante, el Especialista técnico en el área técnica', () => {
-    const dirCom = sujeto('u-dir', ['Comercial'], { cargoPermiso: 'Director Comercial' })
-    const coordCom = sujeto('u-coo', ['Comercial'], { cargoPermiso: 'Coordinador Comercial' })
-    const admin = sujeto('u-adm', [], { isAdmin: true })
-    for (const s of [dirCom, coordCom, admin]) expect(ejecutorDeSalida(cobro, tkEr, s, ENCENDIDO), s.id).toEqual({ via: 'respaldo' })
-    const espec = sujeto('u-esp', ['Servicio Técnico'], { cargoPermiso: 'Especialista técnico' })
-    const tkSol = { status: 'Solicitado', derivadoA: null }
-    expect(ejecutorDeSalida(sinPieza, tkSol, espec, ENCENDIDO)).toMatchObject({ via: 'denegado' })
-    expect(ejecutorDeSalida(sinPieza, tkSol, espec, { ...ENCENDIDO, coordinadorTecnicoVacante: true })).toEqual({ via: 'respaldo' })
-  })
-
-  it('denegado trae el mensaje de D2 con el nombre de la transición y el origen', () => {
-    const v = ejecutorDeSalida(cobro, tkEr, sujeto('u-x', ['Comercial']), ENCENDIDO) as { via: 'denegado'; mensaje: string }
-    expect(v.via).toBe('denegado')
-    expect(v.mensaje).toBe('"Cobro de diagnóstico" desde «En Espera de Repuestos» la ejecuta la persona a cargo del ticket o, con motivo, el Director o el Coordinador del área')
-  })
-
-  it('S-2 · derivado nulo o ajeno: nadie cumple (a); sólo pasa (b)', () => {
-    const dirCom = sujeto('u-dir', ['Comercial'], { cargoPermiso: 'Director Comercial' })
-    for (const derivadoA of [null, 'u-otro-inactivo']) {
-      expect(ejecutorDeSalida(cobro, { ...tkEr, derivadoA }, comercial, ENCENDIDO), String(derivadoA)).toMatchObject({ via: 'denegado' })
-      expect(ejecutorDeSalida(cobro, { ...tkEr, derivadoA }, dirCom, ENCENDIDO), String(derivadoA)).toEqual({ via: 'respaldo' })
+  it('Director Comercial, Coordinador Comercial y administrador: permitido en el cobro y en la anulación desde las dos externas', () => {
+    for (const s of [dirCom, coordCom, admin]) for (const t of [cobro, anulacion]) for (const o of EXTERNAS) {
+      expect(ejecutorDeSalida(t, { status: o }, s, ENCENDIDO), `${s.id} ${t.id} ${o}`).toEqual({ via: 'permitido' })
     }
   })
 
-  it('una sesión sin id nunca es persona a cargo, ni con derivadoA nulo', () => {
-    expect(ejecutorDeSalida(cobro, { ...tkEr, derivadoA: null }, { areas: ['Comercial'], isAdmin: false }, ENCENDIDO)).toMatchObject({ via: 'denegado' })
+  it('cualquier otro cargo, o ninguno, queda denegado con el mensaje que nombra los dos cargos', () => {
+    const otros = [comercial, ...(['Asistente Comercial', 'Director Técnico', 'Coordinador Técnico', 'Técnico', 'Especialista técnico'] as const).map((c) => sujeto(`u-${c}`, ['Comercial'], { cargoPermiso: c }))]
+    for (const s of otros) expect(ejecutorDeSalida(cobro, { status: 'Servicio externo' }, s, ENCENDIDO), s.id).toMatchObject({ via: 'denegado' })
+    expect(ejecutorDeSalida(anulacion, { status: 'En Espera de Repuestos' }, comercial, ENCENDIDO)).toEqual({
+      via: 'denegado', mensaje: '"Anulación" desde «En Espera de Repuestos» la ejecutan sólo el Director Comercial o la Coordinadora Comercial',
+    })
+  })
+
+  it('derivado_a YA NO decide: el derivado sin cargo queda denegado', () => {
+    const tk = { status: 'Servicio externo', derivadoA: comercial.id }
+    expect(ejecutorDeSalida(cobro, tk, comercial, ENCENDIDO)).toMatchObject({ via: 'denegado' })
+    expect(ejecutorDeSalida(anulacion, tk, comercial, ENCENDIDO)).toMatchObject({ via: 'denegado' })
+  })
+
+  it('el contexto es sólo el interruptor: sin vacante del Coordinador Técnico ni nada que consultar', () => {
+    expect(SALIDAS_ESPERAS_APAGADO).toEqual({ activo: false })
   })
 })
 
-describe('RQ-PM-44 · erroresMotivoRespaldo y CAMPO_MOTIVO_RESPALDO', () => {
-  it('la clave es «Motivo del respaldo» y el campo (text, required) NO está en el catálogo', () => {
-    expect(CLAVE_MOTIVO_RESPALDO).toBe('Motivo del respaldo')
-    expect(CAMPO_MOTIVO_RESPALDO).toMatchObject({ key: CLAVE_MOTIVO_RESPALDO, label: CLAVE_MOTIVO_RESPALDO, kind: 'text', required: true })
-    expect(TRANSITIONS.some((t) => t.fields.some((f) => f.key === CLAVE_MOTIVO_RESPALDO))).toBe(false)
+describe('el motivo del cobro y el de la anulación', () => {
+  it('erroresMotivoCobro: sólo espacios → mensaje; con texto, vacío o ausente → [] (la presencia la dice el plan); otra transición → []', () => {
+    expect(CLAVE_MOTIVO_COBRO).toBe('Motivo del cobro de diagnóstico')
+    expect(erroresMotivoCobro(ID_COBRO_DIAGNOSTICO, { [CLAVE_MOTIVO_COBRO]: '   ' })).toEqual(['"Motivo del cobro de diagnóstico" no puede estar en blanco'])
+    expect(erroresMotivoCobro(ID_COBRO_DIAGNOSTICO, { [CLAVE_MOTIVO_COBRO]: 'El cliente no aprueba la reparación' })).toEqual([])
+    expect(erroresMotivoCobro(ID_COBRO_DIAGNOSTICO, {})).toEqual([])
+    expect(erroresMotivoCobro('anulacion', { [CLAVE_MOTIVO_COBRO]: '   ' })).toEqual([])
   })
 
-  it('respaldo: ausente o en blanco (también espacios) → mensaje; con texto → []', () => {
-    const r = { via: 'respaldo' } as const
-    const msg = '"Motivo del respaldo" es obligatorio: no eres la persona a cargo del ticket'
-    expect(erroresMotivoRespaldo(r, {})).toEqual([msg])
-    expect(erroresMotivoRespaldo(r, { [CLAVE_MOTIVO_RESPALDO]: '' })).toEqual([msg])
-    expect(erroresMotivoRespaldo(r, { [CLAVE_MOTIVO_RESPALDO]: '   ' })).toEqual([msg])
-    expect(erroresMotivoRespaldo(r, { [CLAVE_MOTIVO_RESPALDO]: 7 })).toEqual([msg])
-    expect(erroresMotivoRespaldo(r, { [CLAVE_MOTIVO_RESPALDO]: 'Cubro la baja' })).toEqual([])
+  it('la anulación conserva sus campos de F1C-01: motivo de lista cerrada obligatorio y detalle', () => {
+    expect(anulacion.fields.filter((f) => f.key !== CLAVE_DERIVACION).map((f) => f.key)).toEqual(['comment', CLAVE_MOTIVO_ANULACION, CLAVE_DETALLE_ANULACION])
+    expect(anulacion.fields.find((f) => f.key === CLAVE_MOTIVO_ANULACION)).toMatchObject({ kind: 'select', required: true, options: [...MOTIVOS_ANULACION] })
   })
 
-  it('persona a cargo: sin texto → []; con texto → mensaje (no se descarta en silencio, S-14); en blanco → []', () => {
-    const p = { via: 'persona_a_cargo' } as const
-    expect(erroresMotivoRespaldo(p, {})).toEqual([])
-    expect(erroresMotivoRespaldo(p, { [CLAVE_MOTIVO_RESPALDO]: '  ' })).toEqual([])
-    expect(erroresMotivoRespaldo(p, { [CLAVE_MOTIVO_RESPALDO]: 'x' })).toEqual(['"Motivo del respaldo" sólo lo da el respaldo: eres la persona a cargo del ticket'])
-  })
-
-  it('null y denegado → [] (el 403 ya habló)', () => {
-    expect(erroresMotivoRespaldo(null, {})).toEqual([])
-    expect(erroresMotivoRespaldo({ via: 'denegado', mensaje: 'm' }, {})).toEqual([])
+  it('no queda rastro del motivo del respaldo: ni en el módulo ni en ningún campo del catálogo', () => {
+    expect(Object.keys(modulo).filter((k) => /respaldo/i.test(k))).toEqual([])
+    expect(TRANSITIONS.some((t) => t.fields.some((f) => /respaldo/i.test(f.key)))).toBe(false)
   })
 })
 
-describe('RQ-PM-43 · puedeEjecutarConSalidasEsperas frente a la compuesta de Decisionales', () => {
+describe('puedeEjecutarConSalidasEsperas frente a la compuesta de Decisionales', () => {
   const dpc = { activo: true, coordinadorTecnicoVacante: false }
-  it('la persona a cargo sin cargo ejecuta el cobro (Decisional) con DPC encendido; la compuesta intacta lo niega', () => {
-    expect(puedeEjecutarTransicionConDecisionales(comercial, cobro, dpc)).toBe(false)
-    expect(puedeEjecutarConSalidasEsperas(comercial, cobro, tkEr, dpc, ENCENDIDO)).toBe(true)
+  it('rige aunque DPC esté apagado: el Comercial sin cargo no ejecuta el cobro ni la anulación desde las externas; los dos cargos sí', () => {
+    for (const t of [cobro, anulacion]) {
+      expect(puedeEjecutarTransicionConDecisionales(comercial, t, DECISIONALES_APAGADO), t.id).toBe(true)
+      expect(puedeEjecutarConSalidasEsperas(comercial, t, { status: 'Servicio externo' }, DECISIONALES_APAGADO, ENCENDIDO), t.id).toBe(false)
+      for (const s of [dirCom, coordCom, admin]) expect(puedeEjecutarConSalidasEsperas(s, t, { status: 'Servicio externo' }, dpc, ENCENDIDO), `${s.id} ${t.id}`).toBe(true)
+    }
   })
 
-  it('rige aunque DPC esté apagado: el extraño de Comercial no ejecuta anulacion desde SE', () => {
-    expect(puedeEjecutarTransicionConDecisionales(sujeto('u-x', ['Comercial']), anulacion, DECISIONALES_APAGADO)).toBe(true)
-    expect(puedeEjecutarConSalidasEsperas(sujeto('u-x', ['Comercial']), anulacion, { status: 'Servicio externo', derivadoA: 'u-com' }, DECISIONALES_APAGADO, ENCENDIDO)).toBe(false)
+  it('el área sigue mandando: el Director Comercial sin el área Comercial no pasa', () => {
+    const fuera = sujeto('u-x', ['Servicio Técnico'], { cargoPermiso: 'Director Comercial' })
+    expect(puedeEjecutarConSalidasEsperas(fuera, cobro, { status: 'Servicio externo' }, DECISIONALES_APAGADO, ENCENDIDO)).toBe(false)
   })
 
-  it('el respaldo con cargo pasa; el área sigue mandando (la persona a cargo de otra área no pasa)', () => {
-    const dirCom = sujeto('u-dir', ['Comercial'], { cargoPermiso: 'Director Comercial' })
-    expect(puedeEjecutarConSalidasEsperas(dirCom, cobro, tkEr, dpc, ENCENDIDO)).toBe(true)
-    expect(puedeEjecutarConSalidasEsperas(tecnico, cobro, { ...tkEr, derivadoA: 'u-tec' }, dpc, ENCENDIDO)).toBe(false)
-  })
-
-  it('apagado, o anulacion desde Rev./Diagnostico, o una ajena: idéntica a la compuesta de Decisionales', () => {
-    const tkRev = { status: 'Rev./Diagnostico', derivadoA: 'u-com' }
-    const dirCom = sujeto('u-dir', ['Comercial'], { cargoPermiso: 'Director Comercial' })
-    for (const s of [comercial, tecnico, dirCom]) {
-      for (const [t, tk, sal] of [[cobro, tkEr, SALIDAS_ESPERAS_APAGADO], [anulacion, tkRev, ENCENDIDO], [transitionById('rechazo_comercial')!, tkEr, ENCENDIDO]] as const) {
-        expect(puedeEjecutarConSalidasEsperas(s, t, tk, dpc, sal), `${s.id} ${t.id}`).toBe(puedeEjecutarTransicionConDecisionales(s, t, dpc))
-      }
+  it('apagado, la anulación desde los otros orígenes, sin_pieza_en_almacen o una ajena: idéntica a la compuesta de Decisionales', () => {
+    const tecnico = sujeto('u-tec', ['Servicio Técnico'])
+    const casos = [
+      [anulacion, 'Servicio externo', SALIDAS_ESPERAS_APAGADO], [cobro, 'En Espera de Repuestos', SALIDAS_ESPERAS_APAGADO], [sinPieza, 'Solicitado', ENCENDIDO],
+      [transitionById('rechazo_comercial')!, 'Notificación Comercial', ENCENDIDO], ...OTROS_ORIGENES_ANULACION.map((o) => [anulacion, o, ENCENDIDO] as const),
+    ] as const
+    for (const s of [comercial, tecnico, dirCom]) for (const ctxDec of [dpc, DECISIONALES_APAGADO]) for (const [t, status, sal] of casos) {
+      expect(puedeEjecutarConSalidasEsperas(s, t, { status }, ctxDec, sal), `${s.id} ${t.id} ${status}`).toBe(puedeEjecutarTransicionConDecisionales(s, t, ctxDec))
     }
   })
 })

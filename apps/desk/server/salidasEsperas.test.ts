@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
-import { transicionPorId, CLAVE_MOTIVO_RESPALDO, cargoQueFaltaParaTransicion, IDS_FIRMA_CC, IDS_CALIBRACION_DIRECTA, type Cargo } from '@ambientalia/shared'
+import { transicionPorId, CLAVE_MOTIVO_COBRO, CLAVE_DERIVACION, cargoQueFaltaParaTransicion, IDS_FIRMA_CC, IDS_CALIBRACION_DIRECTA, type Cargo } from '@ambientalia/shared'
 import { createUser } from './auth/users'
 import { createRole } from './auth/roles'
 import { createSession } from './auth/sessions'
@@ -12,13 +12,14 @@ instalarArnes()
 /**
  * SALIDAS DE LAS ESPERAS (F1C-03), contra el servidor. Lote I3a: el interruptor `SALIDAS_ESPERAS` (RQ-TS-61, RQ-TS-64 SE-0 y SE-1).
  * La guarda va en `ticketService.ts:128`, junto a la de control de calidad: escalón B, `409`, tras el estado y ANTES del área.
- * Lote I4: la regla del ejecutor (persona a cargo / respaldo, RQ-PM-42..45) en `:131` y el motivo del respaldo en `:134` (`422`, agregado).
- * Cada prueba de posición activa DOS guardas a la vez (regla de mutación 1).
+ * Corrección `decision/f1c03-quien-ejecuta-salidas`: el `403` del ejecutor (sólo el cargo comercial en las esperas externas) en `:131` y el
+ * motivo del cobro en blanco en `:134` (`422`, agregado). Cada prueba de posición activa DOS guardas a la vez (regla de mutación 1).
  */
 const COBRO = 'cobro_diagnostico_espera'
 const SIN_PIEZA = 'sin_pieza_en_almacen'
 const encendido = () => appWith({ salidasEsperas: true }).app
 const apagado = () => appWith({ salidasEsperas: false }).app
+const conDpc = (salidasEsperas: boolean) => appWith({ salidasEsperas, decisionalesPorCargo: true }).app
 
 let numero = 9700
 async function ticket(id: string, status: string, derivadoA: string | null = null) {
@@ -35,11 +36,12 @@ async function persona(areas: string[], cargoPermiso: Cargo | null = null) {
 }
 const enviar = (app: ReturnType<typeof encendido>, cookie: string, id: string, transitionId: string, extra: Record<string, unknown> = {}, base?: Record<string, unknown>) =>
   request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie).send({ transitionId, values: { ...(base ?? valoresValidos(transicionPorId(transitionId)!, 1)), ...extra } })
-const MOTIVO = { [CLAVE_MOTIVO_RESPALDO]: 'Cubro a la persona a cargo, que está de vacaciones' }
 const ejecutar = (app: ReturnType<typeof encendido>, cookie: string, id: string, transitionId: string) =>
   request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie).send({ transitionId, values: valoresValidos(transicionPorId(transitionId)!, 1) })
 const estadoDe = async (id: string) => ((await db.query('SELECT status FROM tickets WHERE id=$1', [id])).rows[0] as { status: string }).status
 const trazas = async (id: string) => (await db.query('SELECT * FROM ticket_transitions WHERE ticket_id=$1 ORDER BY id', [id])).rows as Array<Record<string, unknown>>
+const SOLO_CARGO = 'la ejecutan sólo el Director Comercial o la Coordinadora Comercial'
+const EXTERNAS = ['En Espera de Repuestos', 'Servicio externo']
 
 describe('interruptor (RQ-TS-61): apagado, las dos dan 409 y no escriben', () => {
   it('apagado, el cobro desde Servicio externo da 409 de interruptor, distinto del de estado, y el ticket no se mueve', async () => {
@@ -63,25 +65,24 @@ describe('interruptor (RQ-TS-61): apagado, las dos dan 409 y no escriben', () =>
 
   it('CARACTERIZACIÓN · apagado, anulacion desde En Espera de Repuestos sigue la regla de hoy', async () => {
     await ticket('a3', 'En Espera de Repuestos')
-    const res = await request(apagado()).post('/api/tickets/a3/transition').set('Cookie', await adminCookie())
-      .send({ transitionId: 'anulacion', values: valoresValidos(transicionPorId('anulacion')!, 1) })
+    const res = await ejecutar(apagado(), await adminCookie(), 'a3', 'anulacion')
     expect(res.status).toBe(200)
     expect(await estadoDe('a3')).toBe('Anulado')
   })
 })
 
 describe('encendido: pasan por la guarda de área como hoy (RQ-TS-61)', () => {
-  it('el administrador (respaldo, con motivo) ejecuta el cobro desde En Espera de Repuestos: Por Facturar y una fila de traza', async () => {
+  it('el administrador ejecuta el cobro desde En Espera de Repuestos: Por Facturar y una fila de traza', async () => {
     await ticket('e1', 'En Espera de Repuestos')
-    const res = await enviar(encendido(), await adminCookie(), 'e1', COBRO, MOTIVO)
+    const res = await ejecutar(encendido(), await adminCookie(), 'e1', COBRO)
     expect(res.status).toBe(200)
     expect(await estadoDe('e1')).toBe('Por Facturar')
     expect(await trazas('e1')).toHaveLength(1)
   })
 
-  it('el administrador (respaldo, con motivo) ejecuta sin_pieza_en_almacen desde Solicitado: En Espera de Repuestos y una fila de traza', async () => {
+  it('el administrador ejecuta sin_pieza_en_almacen desde Solicitado: En Espera de Repuestos y una fila de traza', async () => {
     await ticket('e2', 'Solicitado')
-    const res = await enviar(encendido(), await adminCookie(), 'e2', SIN_PIEZA, MOTIVO)
+    const res = await ejecutar(encendido(), await adminCookie(), 'e2', SIN_PIEZA)
     expect(res.status).toBe(200)
     expect(await estadoDe('e2')).toBe('En Espera de Repuestos')
     expect(await trazas('e2')).toHaveLength(1)
@@ -113,164 +114,179 @@ describe('posición de las guardas (RQ-TS-64, regla de mutación 1)', () => {
   })
 })
 
-describe('el ejecutor de la salida (RQ-PM-42, RQ-PM-44): persona a cargo o respaldo con motivo', () => {
-  it('la persona a cargo ejecuta el cobro SIN motivo: pasa y la traza lleva su id en performed_by_id', async () => {
-    const p = await persona(['Comercial'])
-    await ticket('x1', 'Servicio externo', p.id)
-    const res = await enviar(encendido(), p.cookie, 'x1', COBRO)
+describe('el ejecutor de las salidas de las esperas externas: sólo el Director Comercial o la Coordinadora Comercial (decision/f1c03-quien-ejecuta-salidas)', () => {
+  it('el Director Comercial cobra desde Servicio externo: el motivo llega a la traza y NO a custom_fields', async () => {
+    const d = await persona(['Comercial'], 'Director Comercial')
+    await ticket('x1', 'Servicio externo')
+    const res = await enviar(encendido(), d.cookie, 'x1', COBRO, { [CLAVE_MOTIVO_COBRO]: 'El cliente rechaza la cotización' })
     expect(res.status).toBe(200)
     expect(await estadoDe('x1')).toBe('Por Facturar')
     const filas = await trazas('x1')
     expect(filas).toHaveLength(1)
-    expect(filas[0].performed_by_id).toBe(p.id)
+    expect(filas[0].performed_by_id).toBe(d.id)
+    expect(JSON.stringify(filas[0].values)).toContain('El cliente rechaza la cotización')
+    const cf = ((await db.query('SELECT custom_fields FROM tickets WHERE id=$1', ['x1'])).rows[0] as { custom_fields: unknown }).custom_fields
+    expect(JSON.stringify(cf ?? {})).not.toContain(CLAVE_MOTIVO_COBRO)
   })
 
-  it('la persona a cargo de Servicio Técnico ejecuta sin_pieza_en_almacen sin motivo', async () => {
-    const p = await persona(['Servicio Técnico'])
-    await ticket('x2', 'Solicitado', p.id)
-    const res = await enviar(encendido(), p.cookie, 'x2', SIN_PIEZA)
-    expect(res.status).toBe(200)
-    expect(await estadoDe('x2')).toBe('En Espera de Repuestos')
-  })
-
-  it('anulacion desde En Espera de Repuestos: la persona a cargo sin motivo pasa', async () => {
-    const p = await persona(['Comercial'])
-    await ticket('x3', 'En Espera de Repuestos', p.id)
-    const res = await enviar(encendido(), p.cookie, 'x3', 'anulacion')
-    expect(res.status).toBe(200)
-    expect(await estadoDe('x3')).toBe('Anulado')
-  })
-
-  it('el respaldo (Director Comercial) sin motivo: 422 que nombra el motivo, y el ticket no se mueve', async () => {
-    const r = await persona(['Comercial'], 'Director Comercial')
-    await ticket('x4', 'Servicio externo')
-    const res = await enviar(encendido(), r.cookie, 'x4', 'anulacion')
-    expect(res.status).toBe(422)
-    expect(res.body.errors.join(' | ')).toContain(CLAVE_MOTIVO_RESPALDO)
-    expect(await estadoDe('x4')).toBe('Servicio externo')
-  })
-
-  it('el respaldo con motivo pasa; el texto llega a la traza y NO a custom_fields (S-13)', async () => {
-    const r = await persona(['Comercial'], 'Coordinador Comercial')
-    await ticket('x5', 'Servicio externo')
-    const res = await enviar(encendido(), r.cookie, 'x5', 'anulacion', MOTIVO)
-    expect(res.status).toBe(200)
-    const filas = await trazas('x5')
-    expect(JSON.stringify(filas[0].values)).toContain('Cubro a la persona a cargo')
-    expect(filas[0].performed_by_id).toBe(r.id)
-    const cf = ((await db.query('SELECT custom_fields FROM tickets WHERE id=$1', ['x5'])).rows[0] as { custom_fields: unknown }).custom_fields
-    expect(JSON.stringify(cf ?? {})).not.toContain(CLAVE_MOTIVO_RESPALDO)
-  })
-
-  it('el administrador que no es la persona a cargo es respaldo: sin motivo 422, con motivo pasa', async () => {
-    await ticket('x6', 'En Espera de Repuestos')
+  it('la Coordinadora Comercial y el administrador ejecutan el cobro y la anulación desde las dos externas', async () => {
+    const c = await persona(['Comercial'], 'Coordinador Comercial')
     const admin = await adminCookie()
-    expect((await enviar(encendido(), admin, 'x6', COBRO)).status).toBe(422)
-    expect((await enviar(encendido(), admin, 'x6', COBRO, MOTIVO)).status).toBe(200)
+    let n = 0
+    for (const cookie of [c.cookie, admin]) for (const t of [COBRO, 'anulacion']) for (const o of EXTERNAS) {
+      n += 1
+      await ticket(`x2-${n}`, o)
+      expect((await enviar(encendido(), cookie, `x2-${n}`, t)).status, `${t} ${o}`).toBe(200)
+    }
   })
 
-  it('S-14 · la persona a cargo que manda motivo recibe 422 (no se descarta en silencio)', async () => {
-    const p = await persona(['Comercial'])
-    await ticket('x7', 'Servicio externo', p.id)
-    const res = await enviar(encendido(), p.cookie, 'x7', COBRO, MOTIVO)
-    expect(res.status).toBe(422)
-    expect(res.body.errors.join(' | ')).toContain('sólo lo da el respaldo')
-    expect(await estadoDe('x7')).toBe('Servicio externo')
-  })
-
-  it('un extraño del área (ni persona a cargo ni cargo) recibe 403 con el mensaje del ejecutor', async () => {
+  it('un Comercial sin cargo recibe 403 del ejecutor en el cobro y en la anulación desde las dos externas, y el ticket no se mueve', async () => {
     const e = await persona(['Comercial'])
-    await ticket('x8', 'Servicio externo')
-    const res = await enviar(encendido(), e.cookie, 'x8', COBRO)
-    expect(res.status).toBe(403)
-    expect(res.body.error).toContain('la ejecuta la persona a cargo del ticket')
-    expect(await estadoDe('x8')).toBe('Servicio externo')
+    let n = 0
+    for (const t of [COBRO, 'anulacion']) for (const o of EXTERNAS) {
+      n += 1
+      await ticket(`x3-${n}`, o)
+      const res = await enviar(encendido(), e.cookie, `x3-${n}`, t)
+      expect(res.status, `${t} ${o}`).toBe(403)
+      expect(res.body.error).toContain(SOLO_CARGO)
+      expect(await estadoDe(`x3-${n}`)).toBe(o)
+    }
   })
 
-  it('S-2 · el derivado de otra área no es persona a cargo: el de Comercial sin cargo recibe 403', async () => {
-    const tec = await persona(['Servicio Técnico'])
+  it('el Asistente Comercial y el Director Técnico con el área Comercial también reciben el 403', async () => {
+    for (const cargo of ['Asistente Comercial', 'Director Técnico'] as const) {
+      const p = await persona(['Comercial'], cargo)
+      await ticket(`x4-${cargo}`, 'Servicio externo')
+      expect((await enviar(encendido(), p.cookie, `x4-${cargo}`, COBRO)).status, cargo).toBe(403)
+    }
+  })
+
+  it('derivado_a YA NO decide: el derivado sin cargo recibe 403, aunque mande un «Motivo del respaldo»', async () => {
+    const p = await persona(['Comercial'])
+    for (const t of [COBRO, 'anulacion']) {
+      await ticket(`x5-${t}`, 'Servicio externo', p.id)
+      const res = await enviar(encendido(), p.cookie, `x5-${t}`, t, { 'Motivo del respaldo': 'Soy la persona a cargo' })
+      expect(res.status, t).toBe(403)
+      expect(res.body.error).toContain(SOLO_CARGO)
+    }
+  })
+
+  it('el cobro sin motivo, o con el motivo sólo de espacios, da 422 que lo nombra, y el ticket no se mueve', async () => {
+    const d = await persona(['Comercial'], 'Director Comercial')
+    await ticket('x6', 'En Espera de Repuestos')
+    const sin = await enviar(encendido(), d.cookie, 'x6', COBRO, {}, { comment: 'sin motivo' })
+    expect(sin.status).toBe(422)
+    expect(sin.body.errors.join(' | ')).toContain(CLAVE_MOTIVO_COBRO)
+    const blanco = await enviar(encendido(), d.cookie, 'x6', COBRO, { [CLAVE_MOTIVO_COBRO]: '   ' })
+    expect(blanco.status).toBe(422)
+    expect(blanco.body.errors).toEqual([`"${CLAVE_MOTIVO_COBRO}" no puede estar en blanco`])
+    expect(await estadoDe('x6')).toBe('En Espera de Repuestos')
+  })
+
+  it('la anulación conserva su motivo de lista de F1C-01: sin él, 422 aun para el Director Comercial', async () => {
+    const d = await persona(['Comercial'], 'Director Comercial')
+    await ticket('x7', 'Servicio externo')
+    const res = await enviar(encendido(), d.cookie, 'x7', 'anulacion', {}, { comment: 'sin motivo de anulación' })
+    expect(res.status).toBe(422)
+    expect(res.body.errors).toEqual(['Falta el campo obligatorio: Motivo'])
+  })
+
+  it('la anulación desde Rev./Diagnostico, Notificación Comercial y Notificación cliente NO entra en la regla: el Comercial sin cargo anula', async () => {
+    const e = await persona(['Comercial'])
+    for (const [i, o] of ['Rev./Diagnostico', 'Notificación Comercial', 'Notificación cliente'].entries()) {
+      await ticket(`x8-${i}`, o)
+      expect((await enviar(encendido(), e.cookie, `x8-${i}`, 'anulacion')).status, o).toBe(200)
+    }
+  })
+
+  it('desde Rev./Diagnostico, con DPC encendido, sigue Decisional por cargo: el Comercial sin cargo 403 de Decisionales; el Director pasa', async () => {
     const com = await persona(['Comercial'])
-    await ticket('x9', 'Servicio externo', tec.id)
-    expect((await enviar(encendido(), com.cookie, 'x9', COBRO)).status).toBe(403)
-  })
-
-  it('S-21 · con el Coordinador Técnico vacante, el Especialista técnico es respaldo de sin_pieza_en_almacen; con uno activo, 403', async () => {
-    const esp = await persona(['Servicio Técnico'], 'Especialista técnico')
-    await ticket('x10', 'Solicitado')
-    expect((await enviar(encendido(), esp.cookie, 'x10', SIN_PIEZA)).status).toBe(422) // respaldo sin motivo: pasó el 403
-    expect((await enviar(encendido(), esp.cookie, 'x10', SIN_PIEZA, MOTIVO)).status).toBe(200)
-    await persona(['Servicio Técnico'], 'Coordinador Técnico')
-    await ticket('x11', 'Solicitado')
-    expect((await enviar(encendido(), esp.cookie, 'x11', SIN_PIEZA, MOTIVO)).status).toBe(403)
-  })
-
-  it('anulacion desde Rev./Diagnostico NO es salida de espera: sigue Decisional por cargo (DPC) y no pide motivo del respaldo', async () => {
-    const com = await persona(['Comercial'])
-    await ticket('x12', 'Rev./Diagnostico', com.id)
-    const app = appWith({ salidasEsperas: true, decisionalesPorCargo: true }).app
-    const res = await enviar(app, com.cookie, 'x12', 'anulacion')
+    await ticket('x9', 'Rev./Diagnostico')
+    const res = await enviar(conDpc(true), com.cookie, 'x9', 'anulacion')
     expect(res.status).toBe(403)
     expect(res.body.error).toContain('Decisional')
     const dir = await persona(['Comercial'], 'Director Comercial')
-    await ticket('x13', 'Rev./Diagnostico')
-    expect((await enviar(app, dir.cookie, 'x13', 'anulacion')).status).toBe(200)
+    await ticket('x10', 'Rev./Diagnostico')
+    expect((await enviar(conDpc(true), dir.cookie, 'x10', 'anulacion')).status).toBe(200)
   })
 
-  it('RQ-PM-43 · DPC encendido: la persona a cargo sin cargo ejecuta el cobro; rechazo_comercial sigue pidiendo cargo', async () => {
-    const app = appWith({ salidasEsperas: true, decisionalesPorCargo: true }).app
+  it('apagado el interruptor, la regla no opina: el Comercial sin cargo anula desde las dos externas (F1C-01)', async () => {
+    const com = await persona(['Comercial'])
+    for (const o of EXTERNAS) {
+      await ticket(`x11-${o}`, o)
+      expect((await enviar(apagado(), com.cookie, `x11-${o}`, 'anulacion')).status, o).toBe(200)
+    }
+  })
+
+  it('apagado el interruptor y DPC encendido, la anulación desde las externas es Decisional por cargo: el Comercial sin cargo 403 de Decisionales', async () => {
+    const com = await persona(['Comercial'])
+    await ticket('x12', 'Servicio externo')
+    const res = await enviar(conDpc(false), com.cookie, 'x12', 'anulacion')
+    expect(res.status).toBe(403)
+    expect(res.body.error).toContain('Decisional')
+    expect(res.body.error).not.toContain(SOLO_CARGO)
+  })
+
+  it('DPC encendido: el Director Comercial cobra; rechazo_comercial sigue pidiendo cargo a quien no lo tiene', async () => {
+    const d = await persona(['Comercial'], 'Director Comercial')
+    await ticket('x13', 'Servicio externo')
+    expect((await enviar(conDpc(true), d.cookie, 'x13', COBRO)).status).toBe(200)
     const p = await persona(['Comercial'])
-    await ticket('x14', 'Servicio externo', p.id)
-    expect((await enviar(app, p.cookie, 'x14', COBRO)).status).toBe(200)
-    await ticket('x15', 'Notificación Comercial', p.id)
-    const res = await enviar(app, p.cookie, 'x15', 'rechazo_comercial')
+    await ticket('x14', 'Notificación Comercial')
+    const res = await enviar(conDpc(true), p.cookie, 'x14', 'rechazo_comercial')
     expect(res.status).toBe(403)
     expect(res.body.error).toContain('Decisional')
   })
 
-  it('apagado el interruptor, anulacion desde ER no mira al ejecutor ni pide motivo del respaldo (hoy)', async () => {
-    const com = await persona(['Comercial'])
-    await ticket('x16', 'En Espera de Repuestos')
-    expect((await enviar(apagado(), com.cookie, 'x16', 'anulacion')).status).toBe(200)
+  it('sin_pieza_en_almacen no tiene regla de ejecutor: la ejecuta Servicio Técnico sin cargo ni derivado; Comercial recibe el 403 de área', async () => {
+    const tec = await persona(['Servicio Técnico'])
+    await ticket('x15', 'Solicitado')
+    expect((await enviar(encendido(), tec.cookie, 'x15', SIN_PIEZA)).status).toBe(200)
+    expect(await estadoDe('x15')).toBe('En Espera de Repuestos')
+    const com = await persona(['Comercial'], 'Director Comercial')
+    await ticket('x16', 'Solicitado')
+    const res = await enviar(encendido(), com.cookie, 'x16', SIN_PIEZA)
+    expect(res.status).toBe(403)
+    expect(res.body.error).toContain('área: Servicio Técnico')
   })
 })
 
-describe('posición del ejecutor y del motivo (RQ-PM-45, RQ-TS-64, regla de mutación 1): cada par activa DOS guardas', () => {
-  it('SE-2 · área < ejecutor: un usuario de Servicio Técnico que no es la persona a cargo del cobro → 403 de ÁREA, no el del ejecutor', async () => {
+describe('posición del ejecutor y del motivo del cobro (RQ-PM-45, RQ-TS-64, regla de mutación 1): cada par activa DOS guardas', () => {
+  it('SE-2 · área < ejecutor: un usuario de Servicio Técnico sin cargo en el cobro → 403 de ÁREA, no el del ejecutor', async () => {
     const tec = await persona(['Servicio Técnico'])
     await ticket('s2', 'Servicio externo')
     const res = await enviar(encendido(), tec.cookie, 's2', COBRO)
     expect(res.status).toBe(403)
     expect(res.body.error).toContain('área: Comercial')
-    expect(res.body.error).not.toContain('persona a cargo')
+    expect(res.body.error).not.toContain(SOLO_CARGO)
   })
 
-  it('SE-2b · ejecutor < Decisionales: DPC encendido, Comercial sin cargo ni derivado en el cobro → el mensaje del EJECUTOR, no el de Decisionales', async () => {
+  it('SE-2b · ejecutor < Decisionales: DPC encendido, Comercial sin cargo en el cobro → el mensaje del EJECUTOR, no el de Decisionales', async () => {
     const e = await persona(['Comercial'])
     await ticket('s2b', 'Servicio externo')
-    const res = await enviar(appWith({ salidasEsperas: true, decisionalesPorCargo: true }).app, e.cookie, 's2b', COBRO)
+    const res = await enviar(conDpc(true), e.cookie, 's2b', COBRO)
     expect(res.status).toBe(403)
-    expect(res.body.error).toContain('persona a cargo del ticket')
+    expect(res.body.error).toContain(SOLO_CARGO)
     expect(res.body.error).not.toContain('es Decisional')
   })
 
-  it('SE-3 · ejecutor < 422: un extraño que además manda el motivo y falla el de anulación → el 403 del ejecutor, sin 422', async () => {
+  it('SE-3 · ejecutor < 422: un Comercial sin cargo que anula sin «Motivo de anulación» o cobra sin motivo → el 403 del ejecutor, sin 422', async () => {
     const e = await persona(['Comercial'])
-    await ticket('s3', 'Servicio externo')
-    const res = await enviar(encendido(), e.cookie, 's3', 'anulacion', MOTIVO, { comment: 'sin motivo de anulación' })
-    expect(res.status).toBe(403)
-    expect(res.body.error).toContain('persona a cargo del ticket')
-    expect(res.body.errors).toBeUndefined()
+    for (const [t, base] of [['anulacion', { comment: 'sin motivo de anulación' }], [COBRO, { comment: 'x', [CLAVE_MOTIVO_COBRO]: '   ' }]] as const) {
+      await ticket(`s3-${t}`, 'Servicio externo')
+      const res = await enviar(encendido(), e.cookie, `s3-${t}`, t, {}, base)
+      expect(res.status, t).toBe(403)
+      expect(res.body.error).toContain(SOLO_CARGO)
+      expect(res.body.errors).toBeUndefined()
+    }
   })
 
-  it('SE-5 · un único 422: anulacion sin «Motivo de anulación» y sin motivo del respaldo devuelve LOS DOS errores a la vez', async () => {
-    const r = await persona(['Comercial'], 'Director Comercial')
+  it('SE-5 · agregado < persona derivada: el cobro con motivo en blanco y derivado inexistente → sólo el 422 del motivo', async () => {
+    const d = await persona(['Comercial'], 'Director Comercial')
     await ticket('s5', 'En Espera de Repuestos')
-    const res = await enviar(encendido(), r.cookie, 's5', 'anulacion', {}, { comment: 'nada más' })
+    const res = await enviar(encendido(), d.cookie, 's5', COBRO, { [CLAVE_MOTIVO_COBRO]: '  ', [CLAVE_DERIVACION]: 'no-existe' })
     expect(res.status).toBe(422)
-    const juntos = res.body.errors.join(' | ')
-    expect(juntos).toContain('Falta el campo obligatorio: Motivo')   // el de anulacion, del plan (escalón C)
-    expect(res.body.errors).toHaveLength(2)
-    expect(juntos).toContain(CLAVE_MOTIVO_RESPALDO)
+    expect(res.body.errors).toEqual([`"${CLAVE_MOTIVO_COBRO}" no puede estar en blanco`])
   })
 })
 
@@ -292,22 +308,18 @@ describe('GET /api/permisos/salidas-esperas (RQ-PM-45): el contexto para el clie
     expect((await pedir(encendido())).status).toBe(401)
   })
 
-  it('apagado: { activo: false, coordinadorTecnicoVacante: false } aunque no haya Coordinador Técnico', async () => {
-    const res = await pedir(apagado(), await adminCookie())
-    expect(res.status).toBe(200)
-    expect(res.body).toEqual({ activo: false, coordinadorTecnicoVacante: false })
-  })
-
-  it('encendido, sin Coordinador Técnico activo: vacante; con uno activo: no vacante (S-21)', async () => {
+  it('sólo el interruptor: { activo: false } apagado y { activo: true } encendido', async () => {
     const cookie = await adminCookie()
-    expect((await pedir(encendido(), cookie)).body).toEqual({ activo: true, coordinadorTecnicoVacante: true })
-    await persona(['Servicio Técnico'], 'Coordinador Técnico')
-    expect((await pedir(encendido(), cookie)).body).toEqual({ activo: true, coordinadorTecnicoVacante: false })
+    const res = await pedir(apagado(), cookie)
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ activo: false })
+    expect((await pedir(encendido(), cookie)).body).toEqual({ activo: true })
   })
 })
 
 /**
  * Pares SIN prueba posible, declarados (D3): el ejecutor frente a la lista corta (`cargoFalta`), a la firma de control de calidad y a la prioridad, y el
  * interruptor frente a `exigirInterruptorControlCalidad` y `exigirCalibracionDirecta`, son conjuntos de transiciones DISJUNTOS (ninguna transición activa
- * las dos guardas). La disjunción de ids está fijada en `packages/shared/src/salidasEsperas.test.ts`.
+ * las dos guardas). La disjunción de ids está fijada en `packages/shared/src/salidasEsperas.test.ts`. El motivo del cobro frente a otro `422` del
+ * MISMO agregado tampoco tiene prueba posible: el cobro no activa ninguna otra guarda de contenido de `:134`.
  */

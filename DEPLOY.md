@@ -814,13 +814,13 @@ tickets ya en «En Proceso» por el atajo, éstos siguen su camino y sólo se oc
 **Qué enciende:** con `SALIDAS_ESPERAS=true` en el servicio App, las esperas externas dejan de ser un callejón sin salida. Desde
 «En Espera de Repuestos» y «Servicio externo» Comercial puede cobrar el diagnóstico (`cobro_diagnostico_espera`, hacia «Por Facturar»),
 y desde «Solicitado» el taller puede declarar que no hay pieza en el almacén (`sin_pieza_en_almacen`, hacia «En Espera de Repuestos»).
-Además, la anulación desde las dos esperas externas la ejecuta la persona a cargo del ticket (el `derivado_a`) sin más trámite, y el
-Director o el Coordinador del área sólo con el «Motivo del respaldo» escrito; ese motivo queda en la traza de la transición
-(`packages/zoho-sync/src/config.ts:125`, `apps/desk/server/services/ticketService.ts:128`). Apagada —ausente o con cualquier otro
-valor— las dos transiciones nuevas responden `409` y el panel no las ofrece, y la anulación desde las esperas sigue como antes.
-**Qué se rompe si se pone mal:** encendida antes de tiempo, contradice la decisión de Gerencia; encendida con tickets sin persona a
-cargo (por ejemplo, tickets traídos de Zoho sin derivado), sólo las salidas de respaldo, cada una con su motivo, funcionan, y quien no
-sea persona a cargo ni respaldo recibe `403`. Es independiente de `CONTROL_CALIDAD_LIBERACION` (§16) y de `DECISIONALES_POR_CARGO`
+El cobro y la anulación desde esas dos esperas externas los ejecutan sólo el Director Comercial o la Coordinadora Comercial (y el
+administrador); el cobro pide además un «Motivo del cobro de diagnóstico» corto, que queda en la traza de la transición, y la anulación
+conserva su motivo de lista (`packages/zoho-sync/src/config.ts:125`, `apps/desk/server/services/ticketService.ts:131` y `:134`). Apagada
+—ausente o con cualquier otro valor— las dos transiciones nuevas responden `409` y el panel no las ofrece, y la anulación sigue como antes.
+**Qué se rompe si se pone mal:** encendida antes de tiempo, contradice la decisión de Gerencia; encendida sin nadie con el cargo
+Director Comercial o Coordinador Comercial (`cargo_permiso`), sólo el administrador puede cobrar o anular desde las esperas externas, y
+cualquier otro de Comercial recibe `403`. Es independiente de `CONTROL_CALIDAD_LIBERACION` (§16) y de `DECISIONALES_POR_CARGO`
 (§15): encenderla no enciende ninguna de las dos, ni al revés.
 
 **Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). **No se enciende antes del 14/12/2026, y lo decide

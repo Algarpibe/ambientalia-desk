@@ -14,10 +14,9 @@ export async function contextoDecisionales(db: Queryable, activo: boolean): Prom
 
 /**
  * El contexto de las salidas de las esperas (F1C-03, RQ-PM-45), el mismo para la guarda de `ticketService.ts` y para la ruta que lo enseña
- * al cliente. Apagado no consulta nada. Encendido, pide la vacante del Coordinador Técnico a `contextoDecisionales` (S-21): también con
- * `DECISIONALES_POR_CARGO` apagado, porque la vacante decide quién es respaldo de `sin_pieza_en_almacen`.
+ * al cliente. Desde `decision/f1c03-quien-ejecuta-salidas` no consulta nada: la regla del ejecutor sólo mira el cargo de la sesión, así
+ * que ya no lleva la vacante del Coordinador Técnico.
  */
-export async function contextoSalidasEsperas(db: Queryable, activo: boolean): Promise<ContextoSalidasEsperas> {
-  if (!activo) return SALIDAS_ESPERAS_APAGADO
-  return { activo: true, coordinadorTecnicoVacante: (await contextoDecisionales(db, true)).coordinadorTecnicoVacante }
+export function contextoSalidasEsperas(activo: boolean): ContextoSalidasEsperas {
+  return activo ? { activo: true } : SALIDAS_ESPERAS_APAGADO
 }

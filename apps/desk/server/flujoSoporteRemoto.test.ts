@@ -99,7 +99,7 @@ describe('serie P · ejecución del flujo de soporte remoto (guarda 3, estado y 
 
   it('P8 · un SR en Solicitud Soporte, con Servicio Técnico: de TODAS las transiciones de los tres catálogos sólo asignacion_soporte da 200', async () => {
     const cookie = await userCookie(SERVICIO)
-    const { app } = appWith({ salidasEsperas: true })   // F1C-03: con el interruptor encendido el 409 sigue siendo el de flujo (I4: el 409 de flujo precede al ejecutor, así que aquí no hace falta sembrar derivado_a)
+    const { app } = appWith({ salidasEsperas: true })   // F1C-03: con el interruptor encendido el 409 sigue siendo el de flujo (el 409 de flujo precede al ejecutor)
     const ok: string[] = []
     let n = 0
     for (const t of todas) {

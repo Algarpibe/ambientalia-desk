@@ -1,12 +1,11 @@
-import { canExecuteTransition } from './permissions'
-import { areaDeDecision, cargosDecisionales, puedeEjecutarTransicionConDecisionales, type ContextoDecisionales } from './decisionales'
-import { esCargo, puedeEjecutarTransicion, type SujetoDePermiso } from './cargos'
-import type { Transition, TransitionField } from './transitions'
+import { puedeEjecutarTransicionConDecisionales, type ContextoDecisionales } from './decisionales'
+import { esCargo, puedeEjecutarTransicion, type Cargo, type SujetoDePermiso } from './cargos'
+import type { Transition } from './transitions'
 
 /**
- * salidas-esperas (F1C-03, RQ-TS-60, RQ-TS-61, RQ-PM-42..44; `decision/c3-salida-esperas`): las dos salidas nuevas de las esperas, su
- * interruptor y la regla del ejecutor como regla pura. Sin reloj ni base de datos: la lee igual el servidor (que la impone) y el cliente
- * (que sólo la pinta, regla invariable 13).
+ * salidas-esperas (F1C-03, RQ-TS-60, RQ-TS-61, RQ-PM-42..44; `decision/c3-salida-esperas`, corregida por
+ * `decision/f1c03-quien-ejecuta-salidas`): las dos salidas nuevas de las esperas, su interruptor y la regla del ejecutor como
+ * regla pura. Sin reloj ni base de datos: la lee igual el servidor (que la impone) y el cliente (que sólo la pinta, regla invariable 13).
  *
  * El interruptor es una función HERMANA de `motivoQuitadaPorInterruptor` (`controlCalidad.ts`), no una cláusula más de ella:
  * esa recibe UN solo `activo` (`CONTROL_CALIDAD_LIBERACION`) y la llaman el servidor y el panel; meter un segundo
@@ -27,53 +26,49 @@ export function visibleConSalidasEsperas(transitionId: string, activo: boolean):
   return motivoQuitadaPorSalidasEsperas(transitionId, activo) === null
 }
 
-/** Los orígenes desde los que `anulacion` es una salida de espera; desde `Rev./Diagnostico` y demás sigue siendo Decisional por cargo. */
+/** Los orígenes desde los que `anulacion` entra en la regla del ejecutor; desde `Rev./Diagnostico` y demás, la regla no opina. */
 export const ORIGENES_ANULACION_EN_ESPERA: ReadonlySet<string> = new Set(['En Espera de Repuestos', 'Servicio externo'])
 
-export const CLAVE_MOTIVO_RESPALDO = 'Motivo del respaldo'
-/** El campo que el panel pide al respaldo. NO va en el catálogo: lo vería la persona a cargo y `buildTransitionPlan` lo escribiría en `custom_fields` (S-13). */
-export const CAMPO_MOTIVO_RESPALDO: TransitionField =
-  { key: CLAVE_MOTIVO_RESPALDO, label: CLAVE_MOTIVO_RESPALDO, kind: 'text', required: true, target: 'customField' }
+/** Los dos cargos que ejecutan las salidas de las esperas externas; el administrador, además (exento de todo cargo, `cargos.ts`). */
+export const CARGOS_EJECUTORES_SALIDA: readonly Cargo[] = ['Director Comercial', 'Coordinador Comercial']
 
-export interface ContextoSalidasEsperas { activo: boolean; coordinadorTecnicoVacante: boolean }
-export const SALIDAS_ESPERAS_APAGADO: ContextoSalidasEsperas = Object.freeze({ activo: false, coordinadorTecnicoVacante: false })
+/**
+ * El motivo corto del cobro del diagnóstico: el campo de texto obligatorio del catálogo (`cfText`, `transitions.ts:262`). Va a la traza
+ * y NO a `tickets.custom_fields` (lo quita `ticketService.ts:133`, molde de `CLAVE_DESCRIPCION_FALLA`).
+ */
+export const CLAVE_MOTIVO_COBRO = 'Motivo del cobro de diagnóstico'
 
-export type EjecutorSalida = { via: 'persona_a_cargo' } | { via: 'respaldo' } | { via: 'denegado'; mensaje: string }
+export interface ContextoSalidasEsperas { activo: boolean }
+export const SALIDAS_ESPERAS_APAGADO: ContextoSalidasEsperas = Object.freeze({ activo: false })
 
-/** ¿Es una salida de espera? `anulacion` sólo desde las dos esperas externas; las dos nuevas, siempre. */
+export type EjecutorSalida = { via: 'permitido' } | { via: 'denegado'; mensaje: string }
+
+/** ¿Entra en la regla del ejecutor? El cobro del diagnóstico desde sus orígenes, y `anulacion` sólo desde las dos esperas externas. */
 export function esSalidaDeEspera(transitionId: string, origen: string): boolean {
-  if (IDS_SALIDAS_NUEVAS.has(transitionId)) return true
+  if (transitionId === ID_COBRO_DIAGNOSTICO) return true
   return transitionId === 'anulacion' && ORIGENES_ANULACION_EN_ESPERA.has(origen)
 }
 
 /**
- * Quién ejecuta la salida: `null` si el interruptor está apagado o la transición no es una salida de espera (no opina). Si no, en orden:
- * (a) la persona a cargo (`s.id === tk.derivadoA` con el área); (b) el respaldo (administrador o cargo de `cargosDecisionales` del área
- * de la decisión); (c) denegado. «Activo» no se consulta (S-12): quien ejecuta ya está activo, y un derivado nulo, inactivo o ajeno
- * simplemente no cumple (a) (S-2).
+ * Quién ejecuta la salida: `null` si el interruptor está apagado o la transición no entra en la regla (no opina). Si entra, sólo el
+ * administrador o un cargo de `CARGOS_EJECUTORES_SALIDA`; cualquier otro, `denegado`. El derivado del ticket no cuenta.
  */
 export function ejecutorDeSalida(
-  t: Pick<Transition, 'id' | 'name' | 'area'>,
-  tk: { status: string; derivadoA: string | null },
-  s: SujetoDePermiso & { id?: string | null },
+  t: Pick<Transition, 'id' | 'name'>,
+  tk: { status: string },
+  s: Pick<SujetoDePermiso, 'isAdmin' | 'cargoPermiso'>,
   ctx: ContextoSalidasEsperas,
 ): EjecutorSalida | null {
   if (!ctx.activo || !esSalidaDeEspera(t.id, tk.status)) return null
-  if (s.id != null && s.id === tk.derivadoA && canExecuteTransition(s.areas, s.isAdmin, t.area)) return { via: 'persona_a_cargo' }
-  const area = areaDeDecision(t)
-  const cargos = area ? cargosDecisionales(area, ctx.coordinadorTecnicoVacante) : []
-  if (s.isAdmin || (esCargo(s.cargoPermiso) && cargos.includes(s.cargoPermiso))) return { via: 'respaldo' }
-  return { via: 'denegado', mensaje: `"${t.name}" desde «${tk.status}» la ejecuta la persona a cargo del ticket o, con motivo, el Director o el Coordinador del área` }
+  if (s.isAdmin || (esCargo(s.cargoPermiso) && CARGOS_EJECUTORES_SALIDA.includes(s.cargoPermiso))) return { via: 'permitido' }
+  return { via: 'denegado', mensaje: `"${t.name}" desde «${tk.status}» la ejecutan sólo el Director Comercial o la Coordinadora Comercial` }
 }
 
-/** Escalón C: el respaldo debe dar el motivo; la persona a cargo no lo da (no se descarta en silencio, S-14); `null` y `denegado` no opinan. */
-export function erroresMotivoRespaldo(v: EjecutorSalida | null, values: Record<string, unknown>): string[] {
-  if (v === null || v.via === 'denegado') return []
-  const crudo = values[CLAVE_MOTIVO_RESPALDO]
-  const hayTexto = typeof crudo === 'string' && crudo.trim() !== ''
-  if (v.via === 'respaldo' && !hayTexto) return [`"${CLAVE_MOTIVO_RESPALDO}" es obligatorio: no eres la persona a cargo del ticket`]
-  if (v.via === 'persona_a_cargo' && hayTexto) return [`"${CLAVE_MOTIVO_RESPALDO}" sólo lo da el respaldo: eres la persona a cargo del ticket`]
-  return []
+/** Escalón C: el motivo del cobro no puede ir sólo con espacios. Ausente o vacío lo dice `buildTransitionPlan` (campo obligatorio). */
+export function erroresMotivoCobro(transitionId: string, values: Record<string, unknown>): string[] {
+  if (transitionId !== ID_COBRO_DIAGNOSTICO) return []
+  const v = values[CLAVE_MOTIVO_COBRO]
+  return typeof v === 'string' && v.length > 0 && v.trim() === '' ? [`"${CLAVE_MOTIVO_COBRO}" no puede estar en blanco`] : []
 }
 
 /**
@@ -81,9 +76,9 @@ export function erroresMotivoRespaldo(v: EjecutorSalida | null, values: Record<s
  * (`puedeEjecutarTransicion`) Y que no sea `denegado`; si no, `puedeEjecutarTransicionConDecisionales` intacta.
  */
 export function puedeEjecutarConSalidasEsperas(
-  s: SujetoDePermiso & { id?: string | null },
+  s: SujetoDePermiso,
   t: Pick<Transition, 'id' | 'name' | 'area'>,
-  tk: { status: string; derivadoA: string | null },
+  tk: { status: string },
   dec: ContextoDecisionales,
   sal: ContextoSalidasEsperas,
 ): boolean {
