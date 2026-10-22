@@ -10,15 +10,24 @@ let db: Queryable
 beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
 
 let numero = 0
-/** Un ticket de Zoho con su `modified_time` y, si se da, la marca de la última historia traída. */
-const ticket = (id: string, modificado: string | null, sincronizado: string | null = null) =>
+/**
+ * Un ticket de Zoho con su `modified_time` y, si se dan, las dos marcas de la última historia traída: la
+ * hora (`history_synced_at`) y la fase (`history_synced_status`). Su fase actual es `Finalizado`.
+ */
+const ticket = (id: string, modificado: string | null, sincronizado: string | null = null, faseSincronizada: string | null = null) =>
   db.query(
-    'INSERT INTO tickets (id, number, subject, status, modified_time, history_synced_at) VALUES ($1,$2,$3,$4,$5,$6)',
-    [id, ++numero, 'A', 'Finalizado', modificado ? new Date(modificado) : null, sincronizado ? new Date(sincronizado) : null],
+    'INSERT INTO tickets (id, number, subject, status, modified_time, history_synced_at, history_synced_status) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+    [id, ++numero, 'A', 'Finalizado', modificado ? new Date(modificado) : null, sincronizado ? new Date(sincronizado) : null, faseSincronizada],
   )
 
 const marca = async (id: string): Promise<Date | null> =>
   (await db.query('SELECT history_synced_at FROM tickets WHERE id = $1', [id])).rows[0].history_synced_at
+
+const marcaDeFase = async (id: string): Promise<string | null> =>
+  (await db.query('SELECT history_synced_status FROM tickets WHERE id = $1', [id])).rows[0].history_synced_status
+
+/** Zoho cambia la fase del ticket, como la dejaría un `syncRecent` (la lista no trae `modifiedTime`). */
+const cambiaDeFase = (id: string, fase: string) => db.query('UPDATE tickets SET status = $1 WHERE id = $2', [fase, id])
 
 describe('esquema · history_synced_at', () => {
   it('tickets tiene la columna y nace nula', async () => {
@@ -26,12 +35,17 @@ describe('esquema · history_synced_at', () => {
     expect(await marca('900')).toBeNull()
   })
 
+  it('tickets tiene la marca de fase y nace nula', async () => {
+    await ticket('900', '2026-01-01T10:00:00Z')
+    expect(await marcaDeFase('900')).toBeNull()
+  })
+
   /**
    * `history_synced_at` no está en `TICKET_COLS`, así que el sync de tickets no la toca. Si la
    * pisara, cada `syncRecent` devolvería a la cola los tickets que acaba de actualizar.
    */
   it('el sync de un ticket desde Zoho no borra la marca', async () => {
-    await ticket('100', '2026-01-04T16:00:00Z', '2026-01-04T16:00:00Z')
+    await ticket('100', '2026-01-04T16:00:00Z', '2026-01-04T16:00:00Z', 'En Proceso')
     const zohoFetch = vi.fn().mockImplementation(async (url: string) =>
       url.startsWith('/tickets/100?')
         ? new Response(JSON.stringify({ id: '100', ticketNumber: '1', subject: 'A', status: 'Finalizado', modifiedTime: '2026-01-04T16:00:00Z' }), { status: 200 })
@@ -41,6 +55,9 @@ describe('esquema · history_synced_at', () => {
     await sync.syncTicket('100')
 
     expect((await marca('100'))?.toISOString()).toBe('2026-01-04T16:00:00.000Z')
+    // La marca de fase tampoco está en `TICKET_COLS`: el sync trae `Finalizado` y la marca sigue
+    // diciendo la fase de la última historia traída, que es justo lo que devuelve el ticket a la cola.
+    expect(await marcaDeFase('100')).toBe('En Proceso')
   })
 })
 
@@ -74,7 +91,7 @@ describe('syncPendingHistory', () => {
   })
 
   it('no elige los que ya están al día', async () => {
-    await ticket('100', '2026-01-04T16:00:00Z', '2026-01-04T16:00:00Z')
+    await ticket('100', '2026-01-04T16:00:00Z', '2026-01-04T16:00:00Z', 'Finalizado')
     const zohoFetch = unaPagina()
     const sync = createSync({ zohoFetch, db, config })
 
@@ -169,5 +186,110 @@ describe('syncPendingHistory', () => {
 
     expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1, poblados: 1 })
     expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 0 })
+  })
+})
+
+/**
+ * La LISTA de tickets de Zoho Desk no trae `modifiedTime`: en el hub `modified_time` queda nulo y la marca
+ * de hora es el epoch, así que sólo con ella cada historia se traía UNA vez y los cambios de fase
+ * posteriores no llegaban nunca a `ticket_history`. La fase es lo que devuelve el ticket a la cola.
+ * Las fixtures reproducen esa forma: `modified_time` nulo y `history_synced_at` en el epoch.
+ */
+describe('syncPendingHistory · cambio de fase', () => {
+  const EPOCH = '1970-01-01T00:00:00Z'
+
+  it('no elige un ticket cuya fase no ha cambiado desde la última historia traída', async () => {
+    await ticket('100', null, EPOCH, 'Finalizado')
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toEqual({ intentados: 0, poblados: 0, fallidos: 0 })
+    expect(zohoFetch).not.toHaveBeenCalled()
+  })
+
+  it('elige el ticket cuando cambia de fase y, traída la historia, actualiza las dos marcas', async () => {
+    await ticket('100', null, EPOCH, 'Finalizado')
+    await cambiaDeFase('100', 'Notificación Comercial')
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toEqual({ intentados: 1, poblados: 1, fallidos: 0 })
+    expect(pedidos(zohoFetch)).toEqual(['100'])
+    expect(await marcaDeFase('100')).toBe('Notificación Comercial')
+    expect((await marca('100'))?.toISOString()).toBe('1970-01-01T00:00:00.000Z')
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 0 })
+  })
+
+  /**
+   * La recuperación de la historia perdida: al nacer la columna, todos los tickets ya traídos tienen la
+   * marca de fase nula, y nula cuenta como distinta de su fase. El worker los re-barre en tandas de `limite`.
+   */
+  it('elige los tickets ya traídos cuya marca de fase es nula, y los marca', async () => {
+    await ticket('100', null, EPOCH)
+    await ticket('200', null, EPOCH)
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 1 })).toMatchObject({ intentados: 1, poblados: 1 })
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 1 })).toMatchObject({ intentados: 1, poblados: 1 })
+    expect(pedidos(zohoFetch).sort()).toEqual(['100', '200'])
+    expect(await marcaDeFase('100')).toBe('Finalizado')
+    expect(await marcaDeFase('200')).toBe('Finalizado')
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 1 })).toMatchObject({ intentados: 0 })
+  })
+
+  /** Releer la historia de un ticket que ya la tiene no la duplica: el id del evento es determinista. */
+  it('releer la historia tras un cambio de fase no duplica los eventos ya guardados', async () => {
+    await ticket('100', null)
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+    await sync.syncPendingHistory({ ...sinPausa, limite: 50 })
+    await cambiaDeFase('100', 'Notificación Comercial')
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1, poblados: 1 })
+    expect((await db.query('SELECT count(*)::int AS c FROM ticket_history')).rows[0].c).toBe(1)
+  })
+
+  it('un fallo de Zoho deja las dos marcas como estaban y el ticket vuelve a salir', async () => {
+    await ticket('100', null, EPOCH, 'Finalizado')
+    await cambiaDeFase('100', 'Notificación Comercial')
+    const zohoFetch = vi.fn().mockResolvedValue(new Response('nope', { status: 500 }))
+    const sync = createSync({ zohoFetch, db, config })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1, poblados: 0, fallidos: 1 })
+    expect(await marcaDeFase('100')).toBe('Finalizado')
+    expect((await marca('100'))?.toISOString()).toBe('1970-01-01T00:00:00.000Z')
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1 })
+  })
+
+  /**
+   * La marca de fase es la LEÍDA al elegir el ticket, como la de hora: si Zoho cambia la fase mientras se
+   * trae la historia, la marca guarda la vieja y la pasada siguiente lo vuelve a elegir.
+   */
+  it('un ticket que cambia de fase mientras se trae su historia vuelve a salir en la pasada siguiente', async () => {
+    await ticket('100', null, EPOCH, 'En Proceso')
+    const base = unaPagina()
+    const zohoFetch = vi.fn().mockImplementation(async (url: string) => {
+      await cambiaDeFase('100', 'Notificación Comercial')
+      return base(url)
+    })
+    const sync = createSync({ zohoFetch, db, config })
+
+    await sync.syncPendingHistory({ ...sinPausa, limite: 50 })
+
+    expect(await marcaDeFase('100')).toBe('Finalizado')
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1, poblados: 1 })
+    expect(await marcaDeFase('100')).toBe('Notificación Comercial')
+  })
+
+  /** La rama de `modified_time` se conserva por si Zoho llega a mandarlo: elige aunque la fase no cambie. */
+  it('con la fase igual, elige el ticket que Zoho modificó después de la última historia traída', async () => {
+    await ticket('100', '2026-02-04T16:00:00Z', '2026-01-10T16:00:00Z', 'Finalizado')
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1, poblados: 1 })
+    expect((await marca('100'))?.toISOString()).toBe('2026-02-04T16:00:00.000Z')
+    expect(await marcaDeFase('100')).toBe('Finalizado')
   })
 })
