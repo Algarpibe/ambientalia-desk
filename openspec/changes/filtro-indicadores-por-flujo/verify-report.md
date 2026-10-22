@@ -215,7 +215,7 @@ Ninguno.
 **W1 · La justificación de RQ-KP-32 y D6 («recortar antes llevaría un ticket de otro flujo a “fuera del periodo”») es imprecisa.**
 `apps/desk/server/routes/indicadoresComparacion.ts:56-59`: si se recortara `entradas.tickets` antes de cruzar, el SR del periodo caería en
 `sinCruzar`, `ticketsConClasificacion` lo devolvería con su clasificación (`:59`) y `cruzarPorFlujo` lo mandaría igualmente a `deOtroFlujo`
-(`apps/desk/server/comparacion/cruzarExportacion.ts:42-68`, `flujoDe` por `existentes`). El cuerpo del POST sería el mismo; sólo cambian
+(`apps/desk/server/comparacion/cruzarExportacion.ts:53-68`, `flujoDe` por `existentes`). El cuerpo del POST sería el mismo; sólo cambian
 los «ID» de la sentencia por bloque. La frase sólo vale para el reparto de hoy, sin clasificación (`repartirSinCruzar`). Es una
 justificación imprecisa de la spec, no un defecto de comportamiento: el requisito «cruzar con todos y repartir después» se cumple.
 Consecuencia: la mutación M4 «recortar antes» es observacionalmente equivalente en el cuerpo y la fijan sólo aserciones sobre los
