@@ -233,3 +233,91 @@ Una pasada sobre el árbol de L1b, código **1**: 316 ficheros (313 pasan, 3 omi
 2 errores, los dos `[vitest-worker]: Timeout calling "onTaskUpdate"`, 313 s. Condiciones del usuario: (a) 0 fallidas, sí; (b) sólo ese error, sí;
 (c) 316 ≥ 316 ficheros y 5.425 ≥ 5.387 pruebas, sí. La pasada del agente dio lo mismo con 1 error (334 s). typecheck 0; lint 0 (165 avisos);
 build 0 (`index-BpbCtGfB.js`, 426.074 B, sin cambio: el cliente aún no usa lo nuevo).
+
+
+## Lote L2 (cliente: URL, vista y selector; mutaciones M7, M9, M11; barrido; regla 13)
+
+Base del lote: `a72ea5c1`. Modo: Strict TDD. Sin commit. Tareas hechas: L2.1 a L2.12 (L2.13, el `npm run reconcile`, y la L2.c son del orquestador).
+
+### Linea base (L2.1)
+- Arbol limpio sobre `a72ea5c1`. Antes de editar: `indicadoresUrl.test.ts` 11, `comparacionExportacion.test.ts` 31 y `api/client.test.ts` 3, todos verdes (45/45).
+
+### TDD Cycle Evidence
+| Tarea | Fichero de prueba | Capa | Red de seguridad | ROJO | VERDE | TRIANGULAR | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| L2.2-3 | `src/lib/indicadoresUrl.test.ts` | Unitaria (pura) | 11/11 | 6 rojas | 18/18 | con flujo, con periodo, vacio, ausente, valor desconocido; 3 rotulos | n/a |
+| L2.4-5 | `src/lib/comparacionExportacion.test.ts` | Unitaria (pura) | 31/31 | 6 rojas | 40/40 | solo flujo, con periodo, vacio; con y sin `deOtroFlujo`, vacio con flujo, total 40 con 2 tickets | n/a |
+| L2.6 | sin prueba (`.tsx`, F0-00) | n/a | typecheck 0 | n/a | typecheck 0 | n/a | n/a |
+
+### ROJOS (salida de vitest copiada)
+#### L2.2 (`opcionesFlujo` inexistente y la URL aun no lleva el flujo): 6 rojas
+    × urlIndicadores con flujo (RQ-KP-33, M7) > con flujo: `flujo=equipo-nuevo` tras el formato
+    → expected '/api/indicadores?formato=csv' to be '/api/indicadores?formato=csv&flujo=eq…' // Object.is equality
+    × urlIndicadores con flujo (RQ-KP-33, M7) > con periodo y flujo: el flujo va tras `hasta`
+    → expected '/api/indicadores?formato=csv&desde=20…' to be '/api/indicadores?formato=csv&desde=20…' // Object.is equality
+    × opcionesFlujo (RQ-KP-33): «Todos» y la lista de `shared`, con sus rótulos > la primera es «Todos» con valor vacío
+    → (0 , opcionesFlujo) is not a function
+#### L2.4 (la URL y la vista aun no conocen el flujo): 6 rojas
+    × urlComparacion con flujo (RQ-KP-33, M9) > sólo flujo: la ruta con `flujo` y nada más
+    → expected '/api/indicadores/comparacion' to be '/api/indicadores/comparacion?flujo=eq…' // Object.is equality
+    × vistaComparacion con flujo y «De otro flujo» (RQ-KP-33, M11): sólo si llegan, sin calcular > con `deOtroFlujo`: recuento y lista tras «Fuera del periodo», con el total tal como llegó (40 aunque haya 2 tickets)
+    → expected [ 'Filas leídas', …(7) ] to deeply equal [ 'Filas leídas', …(8) ]
+    × vistaComparacion con flujo y «De otro flujo» (RQ-KP-33, M11): sólo si llegan, sin calcular > con flujo la clave está siempre, aunque vacía: total 0 y sin líneas, y se pinta
+    → expected undefined to be '0' // Object.is equality
+    × vistaComparacion con flujo y «De otro flujo» (RQ-KP-33, M11): sólo si llegan, sin calcular > el periodo gana « · Flujo: <nombre>» con el flujo de la RESPUESTA, y sin flujo queda como hoy
+    → expected 'Periodo: 2026-01-01 a 2026-01-31' to be 'Periodo: 2026-01-01 a 2026-01-31 · Fl…' // Object.is equality
+
+### Mutaciones (L2.7 a L2.9): mutar, ver rojo, revertir con otra edicion, mismo sha256
+Fichero `apps/desk/src/lib/indicadoresUrl.ts`: sha256 antes = despues = `0e31ad235eab8fca99c10a9cf749010bd1eaf4f72e134b25c2f9720a18a32a21`.
+Fichero `apps/desk/src/lib/comparacionExportacion.ts`: sha256 antes = despues = `335c362f2013cf27e9fb7ab6479cff424449557f792628cf09b934f4c26fdeef`. Los dos IGUAL en las 8 mutaciones.
+| Tarea | Mutacion | sha256 mutado | Rojas | Prueba que cae |
+|---|---|---|---|---|
+| L2.7 M7 | `urlIndicadores` pierde el parametro (sin `if (flujo) q.set(…)`) | `52f72583f2acc211…` | 3 | «con flujo: `flujo=equipo-nuevo` tras el formato», «con periodo y flujo…», «el cliente no valida…» |
+| L2.7 M7b | el vacio entra (`flujo !== undefined`) | `dc76f26baa22bddacb…` | 1 | «"Todos" (vacío) y ausente: la URL de hoy, sin `flujo` ni siquiera vacío» (`…&flujo=`) |
+| L2.8 M9 | `urlComparacion` pierde el parametro | `0ddcd79bfde2a748…` | 3 | «con periodo y flujo…», «sólo flujo…», «el cliente no valida…» |
+| L2.8 M9b | el vacio entra | `fcfbfa2628f8d8b7…` | 1 | «sin flujo, o "Todos" (vacío): la URL de hoy…» |
+| L2.9 M11a | el recuento «De otro flujo» se pinta sin que venga | `829020b98beac58c…` | 1 | «sin `deOtroFlujo`: ni recuento ni lista…» (9 recuentos en vez de 8) |
+| L2.9 M11b | la lista «De otro flujo» se pinta sin que venga | `f3beb5564170546e…` | 1 | la misma (7 listas en vez de 6) |
+| L2.9 M11c | el total de la lista se calcula (`tickets.length`) | `304b22a1b36838a1…` | 1 | «con `deOtroFlujo`: …total tal como llegó (40 aunque haya 2 tickets)» |
+| L2.9 M11d | el total del recuento se calcula | `d2d54d3967dea647…` | 1 | la misma: `expected '2' to be '40'` |
+Salida literal de M7: `× urlIndicadores con flujo (RQ-KP-33, M7) > con flujo: ...` con `→ expected '/api/indicadores?formato=csv' to be '/api/indicadores?formato=csv&flujo=eq…'`.
+Salida literal de M11d: `→ expected '2' to be '40' // Object.is equality`. Incidente: la primera mutacion de M7 se lanzo con un texto de reversion vacio, no revirtio y se
+restauro a mano con otra edicion; el sha256 volvio a `0e31ad23…` antes de seguir (el script de mutacion exige ahora un ancla).
+
+### Barrido de la regla de mutacion 4 contra `8a068fe9` (L2.10, L2.11)
+(1) `git diff -U0 8a068fe9`: los 12 ficheros de produccion, solo trozos en sitio o tras la ultima linea. `server/indicadores.ts` -2 -43 -64,2 -73 -88 y +97,21;
+`routes/indicadores.ts` -7 -42,3 -48 -53; `routes/indicadoresComparacion.ts` -3 -8,4 -15 -26,3 -34,2 -40 -43 y +52,9; `flujos.ts` -126,2 y +164,12; `cruzarExportacion.ts` -2 y +42,27;
+`ticketsPorId.ts` +20,14; `indicadoresExportacion.ts` -16 -21; `indicadoresUrl.ts` -3 -5 -8 y +19,5; `comparacionExportacion.ts` -4 -13 -16 -56 -62 -76; `client.ts` -897 -899;
+`Analisis.tsx` -6 -75 -83 -91; `ComparacionExportacion.tsx` -9 -20. Los 8 `*.test.ts`: un solo trozo `-N,0` al final cada uno. Ningun desplazamiento.
+(2) `git grep -noE` con la ruta completa (84, 28, 37, 114, 1, 2, 2, 12, 5, 62, 19 y 1 citas); las que caen en una linea editada en sitio o la cruzan, sin contar los artefactos de este cambio, se leyeron contra su frase:
+- **Siguen ciertas (A)**: `DEPLOY.md:735` (`routes/indicadoresComparacion.ts:27-28`: 27 llama a `validarPeriodo`, 28 responde el 400 del periodo; el del flujo comparte la linea) y `DEPLOY.md:744-745` (`:30-31` lector y `:29` sin fichero);
+  `openspec/config.yaml:4105` (`routes/indicadores.ts:52`, el comentario «ningún fichero, ninguna escritura», sin tocar); `Paquete_de_Despliegue_2026-10-04(b).md` 586, 593, 643, 864, 905, 978;
+  `ENTRADA.md:2128` y `F1B-09…:247` (`indicadores.ts:57-64`, «filtra sólo por periodo»: el `WHERE` no cambia, solo el `SELECT`); `2026-10-11-tiempo-en-tarjeta…/proposal.md:25` (`:88`, sigue leyendo `listarCierres`);
+  `2026-10-18-anulado-con-motivo` (`:64-74`, la lectura por ticket); los de `comparacion-exportacion-zoho` (`:27`, `:28`, `:29`, `:31`, `:39-48`, `routes/indicadores.ts:52-53`, `comparacionExportacion.ts:76`, `Analisis.tsx:6` y `:83`);
+  `2026-10-17-fecha-migracion…/design.md:34` (`:25-36`); `2026-10-03-continuidad-indicadores` (`:42`, `:43`, `indicadoresUrl.ts:5-10`, `Analisis.tsx:83`, `:81-88`); `2026-10-11…/proposal.md:71` (`routes/indicadores.ts:48`);
+  `2026-10-08-mapa-blueprint-tres-flujos/design.md:32` y `:176` (`flujos.ts:127-131`: un cuarto flujo rompe `tsc` ahi) y `2026-09-29-blueprint-soporte-remoto/verify-report.md:87`.
+- **Dato fechado (B), cierto de su dia, sin tocar**: las ancladas `en 42a4828` (`2026-10-07-indicadores-51-55` y Paquete 586/864); `indicadores-51-55/apply-progress.md:406` y `:409` («líneas sin cambio»);
+  `2026-10-19-reloj-sla-esperas/apply-progress.md:142` (`Analisis.tsx:83` «idéntica a la de `bef8ae3`»); `continuidad-indicadores/design.md:243` (cita el enlace con `urlIndicadores('csv')` de entonces; la barra `:81-88` sigue donde estaba).
+- **Superadas (C), a anotar sin editar (la rama no las toca)**: `2026-10-08-mapa-blueprint-tres-flujos/archive-report.md:100` y `design.md:212` dicen de `flujos.ts:127-131` «unificarlos exige exportar esa tabla; quedó fuera»: esta tanda la exporta (D2).
+- **Ninguna frase ha dejado de ser cierta.** `DEPLOY.md` no documenta el parametro `flujo` (no se toca): lo recoge el orquestador si quiere.
+(3) Pase de abreviadas: citas con nombre sin ruta y herencia de las `:N` pegadas a una cita completa, en todo fichero rastreado que cite estos modulos; las que heredan un modulo editado (10, todas de `archive/`) estan arriba.
+(4) Detector de `pre-push` sobre `a72ea5c`: salida 0, 13 abreviadas rotas (las mismas que en `main`), 0 cabeceras R-1 invalidas, base de citas 0/0. Lee el commit, no el arbol: el orquestador debe repetirlo tras el commit de L2.
+
+### Regla 13 (L2.12): decisiones del cliente y linea del servidor que las impone (leidas en el fichero hoy)
+| # | Decision del cliente | Linea del servidor |
+|---|---|---|
+| C1 | Selector solo a administradores (`Analisis.tsx:83`, `:91`) | `requireAdmin` (403): `apps/desk/server/routes/indicadores.ts:41`, `apps/desk/server/routes/indicadoresComparacion.ts:25` |
+| C2 | Ofrece solo «Todos» y `FLUJOS` | `validarFlujo` (400): `routes/indicadores.ts:42-43`, `routes/indicadoresComparacion.ts:27-28`; la funcion, `apps/desk/server/indicadores.ts:107-111` |
+| C3 | «Todos» no envia `flujo` | `validarFlujo(undefined)` da `null` (`indicadores.ts:108`) y `recortarPorFlujo` devuelve la misma entrada (`:115`); el unico corte sigue en `indicadores.ts:70` |
+| C4 | La descarga lleva el flujo | recorte `routes/indicadores.ts:44` (`indicadores.ts:114-117`) y nombre del CSV `routes/indicadores.ts:48` |
+| C5 | La comparacion lleva el mismo flujo | `routes/indicadoresComparacion.ts:34` (`cruceDeLaPeticion`, `:55`) y `cruzarPorFlujo` (`apps/desk/server/comparacion/cruzarExportacion.ts:53`) |
+| C6 | Pinta el flujo y «De otro flujo» solo si llegan, sin calcular | serializacion `routes/indicadoresComparacion.ts:40` (`flujo`) y `:43` (`deOtroFlujo`); en el GET `routes/indicadores.ts:53` |
+| C7 | Rotulos de `NOMBRE_FLUJO` | ninguna: es rotulo, no decision; su fuente es `packages/shared/src/flujos.ts:127` |
+
+### Cierre de lote (cifras en el informe del apply)
+- `npm test`: codigo **0**, 316 ficheros (313 pasan, 3 omitidos), 5.441 pruebas (5.430 pasan, 11 omitidas), 0 fallidas, ningun error, 307 s. Salvedad: (a) 0 fallidas, (b) sin errores, (c) 316 >= 316 y 5.430 >= 5.414 (suben 16 pruebas: 7 + 9).
+- `npm run typecheck`: 0. `npm run lint`: 0, 165 avisos (ninguno nuevo). `npm run build`: 0, `index-eZJekTNg.js` 426.466 B (antes `index-BpbCtGfB.js`, 426.074 B): el bundle cambia, como era de esperar.
+- Medida: `git diff --shortstat --no-renames a72ea5c1` = 215 inserciones y 29 borrados (244; las 88 lineas de esta seccion y las 12 marcas de `tasks.md` incluidas) + 0 lineas sin trackear = 244, bajo 600 y 720. Sin la reconciliacion (L2.13, del orquestador).
+
+### Desviaciones del diseno
+- Ninguna. Una decision menor del `.tsx`: el `<select>` lleva `aria-label="Flujo"` y el `title` del diseno; el `<a>` y el `<select>` van juntos en un fragmento dentro de la misma linea 83.

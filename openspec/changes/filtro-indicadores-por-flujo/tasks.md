@@ -57,19 +57,19 @@ partida del lote, válvula 720.
 
 ## Lote L2 — cliente, mutaciones restantes, barrido, reconciliación (~200 × 1,8 = 360 + reconciliación; ≤ 720)
 
-- [ ] L2.1 Línea base: suite en verde con L1b aplicado.
-- [ ] L2.2 ROJO `src/lib/indicadoresUrl.test.ts` (al final): `urlIndicadores('csv', undefined, 'equipo-nuevo')`, sin flujo y con `''` sin `flujo`; `opcionesFlujo` (M7). RQ-KP-33.
-- [ ] L2.3 VERDE `src/lib/indicadoresUrl.ts`: línea 3, `:5`, `:8` en sitio; `opcionesFlujo` tras `:18` (D9).
-- [ ] L2.4 ROJO `src/lib/comparacionExportacion.test.ts` (al final): `urlComparacion(…, 'soporte-remoto')` y la de hoy sin flujo (M9); `vistaComparacion` con y sin `deOtroFlujo`, total incoherente repetido (M11). RQ-KP-33.
-- [ ] L2.5 VERDE `src/lib/comparacionExportacion.ts` en sitio `:4`, `:13`, `:16`, `:56`, `:62`, `:76`; `src/api/client.ts` en sitio `:897`, `:899` (D9).
-- [ ] L2.6 Cableado `.tsx` (sin prueba por decisión F0-00): `src/components/Analisis.tsx` en sitio `:6`, `:75`, `:83`, `:91`; `src/components/ComparacionExportacion.tsx` en sitio `:9`, `:20`. Sólo pintan.
-- [ ] L2.7 Mutación M7: `urlIndicadores` pierde el parámetro → cae `indicadoresUrl.test.ts`.
-- [ ] L2.8 Mutación M9: `urlComparacion` pierde el parámetro → cae `comparacionExportacion.test.ts`.
-- [ ] L2.9 Mutación M11: `vistaComparacion` pinta el cubo sin que venga, o calcula el total → cae «Cubo sólo si llega».
-- [ ] L2.10 **Barrido de la regla de mutación 4 (D12)** sobre los 12 ficheros tocados: (1) `git diff -U0 8a068fe9 -- <fichero>` sólo con trozos en sitio o tras la última línea; (2)
+- [x] L2.1 Línea base: suite en verde con L1b aplicado.
+- [x] L2.2 ROJO `src/lib/indicadoresUrl.test.ts` (al final): `urlIndicadores('csv', undefined, 'equipo-nuevo')`, sin flujo y con `''` sin `flujo`; `opcionesFlujo` (M7). RQ-KP-33.
+- [x] L2.3 VERDE `src/lib/indicadoresUrl.ts`: línea 3, `:5`, `:8` en sitio; `opcionesFlujo` tras `:18` (D9).
+- [x] L2.4 ROJO `src/lib/comparacionExportacion.test.ts` (al final): `urlComparacion(…, 'soporte-remoto')` y la de hoy sin flujo (M9); `vistaComparacion` con y sin `deOtroFlujo`, total incoherente repetido (M11). RQ-KP-33.
+- [x] L2.5 VERDE `src/lib/comparacionExportacion.ts` en sitio `:4`, `:13`, `:16`, `:56`, `:62`, `:76`; `src/api/client.ts` en sitio `:897`, `:899` (D9).
+- [x] L2.6 Cableado `.tsx` (sin prueba por decisión F0-00): `src/components/Analisis.tsx` en sitio `:6`, `:75`, `:83`, `:91`; `src/components/ComparacionExportacion.tsx` en sitio `:9`, `:20`. Sólo pintan.
+- [x] L2.7 Mutación M7: `urlIndicadores` pierde el parámetro → cae `indicadoresUrl.test.ts`.
+- [x] L2.8 Mutación M9: `urlComparacion` pierde el parámetro → cae `comparacionExportacion.test.ts`.
+- [x] L2.9 Mutación M11: `vistaComparacion` pinta el cubo sin que venga, o calcula el total → cae «Cubo sólo si llega».
+- [x] L2.10 **Barrido de la regla de mutación 4 (D12)** sobre los 12 ficheros tocados: (1) `git diff -U0 8a068fe9 -- <fichero>` sólo con trozos en sitio o tras la última línea; (2)
       `git grep -noE "<fichero>:[0-9]+(-[0-9]+)?"`, cada resultado leído contra lo que afirma su frase; (3) pase de abreviadas; (4) detector de `pre-push`.
-- [ ] L2.11 Comprobar que `DEPLOY.md:735` y `DEPLOY.md:744-745` siguen diciendo la verdad de `apps/desk/server/routes/indicadoresComparacion.ts:27-31`, y `routes/indicadores.ts:52` → `openspec/config.yaml:4105`.
-- [ ] L2.12 Tabla de la regla 13 (regla de mutación 3) C1-C6 de D10 con las líneas REALES del servidor tras editar; se pega en `apply-progress.md` y en el verify.
+- [x] L2.11 Comprobar que `DEPLOY.md:735` y `DEPLOY.md:744-745` siguen diciendo la verdad de `apps/desk/server/routes/indicadoresComparacion.ts:27-31`, y `routes/indicadores.ts:52` → `openspec/config.yaml:4105`.
+- [x] L2.12 Tabla de la regla 13 (regla de mutación 3) C1-C6 de D10 con las líneas REALES del servidor tras editar; se pega en `apply-progress.md` y en el verify.
 - [ ] L2.13 `npm run reconcile` (`package.json:20`) regenera `docs/sdd/RECONCILIACION.md`; su diff entra en la medida del lote.
 - [ ] L2.c Cierre de lote L2: X.c; estimación **~360 + diff de la reconciliación (bajo 720)**; `apply-progress.md` con M1-M12 rojas y restauradas.
 

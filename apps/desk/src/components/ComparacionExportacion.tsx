@@ -6,7 +6,7 @@ import { ACEPTA_EXPORTACION, puedeComparar, vistaComparacion } from '../lib/comp
 // F1F-05, RQ-KP-28. Sin prueba por decisión de Gerencia (F0-00): todo lo decidible está en `lib/comparacionExportacion.ts`.
 // Regla invariable 13: este panel NO lee el fichero, NO cruza, NO calcula porcentajes ni valida el periodo; sube el fichero y pinta
 // lo que devuelve el servidor, en tonos neutros y sin meta, semáforo ni veredicto. Sólo se monta a administradores (`Analisis.tsx`).
-export function ComparacionExportacion() {
+export function ComparacionExportacion({ flujo }: { flujo?: string }) {
   const [file, setFile] = useState<File | null>(null)
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
@@ -17,7 +17,7 @@ export function ComparacionExportacion() {
   const comparar = async () => {
     if (!file) return
     setEnviando(true); setError(null); setRespuesta(null)
-    try { setRespuesta(await compararConExportacion(file, { desde, hasta })) }
+    try { setRespuesta(await compararConExportacion(file, { desde, hasta }, flujo)) }
     catch (e) { setError(e instanceof Error ? e.message : String(e)) }
     finally { setEnviando(false) }
   }
