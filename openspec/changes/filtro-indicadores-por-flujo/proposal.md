@@ -73,10 +73,11 @@ El catálogo de equipo nuevo cubre Ingresado, En Proceso, Notificado, Verificaci
 - **Caso 1 · «Equipo nuevo» hoy en un estado de servicio.** Toda alta que no es soporte remoto nace en `Ticket creado`
   (`flujos.ts:138-140`), fuera de ese catálogo: `flujoDelTicket` la da como `servicio` hasta que llega a `Ingresado`.
   Igual un heredado en `Rev./Diagnostico`.
-- **Caso 2 · finalizado.** En `Finalizado` da `equipo-nuevo`; en `Cerrado`, fuera del catálogo, da `servicio`.
+- **Caso 2 · finalizado.** En `Finalizado` los dos candidatos dan `equipo-nuevo`: es el mismo ticket del caso 1, que
+  con `flujoDelTicket` contó como `servicio` en `Ticket creado`. Un heredado en `Por Facturar` da `servicio`.
 
-Comprobado por lectura; el orquestador lo ejecutó el 2026-10-22 con el mismo resultado. Con `flujoDelTicket`, la misma
-descarga del mismo periodo cuenta poblaciones distintas según el día, y un histórico en `Cerrado` sale como servicio: su
+Ejecutado el 2026-10-22 sobre los 26 estados del registro (`packages/shared/src/estados.ts:112`; `Cerrado` no es uno de
+ellos). Con `flujoDelTicket`, la misma descarga del mismo periodo cuenta poblaciones distintas según el día: su
 condición de estado es una guarda de **enrutado** (`flujos.ts:50-55`), no una definición de población. **S-1:** función
 nueva al final de `flujos.ts` que consume los dos `esClasificacion*` y devuelve `Flujo` (sin clasificación reconocida,
 `servicio`). Que las alarmas usen `flujoDelTicket` (`apps/desk/server/db/sla.ts:49`) es coherente: miran el estado de
@@ -143,7 +144,7 @@ Archivar no las da por hechas (regla del ciclo 1). Ninguna describe trabajo de u
 | M3 | Un flujo inválido pasa sin `400` | `otro`, vacío, repetido y `Servicio` → `400` que nombra «flujo» |
 | M4 | Un ticket de otro flujo cae en «sólo en el fichero» o «fuera del periodo» | Comparación con uno de otro flujo dentro del periodo y otro fuera |
 | M5 | El CSV ignora el recorte | `GET` csv con `flujo` |
-| M6 | El predicado se cambia por `flujoDelTicket` | Los dos casos de §5: «Equipo nuevo» en `Ticket creado` y en `Cerrado` salen con `flujo=equipo-nuevo` |
+| M6 | El predicado se cambia por `flujoDelTicket` | §5: «Equipo nuevo» en `Ticket creado` y heredado en `Por Facturar` salen con `flujo=equipo-nuevo` |
 | M7 | `urlIndicadores` pierde el parámetro | `apps/desk/src/lib/indicadoresUrl.test.ts` |
 | M8 | Posición (regla 1): flujo antes que periodo; en el `POST`, flujo detrás de «falta el fichero» | Petición con las dos cosas mal a la vez, en cada ruta |
 | M9 | `urlComparacion` pierde el parámetro | `apps/desk/src/lib/comparacionExportacion.test.ts` |
