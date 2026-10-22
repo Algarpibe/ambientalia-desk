@@ -140,3 +140,96 @@ Tres pasadas de `npm test` sobre el contenido de `88641e65` (las dos primeras so
 y el usuario decidió asentar con tres condiciones, que se comprueban en CADA pasada de L1b, L2, verify y archive: (a) 0 pruebas fallidas; (b) los
 únicos errores son «Timeout calling "onTaskUpdate"»; (c) ficheros de prueba ≥ 316 más los que añada la tanda, y pruebas que sólo suben
 (5.337 en `126b5ab0`, 5.387 en L1a). Si falla cualquiera, se para. typecheck 0; lint 0 (165 avisos); build 0 (`index-BpbCtGfB.js`, 426.074 B).
+
+
+## Lote L1b (POST, cruce por flujo, clasificacion de los sin cruzar, forma)
+
+Base del lote: `e123e9d0`. Modo: Strict TDD. Sin commit. Tareas hechas: L1b.1 a L1b.12 (la L1b.c es del orquestador).
+
+### Linea base (L1b.1)
+- Arbol limpio sobre `e123e9d0` (`git status` vacio). Los tres ficheros de prueba tocados, antes de editar: 62/62 verdes (`cruzarExportacion.test.ts` 19, `ticketsPorId.test.ts` 7, `indicadoresComparacion.test.ts` 36).
+- Las tres caracterizaciones de M2 de L1a (sha256 literales) siguen en verde tras L1b.7 sin tocarlas: el POST sin `flujo` da los bytes de hoy.
+
+### TDD Cycle Evidence
+| Tarea | Fichero de prueba | Capa | Red de seguridad | ROJO | VERDE | TRIANGULAR | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| L1b.2-3 | `server/comparacion/cruzarExportacion.test.ts` | Unitaria (pura) | 19/19 | fichero entero sin cargar | 30/30 | 2 flujos, 26 estados x 2 clasificaciones, `null`, grafia sin normalizar | n/a |
+| L1b.4-5 | `server/db/ticketsPorId.test.ts` | Integracion (pg-mem) | 7/7 | 6 rojas | 13/13 | bloques de 2, 5001 ID, vacia, repetidos | n/a |
+| L1b.6-7 | `server/routes/indicadoresComparacion.test.ts` | Integracion (ruta) | 36/36 | 16 rojas | 57/57 | 3 flujos, 4 valores malos, sin fichero, fichero sin ID, con y sin flujo | n/a |
+
+### ROJOS (salida de vitest copiada)
+#### L1b.2 (`cruzarPorFlujo` inexistente)
+    FAIL  apps/desk/server/comparacion/cruzarExportacion.test.ts [ apps/desk/server/comparacion/cruzarExportacion.test.ts ]
+    TypeError: (0 , cruzarPorFlujo) is not a function
+     Test Files  1 failed (1)
+          Tests  no tests
+#### L1b.4 (`ticketsConClasificacion` inexistente): 5 de las 6 rojas
+    × ticketsConClasificacion · número y clasificación por ID (D7) > devuelve Map<id, { numero, clasificacion }> sólo de los ID que existen; la clasificación va cruda y null si no hay
+    → (0 , ticketsConClasificacion) is not a function
+    × ticketsConClasificacion · número y clasificación por ID (D7) > lista vacía: mapa vacío y NINGUNA sentencia
+    → (0 , ticketsConClasificacion) is not a function
+#### L1b.6 (la ruta aun no valida ni cruza por flujo): 16 rojas
+    × RQ-KP-32 · el POST con flujo: los cubos y la forma (M4, M6) > Otro flujo dentro del periodo: el SR del periodo va a `deOtroFlujo`, no a «fuera del periodo», y el flujo sale tras `periodo`
+    → expected [ 'periodo', 'fichero', 'cruce', …(1) ] to deeply equal [ 'periodo', 'flujo', 'fichero', …(2) ]
+    × RQ-KP-32 · el POST con flujo: los cubos y la forma (M4, M6) > con flujo, `deOtroFlujo` está siempre, aunque vacío
+    → expected undefined to deeply equal { total: +0, tickets: [] }
+    × RQ-KP-29 · el parámetro flujo del POST y su orden (M3, M8) > Valor desconocido (flujo=otro): 400 con MENSAJE_FLUJO y ninguna consulta de datos
+    → expected 200 to be 400 // Object.is equality
+    × RQ-KP-29 · el parámetro flujo del POST y su orden (M3, M8) > Flujo antes que «falta el fichero» y que el lector: flujo=otro sin fichero → MENSAJE_FLUJO
+    → expected { Object (error) } to deeply equal { Object (error) }
+    × RQ-KP-32 · las mismas consultas con y sin flujo (M10) > Mismas consultas: con y sin flujo son cuatro de datos más UNA por bloque de «ID» sin cruzar; sólo SELECT, y sólo con flujo se lee la clasificación por ID
+    → expected 'SELECT id, number FROM tickets WHERE …' to match /\bclassification\b/
+    Tests  16 failed | 41 passed (57)
+
+### Mutaciones (L1b.8 a L1b.12): mutar, ver rojo, revertir, mismo sha256
+Scripts de sustitucion literal fuera del repositorio. Las sumas de `routes/indicadoresComparacion.ts` y `comparacion/cruzarExportacion.ts` no cambiaron en ninguna.
+#### L1b.8 · M3 — el POST deja pasar `flujo=otro` (`if (!fl.ok && false)`): 6 rojas
+Fichero `apps/desk/server/routes/indicadoresComparacion.ts`; sha256 antes = despues = `85ea3bc80316f5ee7f03ec4f73f8e8dc32a98c548aeb0a13da8898122321655b` (IGUAL).
+    × RQ-KP-29 · el parámetro flujo del POST y su orden (M3, M8) > Valor desconocido (flujo=otro): 400 con MENSAJE_FLUJO y ninguna consulta de datos
+    → expected 200 to be 400 // Object.is equality
+    × RQ-KP-29 · el parámetro flujo del POST y su orden (M3, M8) > vacío (flujo=): 400 con MENSAJE_FLUJO y ninguna consulta de datos
+    → expected 200 to be 400 // Object.is equality
+#### L1b.9 · M4 — se recorta `entradas.tickets` antes de cruzar (`recortarPorFlujo(entradas, flujo).tickets`): 2 rojas
+Mismo fichero y mismas sumas (IGUAL). El cuerpo sale igual (el SR del periodo se reconoce igual por su clasificacion al preguntar por ID): lo que cambia son los «ID» que se preguntan, y eso lo fijan dos pruebas (ver desviaciones).
+    × RQ-KP-32 · el POST con flujo: los cubos y la forma (M4, M6) > Otro flujo dentro del periodo: el SR del periodo va a `deOtroFlujo`, no a «fuera del periodo», y el flujo sale tras `periodo`
+    → expected [ '222', '444', '555', '666' ] to not include '222'
+    × RQ-KP-32 · las mismas consultas con y sin flujo (M10) > los «ID» que se preguntan por separado son los mismos con y sin flujo: los del fichero que no están en NINGÚN flujo del periodo
+    → expected [ '222', '444', '555', '666' ] to deeply equal [ '444', '555', '666' ]
+#### L1b.9b · M4 (extra) — `cruzarPorFlujo` ignora `existentes` (`const e = undefined`): 6 rojas, entre ellas «Otro flujo fuera del periodo»
+Fichero `apps/desk/server/comparacion/cruzarExportacion.ts`; sha256 antes = despues = `abda23ddac584748d5eb6c1ddfad5c6c3d8b3a6f963f9be11c72f213d90c0439` (IGUAL).
+    × RQ-KP-32 · el POST con flujo: los cubos y la forma (M4, M6) > Otro flujo fuera del periodo: el servicio de fuera va a `deOtroFlujo` y el equipo nuevo de fuera a «fuera del periodo»
+    → expected { total: 1, tickets: [ { …(2) } ] } to deeply equal { total: 2, …(1) }
+    × cruzarPorFlujo · los cubos con flujo (M4) > el equipo nuevo de fuera es «fuera del periodo» y el ausente de Desk es «sólo en el fichero»; ninguno es «de otro flujo»
+    → expected [ { id: '10', numero: 3010 }, …(1) ] to deeply equal [ { id: '11', numero: 3011 } ]
+#### L1b.10 · M6 — `cruzarPorFlujo` usa `flujoDelTicket` con el estado del ticket: 9 rojas
+Mismo fichero y mismas sumas (IGUAL).
+    × cruzarPorFlujo · el flujo no depende del estado (M6) > «Equipo nuevo» cruza con equipo-nuevo en cada uno de los estados del registro, también `Ticket creado`, `Por Facturar` y `Rev./Diagnostico`
+    → En Espera de Repuestos: expected [] to deeply equal [ '7' ]
+    × cruzarPorFlujo · el flujo no depende del estado (M6) > el mismo ticket con otro flujo pedido sale `deOtroFlujo` en cada estado: el estado no lo rescata
+    → Ticket creado: expected [ { id: '7', numero: 7, …(6) } ] to deeply equal []
+    × RQ-KP-32 · el POST con flujo: los cubos y la forma (M4, M6) > M6 · el estado no decide: «Equipo nuevo» en `Ticket creado` y en `Por Facturar` es de equipo nuevo, y «Soporte remoto» en `Rev./Diagnostico` de soporte remoto
+    → expected +0 to be 2 // Object.is equality
+#### L1b.11 · M8 — `validarFlujo` detras de «falta el fichero»: 1 roja
+Fichero `apps/desk/server/routes/indicadoresComparacion.ts`; sha256 antes = despues = `85ea3bc80316f5ee7f03ec4f73f8e8dc32a98c548aeb0a13da8898122321655b` (IGUAL).
+    × RQ-KP-29 · el parámetro flujo del POST y su orden (M3, M8) > Flujo antes que «falta el fichero» y que el lector: flujo=otro sin fichero → MENSAJE_FLUJO
+    → expected { Object (error) } to deeply equal { Object (error) }
+#### L1b.12 · M10 — llamar siempre a `ticketsConClasificacion`: 1 roja; y consulta de clasificaciones aparte (`numerosDeTickets` mas `ticketsConClasificacion`): 3 rojas
+Mismo fichero y misma suma `85ea3bc8…` en las dos (IGUAL).
+    × RQ-KP-32 · las mismas consultas con y sin flujo (M10) > Mismas consultas: con y sin flujo son cuatro de datos más UNA por bloque de «ID» sin cruzar; sólo SELECT, y sólo con flujo se lee la clasificación por ID
+    → expected 'SELECT id, number, classification FRO…' not to match /\bclassification\b/
+    → (consulta aparte) expected [ …(6) ] to have a length of 5 but got 6
+
+### Cierre de lote (cifras en el informe del apply)
+- `npm test`: 316 ficheros (313 pasan, 3 omitidos); 5.425 pruebas (5.414 pasan, 11 omitidas), 0 fallan; unico error `Timeout calling "onTaskUpdate"` (1 error); codigo 1; 334 s. Condiciones de la salvedad: (a) 0 fallidas, (b) solo ese error, (c) 316 >= 316 ficheros y 5.414 >= 5.387 pruebas pasadas (suben 38 pruebas nuevas: 11 + 6 + 21).
+- `npm run typecheck`: 0. `npm run lint`: 0, 165 avisos (ninguno nuevo).
+- `git diff -U0 e123e9d0`: produccion solo en sitio o tras la ultima linea (`indicadoresComparacion.ts` -3, -8,4, -15, -26,3, -34,2, -40, -43 y +52,9; `cruzarExportacion.ts` -2 y +42,27; `ticketsPorId.ts` +20,14; `indicadoresExportacion.ts` -16 y -21); pruebas solo anadidas al final.
+
+### Desviaciones del diseno
+- Ninguna de codigo. `cruzarPorFlujo` decide el flujo de un «ID» del periodo por `clasificaciones` y el de uno de fuera por `existentes`, como dice D6; `flujoDe` mira primero si el ticket es del periodo.
+- Mutacion M4 (L1b.9), tal como la describen las tareas, es OBSERVACIONALMENTE EQUIVALENTE en el cuerpo: el SR del periodo recortado cae en `sinCruzar`, se pregunta por ID y su clasificacion lo manda a `deOtroFlujo` igual. Lo que cambia son los «ID» de la sentencia por bloque (aparece el `222`). Se anadio esa asercion a «Otro flujo dentro del periodo» y a la prueba de los mismos «ID»; esas dos son las que caen. «Otro flujo fuera del periodo» se mutó aparte (L1b.9b: ignorar `existentes`).
+
+### Salvedad de `npm test` en el cierre de L1b (pasada del orquestador)
+Una pasada sobre el árbol de L1b, código **1**: 316 ficheros (313 pasan, 3 omitidos), 5.425 pruebas (5.414 pasan, 11 omitidas), **0 fallidas**,
+2 errores, los dos `[vitest-worker]: Timeout calling "onTaskUpdate"`, 313 s. Condiciones del usuario: (a) 0 fallidas, sí; (b) sólo ese error, sí;
+(c) 316 ≥ 316 ficheros y 5.425 ≥ 5.387 pruebas, sí. La pasada del agente dio lo mismo con 1 error (334 s). typecheck 0; lint 0 (165 avisos);
+build 0 (`index-BpbCtGfB.js`, 426.074 B, sin cambio: el cliente aún no usa lo nuevo).

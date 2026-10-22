@@ -38,21 +38,21 @@ partida del lote, válvula 720.
 
 ## Lote L1b — POST, cruce por flujo, clasificación de los sin cruzar, forma (~215 × 1,8 = 390; ≤ 720)
 
-- [ ] L1b.1 Línea base: suite en verde con L1a aplicado; `git diff` vacío entre el commit de L1a y el árbol.
-- [ ] L1b.2 ROJO `server/comparacion/cruzarExportacion.test.ts` (al final): `cruzarPorFlujo` — SR del periodo y servicio fuera → `deOtroFlujo`; EN fuera → `fueraDelPeriodo`;
+- [x] L1b.1 Línea base: suite en verde con L1a aplicado; `git diff` vacío entre el commit de L1a y el árbol.
+- [x] L1b.2 ROJO `server/comparacion/cruzarExportacion.test.ts` (al final): `cruzarPorFlujo` — SR del periodo y servicio fuera → `deOtroFlujo`; EN fuera → `fueraDelPeriodo`;
       ausente → `soloEnFichero`; `soloEnDesk` y `numeroDistinto` sólo del flujo; invariante de D6 (M4, M6). RQ-KP-32.
-- [ ] L1b.3 VERDE `server/comparacion/cruzarExportacion.ts`: `:2` en sitio; `TicketExistente`, `CruceRepartido`, `cruzarPorFlujo` tras `:41` (D6).
-- [ ] L1b.4 ROJO `server/db/ticketsPorId.test.ts` (al final): `ticketsConClasificacion` — bloques, parámetros, sólo `SELECT`, lista vacía sin sentencia (M10). RQ-KP-32.
-- [ ] L1b.5 VERDE `server/db/ticketsPorId.ts`: `ticketsConClasificacion` tras `:19` (D7).
-- [ ] L1b.6 ROJO `server/routes/indicadoresComparacion.test.ts` (al final): M3 (cuatro valores malos, sin consultas), M4 (cubos e invariante), M8 (periodo antes que flujo;
+- [x] L1b.3 VERDE `server/comparacion/cruzarExportacion.ts`: `:2` en sitio; `TicketExistente`, `CruceRepartido`, `cruzarPorFlujo` tras `:41` (D6).
+- [x] L1b.4 ROJO `server/db/ticketsPorId.test.ts` (al final): `ticketsConClasificacion` — bloques, parámetros, sólo `SELECT`, lista vacía sin sentencia (M10). RQ-KP-32.
+- [x] L1b.5 VERDE `server/db/ticketsPorId.ts`: `ticketsConClasificacion` tras `:19` (D7).
+- [x] L1b.6 ROJO `server/routes/indicadoresComparacion.test.ts` (al final): M3 (cuatro valores malos, sin consultas), M4 (cubos e invariante), M8 (periodo antes que flujo;
       `flujo=otro` sin fichero → `MENSAJE_FLUJO`), M10 (mixto con y sin flujo: 5 sentencias), `flujo` y `deOtroFlujo` sólo con flujo. RQ-KP-29, -32.
-- [ ] L1b.7 VERDE `server/routes/indicadoresComparacion.ts` en sitio `:3`, `:8-11`, `:15`, `:26-28`, `:34`, `:35`, `:40`, `:43`; `cruceDeLaPeticion` tras `:51`;
+- [x] L1b.7 VERDE `server/routes/indicadoresComparacion.ts` en sitio `:3`, `:8-11`, `:15`, `:26-28`, `:34`, `:35`, `:40`, `:43`; `cruceDeLaPeticion` tras `:51`;
       `packages/shared/src/indicadoresExportacion.ts` en sitio `:16`, `:21` (D3, D6-D8).
-- [ ] L1b.8 Mutación M3: el POST deja pasar `flujo=otro` → cae «Valor desconocido» en el POST.
-- [ ] L1b.9 Mutación M4: recortar `entradas.tickets` antes de cruzar → caen «Otro flujo dentro del periodo» y «Otro flujo fuera del periodo».
-- [ ] L1b.10 Mutación M6: `cruzarPorFlujo` usa `flujoDelTicket` → cae la tabla de estados de L1b.2.
-- [ ] L1b.11 Mutación M8 (regla 1): `validarFlujo` detrás de «falta el fichero» (`:29`) → cae «Flujo antes que "falta el fichero"».
-- [ ] L1b.12 Mutación M10: llamar siempre a `ticketsConClasificacion`, o una consulta de clasificaciones aparte → cae «Mismas consultas».
+- [x] L1b.8 Mutación M3: el POST deja pasar `flujo=otro` → cae «Valor desconocido» en el POST.
+- [x] L1b.9 Mutación M4: recortar `entradas.tickets` antes de cruzar → caen «Otro flujo dentro del periodo» y «Otro flujo fuera del periodo».
+- [x] L1b.10 Mutación M6: `cruzarPorFlujo` usa `flujoDelTicket` → cae la tabla de estados de L1b.2.
+- [x] L1b.11 Mutación M8 (regla 1): `validarFlujo` detrás de «falta el fichero» (`:29`) → cae «Flujo antes que "falta el fichero"».
+- [x] L1b.12 Mutación M10: llamar siempre a `ticketsConClasificacion`, o una consulta de clasificaciones aparte → cae «Mismas consultas».
 - [ ] L1b.c Cierre de lote L1b: X.c; estimación **~390 (bajo 720)**; `apply-progress.md`.
 
 ## Lote L2 — cliente, mutaciones restantes, barrido, reconciliación (~200 × 1,8 = 360 + reconciliación; ≤ 720)
