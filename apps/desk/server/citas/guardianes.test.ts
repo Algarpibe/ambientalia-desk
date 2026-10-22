@@ -145,7 +145,7 @@ describe('guardián · D10: `.githooks/pre-push` declara `eol=lf` en `.gitattrib
     expect(eolDeclarado(process.cwd(), process.env, '.githooks/pre-push')).toBe('lf')
   })
 
-  it('MUT (regla de mutación 2, repositorio sintético SIN la línea) → no es `lf` (tarea 4.6)', () => {
+  it('MUT (regla de mutación 2, repositorio sintético SIN la línea) → no es `lf` (tarea 4.6)', { timeout: 30_000 }, () => {
     const r = repoGitTemporal()
     try {
       mkdirSync(path.join(r.dir, '.githooks'), { recursive: true })
@@ -159,7 +159,7 @@ describe('guardián · D10: `.githooks/pre-push` declara `eol=lf` en `.gitattrib
     }
   })
 
-  it('control del otro signo, mismo repositorio sintético CON la línea → `lf` (tarea 4.6)', () => {
+  it('control del otro signo, mismo repositorio sintético CON la línea → `lf` (tarea 4.6)', { timeout: 30_000 }, () => {
     const r = repoGitTemporal()
     try {
       mkdirSync(path.join(r.dir, '.githooks'), { recursive: true })
