@@ -34,7 +34,7 @@ partida del lote, válvula 720.
 - [x] L1a.14 Mutación M8 (regla 1): `validarFlujo` antes de `validarPeriodo` en el GET → cae «Periodo antes que flujo».
 - [x] L1a.15 Mutación M10: `clasificaciones` por una consulta aparte → cae «Cuatro consultas» (`indicadores.test.ts:58` y el par de la ruta).
 - [x] L1a.16 Mutación M12 (regla 2): comparar la clasificación sin normalizar → cae «Otra mayúscula» y «Ticket sin clasificación».
-- [ ] L1a.c Cierre de lote L1a: X.c; estimación **~430 (bajo 720)**; `apply-progress.md` con rojos, mutaciones y medida.
+- [x] L1a.c Cierre de lote L1a: X.c; estimación **~430 (bajo 720)**; `apply-progress.md` con rojos, mutaciones y medida.
 
 ## Lote L1b — POST, cruce por flujo, clasificación de los sin cruzar, forma (~215 × 1,8 = 390; ≤ 720)
 
@@ -53,7 +53,7 @@ partida del lote, válvula 720.
 - [x] L1b.10 Mutación M6: `cruzarPorFlujo` usa `flujoDelTicket` → cae la tabla de estados de L1b.2.
 - [x] L1b.11 Mutación M8 (regla 1): `validarFlujo` detrás de «falta el fichero» (`:29`) → cae «Flujo antes que "falta el fichero"».
 - [x] L1b.12 Mutación M10: llamar siempre a `ticketsConClasificacion`, o una consulta de clasificaciones aparte → cae «Mismas consultas».
-- [ ] L1b.c Cierre de lote L1b: X.c; estimación **~390 (bajo 720)**; `apply-progress.md`.
+- [x] L1b.c Cierre de lote L1b: X.c; estimación **~390 (bajo 720)**; `apply-progress.md`.
 
 ## Lote L2 — cliente, mutaciones restantes, barrido, reconciliación (~200 × 1,8 = 360 + reconciliación; ≤ 720)
 
@@ -70,8 +70,8 @@ partida del lote, válvula 720.
       `git grep -noE "<fichero>:[0-9]+(-[0-9]+)?"`, cada resultado leído contra lo que afirma su frase; (3) pase de abreviadas; (4) detector de `pre-push`.
 - [x] L2.11 Comprobar que `DEPLOY.md:735` y `DEPLOY.md:744-745` siguen diciendo la verdad de `apps/desk/server/routes/indicadoresComparacion.ts:27-31`, y `routes/indicadores.ts:52` → `openspec/config.yaml:4105`.
 - [x] L2.12 Tabla de la regla 13 (regla de mutación 3) C1-C6 de D10 con las líneas REALES del servidor tras editar; se pega en `apply-progress.md` y en el verify.
-- [ ] L2.13 `npm run reconcile` (`package.json:20`) regenera `docs/sdd/RECONCILIACION.md`; su diff entra en la medida del lote.
-- [ ] L2.c Cierre de lote L2: X.c; estimación **~360 + diff de la reconciliación (bajo 720)**; `apply-progress.md` con M1-M12 rojas y restauradas.
+- [x] L2.13 `npm run reconcile` (`package.json:20`) regenera `docs/sdd/RECONCILIACION.md`; su diff entra en la medida del lote.
+- [x] L2.c Cierre de lote L2: X.c; estimación **~360 + diff de la reconciliación (bajo 720)**; `apply-progress.md` con M1-M12 rojas y restauradas.
 
 ## Tareas de persona — fuera del recuento
 
