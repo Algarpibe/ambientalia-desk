@@ -894,9 +894,9 @@ export async function confirmarRotulado(id: string): Promise<RemisionConFotos> {
 /** Comparación de los nueve indicadores con la exportación de Zoho (F1F-05, RQ-KP-28). Sólo transporte: sube el fichero tal cual y el periodo tal como se escribió; lo decide el servidor. */
 import { urlComparacion, mensajeDeError } from '../lib/comparacionExportacion'
 import type { ComparacionExportacion as RespuestaComparacion } from '@ambientalia/shared'
-export async function compararConExportacion(file: File, periodo: { desde?: string; hasta?: string }): Promise<RespuestaComparacion> {
+export async function compararConExportacion(file: File, periodo: { desde?: string; hasta?: string }, flujo?: string): Promise<RespuestaComparacion> {
   const fd = new FormData(); fd.append('file', file)
-  const res = await fetch(urlComparacion(periodo), { method: 'POST', credentials: 'include', body: fd })
+  const res = await fetch(urlComparacion(periodo, flujo), { method: 'POST', credentials: 'include', body: fd })
   const cuerpo: unknown = await res.json().catch(() => null)
   if (!res.ok) throw new Error(mensajeDeError(res.status, cuerpo))
   return cuerpo as RespuestaComparacion

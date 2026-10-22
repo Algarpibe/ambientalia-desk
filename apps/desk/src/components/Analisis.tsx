@@ -3,7 +3,7 @@ import type { Analisis as AnalisisData, AnalisisPunto, AnalisisMes } from '@ambi
 import { useAsync } from '../hooks/useAsync'
 import { fetchAnalisis } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import { urlIndicadores, mostrarDescargaIndicadores } from '../lib/indicadoresUrl'; import { ComparacionExportacion } from './ComparacionExportacion'
+import { urlIndicadores, mostrarDescargaIndicadores, opcionesFlujo } from '../lib/indicadoresUrl'; import { ComparacionExportacion } from './ComparacionExportacion'
 
 const RANGOS: { key: string; label: string }[] = [
   { key: 'mes', label: 'Último mes' },
@@ -72,7 +72,7 @@ function Tendencia({ data }: { data: AnalisisMes[] }) {
 export function Analisis(props: { onClose: () => void }) {
   void props
 
-  const [range, setRange] = useState('trimestre')
+  const [range, setRange] = useState('trimestre'); const [flujo, setFlujo] = useState('')
   const { user } = useAuth()
   const { data, loading, error } = useAsync<AnalisisData>(() => fetchAnalisis(range), [range])
 
@@ -80,7 +80,7 @@ export function Analisis(props: { onClose: () => void }) {
     <div className="fixed inset-x-0 bottom-0 top-[48px] z-20 bg-[#f4f5f7] flex flex-col">
       <div className="bg-[#2C2E3E] text-white h-[48px] flex items-center px-4 gap-3 shrink-0">
         <div className="ml-auto flex gap-1">
-          {mostrarDescargaIndicadores(user) && <a href={urlIndicadores('csv')} download title="Tabla de los nueve indicadores por ticket" className="px-3 py-1 rounded text-[12px] bg-white/10 text-white/80 hover:bg-white/20 mr-2">Descargar indicadores (CSV)</a>}
+          {mostrarDescargaIndicadores(user) && <><select value={flujo} onChange={(e) => setFlujo(e.target.value)} aria-label="Flujo" title="Flujo de la descarga y de la comparación" className="px-2 py-1 rounded text-[12px] bg-white/10 text-white/80 mr-2">{opcionesFlujo().map((o) => <option key={o.valor} value={o.valor} className="text-slate-800">{o.etiqueta}</option>)}</select><a href={urlIndicadores('csv', undefined, flujo)} download title="Tabla de los nueve indicadores por ticket" className="px-3 py-1 rounded text-[12px] bg-white/10 text-white/80 hover:bg-white/20 mr-2">Descargar indicadores (CSV)</a></>}
           {RANGOS.map((r) => (
             <button key={r.key} onClick={() => setRange(r.key)} className={`px-3 py-1 rounded text-[12px] ${range === r.key ? 'bg-white text-slate-800 font-bold' : 'bg-white/10 text-white/80 hover:bg-white/20'}`}>{r.label}</button>
           ))}
@@ -88,7 +88,7 @@ export function Analisis(props: { onClose: () => void }) {
       </div>
       {error && <div className="bg-red-50 text-red-700 text-[12px] px-4 py-2">{error}</div>}
       <div className="flex-1 overflow-auto p-6">
-        {loading && !data && <div className="text-center text-slate-400 text-[13px]">Cargando…</div>}{mostrarDescargaIndicadores(user) && <ComparacionExportacion />}
+        {loading && !data && <div className="text-center text-slate-400 text-[13px]">Cargando…</div>}{mostrarDescargaIndicadores(user) && <ComparacionExportacion flujo={flujo} />}
         {data && (
           <div className="max-w-[1100px] mx-auto flex flex-col gap-4">
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">

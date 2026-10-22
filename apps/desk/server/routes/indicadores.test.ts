@@ -239,3 +239,139 @@ describe('RQ-KP-22 y RQ-KP-14 · el 55 por la ruta', () => {
     expect((await db.query('SELECT id FROM public.encuesta_respuestas ORDER BY id')).rows).toEqual(antes)
   })
 })
+
+// ── filtro-indicadores-por-flujo (F1F-05, L1a): caracterización de M2 y filtro por flujo (RQ-KP-29 y -31) ─────────────────────────────
+// La caracterización de «sin flujo» se escribió ANTES de tocar producción, con el `sha256` del cuerpo de ese día (RQ-KP-31, «bytes de hoy»).
+import { createHash } from 'node:crypto'
+
+const sha256 = (texto: string): string => createHash('sha256').update(texto).digest('hex')
+/** Estados que SEPARAN `flujoDelTicket` del predicado por clasificación (M6): ninguno es de equipo nuevo ni de soporte remoto. */
+async function cuatroFlujos(): Promise<void> {
+  const alta = (id: string, n: number, estado: string, clasificacion: string | null) =>
+    db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, classification) VALUES ($1, $2, 's', $3, '2026-10-02T15:00:00Z', $4, $5)", [id, n, estado, `ST-${n}`, clasificacion])
+  await alta('en', 1, 'Ticket creado', 'Equipo nuevo'); await alta('sr', 2, 'Rev./Diagnostico', 'Soporte remoto')
+  await alta('sv', 3, 'Por Facturar', 'Servicio'); await alta('nu', 4, 'Ticket creado', null)
+}
+
+describe('M2 · caracterización sin flujo: los bytes de hoy (escrita antes de la producción)', () => {
+  it('GET json sin parámetros: el cuerpo es idéntico byte a byte y las claves van en su orden', async () => {
+    await cuatroFlujos()
+    const res = await request(appWith().app).get(RUTA).set('Cookie', await adminCookie())
+    expect(res.status).toBe(200)
+    expect(Object.keys(res.body)).toEqual(['periodo', 'tickets', 'comparacion'])
+    expect(res.body.tickets.map((t: { ticketId: string }) => t.ticketId)).toEqual(['en', 'sr', 'sv', 'nu'])
+    expect(sha256(res.text)).toBe('0975f415450ecfb42cb419fa9eac640c80b143f0278940792c6e30db603992cf')
+  })
+  it('GET csv sin parámetros: el cuerpo es idéntico byte a byte y el nombre es el de hoy', async () => {
+    await cuatroFlujos()
+    const res = await request(appWith().app).get(RUTA).query({ formato: 'csv' }).set('Cookie', await adminCookie())
+    expect(res.status).toBe(200)
+    expect(res.headers['content-disposition']).toMatch(/^attachment; filename="indicadores-\d{4}-\d{2}-\d{2}\.csv"$/)
+    expect(res.text.slice(1).split('\r\n').filter((l) => l !== '')).toHaveLength(1 + 4 * 9)
+    expect(sha256(res.text)).toBe('c83ef69af8de973b0d0fa21bf968a335084516482de0cd4790b0bc873ba88be2')
+  })
+})
+
+import { validarPeriodo, MENSAJE_FLUJO } from '../indicadores'
+
+const idsDe = (res: { body: { tickets: Array<{ ticketId: string }> } }): string[] => res.body.tickets.map((t) => t.ticketId)
+const pedirFlujo = async (q: Record<string, string>, cookie?: string) => request(appWith().app).get(RUTA).query(q).set('Cookie', cookie ?? await adminCookie())
+
+describe('RQ-KP-31 · el recorte del GET por flujo', () => {
+  it('El recorte filtra: flujo=equipo-nuevo sobre los tres flujos trae sólo los suyos y la clave `flujo` tras `periodo`', async () => {
+    await cuatroFlujos()
+    const res = await pedirFlujo({ flujo: 'equipo-nuevo' })
+    expect(res.status).toBe(200)
+    expect(Object.keys(res.body)).toEqual(['periodo', 'flujo', 'tickets', 'comparacion'])
+    expect(res.body.flujo).toBe('equipo-nuevo')
+    expect(idsDe(res)).toEqual(['en'])
+  })
+  it.each([['servicio', ['sv', 'nu']], ['soporte-remoto', ['sr']]] as const)('los tres valores válidos dan 200: flujo=%s trae %j', async (flujo, ids) => {
+    await cuatroFlujos()
+    const res = await pedirFlujo({ flujo })
+    expect(res.status).toBe(200)
+    expect(res.body.flujo).toBe(flujo)
+    expect(idsDe(res)).toEqual(ids)
+  })
+  it('la comparación sale de las filas recortadas: el valor de Zoho de un ticket de servicio no cuenta en el resumen de equipo nuevo', async () => {
+    await cuatroFlujos()
+    await db.query("UPDATE tickets SET fecha_cotizacion = '2026-10-01', fecha_orden_venta = '2026-10-04', custom_fields = '{\"Tiempo de orden de Venta\": 3}' WHERE id = 'sv'")
+    const cookie = await adminCookie()
+    const todos = (await pedirFlujo({}, cookie)).body.comparacion
+    const recortado = (await pedirFlujo({ flujo: 'equipo-nuevo' }, cookie)).body.comparacion
+    expect(todos).toMatchObject({ comparable: true, mensaje: null })
+    expect(recortado).toMatchObject({ comparable: false, mensaje: 'sin valor de Zoho con que comparar' })
+  })
+  it('Ticket sin clasificación (M12): «Equipo Nuevo» y NULL en el periodo salen cada uno en su flujo', async () => {
+    await cuatroFlujos()
+    await db.query("UPDATE tickets SET classification = 'Equipo Nuevo' WHERE id = 'en'")
+    const cookie = await adminCookie()
+    expect(idsDe(await pedirFlujo({ flujo: 'servicio' }, cookie))).toEqual(['sv', 'nu'])
+    expect(idsDe(await pedirFlujo({ flujo: 'equipo-nuevo' }, cookie))).toEqual(['en'])
+  })
+  it('Cuatro consultas con y sin flujo (M10): ambas ejecutan cuatro consultas de datos', async () => {
+    await cuatroFlujos()
+    const cookie = await adminCookie()
+    for (const q of [{ flujo: 'servicio' }, {}]) {
+      const { app, datos, todas } = conEspia()
+      const res = await request(app).get(RUTA).query(q).set('Cookie', cookie)
+      expect(res.status).toBe(200)
+      expect(datos()).toHaveLength(4)
+      expect(noSelect(todas)).toEqual([])
+    }
+  })
+})
+
+describe('RQ-KP-31 · el CSV por flujo (M5)', () => {
+  it('El CSV también filtra: flujo=soporte-remoto da sólo las filas del SR, la cabecera de hoy y el nombre con el flujo', async () => {
+    await cuatroFlujos()
+    const res = await pedirFlujo({ formato: 'csv', flujo: 'soporte-remoto' })
+    expect(res.status).toBe(200)
+    expect(res.headers['content-disposition']).toMatch(/^attachment; filename="indicadores-soporte-remoto-\d{4}-\d{2}-\d{2}\.csv"$/)
+    const lineas = res.text.slice(1).split('\r\n').filter((l) => l !== '')
+    expect(lineas[0]).toBe('ticket_id;codigo_servicio;columna;indicador;unidad;valor;estado;motivo;fuente_hitos;reentrante;sin_finalizar;formula_zoho;valor_zoho')
+    expect(lineas).toHaveLength(1 + 9)
+    expect([...new Set(lineas.slice(1).map((l) => l.split(';')[0]))]).toEqual(['sr'])
+  })
+  it('sin flujo el nombre del CSV es el de hoy, sin sufijo', async () => {
+    await cuatroFlujos()
+    expect((await pedirFlujo({ formato: 'csv' })).headers['content-disposition']).toMatch(/^attachment; filename="indicadores-\d{4}-\d{2}-\d{2}\.csv"$/)
+  })
+})
+
+describe('RQ-KP-29 · el parámetro flujo y su orden (M3, M8)', () => {
+  it.each([['Valor desconocido', 'flujo=otro'], ['vacío', 'flujo='], ['Vacío, repetido y otra grafía: repetido', 'flujo=servicio&flujo=servicio'], ['Vacío, repetido y otra grafía: otra grafía', 'flujo=Servicio']])('%s (%s): 400 con MENSAJE_FLUJO y ninguna consulta de datos', async (_n, qs) => {
+    const { app, datos } = conEspia()
+    const res = await request(app).get(`${RUTA}?${qs}`).set('Cookie', await adminCookie())
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: MENSAJE_FLUJO })
+    expect(datos()).toEqual([])
+  })
+  it('el mismo 400 en CSV, sin consulta de datos', async () => {
+    const { app, datos } = conEspia()
+    const res = await request(app).get(`${RUTA}?formato=csv&flujo=otro`).set('Cookie', await adminCookie())
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: MENSAJE_FLUJO })
+    expect(datos()).toEqual([])
+  })
+  it('Periodo antes que flujo (regla de mutación 1): periodo invertido + flujo=otro → el mensaje del periodo, que no nombra «flujo»', async () => {
+    const { app, datos } = conEspia()
+    const res = await request(app).get(RUTA).query({ desde: '2026-12-31', hasta: '2026-12-01', flujo: 'otro' }).set('Cookie', await adminCookie())
+    const p = validarPeriodo({ desde: '2026-12-31', hasta: '2026-12-01' })
+    expect(p.ok).toBe(false)
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: p.ok ? '' : p.error })
+    expect(res.body.error).not.toContain('flujo')
+    expect(datos()).toEqual([])
+  })
+  it('formato=xml + flujo=otro → el mensaje del formato (el flujo va detrás de todo el periodo)', async () => {
+    const res = await request(appWith().app).get(RUTA).query({ formato: 'xml', flujo: 'otro' }).set('Cookie', await adminCookie())
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('formato')
+    expect(res.body.error).not.toContain('flujo')
+  })
+  it('flujo=otro sin sesión → 401 y sin administrador → 403, no 400', async () => {
+    expect((await request(appWith().app).get(RUTA).query({ flujo: 'otro' })).status).toBe(401)
+    expect((await request(appWith().app).get(RUTA).query({ flujo: 'otro' }).set('Cookie', await userCookie(['Comercial']))).status).toBe(403)
+  })
+})

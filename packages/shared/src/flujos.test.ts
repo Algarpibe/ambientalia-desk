@@ -256,3 +256,45 @@ describe('MODALIDADES y modalidadDelAlta — tabla de D5 (RQ-SR-07/08/09)', () =
     expect((r as { error: string }).error).toContain('modalidad')
   })
 })
+
+// ── filtro-indicadores-por-flujo (F1F-05, L1a): el flujo de un ticket para los indicadores lo decide SU CLASIFICACIÓN (RQ-KP-30, D1/D2) ──
+import { flujoPorClasificacion, FLUJOS, NOMBRE_FLUJO } from './flujos'
+import { ESTADOS } from './estados'
+
+describe('FLUJOS y NOMBRE_FLUJO (D2): la lista sale del registro, sin tercera lista', () => {
+  it('FLUJOS son las claves de CATALOGO_POR_FLUJO, en su orden', () => {
+    expect(FLUJOS).toEqual(['servicio', 'equipo-nuevo', 'soporte-remoto'])
+    expect([...FLUJOS]).toEqual(Object.keys(CATALOGO_POR_FLUJO))
+  })
+  it('NOMBRE_FLUJO sale exportado con un nombre por flujo', () => {
+    expect(NOMBRE_FLUJO).toEqual({ servicio: 'servicio técnico', 'equipo-nuevo': 'equipo nuevo', 'soporte-remoto': 'soporte remoto' })
+  })
+})
+
+describe('flujoPorClasificacion (RQ-KP-30, D1, M12): sólo la clasificación, sin estado', () => {
+  it.each([
+    ['Equipo nuevo', 'equipo-nuevo'], ['Equipo Nuevo', 'equipo-nuevo'], ['  equipo   NUEVO ', 'equipo-nuevo'],
+    ['Soporte remoto', 'soporte-remoto'], ['soporte REMOTO', 'soporte-remoto'],
+    ['Servicio', 'servicio'], ['Equipo nuevo usado', 'servicio'], ['', 'servicio'],
+  ] as const)('«%s» → %s', (clasificacion, esperado) => {
+    expect(flujoPorClasificacion(clasificacion)).toBe(esperado)
+  })
+  it('una clasificación ausente (null o undefined) es servicio', () => {
+    expect(flujoPorClasificacion(null)).toBe('servicio')
+    expect(flujoPorClasificacion(undefined)).toBe('servicio')
+  })
+  it('M6 · enfrentado a flujoDelTicket en los ESTADOS del registro: el predicado no mira el estado y flujoDelTicket sí', () => {
+    expect(ESTADOS).toHaveLength(26)
+    const separados: string[] = []
+    for (const estado of ESTADOS) {
+      for (const [clasificacion, esperado] of [['Equipo nuevo', 'equipo-nuevo'], ['Soporte remoto', 'soporte-remoto'], ['Servicio', 'servicio']] as const) {
+        expect(flujoPorClasificacion(clasificacion), `${clasificacion} en ${estado}`).toBe(esperado)
+        if (flujoDelTicket({ classification: clasificacion, status: estado }) !== esperado) separados.push(`${clasificacion}|${estado}`)
+      }
+    }
+    // Los separa el estado: «Equipo nuevo» en un estado de servicio, y «Soporte remoto» fuera de su catálogo.
+    for (const caso of ['Equipo nuevo|Ticket creado', 'Equipo nuevo|Por Facturar', 'Equipo nuevo|Rev./Diagnostico', 'Soporte remoto|Rev./Diagnostico']) expect(separados).toContain(caso)
+    expect(flujoDelTicket({ classification: 'Equipo nuevo', status: 'Finalizado' })).toBe('equipo-nuevo')
+    expect(flujoPorClasificacion('Equipo nuevo')).toBe('equipo-nuevo')
+  })
+})

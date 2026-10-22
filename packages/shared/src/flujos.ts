@@ -123,8 +123,8 @@ const ESTADOS_DEL_CATALOGO_SOPORTE_REMOTO = new Set<string>(
   TRANSITIONS_SOPORTE_REMOTO.flatMap((t) => [...t.from, t.to]),
 )
 
-/** El nombre humano de cada flujo, para el `409` de la guarda 3. Un cuarto flujo sin nombre rompe `tsc`. */
-const NOMBRE_FLUJO: Record<Flujo, string> = {
+/** El nombre humano de cada flujo, para el `409` de la guarda 3 y el selector de Análisis. Un cuarto flujo sin nombre rompe `tsc`. */
+export const NOMBRE_FLUJO: Record<Flujo, string> = {
   servicio: 'servicio técnico',
   'equipo-nuevo': 'equipo nuevo',
   'soporte-remoto': 'soporte remoto',
@@ -161,3 +161,15 @@ export function modalidadDelAlta(
   if (valor === undefined) return { valor: null }
   return { error: 'La modalidad sólo aplica a los tickets de soporte remoto' }
 }
+
+// ── filtro-indicadores-por-flujo (F1F-05, D1 y D2): el flujo de un ticket para los INDICADORES ───────────────────────────────────
+// Lo decide sólo la clasificación (RQ-KP-30). `flujoDelTicket` exige además el estado: es una guarda de enrutado, no de población.
+
+/** El flujo de un ticket para filtrar indicadores: soporte remoto, equipo nuevo o, si ninguna lo reconoce (incluida `null`), servicio. */
+export function flujoPorClasificacion(clasificacion: string | null | undefined): Flujo {
+  if (esClasificacionSoporteRemoto(clasificacion)) return 'soporte-remoto'
+  return esClasificacionEquipoNuevo(clasificacion) ? 'equipo-nuevo' : 'servicio'
+}
+
+/** Los flujos, en el orden de `CATALOGO_POR_FLUJO`: la lista que valida el servidor y ofrece el selector (sin tercera lista). */
+export const FLUJOS = Object.keys(CATALOGO_POR_FLUJO) as readonly Flujo[]

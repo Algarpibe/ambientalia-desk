@@ -132,3 +132,79 @@ describe('repartirSinCruzar · sólo en el fichero o en Desk fuera del periodo (
     expect(Object.keys(r.soloEnFichero[0]).sort()).toEqual(['id', 'numero'])
   })
 })
+
+// ── filtro-indicadores-por-flujo (F1F-05, L1b): `cruzarPorFlujo` (RQ-KP-32, D6, M4 y M6). PURO: el flujo sale de la clasificación ─────────────
+import { ESTADOS } from '@ambientalia/shared'
+import { cruzarPorFlujo, type TicketExistente } from './cruzarExportacion'
+
+const clases = (t: TicketParaIndicadores[], c: Array<string | null>): Map<string, string | null> => new Map(t.map((x, i) => [x.id, c[i]]))
+const existente = (numero: number, clasificacion: string | null): TicketExistente => ({ numero, clasificacion })
+
+describe('cruzarPorFlujo · los cubos con flujo (M4)', () => {
+  // Del periodo: 1 EN y 5 EN (cruzan; el 5 con otro número), 2 SR y 4 servicio (otro flujo), 3 EN ausente del fichero.
+  const periodo = [ticket('1', 1001), ticket('2', 1002), ticket('3', 1003), ticket('4', 1004), ticket('5', 1005)]
+  const clasificaciones = clases(periodo, ['Equipo nuevo', 'Soporte remoto', 'Equipo nuevo', 'Servicio', 'Equipo nuevo'])
+  // Fuera del periodo: 10 de servicio, 11 de equipo nuevo; el 12 no existe en Desk.
+  const existentes = new Map([['10', existente(2010, 'Servicio')], ['11', existente(2011, 'Equipo nuevo')]])
+  const filas = [fila('1', 1001), fila('2', 1002), fila('5', 9999), fila('10', 3010), fila('11', 3011), fila('12', 3012)]
+  const r = cruzarPorFlujo(filas, periodo, clasificaciones, existentes, 'equipo-nuevo')
+
+  it('cruzados, «sólo en Desk» y «número distinto» son sólo del flujo pedido', () => {
+    expect(r.cruzados.map((t) => t.id)).toEqual(['1', '5'])
+    expect(r.soloEnDesk).toEqual([{ id: '3', numero: 1003 }])
+    expect(r.numeroDistinto).toEqual([{ id: '5', numeroFichero: 9999, numeroDesk: 1005 }])
+  })
+  it('un SR del periodo y un servicio de fuera caen en `deOtroFlujo`, con el número del fichero y en el orden del fichero', () => {
+    expect(r.deOtroFlujo).toEqual([{ id: '2', numero: 1002 }, { id: '10', numero: 3010 }])
+  })
+  it('el equipo nuevo de fuera es «fuera del periodo» y el ausente de Desk es «sólo en el fichero»; ninguno es «de otro flujo»', () => {
+    expect(r.fueraDelPeriodo).toEqual([{ id: '11', numero: 3011 }])
+    expect(r.soloEnFichero).toEqual([{ id: '12', numero: 3012 }])
+  })
+  it('invariante de D6: filas = cruzados + soloEnFichero + fueraDelPeriodo + deOtroFlujo', () => {
+    expect(filas.length).toBe(6)
+    expect(filas.length).toBe(r.cruzados.length + r.soloEnFichero.length + r.fueraDelPeriodo.length + (r.deOtroFlujo ?? []).length)
+  })
+  it('con otro flujo el reparto cambia de lado: soporte-remoto cruza el 2 y deja el resto en `deOtroFlujo` o en sus cubos', () => {
+    const s = cruzarPorFlujo(filas, periodo, clasificaciones, existentes, 'soporte-remoto')
+    expect(s.cruzados.map((t) => t.id)).toEqual(['2'])
+    expect(s.soloEnDesk).toEqual([])
+    expect(s.deOtroFlujo?.map((f) => f.id)).toEqual(['1', '5', '10', '11'])
+    expect(s.fueraDelPeriodo).toEqual([])
+    expect(s.soloEnFichero).toEqual([{ id: '12', numero: 3012 }])
+  })
+  it('`deOtroFlujo` gana a «fuera del periodo» y a «sólo en el fichero»: ningún «ID» sale en dos cubos', () => {
+    const ids = [...r.cruzados.map((t) => t.id), ...r.soloEnFichero.map((f) => f.id), ...r.fueraDelPeriodo.map((f) => f.id), ...(r.deOtroFlujo ?? []).map((f) => f.id)]
+    expect(ids).toHaveLength(new Set(ids).size)
+  })
+  it('un número ilegible del fichero (null) se conserva en `deOtroFlujo`', () => {
+    const x = cruzarPorFlujo([fila('2', null)], periodo, clasificaciones, existentes, 'equipo-nuevo')
+    expect(x.deOtroFlujo).toEqual([{ id: '2', numero: null }])
+  })
+})
+
+describe('cruzarPorFlujo · el flujo no depende del estado (M6)', () => {
+  it.each([['Equipo nuevo', 'equipo-nuevo'], ['Soporte remoto', 'soporte-remoto']] as const)('«%s» cruza con %s en cada uno de los estados del registro, también `Ticket creado`, `Por Facturar` y `Rev./Diagnostico`', (clasificacion, flujo) => {
+    expect(ESTADOS).toHaveLength(26)
+    for (const estado of ESTADOS) {
+      const t = ticket('7', 7, { estado })
+      const x = cruzarPorFlujo([fila('7', 7)], [t], clases([t], [clasificacion]), new Map(), flujo)
+      expect(x.cruzados.map((c) => c.id), estado).toEqual(['7'])
+      expect(x.deOtroFlujo, estado).toEqual([])
+    }
+  })
+  it('el mismo ticket con otro flujo pedido sale `deOtroFlujo` en cada estado: el estado no lo rescata', () => {
+    for (const estado of ['Ticket creado', 'Por Facturar', 'Rev./Diagnostico', 'Finalizado']) {
+      const t = ticket('7', 7, { estado })
+      const x = cruzarPorFlujo([fila('7', 7)], [t], clases([t], ['Equipo nuevo']), new Map(), 'servicio')
+      expect(x.cruzados, estado).toEqual([])
+      expect(x.deOtroFlujo, estado).toEqual([{ id: '7', numero: 7 }])
+    }
+  })
+  it('la clasificación de fuera del periodo también se normaliza: «  equipo   NUEVO » es equipo-nuevo y null es servicio', () => {
+    const e = new Map([['8', existente(8, '  equipo   NUEVO ')], ['9', existente(9, null)]])
+    const x = cruzarPorFlujo([fila('8', 8), fila('9', 9)], [], new Map(), e, 'equipo-nuevo')
+    expect(x.fueraDelPeriodo).toEqual([{ id: '8', numero: 8 }])
+    expect(x.deOtroFlujo).toEqual([{ id: '9', numero: 9 }])
+  })
+})

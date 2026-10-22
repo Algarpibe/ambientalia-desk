@@ -74,3 +74,64 @@ describe('numerosDeTickets · trozo por defecto (S2 · T1b)', () => {
     expect(sentencias.map((s) => s.params.length)).toEqual([5000, 1])
   })
 })
+
+// ── filtro-indicadores-por-flujo (F1F-05, L1b): `ticketsConClasificacion` (RQ-KP-32, D7, M10). La misma forma que `numerosDeTickets` ─────────
+import { ticketsConClasificacion } from './ticketsPorId'
+
+async function ticketClasificado(id: string, numero: number, clasificacion: string | null): Promise<void> {
+  await db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1, $2, $3, $4, $5)', [id, numero, 's', 'Ingresado', clasificacion])
+}
+
+describe('ticketsConClasificacion · número y clasificación por ID (D7)', () => {
+  it('devuelve Map<id, { numero, clasificacion }> sólo de los ID que existen; la clasificación va cruda y null si no hay', async () => {
+    await ticketClasificado('100000000000000001', 1001, 'Equipo Nuevo'); await ticketClasificado('100000000000000002', 1002, null)
+    const m = await ticketsConClasificacion(db, ['100000000000000001', '100000000000000002', '100000000000000999'])
+    expect(m).toEqual(new Map([['100000000000000001', { numero: 1001, clasificacion: 'Equipo Nuevo' }], ['100000000000000002', { numero: 1002, clasificacion: null }]]))
+    expect(typeof m.get('100000000000000001')?.numero).toBe('number')
+  })
+
+  it('con trozo = 2 parte en bloques: 5 ID, 3 consultas, parámetros por bloque y el mismo resultado que numerosDeTickets', async () => {
+    for (let i = 1; i <= 5; i++) await ticketClasificado(`id${i}`, i, i % 2 ? 'Servicio' : 'Soporte remoto')
+    sentencias.length = 0
+    const m = await ticketsConClasificacion(db, ['id1', 'id2', 'id3', 'id4', 'id5'], 2)
+    expect(lecturas()).toHaveLength(3)
+    expect(lecturas().map((s) => s.params)).toEqual([['id1', 'id2'], ['id3', 'id4'], ['id5']])
+    expect([...m].map(([id, v]) => [id, v.numero, v.clasificacion])).toEqual([['id1', 1, 'Servicio'], ['id2', 2, 'Soporte remoto'], ['id3', 3, 'Servicio'], ['id4', 4, 'Soporte remoto'], ['id5', 5, 'Servicio']])
+    sentencias.length = 0
+    await numerosDeTickets(db, ['id1', 'id2', 'id3', 'id4', 'id5'], 2)
+    expect(lecturas()).toHaveLength(3)
+  })
+
+  it('los ID repetidos no repiten parámetros y la sentencia es UNA por bloque (ninguna consulta de clasificaciones aparte)', async () => {
+    await ticketClasificado('id1', 1, 'Servicio')
+    sentencias.length = 0
+    await ticketsConClasificacion(db, ['id1', 'id1', 'id1'])
+    expect(lecturas()).toHaveLength(1)
+    expect(lecturas()[0].params).toEqual(['id1'])
+  })
+
+  it('lista vacía: mapa vacío y NINGUNA sentencia', async () => {
+    sentencias.length = 0
+    expect(await ticketsConClasificacion(db, [])).toEqual(new Map())
+    expect(sentencias).toEqual([])
+  })
+
+  it('es de sólo lectura, con parámetros ligados (ningún ID en el texto) y sin calificar `tickets`', async () => {
+    await ticketClasificado('id1', 1, 'Servicio')
+    sentencias.length = 0
+    await ticketsConClasificacion(db, ['id1'])
+    expect(sentencias).toHaveLength(1)
+    expect(sentencias[0].sql).toMatch(/^\s*SELECT\b/i)
+    expect(sentencias[0].sql).not.toContain('id1')
+    expect(sentencias[0].sql).not.toMatch(/\b(INSERT|UPDATE|DELETE)\b/i)
+    expect(sentencias[0].sql).not.toMatch(/\b(desk|public)\./i)
+  })
+
+  it('sin `trozo`, 5001 ID distintos salen en dos sentencias: 5000 parámetros y 1', async () => {
+    const ids = Array.from({ length: 5001 }, (_, i) => `x${i}`)
+    const espia = { query: async (sql: string, params?: unknown[]) => { sentencias.push({ sql, params: params ?? [] }); return { rows: [] } } } as unknown as Queryable
+    sentencias.length = 0
+    await ticketsConClasificacion(espia, ids)
+    expect(sentencias.map((s) => s.params.length)).toEqual([5000, 1])
+  })
+})

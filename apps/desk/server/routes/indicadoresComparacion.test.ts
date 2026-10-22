@@ -304,3 +304,188 @@ describe('RQ-KP-27 · privacidad', () => {
     for (const s of SECRETOS) expect(registro + JSON.stringify(res.body), s).not.toContain(s)
   })
 })
+
+// ── filtro-indicadores-por-flujo (F1F-05, L1a): caracterización de M2 del POST (RQ-KP-32, «el cuerpo de hoy») ─────────────────────────────
+// Escrita ANTES de tocar producción: el `sha256` es el del cuerpo de ese día, sobre un fixture con los cuatro flujos.
+import { createHash } from 'node:crypto'
+
+describe('M2 · caracterización del POST sin flujo: los bytes de hoy', () => {
+  it('sin parámetro `flujo`: ni clave `flujo` ni `deOtroFlujo`, las claves en su orden y el cuerpo idéntico byte a byte', async () => {
+    const alta = (id: string, n: number, estado: string, clasificacion: string | null) =>
+      db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta, classification) VALUES ($1, $2, 's', $3, '2026-12-01T15:00:00Z', '2026-12-01', '2026-12-03', $4)", [id, n, estado, clasificacion])
+    await alta('101', 1001, 'Ticket creado', 'Equipo nuevo'); await alta('102', 1002, 'Rev./Diagnostico', 'Soporte remoto')
+    await alta('103', 1003, 'Por Facturar', 'Servicio'); await alta('104', 1004, 'Ticket creado', null)
+    await alta('105', 1005, 'Ticket creado', 'Equipo nuevo')
+    await db.query("UPDATE tickets SET created_time = '2026-06-01T15:00:00Z' WHERE id = '105'")
+    const f = csvMuestra([fila('101', 1001), fila('102', 1002), fila('103', 1003), fila('105', 1005), fila('999', 9009)])
+    const res = await subir(appWith().app, await adminCookie(), f, { query: PERIODO })
+    expect(res.status).toBe(200)
+    expect(Object.keys(res.body)).toEqual(['periodo', 'fichero', 'cruce', 'comparacion'])
+    expect(Object.keys(res.body.cruce)).toEqual(['cruzados', 'soloEnFichero', 'fueraDelPeriodo', 'soloEnDesk', 'numeroDistinto', 'valoresIlegibles'])
+    expect(res.body.cruce).toMatchObject({ cruzados: 3, soloEnFichero: { total: 1 }, fueraDelPeriodo: { total: 1 }, soloEnDesk: { total: 1 } })
+    expect(createHash('sha256').update(res.text).digest('hex')).toBe('862d1958da8da38ec164e10ddd2158bcb0f1fc66f5e835af60a0f4cbc10623a7')
+  })
+})
+
+// ── filtro-indicadores-por-flujo (F1F-05, L1b): el POST con `flujo` (RQ-KP-29 y RQ-KP-32; M3, M4, M6, M8 y M10 del POST) ─────────────────────
+import { MENSAJE_FLUJO } from '../indicadores'
+
+/** Un ticket con estado y clasificación a elección; los estados que usa el fixture separan `flujoDelTicket` del predicado por clasificación (M6). */
+const altaFlujo = (id: string, number: number, estado: string, clasificacion: string | null, creado = '2026-12-01T15:00:00Z') =>
+  db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta, classification) VALUES ($1, $2, 's', $3, $4, '2026-12-01', '2026-12-03', $5)", [id, number, estado, creado, clasificacion])
+const FUERA = '2026-06-01T15:00:00Z'
+/** Periodo: 111 EN, 222 SR, 333 EN heredado (ausente del fichero), 777 servicio (ausente). Fuera: 444 servicio, 555 EN. Ausente de Desk: 666. Una fila mala. */
+async function escenarioFlujos(): Promise<Buffer> {
+  await altaFlujo('111', 1001, 'Ticket creado', 'Equipo nuevo'); await altaFlujo('222', 1002, 'Rev./Diagnostico', 'Soporte remoto')
+  await altaFlujo('333', 1003, 'Por Facturar', 'Equipo nuevo'); await altaFlujo('777', 1007, 'Ticket creado', 'Servicio')
+  await altaFlujo('444', 1004, 'Ticket creado', 'Servicio', FUERA); await altaFlujo('555', 1005, 'Ticket creado', 'Equipo nuevo', FUERA)
+  return csvMuestra([fila('111', 1001), fila('222', 1002), fila('444', 1004), fila('555', 1005), fila('666', 1006), fila('', 7007)])
+}
+const porId = (todas: string[]): string[] => todas.filter((s) => /FROM tickets WHERE id IN/i.test(s))
+/** Con la cadena de consulta tal cual: permite `flujo=` vacío y repetido. */
+let galleta: { d: unknown; c: string } | null = null   // la base es nueva en cada prueba: una sola sesión de administrador por prueba
+const adminDeLaPrueba = async (): Promise<string> => { if (galleta?.d !== db) galleta = { d: db, c: await adminCookie() }; return galleta.c }
+const subirQs = async (app: ReturnType<typeof appWith>['app'], buf: Buffer | null, qs: string) => {
+  const r = request(app).post(`${RUTA}?${qs}`).set('Cookie', await adminDeLaPrueba())
+  return buf === null ? r : r.attach('file', buf, { filename: 'tickets.csv', contentType: 'text/csv' })
+}
+const PERIODO_QS = 'desde=2026-12-01&hasta=2026-12-31'
+const idsDe = (c: { tickets: Array<{ id: string }> }): string[] => c.tickets.map((t) => t.id)
+
+describe('RQ-KP-32 · el POST con flujo: los cubos y la forma (M4, M6)', () => {
+  it('Otro flujo dentro del periodo: el SR del periodo va a `deOtroFlujo`, no a «fuera del periodo», y el flujo sale tras `periodo`', async () => {
+    const f = await escenarioFlujos()
+    const preguntados: unknown[] = [], porIdVistas: string[] = []
+    const q: Queryable = { query: ((sql: string, p?: unknown[]) => { if (/FROM tickets WHERE id IN/i.test(sql)) { porIdVistas.push(sql); preguntados.push(...(p ?? [])) } return db.query(sql, p) }) as Queryable['query'] }
+    const res = await subirQs(appWith({}, q).app, f, `${PERIODO_QS}&flujo=equipo-nuevo`)
+    expect(res.status).toBe(200)
+    expect(preguntados).not.toContain('222')   // cruzó con los del periodo (todos los flujos): no se pregunta por ID
+    expect(Object.keys(res.body)).toEqual(['periodo', 'flujo', 'fichero', 'cruce', 'comparacion'])
+    expect(res.body.flujo).toBe('equipo-nuevo')
+    expect(Object.keys(res.body.cruce)).toEqual(['cruzados', 'soloEnFichero', 'fueraDelPeriodo', 'deOtroFlujo', 'soloEnDesk', 'numeroDistinto', 'valoresIlegibles'])
+    expect(res.body.cruce.deOtroFlujo.tickets).toContainEqual({ id: '222', numero: 1002 })
+    expect(idsDe(res.body.cruce.fueraDelPeriodo)).not.toContain('222')
+    expect(porIdVistas).toHaveLength(1)
+  })
+  it('Otro flujo fuera del periodo: el servicio de fuera va a `deOtroFlujo` y el equipo nuevo de fuera a «fuera del periodo»', async () => {
+    const f = await escenarioFlujos()
+    const res = await subirQs(appWith().app, f, `${PERIODO_QS}&flujo=equipo-nuevo`)
+    const { cruce, fichero } = res.body
+    expect(cruce.cruzados).toBe(1)
+    expect(cruce.deOtroFlujo).toEqual({ total: 2, tickets: [{ id: '222', numero: 1002 }, { id: '444', numero: 1004 }] })
+    expect(cruce.fueraDelPeriodo).toEqual({ total: 1, tickets: [{ id: '555', numero: 1005 }] })
+    expect(cruce.soloEnFichero).toEqual({ total: 1, tickets: [{ id: '666', numero: 1006 }] })
+    expect(cruce.soloEnDesk).toEqual({ total: 1, tickets: [{ id: '333', numero: 1003 }] })
+    expect(fichero.leidas).toBe(fichero.rechazadas.length + cruce.cruzados + cruce.soloEnFichero.total + cruce.fueraDelPeriodo.total + cruce.deOtroFlujo.total)
+  })
+  it('con otro flujo el mismo fichero se reparte distinto: soporte-remoto cruza el 222 y deja el resto de los existentes como `deOtroFlujo`', async () => {
+    const f = await escenarioFlujos()
+    const { cruce, fichero } = (await subirQs(appWith().app, f, `${PERIODO_QS}&flujo=soporte-remoto`)).body
+    expect(cruce.cruzados).toBe(1)
+    expect(idsDe(cruce.deOtroFlujo)).toEqual(['111', '444', '555'])
+    expect(cruce.fueraDelPeriodo.total).toBe(0)
+    expect(cruce.soloEnDesk.total).toBe(0)
+    expect(fichero.leidas).toBe(fichero.rechazadas.length + cruce.cruzados + cruce.soloEnFichero.total + cruce.fueraDelPeriodo.total + cruce.deOtroFlujo.total)
+  })
+  it('la comparación sale sólo de los cruzados del flujo: con equipo-nuevo compara 1 ticket y sin flujo cruzan 2', async () => {
+    const f = await escenarioFlujos()
+    const con = (await subirQs(appWith().app, f, `${PERIODO_QS}&flujo=equipo-nuevo`)).body
+    expect(col(con.comparacion, '59').comparados).toBe(1)
+    expect((await subirQs(appWith().app, f, PERIODO_QS)).body.cruce.cruzados).toBe(2)
+  })
+  it('M6 · el estado no decide: «Equipo nuevo» en `Ticket creado` y en `Por Facturar` es de equipo nuevo, y «Soporte remoto» en `Rev./Diagnostico` de soporte remoto', async () => {
+    await altaFlujo('111', 1001, 'Ticket creado', 'Equipo nuevo'); await altaFlujo('333', 1003, 'Por Facturar', 'Equipo nuevo'); await altaFlujo('222', 1002, 'Rev./Diagnostico', 'Soporte remoto')
+    const f = csvMuestra([fila('111', 1001), fila('333', 1003), fila('222', 1002)])
+    const en = (await subirQs(appWith().app, f, `${PERIODO_QS}&flujo=equipo-nuevo`)).body.cruce
+    expect(en.cruzados).toBe(2)
+    expect(en.deOtroFlujo.tickets).toEqual([{ id: '222', numero: 1002 }])
+    const sr = (await subirQs(appWith().app, f, `${PERIODO_QS}&flujo=soporte-remoto`)).body.cruce
+    expect(sr.cruzados).toBe(1)
+    expect(sr.deOtroFlujo.total).toBe(2)
+  })
+  it('con flujo, `deOtroFlujo` está siempre, aunque vacío', async () => {
+    await altaFlujo('111', 1001, 'Ticket creado', 'Equipo nuevo')
+    const res = await subirQs(appWith().app, csvMuestra([fila('111', 1001)]), 'flujo=equipo-nuevo')
+    expect(res.status).toBe(200)
+    expect(res.body.cruce.deOtroFlujo).toEqual({ total: 0, tickets: [] })
+  })
+  it('sin flujo (M2): ni la clave `flujo` ni `deOtroFlujo`, y el servicio y el equipo nuevo del periodo cruzan juntos', async () => {
+    const f = await escenarioFlujos()
+    const res = await subirQs(appWith().app, f, PERIODO_QS)
+    expect(Object.keys(res.body)).toEqual(['periodo', 'fichero', 'cruce', 'comparacion'])
+    expect(Object.keys(res.body.cruce)).toEqual(['cruzados', 'soloEnFichero', 'fueraDelPeriodo', 'soloEnDesk', 'numeroDistinto', 'valoresIlegibles'])
+    expect(res.body.cruce.cruzados).toBe(2)
+    expect(idsDe(res.body.cruce.fueraDelPeriodo)).toEqual(['444', '555'])
+  })
+})
+
+describe('RQ-KP-29 · el parámetro flujo del POST y su orden (M3, M8)', () => {
+  it.each([['Valor desconocido', 'flujo=otro'], ['vacío', 'flujo='], ['Vacío, repetido y otra grafía: repetido', 'flujo=servicio&flujo=servicio'], ['Vacío, repetido y otra grafía: otra grafía', 'flujo=Servicio']])('%s (%s): 400 con MENSAJE_FLUJO y ninguna consulta de datos', async (_n, qs) => {
+    const { app, datos, tickets } = conEspia()
+    const res = await subirQs(app, VALIDO, qs)
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: MENSAJE_FLUJO })
+    expect(datos()).toEqual([])
+    expect(tickets()).toEqual([])
+  })
+  it('Periodo antes que flujo (regla de mutación 1): periodo invertido + flujo=otro → el mensaje del periodo, que no nombra «flujo»', async () => {
+    const { app, tickets } = conEspia()
+    const res = await subirQs(app, VALIDO, 'desde=2026-12-31&hasta=2026-12-01&flujo=otro')
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: errorDe(INVERTIDO) })
+    expect(res.body.error).not.toContain('flujo')
+    expect(tickets()).toEqual([])
+  })
+  it.each([['sin fichero', null], ['con un fichero sin «ID»', SIN_ID]])('Flujo antes que «falta el fichero» y que el lector: flujo=otro %s → MENSAJE_FLUJO', async (_n, buf) => {
+    const { app, tickets } = conEspia()
+    const res = await subirQs(app, buf, 'flujo=otro')
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: MENSAJE_FLUJO })
+    expect(tickets()).toEqual([])
+  })
+  it('un flujo válido sin fichero da el 400 de siempre, MENSAJE_SIN_EXPORTACION: el flujo bueno no tapa la falta del fichero', async () => {
+    const res = await subirQs(appWith().app, null, 'flujo=servicio')
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ error: MENSAJE_SIN_EXPORTACION })
+  })
+  it('flujo=otro sin sesión → 401 y sin administrador → 403, no 400', async () => {
+    expect((await request(appWith().app).post(`${RUTA}?flujo=otro`)).status).toBe(401)
+    expect((await request(appWith().app).post(`${RUTA}?flujo=otro`).set('Cookie', await userCookie(['Comercial']))).status).toBe(403)
+  })
+  it.each(['servicio', 'equipo-nuevo', 'soporte-remoto'])('flujo=%s es válido: 200 y se devuelve en el cuerpo', async (flujo) => {
+    const res = await subirQs(appWith().app, VALIDO, `flujo=${flujo}`)
+    expect(res.status).toBe(200)
+    expect(res.body.flujo).toBe(flujo)
+  })
+})
+
+describe('RQ-KP-32 · las mismas consultas con y sin flujo (M10)', () => {
+  it('Mismas consultas: con y sin flujo son cuatro de datos más UNA por bloque de «ID» sin cruzar; sólo SELECT, y sólo con flujo se lee la clasificación por ID', async () => {
+    const f = await escenarioFlujos()
+    const sin = conEspia()
+    const sinRes = await subirQs(sin.app, f, PERIODO_QS)
+    const con = conEspia()
+    const conRes = await subirQs(con.app, f, `${PERIODO_QS}&flujo=equipo-nuevo`)
+    expect([sinRes.status, conRes.status]).toEqual([200, 200])
+    expect(sin.datos()).toHaveLength(5)
+    expect(con.datos()).toHaveLength(5)
+    expect(porId(sin.todas)).toHaveLength(1)
+    expect(porId(con.todas)).toHaveLength(1)
+    expect(noSelect(con.todas)).toEqual([])
+    expect(porId(con.todas)[0]).toMatch(/\bclassification\b/)
+    expect(porId(sin.todas)[0]).not.toMatch(/\bclassification\b/)
+  })
+  it('los «ID» que se preguntan por separado son los mismos con y sin flujo: los del fichero que no están en NINGÚN flujo del periodo', async () => {
+    const f = await escenarioFlujos()
+    const parametros = async (qs: string): Promise<unknown[]> => {
+      const registro: Array<{ sql: string; p: unknown[] }> = []
+      const q: Queryable = { query: ((sql: string, p?: unknown[]) => { registro.push({ sql, p: p ?? [] }); return db.query(sql, p) }) as Queryable['query'] }
+      await subirQs(appWith({}, q).app, f, qs)
+      return registro.filter((r) => /FROM tickets WHERE id IN/i.test(r.sql)).flatMap((r) => r.p)
+    }
+    const sin = await parametros(PERIODO_QS)
+    const con = await parametros(`${PERIODO_QS}&flujo=equipo-nuevo`)
+    expect(sin).toEqual(['444', '555', '666'])
+    expect(con).toEqual(sin)
+  })
+})

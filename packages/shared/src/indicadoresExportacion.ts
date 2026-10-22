@@ -13,12 +13,12 @@ export interface ValorIlegible { fila: number; columna: string }
 export interface NumeroDistinto { id: string; numeroFichero: number | null; numeroDesk: number }
 
 export interface ComparacionExportacion {
-  periodo: { desde: DiaCivil | null; hasta: DiaCivil | null }
+  periodo: { desde: DiaCivil | null; hasta: DiaCivil | null }; flujo?: import('./flujos').Flujo
   fichero: { leidas: number; rechazadas: FilaRechazadaExportacion[] }
   cruce: {
     cruzados: number
     soloEnFichero: { total: number; tickets: TicketRef[] }
-    fueraDelPeriodo: { total: number; tickets: TicketRef[] }
+    fueraDelPeriodo: { total: number; tickets: TicketRef[] }; deOtroFlujo?: { total: number; tickets: TicketRef[] }
     soloEnDesk: { total: number; tickets: TicketRef[] }
     numeroDistinto: { total: number; tickets: NumeroDistinto[] }
     valoresIlegibles: { total: number; porColumna: Record<string, number>; valores: ValorIlegible[] }

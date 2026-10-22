@@ -159,3 +159,62 @@ describe('remediación del verify (W3 · K6, K6c, K6d: «Fuera del periodo» sal
     expect(vistaComparacion(distinta()).listas.find((x) => x.titulo === 'Fuera del periodo')?.lineas).toEqual(['222 · solicitud 2', '223 · solicitud ilegible'])
   })
 })
+
+/** F1F-05 (RQ-KP-33, M9 y M11): el flujo viaja en la URL de la comparación y la vista pinta «De otro flujo» y el flujo SÓLO si la respuesta los trae. */
+describe('urlComparacion con flujo (RQ-KP-33, M9)', () => {
+  it('con periodo y flujo: `desde`, `hasta` y `flujo=soporte-remoto`', () => {
+    expect(urlComparacion({ desde: '2026-01-01', hasta: '2026-01-31' }, 'soporte-remoto')).toBe('/api/indicadores/comparacion?desde=2026-01-01&hasta=2026-01-31&flujo=soporte-remoto')
+  })
+  it('sólo flujo: la ruta con `flujo` y nada más', () => {
+    expect(urlComparacion({}, 'equipo-nuevo')).toBe('/api/indicadores/comparacion?flujo=equipo-nuevo')
+  })
+  it('sin flujo, o «Todos» (vacío): la URL de hoy, sin `flujo` ni siquiera vacío', () => {
+    expect(urlComparacion({ desde: '2026-01-01' })).toBe('/api/indicadores/comparacion?desde=2026-01-01')
+    expect(urlComparacion({ desde: '2026-01-01' }, '')).toBe('/api/indicadores/comparacion?desde=2026-01-01')
+    expect(urlComparacion({}, '')).toBe('/api/indicadores/comparacion')
+    expect(urlComparacion({}, undefined)).not.toContain('flujo')
+  })
+  it('el cliente no valida: un valor desconocido viaja tal cual (lo rechaza el servidor con 400)', () => {
+    expect(urlComparacion({}, 'otro')).toBe('/api/indicadores/comparacion?flujo=otro')
+  })
+})
+
+describe('vistaComparacion con flujo y «De otro flujo» (RQ-KP-33, M11): sólo si llegan, sin calcular', () => {
+  const otro = (): ComparacionExportacion => {
+    const r = respuesta({ flujo: 'equipo-nuevo' })
+    r.cruce.deOtroFlujo = { total: 40, tickets: [{ id: '666', numero: 6 }, { id: '667', numero: null }] }
+    return r
+  }
+  it('sin `deOtroFlujo`: ni recuento ni lista «De otro flujo»; los recuentos y las listas de hoy, en su orden', () => {
+    const v = vistaComparacion(respuesta())
+    expect(v.recuentos.map((f) => f.etiqueta)).toEqual(['Filas leídas', 'Filas rechazadas', 'Tickets cruzados', 'Sólo en el fichero', 'Fuera del periodo', 'Sólo en Desk', 'Número de solicitud distinto', 'Valores ilegibles'])
+    expect(v.listas.map((l) => l.titulo)).toEqual(['Filas rechazadas', 'Sólo en el fichero', 'Fuera del periodo', 'Sólo en Desk', 'Número de solicitud distinto', 'Valores ilegibles'])
+    expect(JSON.stringify(v)).not.toContain('De otro flujo')
+  })
+  it('con `deOtroFlujo`: recuento y lista tras «Fuera del periodo», con el total tal como llegó (40 aunque haya 2 tickets)', () => {
+    const v = vistaComparacion(otro())
+    expect(v.recuentos.map((f) => f.etiqueta)).toEqual(['Filas leídas', 'Filas rechazadas', 'Tickets cruzados', 'Sólo en el fichero', 'Fuera del periodo', 'De otro flujo', 'Sólo en Desk', 'Número de solicitud distinto', 'Valores ilegibles'])
+    expect(v.recuentos.find((f) => f.etiqueta === 'De otro flujo')?.valor).toBe('40')
+    expect(v.listas.map((l) => l.titulo)).toEqual(['Filas rechazadas', 'Sólo en el fichero', 'Fuera del periodo', 'De otro flujo', 'Sólo en Desk', 'Número de solicitud distinto', 'Valores ilegibles'])
+    expect(v.listas.find((l) => l.titulo === 'De otro flujo')).toEqual({ titulo: 'De otro flujo', total: '40', lineas: ['666 · solicitud 6', '667 · solicitud ilegible'] })
+  })
+  it('con flujo la clave está siempre, aunque vacía: total 0 y sin líneas, y se pinta', () => {
+    const r = respuesta({ flujo: 'servicio' })
+    r.cruce.deOtroFlujo = { total: 0, tickets: [] }
+    const v = vistaComparacion(r)
+    expect(v.recuentos.find((f) => f.etiqueta === 'De otro flujo')?.valor).toBe('0')
+    expect(v.listas.find((l) => l.titulo === 'De otro flujo')).toEqual({ titulo: 'De otro flujo', total: '0', lineas: [] })
+  })
+  it('el periodo gana « · Flujo: <nombre>» con el flujo de la RESPUESTA, y sin flujo queda como hoy', () => {
+    expect(vistaComparacion(respuesta({ flujo: 'equipo-nuevo' })).periodo).toBe('Periodo: 2026-01-01 a 2026-01-31 · Flujo: equipo nuevo')
+    expect(vistaComparacion(respuesta({ flujo: 'soporte-remoto', periodo: { desde: null, hasta: null } })).periodo).toBe('Sin periodo · Flujo: soporte remoto')
+    expect(vistaComparacion(respuesta({ flujo: 'servicio' })).periodo).toBe('Periodo: 2026-01-01 a 2026-01-31 · Flujo: servicio técnico')
+    expect(vistaComparacion(respuesta()).periodo).toBe('Periodo: 2026-01-01 a 2026-01-31')
+  })
+  it('no muta la respuesta con `deOtroFlujo`', () => {
+    const r = otro()
+    const copia = JSON.parse(JSON.stringify(r))
+    vistaComparacion(r)
+    expect(r).toEqual(copia)
+  })
+})

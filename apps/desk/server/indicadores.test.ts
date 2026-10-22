@@ -181,3 +181,73 @@ describe('el 55 desde la encuesta (F1F-05 lote 3, RQ-KP-22 y RQ-KP-14)', () => {
     expect((await db.query('SELECT id, cargado_at FROM public.encuesta_respuestas ORDER BY id')).rows).toEqual(antes)
   })
 })
+
+// ── filtro-indicadores-por-flujo (F1F-05, L1a): validarFlujo, la clasificación en la lectura y el recorte puro (RQ-KP-29 y -31, D3-D5) ──
+import { FLUJOS } from '@ambientalia/shared'
+import { validarFlujo, MENSAJE_FLUJO, recortarPorFlujo } from './indicadores'
+
+/** Un ticket con su clasificación y un estado a elección. */
+async function conClasificacion(id: string, n: number, estado: string, clasificacion: string | null, creado = '2026-10-02T15:00:00Z'): Promise<void> {
+  await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, classification) VALUES ($1, $2, 's', $3, $4, $5, $6)", [id, n, estado, creado, `ST-${n}`, clasificacion])
+}
+/** Estados que SEPARAN `flujoDelTicket` del predicado por clasificación (M6): `Ticket creado`, `Rev./Diagnostico` y `Por Facturar`. */
+async function cuatroFlujos(): Promise<void> {
+  await conClasificacion('en', 1, 'Ticket creado', 'Equipo Nuevo'); await conClasificacion('sr', 2, 'Rev./Diagnostico', 'Soporte remoto')
+  await conClasificacion('sv', 3, 'Por Facturar', 'Servicio'); await conClasificacion('nu', 4, 'Ticket creado', null)
+}
+
+describe('validarFlujo (RQ-KP-29, D3)', () => {
+  it('sin parámetro: vale y no filtra (flujo null)', () => {
+    expect(validarFlujo(undefined)).toEqual({ ok: true, flujo: null })
+  })
+  it.each(FLUJOS)('«%s» exacto vale y se devuelve tal cual', (f) => {
+    expect(validarFlujo(f)).toEqual({ ok: true, flujo: f })
+  })
+  it.each([['otro', 'otro'], ['vacío', ''], ['repetido', ['servicio', 'servicio']], ['otra grafía', 'Servicio'], ['con espacio', 'equipo nuevo'], ['null', null]])('%s → error con MENSAJE_FLUJO', (_n, v) => {
+    expect(validarFlujo(v)).toEqual({ ok: false, error: MENSAJE_FLUJO })
+  })
+  it('MENSAJE_FLUJO nombra el parámetro «flujo» y cada flujo de FLUJOS', () => {
+    expect(MENSAJE_FLUJO).toContain('«flujo»')
+    for (const f of FLUJOS) expect(MENSAJE_FLUJO).toContain(f)
+  })
+})
+
+describe('la clasificación en la lectura (D4, RQ-KP-31): la misma consulta, cuatro en total', () => {
+  it('trae la clasificación CRUDA por id (texto o null) sólo de los tickets admitidos por el periodo', async () => {
+    await cuatroFlujos(); await conClasificacion('viejo', 5, 'Ticket creado', 'Equipo nuevo', '2026-06-02T15:00:00Z')
+    const e = await leerEntradasIndicadores(db, { desde: '2026-10-01', hasta: null })
+    expect(e.tickets.map((t) => t.id)).toEqual(['en', 'sr', 'sv', 'nu'])
+    expect([...e.clasificaciones]).toEqual([['en', 'Equipo Nuevo'], ['sr', 'Soporte remoto'], ['sv', 'Servicio'], ['nu', null]])
+  })
+  it.each([2, 20])('M10 · con %i tickets son EXACTAMENTE cuatro consultas, también con clasificaciones', async (n) => {
+    for (let i = 1; i <= n; i++) await conClasificacion(`t${i}`, i, 'Ticket creado', i % 2 ? 'Equipo nuevo' : null)
+    const { q, textos } = espia()
+    const e = await leerEntradasIndicadores(q, sinPeriodo)
+    expect(e.clasificaciones.size).toBe(n)
+    expect(textos).toHaveLength(4)
+    expect(textos.every((s) => /^\s*SELECT/i.test(s))).toBe(true)
+  })
+})
+
+describe('recortarPorFlujo (D5, M1, M2, M6, M12)', () => {
+  it('M2 · sin flujo devuelve LA MISMA entrada, no una copia', async () => {
+    await cuatroFlujos()
+    const e = await leerEntradasIndicadores(db, sinPeriodo)
+    expect(recortarPorFlujo(e, null)).toBe(e)
+  })
+  it.each([
+    ['equipo-nuevo', ['en']], ['soporte-remoto', ['sr']], ['servicio', ['sv', 'nu']],
+  ] as const)('M1/M6/M12 · con «%s» salen sólo %j: «Equipo Nuevo» en Ticket creado, SR en Rev./Diagnostico y la clasificación null cuentan por clasificación', async (flujo, ids) => {
+    await cuatroFlujos()
+    const e = await leerEntradasIndicadores(db, sinPeriodo)
+    const r = recortarPorFlujo(e, flujo)
+    expect(r.tickets.map((t) => t.id)).toEqual(ids)
+    expect(r.historial).toBe(e.historial); expect(r.cierres).toBe(e.cierres); expect(r.calificaciones).toBe(e.calificaciones)
+    expect(e.tickets).toHaveLength(4)
+  })
+  it('M12 · «Por Facturar» con «Equipo nuevo» (heredado) también es equipo-nuevo', async () => {
+    await conClasificacion('he', 1, 'Por Facturar', 'Equipo nuevo'); await conClasificacion('sv', 2, 'Por Facturar', 'Servicio')
+    const r = recortarPorFlujo(await leerEntradasIndicadores(db, sinPeriodo), 'equipo-nuevo')
+    expect(r.tickets.map((t) => t.id)).toEqual(['he'])
+  })
+})

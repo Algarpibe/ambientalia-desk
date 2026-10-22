@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { calcularIndicadores, esPasoDeMigracion, diaEnZona, sumarDias, type DiaCivil, type EtiquetaHito, type Indicador, type PasoDelHistorial, type TicketParaIndicadores } from '@ambientalia/shared'
+import { calcularIndicadores, esPasoDeMigracion, diaEnZona, sumarDias, flujoPorClasificacion, FLUJOS, type Flujo, type DiaCivil, type EtiquetaHito, type Indicador, type PasoDelHistorial, type TicketParaIndicadores } from '@ambientalia/shared'
 import { comoDiaCivil, listarCierres } from './db/calendarioCierres'
 
 // Lectura de los indicadores (F1F-05, RQ-KP-13 y -14): SOLO lectura, cuatro consultas pase lo que pase con el número de tickets.
@@ -40,7 +40,7 @@ export function validarPeriodo(q: { desde?: unknown; hasta?: unknown; formato?: 
 export interface EntradasIndicadores {
   tickets: TicketParaIndicadores[]
   historial: Map<string, PasoDelHistorial[]>
-  cierres: Set<DiaCivil>; calificaciones: Map<string, string>
+  cierres: Set<DiaCivil>; calificaciones: Map<string, string>; clasificaciones: Map<string, string | null>
 }
 const iso = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v))
 const objeto = (v: unknown): Record<string, unknown> => {
@@ -61,8 +61,8 @@ export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivi
   const donde = filtros.length ? ` WHERE ${filtros.join(' AND ')}` : ''
   const fechas = ETIQUETAS.map((e) => `t.${COLUMNA_DE_HITO[e]}`).join(', ')
 
-  const rt = await db.query(`SELECT t.id, t.number, t.status, t.created_time, t.codigo_servicio, t.dias_entrega, ${fechas}, t.custom_fields FROM tickets t${donde} ORDER BY t.number`, params)
-  const tickets: TicketParaIndicadores[] = []
+  const rt = await db.query(`SELECT t.id, t.number, t.status, t.classification, t.created_time, t.codigo_servicio, t.dias_entrega, ${fechas}, t.custom_fields FROM tickets t${donde} ORDER BY t.number`, params)
+  const tickets: TicketParaIndicadores[] = []; const clasificaciones = new Map<string, string | null>()
   for (const r of rt.rows) {
     const creadoEn = iso(r.created_time)
     const dia = diaEnZona(creadoEn)
@@ -70,7 +70,7 @@ export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivi
     if (dia === null ? (p.desde || p.hasta) : (p.desde && dia < p.desde) || (p.hasta && dia > p.hasta)) continue
     const f: TicketParaIndicadores['fechas'] = {}
     for (const e of ETIQUETAS) { const v = r[COLUMNA_DE_HITO[e]]; f[e] = v == null ? null : comoDiaCivil(v) }
-    tickets.push({ id: String(r.id), numero: Number(r.number), estado: String(r.status ?? ''), codigoServicio: r.codigo_servicio ?? null, creadoEn, diasEntrega: r.dias_entrega == null ? null : Number(r.dias_entrega), fechas: f, camposZoho: objeto(r.custom_fields) })
+    clasificaciones.set(String(r.id), r.classification == null ? null : String(r.classification)); tickets.push({ id: String(r.id), numero: Number(r.number), estado: String(r.status ?? ''), codigoServicio: r.codigo_servicio ?? null, creadoEn, diasEntrega: r.dias_entrega == null ? null : Number(r.dias_entrega), fechas: f, camposZoho: objeto(r.custom_fields) })
   }
 
   const rh = await db.query(`SELECT tt.ticket_id, tt.transition_id, tt.values, tt.performed_at FROM ticket_transitions tt JOIN tickets t ON t.id = tt.ticket_id${donde} ORDER BY tt.performed_at, tt.id`, params)
@@ -85,7 +85,7 @@ export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivi
   const re = await db.query(`SELECT e.ticket_id, e.calificacion FROM public.encuesta_respuestas e JOIN tickets t ON t.id = e.ticket_id${donde} ORDER BY e.respondida_at, e.id`, params)
   const calificaciones = new Map<string, string>()
   for (const r of re.rows) { const id = String(r.ticket_id); if (vistos.has(id)) calificaciones.set(id, String(r.calificacion)) }
-  return { tickets, historial, calificaciones, cierres: new Set(await listarCierres(db)) }
+  return { tickets, historial, calificaciones, clasificaciones, cierres: new Set(await listarCierres(db)) }
 }
 
 export interface FilaIndicadores { ticketId: string; codigoServicio: string | null; indicadores: Indicador[] }
@@ -93,4 +93,25 @@ export interface FilaIndicadores { ticketId: string; codigoServicio: string | nu
 /** Los nueve indicadores de cada ticket. El 51 sale del historial y el 55 de la última respuesta de la encuesta de cada ticket (RQ-KP-22). */
 export function tablaIndicadores(e: EntradasIndicadores): FilaIndicadores[] {
   return e.tickets.map((t) => ({ ticketId: t.id, codigoServicio: t.codigoServicio, indicadores: calcularIndicadores(t, e.historial.get(t.id) ?? [], { cierres: e.cierres, calificacionSatisfaccion: e.calificaciones.get(t.id) ?? null }) }))
+}
+
+// filtro-indicadores-por-flujo (F1F-05, RQ-KP-29 y -31): el parámetro `flujo` y el recorte de la lectura por flujo.
+
+export const MENSAJE_FLUJO = 'El parámetro «flujo» debe ser servicio, equipo-nuevo o soporte-remoto'
+
+export type FlujoValidado =
+  | { ok: true; flujo: Flujo | null }
+  | { ok: false; error: string }
+
+/** `flujo` es uno de `FLUJOS` por igualdad exacta; ausente no filtra (`null`). Vacío, repetido (array) u otra grafía es `400` (RQ-KP-29). */
+export function validarFlujo(v: unknown): FlujoValidado {
+  if (v === undefined) return { ok: true, flujo: null }
+  const flujo = FLUJOS.find((f) => f === v)
+  return flujo === undefined ? { ok: false, error: MENSAJE_FLUJO } : { ok: true, flujo }
+}
+
+/** Sólo los tickets cuyo flujo POR CLASIFICACIÓN es el pedido; sin flujo, LA MISMA entrada. Historial, encuesta y cierres no se recortan (se buscan por id). */
+export function recortarPorFlujo(e: EntradasIndicadores, flujo: Flujo | null): EntradasIndicadores {
+  if (flujo === null) return e
+  return { ...e, tickets: e.tickets.filter((t) => flujoPorClasificacion(e.clasificaciones.get(t.id)) === flujo) }
 }
