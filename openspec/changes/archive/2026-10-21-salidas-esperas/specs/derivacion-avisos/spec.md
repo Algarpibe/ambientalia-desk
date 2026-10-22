@@ -1,7 +1,7 @@
 # Delta de `derivacion-avisos` — `salidas-esperas` (F1C-03, `cierra: si`)
 
 Sólo ADDED. Molde: RQ-AV-23 (`avisoFacturacionVencida.ts`, F1C-02).
-Fuente: `decision/c3-salida-esperas`, `medicion/p90-esperas-2026-10-21` (`openspec/config.yaml:5276-5328`). Supuestos de la propuesta (reversibles): **S-4** días naturales, vence cuando lo transcurrido es ≥ plazo; **S-5** plazos provisionales; **S-6** destinatarios; **S-7** al encender, un aviso por cada vencido, sin corte.
+Fuente: `decision/c3-salida-esperas`, `medicion/p90-esperas-2026-10-21` (`openspec/config.yaml:5276-5328` en `24b86092`). Supuestos de la propuesta (reversibles): **S-4** días naturales, vence cuando lo transcurrido es ≥ plazo; **S-5** plazos provisionales; **S-6** destinatarios; **S-7** al encender, un aviso por cada vencido, sin corte.
 La entrada al estado de los tickets de Zoho (`de_la_app: 0` en la medición) no sale de `ticket_transitions` sola; de dónde sale y dónde se guarda el anti-duplicado lo fija el diseño (hipótesis: fusión con `ticket_history`).
 
 ## ADDED Requirements

@@ -92,7 +92,7 @@ export function puedeEjecutarConSalidasEsperas(s, t, tk, dec: ContextoDecisional
 en `ESTADOS_SIN_SALIDA` (filtrados a `flujoDelTicket(...) === 'servicio'`, molde `sla.ts:48-49`); sus `ticket_transitions`; y sus
 `ticket_history` con `event_name = 'TicketUpdated'`. La entrada es el ÚLTIMO paso de `secuenciaDelReloj` (`relojSla.ts:36-59`,
 exportada, reutilizada: funde app y Zoho con `etapasDesdeHistoria`, y devuelve `null` si el último estado no es el actual). Es el
-mismo método de la medición (`openspec/config.yaml:5281-5284`). Sin secuencia, el ticket no se mide (S-16, molde `sla.ts:56`).
+mismo método de la medición (`openspec/config.yaml:5281-5284` en `24b86092`). Sin secuencia, el ticket no se mide (S-16, molde `sla.ts:56`).
 Rechazada `entradasActuales` (`sla.ts:78-102`): sólo lee `ticket_transitions` y la medición es 100 % de Zoho.
 
 **(b) Anti-duplicado: `public.alarmas_avisadas` sin migración.** PK `(ticket_id, estado, entrada_at)` (`schema.sql:582-589`). Se

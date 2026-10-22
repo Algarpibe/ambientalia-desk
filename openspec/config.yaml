@@ -5182,6 +5182,46 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "M1.3 · C3 · Anexo D nº 31"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1C-03 (corrección antes de fusionar)"
+
+  - clave: "decision/e224b-poblacion-indicadores"
+    fecha: "2026-10-22"
+    pregunta: |
+      Consecuencia (2) de `decision/e224-indicadores-como-zoho-y-por-flujo`: «qué cuenta Zoho» estaba por confirmar. ¿Qué
+      tickets cuentan en cada uno de los nueve indicadores?
+    respuesta_textual: |
+      «Población de los nueve indicadores. Los indicadores no los calcula Zoho: son las columnas 47 a 59 de la tabla de tickets (Anexo G), calculadas sobre la exportación del departamento «Ambientalia Soporte y Servicio Técnico». Población por defecto: todos los tickets del departamento, de los tres flujos, cerrados en el periodo; cada indicador cuenta sólo los tickets que tienen sus dos hitos; los anulados quedan fuera. Te paso la exportación de septiembre para que lo contrastes.»
+    consecuencias: |
+      (1) RESUELVE la consecuencia (2) de `decision/e224-indicadores-como-zoho-y-por-flujo`: la población ya no está por
+      confirmar.
+      (2) El periodo es el de CIERRE, no el de creación, y sólo entran tickets cerrados.
+      (3) Los anulados quedan fuera.
+      (4) Cada indicador cuenta sólo los tickets que tienen sus dos hitos.
+      (5) HOY el código corta por día de creación (`apps/desk/server/indicadores.ts:59-60` filtra por `created_time`, y
+      `apps/desk/server/indicadores.ts:67-70` descarta por el día de creación en Bogotá) y no excluye los anulados. La
+      corrección es contenido de F1F-05, `cierra: no`.
+      (6) Para los migrados, la fecha de cierre es la original de Zoho (`decision/h1-fechas-migrados`).
+      (7) El contraste con la exportación de septiembre lo hace el analista antes de la tanda.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e224b-poblacion-indicadores) · resuelve la consecuencia (2) de decision/e224-indicadores-como-zoho-y-por-flujo"
+    maestro_pasaje: "Anexo G, lista cerrada de nueve indicadores (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2954`)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1F-05 (población por cierre, sin anulados)"
+
+  - clave: "decision/f1f03-criterio-aceptacion-corregido"
+    fecha: "2026-10-22"
+    pregunta: |
+      Los tres puntos incumplibles de `decision/f1f03-criterio-aceptacion` (consecuencia (2): el SR sin remisión ni
+      etiqueta, la remisión de salida en n8n y el indicador 55 a mano): ¿se aceptan por escrito o se corrige el criterio?
+    respuesta_textual: |
+      «Criterio de aceptación de F1F-03, corregido. Cuatro servicios reales de principio a fin en la aplicación (MT, CG, HV y SR), hechos por el equipo entre el 16/11 y el 04/12. Superado si cada uno llega a «Finalizado»: sin tocar la base a mano; sin registrarlo también en Zoho; con todas las transiciones con su traza; con remisión de entrada, etiqueta y documentos generados en los tres servicios con equipo físico (no en el SR); con la remisión de salida generada por el flujo de n8n y con su número de ticket; y reflejado en los ocho indicadores de tiempo. La satisfacción (55) se acepta medida a mano hasta que haya correo propio en enero. Lo que falle se corrige antes del 09/12 o se acepta por escrito.»
+    consecuencias: |
+      (1) SUSTITUYE el criterio de `decision/f1f03-criterio-aceptacion` y resuelve sus tres puntos incumplibles: (a) el SR
+      va sin remisión ni etiqueta; (b) la remisión de salida es la de n8n; (c) la 55 se acepta medida a mano.
+      (2) «Los ocho indicadores de tiempo» son los nueve menos la 55.
+      (3) El criterio no pide construcción: lo ejecuta el equipo del 16/11 al 04/12.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f03-criterio-aceptacion-corregido) · sustituye a decision/f1f03-criterio-aceptacion"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-03 (criterio de aceptación)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final

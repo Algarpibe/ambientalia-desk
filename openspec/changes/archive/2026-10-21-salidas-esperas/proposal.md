@@ -16,7 +16,7 @@ F1C-03 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:101`): «C3 sa
 persona a cargo», talla S–M, después del corte. La regla del ejecutor va dentro de esta fila y F1C-05 no se reabre
 (`…R01.4.md:163`). Respaldo: `decision/c3-salida-esperas` (`openspec/config.yaml:1828-1847`),
 `decision/salida-emergencia-quien-la-ejecuta` (`openspec/config.yaml:3426-3440`) y la medición
-`medicion/p90-esperas-2026-10-21` (`openspec/config.yaml:5276-5328`). Maestro R08.4: M1.3.4 (`R08.4.md:1297-1342`),
+`medicion/p90-esperas-2026-10-21` (`openspec/config.yaml:5276-5328` en `24b86092`). Maestro R08.4: M1.3.4 (`R08.4.md:1297-1342`),
 M1.9.2 «La persona a cargo» (`R08.4.md:2028`), «Ausencias» (`:2036`) y «Restricción de quién ejecuta» (`:2037`).
 
 `cierra: si` — las cuatro esperas quedan con su salida decidida, la caducidad con plazo medido y la regla del ejecutor
@@ -58,7 +58,7 @@ Faltan dos salidas, la caducidad y la regla de quién ejecuta: hoy no existe nin
 | D13 | Corrección del maestro: plazos medidos y regla del ejecutor | `docs/sdd/F0-01_Correcciones_para_el_maestro.md` |
 
 **Pregunta de diseño (no de Gerencia): la entrada al estado.** La medición es 100 % de tickets venidos de Zoho
-(`de_la_app: 0` en las cuatro, `openspec/config.yaml:5288`, `:5297`, `:5306`, `:5315`), y `apps/desk/server/db/sla.ts:88`
+(`de_la_app: 0` en las cuatro, `openspec/config.yaml:5288` en `24b86092`, `:5297`, `:5306`, `:5314`), y `apps/desk/server/db/sla.ts:88`
 sólo lee `ticket_transitions`. Hay que fusionar con `ticket_history`, como hace `apps/desk/server/db/relojSla.ts:77-81`.
 El anti-duplicado reutiliza `public.alarmas_avisadas` (PK `ticket_id, estado, entrada_at`, `schema.sql:582-589`) o una
 columna nueva. Preferencia: sin migración. Lo decide el diseño.
@@ -140,7 +140,7 @@ El cliente consume la misma regla pura de D4. Corregida por `decision/f1c03-quie
   figura sigue `[ABIERTO]`): si no es de Servicio Técnico, la salida la ejecuta el respaldo.
 - **S-3** El administrador cuenta como respaldo y aporta motivo (molde de F1C-07, `openspec/config.yaml:5125`). **RETIRADO por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21)**: el administrador ejecuta sin motivo propio.
 - **S-4** Días naturales; vence cuando lo transcurrido es ≥ plazo, nunca antes.
-- **S-5** Plazos provisionales (`openspec/config.yaml:5323-5326`): se recalculan con una medición nueva con clave propia.
+- **S-5** Plazos provisionales (`openspec/config.yaml:5323-5326` en `24b86092`): se recalculan con una medición nueva con clave propia.
 - **S-6** Destinatarios de §3.
 - **S-7** Al encender, un aviso por cada ticket ya vencido, sin corte.
 - **S-8** Tipos de evento: D1 Decisional, D2 Compras / Logístico (como `solicitud_repuestos`, `transitions.ts:200`).
@@ -159,7 +159,7 @@ cerrado. El resto, a la lista semanal agrupada por tanda.
 | R-1 | Vigilantes de cifras: hipótesis (dato del encargo, sin cita): F1C-02 rompió 46 pruebas al mover el catálogo | Lote 1 corre la suite entera antes de cerrar; el diseño enumera los vigilantes |
 | R-2 | La alarma no ve la entrada de los tickets de Zoho (`db/sla.ts:88`) | Fusión con `ticket_history` (§3, diseño) |
 | R-3 | Barrido de citas de `transitions.ts`, `estados.ts`, `ticketService.ts`, `config.ts` | Inserción en líneas existentes; regla de mutación 4 al cierre |
-| R-4 | Encendido, `anulacion` desde ER/SE se endurece para quien hoy la ejecuta: 2 + 1 estancias abiertas el 21/10 (`openspec/config.yaml:5293`, `:5302`) | Interruptor cerrado; `DEPLOY.md` §17 lo dice |
+| R-4 | Encendido, `anulacion` desde ER/SE se endurece para quien hoy la ejecuta: 2 + 1 estancias abiertas el 21/10 (`openspec/config.yaml:5293` en `24b86092`, `:5302`) | Interruptor cerrado; `DEPLOY.md` §17 lo dice |
 | R-5 | S-2 deja sin persona a cargo a la mayoría de tickets de Zoho | **Sin objeto desde `decision/f1c03-quien-ejecuta-salidas`**: el ejecutor ya no depende del derivado |
 | R-6 | Muestras pequeñas (12 a 40) para los plazos | S-5 |
 
