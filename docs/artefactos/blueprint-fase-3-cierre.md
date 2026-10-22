@@ -39,4 +39,6 @@ stateDiagram-v2
     e03 --> e23 : Anulación [frontera] [C]
     e21 --> e18 : Facturar [C]
     e22 --> e17 : Control de calidad aprobado [frontera] [ST]
+    e01 --> e17 : Cobro de diagnóstico [frontera] [C]
+    e02 --> e17 : Cobro de diagnóstico [frontera] [C]
 ```

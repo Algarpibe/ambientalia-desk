@@ -916,3 +916,8 @@ export function getContextoDecisionales(): Promise<import('@ambientalia/shared')
 export function getContextoControlCalidad(): Promise<{ activo: boolean }> {
   return fetch('/api/permisos/control-calidad', { credentials: 'include' }).then((r) => json<{ activo: boolean }>(r))
 }
+
+/** El contexto de las salidas de las esperas (F1C-03, RQ-PM-45): lo decide el servidor; el panel sólo filtra con él. */
+export function getContextoSalidasEsperas(): Promise<import('@ambientalia/shared').ContextoSalidasEsperas> {
+  return fetch('/api/permisos/salidas-esperas', { credentials: 'include' }).then((r) => json<import('@ambientalia/shared').ContextoSalidasEsperas>(r))
+}

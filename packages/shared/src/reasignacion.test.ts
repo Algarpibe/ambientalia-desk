@@ -25,7 +25,7 @@ describe('puedeReasignar · barrido de estados por áreas contra la ruta (RQ-PM-
       for (const status of ESTADOS) {
         const catalogo = CATALOGO_POR_FLUJO[flujoDelTicket({ status, classification })]
         for (const area of AREAS) {
-          const esperado = catalogo.some((t) => t.from.includes(status) && t.to !== ESTADO_ANULADO && areasForTransition(t.area).includes(area)) // F1C-01 (S-8): anular no da el testigo
+          const esperado = catalogo.some((t) => t.from.includes(status) && t.to !== ESTADO_ANULADO && t.id !== 'cobro_diagnostico_espera' && areasForTransition(t.area).includes(area)) // F1C-01 (S-8): anular no da el testigo; F1C-03 (S-22): el cobro del diagnóstico tampoco
           expect(puedeReasignar(sujeto([area]), { status, classification }), `${classification ?? 'servicio'} · ${status} · ${area}`).toBe(esperado)
           comparados++
         }

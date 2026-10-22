@@ -4,7 +4,7 @@ import {
   CLAVE_GAS_CC, CLAVE_MOTIVO_FIRMA_ADMIN, CLAVE_MOTIVO_RECHAZO_CC, ID_APROBACION_CC, ID_ENVIO_CC, ID_RECHAZO_CC, IDS_FIRMA_CC,
 } from './camposControlCalidad'
 import { tienePatronVigente, type GasPatronLeido } from './gasPatron'
-import { tipoEventoDeTransicion } from './tipoEvento'; import { IDS_CALIBRACION_DIRECTA } from './calibracionDirecta'; import type { Transition } from './transitions' // F1C-08: en esta línea para no desplazar citas
+import { tipoEventoDeTransicion } from './tipoEvento'; import { IDS_CALIBRACION_DIRECTA } from './calibracionDirecta'; import type { Transition } from './transitions'; import { visibleConSalidasEsperas } from './salidasEsperas' // F1C-08: en esta línea para no desplazar citas; F1C-03 (RQ-TS-56): la visibilidad de las salidas de las esperas
 
 /**
  * control-calidad-liberacion (F1C-07, D2): regla pura de quién firma el control de calidad, qué contenido exige la firma,
@@ -116,10 +116,10 @@ export * from './camposControlCalidad'
 /**
  * F1C-08 (RQ-TS-56, D6, S-14): ids de las transiciones visibles con `activo` cuyo destino es `Por Facturar` y alguno de cuyos
  * orígenes se alcanza desde `En Proceso` por transiciones visibles SIN entrar en `Control de calidad` (BFS). Es la condición (3)
- * como propiedad del grafo: encendido son sólo los rechazos Decisionales; apagado, además `finalizacion_servicio`.
+ * como propiedad del grafo: encendido son sólo los rechazos Decisionales; apagado, además `finalizacion_servicio`. F1C-03 (RQ-TS-56): con `salidasEsperas` (por omisión `false`) se suma `cobro_diagnostico_espera`.
  */
-export function entradasAPorFacturarSinControlCalidad(ts: readonly Transition[], activo: boolean): string[] {
-  const visibles = ts.filter((t) => visibleConControlCalidad(t.id, activo))
+export function entradasAPorFacturarSinControlCalidad(ts: readonly Transition[], activo: boolean, salidasEsperas = false): string[] {
+  const visibles = ts.filter((t) => visibleConControlCalidad(t.id, activo) && visibleConSalidasEsperas(t.id, salidasEsperas))
   const alcanzados = new Set<string>(['En Proceso'])
   const cola = ['En Proceso']
   for (let e = cola.shift(); e !== undefined; e = cola.shift()) {

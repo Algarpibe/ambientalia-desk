@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import type { Request, Response, NextFunction } from 'express'
 import type { UserPublic } from '@ambientalia/shared'
-import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, canExecuteTransition, puedeEjecutarTransicion, esFirmaControlCalidad, CARGOS, EXCEPCIONES_POR_CARGO, IDS_CALIBRACION_DIRECTA } from '@ambientalia/shared'
+import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, canExecuteTransition, puedeEjecutarTransicion, esFirmaControlCalidad, CARGOS, EXCEPCIONES_POR_CARGO, IDS_CALIBRACION_DIRECTA, IDS_SALIDAS_NUEVAS } from '@ambientalia/shared'
 import { requireAuth, requireAdmin, requireArea } from './auth/middleware'; import { conRemisionVigente } from './testing/remisionDePrueba'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
@@ -40,9 +40,9 @@ instalarArnes()
  */
 describe('matriz área × transición, contra el servidor', () => {
   for (const area of AREAS) {
-    it(`las 38 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
-      const cookie = await userCookie([area])
-      const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre
+    it(`las 40 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
+      const cookie = await userCookie([area])   // F1C-03: ya no se siembra derivado_a en las salidas de las esperas (decision/f1c03-quien-ejecuta-salidas)
+      const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas con salidasEsperas (derivado_a ya no decide: el cobro del diagnóstico lo ejecuta sólo el cargo comercial, decision/f1c03-quien-ejecuta-salidas)
 
       const observado: Record<string, number> = {}
       let n = 0
@@ -53,7 +53,7 @@ describe('matriz área × transición, contra el servidor', () => {
         // 409 de `ticketService.ts:126-128` contesta antes y la casilla no llega a probar permisos.
         await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)',
           [id, 90000 + n, 'Matriz de permisos', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-MTX'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
-        const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+        const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id) || IDS_SALIDAS_NUEVAS.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
         observado[t.id] = res.status
       }
@@ -61,7 +61,7 @@ describe('matriz área × transición, contra el servidor', () => {
       // El esperado sale de la regla, no de una lista copiada: el área del usuario cubre —o no— el
       // área de la transición. Un 404 o un 409 colado aquí revienta la comparación y se ve cuál.
       const esperado: Record<string, number> = {}
-      for (const t of TRANSITIONS) esperado[t.id] = puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso: null }, t) && !esFirmaControlCalidad(t.id) ? 200 : 403 // F1C-07 (2b): las dos de firma piden cargo habilitado, y este usuario no lo tiene
+      for (const t of TRANSITIONS) esperado[t.id] = puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso: null }, t) && !esFirmaControlCalidad(t.id) && t.id !== 'cobro_diagnostico_espera' ? 200 : 403 // F1C-07 (2b): las dos de firma piden cargo habilitado, y este usuario no lo tiene. F1C-03: el cobro, sólo el Director Comercial o la Coordinadora Comercial
       expect(observado).toEqual(esperado)
     }, 60_000)
   }
@@ -69,16 +69,16 @@ describe('matriz área × transición, contra el servidor', () => {
   /**
    * EL TOTAL, escrito a mano, porque es lo único que la derivación no puede vigilarse a sí misma.
    *
-   * 38 transiciones × 3 áreas = 114 casos (108 hasta F1C-08). Las 29 de área simple prohíben a 2 áreas cada una y las 7
-   * compartidas a 1: 31×2 + 7×1 = 69 prohibidos, y 45 permitidos (65 y 43 hasta F1C-08: las dos de la calibración directa son de Servicio Técnico; 59 y 40 hasta F1C-07: las tres de control de calidad son de Servicio Técnico). Si mañana una transición pasa de
+   * 40 transiciones × 3 áreas = 120 casos (114 hasta F1C-03, 108 hasta F1C-08). Las 31 de área simple prohíben a 2 áreas cada una y las 7
+   * compartidas a 1: 33×2 + 7×1 = 73 prohibidos, y 47 permitidos (69 y 45 hasta F1C-03: las dos salidas de las esperas son de área simple; 65 y 43 hasta F1C-08: las dos de la calibración directa son de Servicio Técnico; 59 y 40 hasta F1C-07: las tres de control de calidad son de Servicio Técnico). Si mañana una transición pasa de
    * simple a compartida —que es exactamente lo que F1C-05 va a tocar—, estos números se mueven y hay
    * que moverlos a propósito.
    */
-  it('la matriz son 114 casos: 69 prohibidos y 45 permitidos', () => {
+  it('la matriz son 120 casos: 73 prohibidos y 47 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
-    expect(casos).toHaveLength(114)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(69)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(45)
+    expect(casos).toHaveLength(120)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(73)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(47)
   })
 
   /**
@@ -86,11 +86,11 @@ describe('matriz área × transición, contra el servidor', () => {
    * Va contra el servidor por lo mismo que la matriz — el `isAdmin` que decide es el de la sesión,
    * no el del argumento.
    */
-  it('un administrador pasa por las 38 sin que su área importe', async () => {
+  it('un administrador pasa por las 40 sin que su área importe', async () => {
     // Su rol NO cubre ninguna transición: lo único que le abre las 33 es ser administrador.
     const u = await createUser(db, { email: 'jefa@x.co', name: 'Jefa', passwordHash: await hashPassword('password123'), isAdmin: true })
     const cookie = `sid=${await createSession(db, u.id)}`
-    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre
+    const { app: apagada } = appWith(), { app: encendida } = appWith({ controlCalidadLiberacion: true, salidasEsperas: true })   // F1C-07 (lote 2a): el envío sólo pasa con el interruptor encendido; el resto, como siempre. F1C-03: las dos salidas nuevas con salidasEsperas (derivado_a ya no decide: el cobro del diagnóstico lo ejecuta sólo el cargo comercial, decision/f1c03-quien-ejecuta-salidas)
 
     const observado: Record<string, number> = {}
     let n = 0
@@ -99,7 +99,7 @@ describe('matriz área × transición, contra el servidor', () => {
       const id = `adm-${n}`
       await db.query('INSERT INTO tickets (id, number, subject, status, tipo_servicio, orden_venta) VALUES ($1,$2,$3,$4,$5,$6)',
         [id, 80000 + n, 'Matriz de permisos', t.from[0], ...(IDS_CALIBRACION_DIRECTA.has(t.id) ? ['Calibración', 'OV-ADM'] : [null, null])]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
-      const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+      const res = await request((t.id === 'envio_control_calidad' || IDS_CALIBRACION_DIRECTA.has(t.id) || IDS_SALIDAS_NUEVAS.has(t.id)) ? encendida : apagada).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
         .send({ transitionId: t.id, values: valoresValidos(t, n) })
       observado[t.id] = res.status
     }
@@ -346,14 +346,14 @@ describe('cargo · la compuesta contra el área (puro)', () => {
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 
-  it('con la compuesta y sin cargo, la matriz son 114 casos: 70 prohibidos y 44 permitidos', () => {
+  it('con la compuesta y sin cargo, la matriz son 120 casos: 74 prohibidos y 46 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => puedeEjecutarTransicion({ areas: [a], isAdmin: false, cargoPermiso: null }, t)))
-    expect(casos).toHaveLength(114)
-    expect(casos.filter((p) => !p)).toHaveLength(70)
-    expect(casos.filter((p) => p)).toHaveLength(44)
+    expect(casos).toHaveLength(120)
+    expect(casos.filter((p) => !p)).toHaveLength(74)
+    expect(casos.filter((p) => p)).toHaveLength(46)
   })
 
-  it('cargo × área × transición: 1.026 casos, ninguno concede lo que el área niega (S17)', () => {
+  it('cargo × área × transición: 1.080 casos, ninguno concede lo que el área niega (S17)', () => {
     const cargos = [...CARGOS, null]
     let casos = 0
     for (const t of TRANSITIONS) {
@@ -365,7 +365,7 @@ describe('cargo · la compuesta contra el área (puro)', () => {
         }
       }
     }
-    expect(casos).toBe(1026) // 38 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
+    expect(casos).toBe(1080) // 40 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
   })
 
   it('con Director Comercial la compuesta coincide con el área en las 93 celdas', () => {
@@ -443,7 +443,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
     expect((await ejecutar(app, cookie, 'rc-rv', 'rechazo_revision')).status).toBe(200)
   }, 60_000)
 
-  it('el barrido de cargo sube a 1.026 (972 hasta F1C-08, 891 hasta F1C-07) y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
+  it('el barrido de cargo sube a 1.080 (1.026 hasta F1C-03, 972 hasta F1C-08, 891 hasta F1C-07) y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
     let casos = 0
     const difieren: Array<{ transicion: string; area: string }> = []
     for (const t of TRANSITIONS) {
@@ -455,7 +455,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
         }
       }
     }
-    expect(casos).toBe(1026)
+    expect(casos).toBe(1080)
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 })

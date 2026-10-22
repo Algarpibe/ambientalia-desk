@@ -11,10 +11,10 @@ import path from 'node:path'
  */
 const RAIZ = path.resolve(__dirname, '../../..')
 const deploy = readFileSync(path.join(RAIZ, 'DEPLOY.md'), 'utf8')
-const seccion = deploy.slice(deploy.indexOf('## 16. `CONTROL_CALIDAD_LIBERACION`'))
+const seccion = deploy.slice(deploy.indexOf('## 16. `CONTROL_CALIDAD_LIBERACION`'), deploy.indexOf('## 17. `SALIDAS_ESPERAS`') >= 0 ? deploy.indexOf('## 17. `SALIDAS_ESPERAS`') : undefined) // F1C-03 añadió la §17: la §16 se acota hasta ella; en una línea para no desplazar citas
 
 describe('DEPLOY.md §16 · CONTROL_CALIDAD_LIBERACION', () => {
-  it('la sección existe, tras la §15, y es la última', () => {
+  it('la sección existe, tras la §15, y es la última hasta la §17', () => {
     expect(deploy.indexOf('## 15. `DECISIONALES_POR_CARGO`')).toBeGreaterThan(-1)
     expect(deploy.indexOf('## 16. `CONTROL_CALIDAD_LIBERACION`')).toBeGreaterThan(deploy.indexOf('## 15. `DECISIONALES_POR_CARGO`'))
     expect(seccion.match(/^## \d+\./gm)).toHaveLength(1)

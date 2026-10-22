@@ -139,12 +139,12 @@ describe('estados sin salida (M1.3.4)', () => {
   /**
    * LA LECCIÓN DE MÉTODO, en prueba: «salida única» NO es proxy de nada.
    *
-   * Diez estados tienen una sola transición de salida (once hasta F1C-08, que da a `Ingresado` una segunda salida, `calibracion_directa`; diez hasta F1C-02, que añade `Pendiente de facturar`; doce hasta F1C-01: `Anulado` da una segunda salida a `En Espera de Repuestos` y a `Servicio externo`). Entre ellos `Ingresado` y `Ticket creado`, que
+   * Nueve estados tienen una sola transición de salida (diez hasta F1C-03, que da a `Solicitado` una segunda salida, `sin_pieza_en_almacen`; once hasta F1C-08, que da a `Ingresado` una segunda salida, `calibracion_directa`; diez hasta F1C-02, que añade `Pendiente de facturar`; doce hasta F1C-01: `Anulado` da una segunda salida a `En Espera de Repuestos` y a `Servicio externo`). Entre ellos `Ingresado` y `Ticket creado`, que
    * son fases de trabajo corriente y no esperas de nadie. Quien intente derivar `sin_salida` contando
-   * salidas se lleva estos diez, y no cuatro.
+   * salidas se lleva estos nueve, y no cuatro.
    */
-  it('diez estados tienen una sola salida, así que contar salidas no clasifica nada', () => {
-    expect(conUnaSolaSalida()).toHaveLength(10)
+  it('nueve estados tienen una sola salida, así que contar salidas no clasifica nada', () => {
+    expect(conUnaSolaSalida()).toHaveLength(9)
     expect(conUnaSolaSalida()).not.toContain('Ingresado')
     expect(conUnaSolaSalida()).toContain('Ticket creado')
   })
@@ -174,9 +174,9 @@ describe('estados sin salida (M1.3.4)', () => {
    *
    * Ésta es la prueba que da rojo si alguien sustituye la lista declarada por una derivación.
    */
-  it('la derivación da seis, y las cuatro que sobran son Liberación Comercial, Remisión creada, Por Entregar y Por Entregar / Sin facturar: por eso no se deriva', () => {
+  it('la derivación da cinco, y las cuatro que sobran son Liberación Comercial, Remisión creada, Por Entregar y Por Entregar / Sin facturar: por eso no se deriva', () => {
     const derivadaMal = ESTADOS_EN_ESPERA.filter((e) => conUnaSolaSalida().includes(e))
-    expect(derivadaMal).toHaveLength(6)
+    expect(derivadaMal).toHaveLength(5)
     expect(derivadaMal.filter((e) => !(ESTADOS_SIN_SALIDA as string[]).includes(e))).toEqual([
       'Por Entregar',
       'Por Entregar / Sin facturar',

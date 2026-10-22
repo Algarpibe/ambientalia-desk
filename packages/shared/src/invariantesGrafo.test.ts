@@ -47,10 +47,10 @@ describe('invariantes del grafo de transiciones', () => {
    * Vale menos que los demás y por eso va acompañado: un número solo no dice QUÉ se perdió. Va con
    * el conjunto de ids, que sí lo dice.
    */
-  it('2 · 38 transiciones sobre 23 estados', () => {
-    expect(TRANSITIONS).toHaveLength(38)
+  it('2 · 40 transiciones sobre 23 estados', () => {
+    expect(TRANSITIONS).toHaveLength(40)
     expect(ESTADOS_SERVICIO).toHaveLength(23)
-    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(38)
+    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(40)
   })
 
   /**
@@ -169,9 +169,9 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect([...derivados].sort()).toEqual([...ESTADOS].sort())
   })
 
-  it('la unión tiene 50 entradas (38 + 7 + 5), con ids únicos', () => {
-    expect(UNION).toHaveLength(50)
-    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(50)
+  it('la unión tiene 52 entradas (40 + 7 + 5), con ids únicos', () => {
+    expect(UNION).toHaveLength(52)
+    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(52)
   })
 
   it('3 · sin salida en la unión es exactamente Finalizado y Anulado (F1C-01)', () => {
@@ -406,5 +406,77 @@ describe('F1C-08 · entradas a Por Facturar sin pasar por Control de calidad (RQ
     const sucio = [...TRANSITIONS, { ...base, id: 'atajo_desde_diagnostico', from: ['Rev./Diagnostico'], to: 'Por Facturar' }]
     expect(tipoEventoDeTransicion('atajo_desde_diagnostico')).not.toBe('Decisional')
     expect(ordenadas(sucio, true)).toContain('atajo_desde_diagnostico')
+  })
+})
+
+/**
+ * salidas-esperas (F1C-03, RQ-TS-56 modificado, RQ-TS-62, RQ-TS-63, c3) · con `SALIDAS_ESPERAS` encendido la condición (3) gana una
+ * cuarta entrada, `cobro_diagnostico_espera` (Decisional, sin reparación que liberar), y `Solicitado` y la espera de SKU no se abandonan
+ * ni se anulan. Se rompe ensuciando el CATÁLOGO en memoria (regla de mutación 2), no la prueba. El tercer parámetro de
+ * `entradasAPorFacturarSinControlCalidad` vale `false` por omisión: las pruebas de F1C-08 de arriba no cambian.
+ */
+describe('F1C-03 · las salidas de las esperas en el grafo (RQ-TS-56, RQ-TS-62, RQ-TS-63)', () => {
+  const ordenadas = (ts: Transition[], cc: boolean, salidas: boolean) => [...entradasAPorFacturarSinControlCalidad(ts, cc, salidas)].sort()
+  const RECHAZOS = ['rechazo_cliente', 'rechazo_comercial', 'rechazo_revision']
+  const CUATRO = ['cobro_diagnostico_espera', ...RECHAZOS]
+  const salidasDe = (ts: readonly Transition[], estado: string) => ts.filter((t) => t.from.includes(estado))
+
+  it('encendidos los dos interruptores: cuatro entradas, las cuatro Decisionales', () => {
+    expect(ordenadas(TRANSITIONS, true, true)).toEqual(CUATRO)
+    for (const id of CUATRO) expect(tipoEventoDeTransicion(id), `${id} no es Decisional`).toBe('Decisional')
+  })
+
+  it('SALIDAS_ESPERAS apagado, el conjunto es el de F1C-08: tres, y el tercer parámetro vale false por omisión', () => {
+    expect(ordenadas(TRANSITIONS, true, false)).toEqual(RECHAZOS)
+    expect([...entradasAPorFacturarSinControlCalidad(TRANSITIONS, true)].sort()).toEqual(RECHAZOS)
+    expect([...entradasAPorFacturarSinControlCalidad(TRANSITIONS, false)].sort()).toEqual(['finalizacion_servicio', 'rechazo_cliente', 'rechazo_comercial'])
+  })
+
+  it('control de calidad apagado y salidas encendidas: finalizacion_servicio y los dos rechazos sin escape, más el cobro', () => {
+    expect(ordenadas(TRANSITIONS, false, true)).toEqual(['cobro_diagnostico_espera', 'finalizacion_servicio', 'rechazo_cliente', 'rechazo_comercial'])
+  })
+
+  it('RQ-TS-63 · Solicitado sale por entrega_repuestos y sin_pieza_en_almacen; la espera de SKU sólo por notif_cliente_sku', () => {
+    expect(salidasDe(TRANSITIONS, 'Solicitado').map((t) => t.id).sort()).toEqual(['entrega_repuestos', 'sin_pieza_en_almacen'])
+    expect(salidasDe(TRANSITIONS, 'En espera de SKU inventario').map((t) => t.id)).toEqual(['notif_cliente_sku'])
+  })
+
+  it('RQ-TS-63 · ninguna de las dos va a Anulado ni a Por Facturar, con o sin interruptor', () => {
+    for (const estado of ['Solicitado', 'En espera de SKU inventario']) {
+      for (const t of salidasDe(TRANSITIONS, estado)) expect(['Anulado', 'Por Facturar'], `${t.id} desde ${estado}`).not.toContain(t.to)
+    }
+  })
+
+  it('M5 · anulacion también desde Solicitado o desde la espera de SKU rompe la invariante', () => {
+    const anulacion = TRANSITIONS.find((t) => t.id === 'anulacion')!
+    for (const origen of ['Solicitado', 'En espera de SKU inventario']) {
+      const sucio = TRANSITIONS.map((t) => (t.id === 'anulacion' ? { ...anulacion, from: [...anulacion.from, origen] } : t))
+      expect(salidasDe(sucio, origen).some((t) => t.to === 'Anulado'), `desde ${origen}`).toBe(true)
+      expect(salidasDe(sucio, origen).map((t) => t.id).sort()).not.toEqual(salidasDe(TRANSITIONS, origen).map((t) => t.id).sort())
+    }
+  })
+
+  it('M5 · el cobro también desde la espera de SKU, o una salida de Solicitado a Por Facturar, hace crecer el conjunto', () => {
+    const cobro = TRANSITIONS.find((t) => t.id === 'cobro_diagnostico_espera')!
+    const conSku = TRANSITIONS.map((t) => (t.id === 'cobro_diagnostico_espera' ? { ...cobro, from: [...cobro.from, 'En espera de SKU inventario'] } : t))
+    expect(salidasDe(conSku, 'En espera de SKU inventario').some((t) => t.to === 'Por Facturar')).toBe(true)
+    const solicitado = [...TRANSITIONS, { ...cobro, id: 'atajo_sucio', from: ['Solicitado'] }]
+    expect(salidasDe(solicitado, 'Solicitado').some((t) => t.to === 'Por Facturar')).toBe(true)
+    expect(ordenadas(solicitado, true, true)).toContain('atajo_sucio')
+  })
+
+  it('M5 · sin sin_pieza_en_almacen en memoria, Solicitado deja de tener sus dos salidas', () => {
+    const sin = TRANSITIONS.filter((t) => t.id !== 'sin_pieza_en_almacen')
+    expect(salidasDe(sin, 'Solicitado').map((t) => t.id)).toEqual(['entrega_repuestos'])
+  })
+
+  it('mutación sobre el catálogo en memoria · un atajo finalizacion_servicio renombrado a Por Facturar hace crecer el conjunto de las cuatro', () => {
+    const sucio = [...TRANSITIONS, { ...TRANSITIONS.find((t) => t.id === 'finalizacion_servicio')!, id: 'atajo_sucio' }]
+    expect(ordenadas(sucio, true, true)).toContain('atajo_sucio')
+    expect(ordenadas(sucio, true, true)).not.toEqual(CUATRO)
+  })
+
+  it('la unión de catálogos tiene las dos ids una sola vez', () => {
+    for (const id of ['cobro_diagnostico_espera', 'sin_pieza_en_almacen']) expect([...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO, ...TRANSITIONS_SOPORTE_REMOTO].filter((t) => t.id === id)).toHaveLength(1)
   })
 })
