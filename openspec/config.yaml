@@ -5222,6 +5222,24 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-03 (criterio de aceptación)"
+
+  - clave: "decision/e224c-formulas-47-51-y-contraste"
+    fecha: "2026-10-22"
+    pregunta: |
+      H-1 de `continuidad-indicadores` (`openspec/changes/archive/2026-10-03-continuidad-indicadores/proposal.md:91`): ¿qué
+      es «la hora del último cambio de estado» con que Zoho calcula el 47 y el 51? Y, con la exportación de septiembre
+      (`decision/e224b-poblacion-indicadores`), ¿cuáles son las fórmulas de Zoho de los indicadores?
+    respuesta_textual: |
+      «Fórmulas: 47 = cierre − remisión de entrada (naturales); 49 = revisión informe − creación (hábiles); 50 = finalización ST − recepción de repuestos o, si no hay, orden de venta (hábiles, mínimo 0); 51 = cierre − finalización ST (naturales); 54 = Cumple si 50 ≤ días de entrega; 57 = cotización − revisión informe; 58 = orden de compra − cotización; 59 = orden de venta − cotización (naturales). Hábiles contados de lunes a viernes sin festivos. La satisfacción viene vacía en Desk. Los negativos del 969–972 son fechas heredadas de órdenes anteriores: diferencia explicada, no fallo.»
+    consecuencias: |
+      (1) RESUELVE el H-1 de `continuidad-indicadores`: el «último cambio de estado» del 47 y del 51 es el CIERRE.
+      (2) Contraste del analista (22/10, 13 tickets cerrados en septiembre): la variante `formulaZoho` coincide 9/9 en 49,
+      54, 57, 58 y 59 y 11/11 en 50·53; 47 y 51 no tienen variante.
+      (3) Los negativos de 970-972 se reproducen idénticos: no se corrigen.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e224c-formulas-47-51-y-contraste) · resuelve el H-1 de continuidad-indicadores"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-05 (variante Zoho del 47 y del 51)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
