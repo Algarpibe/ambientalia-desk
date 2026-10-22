@@ -128,3 +128,15 @@ Fichero `packages/shared/src/flujos.ts`; sha256 antes = después = `76e8cf419547
 - Ninguna de código. Las pruebas del GET que el diseño reparte entre varios ficheros quedan en `routes/indicadores.test.ts` y `server/indicadores.test.ts`.
 - Los nombres de escenario de M12 en este lote son «Equipo Nuevo → equipo-nuevo» (`flujos.test.ts`) y «Ticket sin clasificación (M12)» (ruta); «Otra mayúscula» y «Clasificación ausente» se cubren con los casos `Equipo Nuevo` y `null`.
 - M5 se mutó releyendo (una sentencia más), así que además de «El CSV también filtra» cae el conteo de cuatro lecturas de hoy.
+
+## Salvedad de `npm test` en el cierre de L1a (decisión del usuario, 2026-10-22)
+Tres pasadas de `npm test` sobre el contenido de `88641e65` (las dos primeras sobre el árbol idéntico antes del commit), las tres con código **1**:
+| Pasada | Ficheros | Pruebas | Fallidas | Errores | Duración |
+|---|---|---|---|---|---|
+| 1 | 316 (313 pasan, 3 omitidos) | 5.387 (5.376 pasan, 11 omitidas) | 0 | 2 × `Timeout calling "onTaskUpdate"` | 324 s |
+| 2 | 316 (313 / 3) | 5.387 (5.376 / 11) | 0 | 2 × `Timeout calling "onTaskUpdate"` | 374 s |
+| 3 | 316 (313 / 3) | 5.387 (5.376 / 11) | 0 | 2 × `Timeout calling "onTaskUpdate"` | 406 s |
+`main` dio el mismo error ese día en `126b5ab0` (316 ficheros, 5.337 pruebas, 0 fallidas). El encargo pedía los cuatro códigos en 0; se preguntó
+y el usuario decidió asentar con tres condiciones, que se comprueban en CADA pasada de L1b, L2, verify y archive: (a) 0 pruebas fallidas; (b) los
+únicos errores son «Timeout calling "onTaskUpdate"»; (c) ficheros de prueba ≥ 316 más los que añada la tanda, y pruebas que sólo suben
+(5.337 en `126b5ab0`, 5.387 en L1a). Si falla cualquiera, se para. typecheck 0; lint 0 (165 avisos); build 0 (`index-BpbCtGfB.js`, 426.074 B).
