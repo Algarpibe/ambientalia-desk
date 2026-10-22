@@ -197,3 +197,17 @@ export function repoGitTemporal(): RepoGitDePrueba {
     },
   }
 }
+
+/**
+ * Para `afterEach`: cede UN macrotask al bucle de eventos entre prueba y prueba.
+ *
+ * Las pruebas con git de verdad son síncronas de punta a punta (`spawnSync`), y entre una y otra
+ * vitest sólo encadena promesas ya resueltas: el bucle no llega nunca a la fase de E/S. La respuesta
+ * del RPC interno de vitest (`onTaskUpdate`) se queda en la tubería hasta que acaba el fichero, y al
+ * ceder por fin corre antes la fase de temporizadores: el plazo de 60 s del RPC vence con la
+ * respuesta ya llegada y sin leer. Un `setImmediate` obliga a pasar por la fase de E/S en cada
+ * prueba, y entonces lo que cuenta es lo que dura UNA prueba, no el fichero entero.
+ */
+export function cederAlBucle(): Promise<void> {
+  return new Promise((ceder) => setImmediate(ceder))
+}

@@ -73,6 +73,17 @@ export default defineConfig({
      * de 60 s produce un unhandled error y la suite sale 1 SIN NINGUNA PRUEBA ROTA.
      * Medido: el número de `Errors` es EXACTAMENTE el de ficheros por encima de 60 s.
      *
+     * …SI EL FICHERO NO CEDE NUNCA AL BUCLE DE EVENTOS, y eso lo cambia todo (2026-10-22, medido).
+     * Lo que vence no es la duración: es que la respuesta del RPC llega y nadie la lee, porque unas
+     * pruebas síncronas con `spawnSync` no dejan llegar al bucle a la fase de E/S hasta que acaba el
+     * fichero. Con `afterEach(cederAlBucle)` (`apps/desk/server/testing/reposDePrueba.ts`), los dos
+     * ficheros del hook duraron 140 s y 179 s con 0 errores, y sin él, en la pasada siguiente, 117 s
+     * y 140 s con 2. Un fichero que cede ya NO necesita estar por debajo de 60 s: lo que tiene que
+     * caber es cada prueba. Hoy ceden `hook.test.ts` y `hook.bordes.test.ts`; los demás ficheros con
+     * git síncrono siguen sujetos a este umbral, y la salida es ceder, no partirlos ni subir nada.
+     * El coste no depende del tamaño del repositorio: todo git corre en repos temporales, y cada
+     * proceso cuesta lo mismo con 1 fichero que con 2.000.
+     *
      * Con los 16 workers por defecto sobre 16 CPUs, las pruebas del hook de citas —que lanzan
      * subprocesos git— sobresuscriben la máquina y los dos ficheros pesados se arrastran hasta
      * 53-57 s, a un suspiro del umbral. Bajar a 4 no cuesta tiempo, LO AHORRA: la suite baja de

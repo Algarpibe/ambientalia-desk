@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect } from 'vitest'
 // Partido por el RPC de vitest (60 s): los bordes y los tres modos del CLI están en hook.bordes.test.ts.
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -6,7 +6,7 @@ import path from 'node:path'
 import { EXCLUSIONES, ejecutar } from './cli'
 import { detectar } from './detector'
 import { repoGit } from './git'
-import { repoGitTemporal, cita, anclada, abreviada, type RepoGitDePrueba } from '../testing/reposDePrueba'
+import { repoGitTemporal, cita, anclada, abreviada, cederAlBucle, type RepoGitDePrueba } from '../testing/reposDePrueba'
 
 // Pruebas SINTÉTICAS del hook: git de verdad, en repositorios temporales aislados (§8 del diseño).
 const LENTO = 30_000
@@ -392,4 +392,7 @@ describe('hook · D12: borrado de rama, sha que no pela a árbol, y dos referenc
     }
   }, LENTO)
 })
+
+// Sin esto el fichero, que pasa de 60 s, sale con un «Timeout calling onTaskUpdate» (ver `cederAlBucle`).
+afterEach(cederAlBucle)
 

@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect } from 'vitest'
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { ejecutar } from './cli'
 import { detectar } from './detector'
 import { repoGit } from './git'
-import { repoGitTemporal, cita, anclada, type RepoGitDePrueba } from '../testing/reposDePrueba'
+import { repoGitTemporal, cita, anclada, cederAlBucle, type RepoGitDePrueba } from '../testing/reposDePrueba'
 
 // Pruebas SINTÉTICAS del hook: git de verdad, en repositorios temporales aislados (§8 del diseño).
 //
@@ -234,3 +234,6 @@ describe('hook · 3.10(c): --generar-base escribe lineaBase.jsonl él mismo, ord
     }
   }, LENTO)
 })
+
+// Sin esto el fichero, que pasa de 60 s, sale con un «Timeout calling onTaskUpdate» (ver `cederAlBucle`).
+afterEach(cederAlBucle)
