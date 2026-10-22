@@ -321,3 +321,12 @@ restauro a mano con otra edicion; el sha256 volvio a `0e31ad23…` antes de segu
 
 ### Desviaciones del diseno
 - Ninguna. Una decision menor del `.tsx`: el `<select>` lleva `aria-label="Flujo"` y el `title` del diseno; el `<a>` y el `<select>` van juntos en un fragmento dentro de la misma linea 83.
+
+### Cierre de L2 (orquestador)
+- Detector sobre `0027e9bb`: salida 1 por cinco bloqueantes de esta misma sección (rutas de archivo recortadas con «…» o sin la fecha de la carpeta).
+  Reparadas en `a4e287c8` con la ruta completa, más dos abreviadas expandidas al fichero que citan; detector sobre `a4e287c8`: salida 0, 13 abreviadas
+  rotas (las de `main`), 0 bloqueantes.
+- `npm run reconcile` en `fa5c2f5d`: cifras sin cambio (28 por archivo, 9 por commit, 9 en curso); sección 6 en 0 en la rama.
+- Salvedad de `npm test` (pasada del orquestador sobre `fa5c2f5d`): código 1; 316 ficheros (313 pasan, 3 omitidos), 5.441 pruebas (5.430 pasan,
+  11 omitidas), 0 fallidas, 2 × `Timeout calling "onTaskUpdate"`, 310 s. Condiciones: (a) sí; (b) sí; (c) 316 ≥ 316 y 5.441 ≥ 5.425, sí. typecheck 0;
+  lint 0 (165 avisos); build 0: `index-eZJekTNg.js`, 426.466 B (antes `index-BpbCtGfB.js`, 426.074 B).
