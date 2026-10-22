@@ -13,27 +13,27 @@ partida del lote, válvula 720.
 
 ## Lote L1a — M2, predicado, `validarFlujo`, lectura, recorte, GET (~240 × 1,8 = 430; ≤ 720)
 
-- [ ] L1a.1 Línea base: `npm test` y `npm run typecheck` en verde antes de tocar nada; anotar el nº de avisos de lint.
-- [ ] L1a.2 CARACTERIZACIONES M2 (verdes a propósito, antes de producción): GET json y GET csv en `server/routes/indicadores.test.ts` (al final), POST sin
+- [x] L1a.1 Línea base: `npm test` y `npm run typecheck` en verde antes de tocar nada; anotar el nº de avisos de lint.
+- [x] L1a.2 CARACTERIZACIONES M2 (verdes a propósito, antes de producción): GET json y GET csv en `server/routes/indicadores.test.ts` (al final), POST sin
       `flujo` en `server/routes/indicadoresComparacion.test.ts` (al final); fixture con «Equipo nuevo» en `Ticket creado`, «Soporte remoto», «Servicio» y `NULL`;
       `sha256` literal del cuerpo y orden de claves (RQ-KP-31 y RQ-KP-32 «bytes de hoy»).
-- [ ] L1a.3 ROJO `packages/shared/src/flujos.test.ts` (al final): `flujoPorClasificacion`, `FLUJOS`, `NOMBRE_FLUJO` exportado; casos de D1; «Equipo Nuevo» y `null` (M12);
+- [x] L1a.3 ROJO `packages/shared/src/flujos.test.ts` (al final): `flujoPorClasificacion`, `FLUJOS`, `NOMBRE_FLUJO` exportado; casos de D1; «Equipo Nuevo» y `null` (M12);
       tabla que enfrenta `flujoDelTicket` y el predicado en los 26 `ESTADOS` (M6). RQ-KP-30. Rojo por símbolos inexistentes.
-- [ ] L1a.4 VERDE `packages/shared/src/flujos.ts`: `:126` comentario y `:127` `export const` en sitio; `flujoPorClasificacion` y `FLUJOS` tras `:163`.
-- [ ] L1a.5 ROJO `server/indicadores.test.ts` (al final): `validarFlujo` (`otro`, `''`, array, `Servicio`, `undefined`), `MENSAJE_FLUJO` nombra cada flujo,
+- [x] L1a.4 VERDE `packages/shared/src/flujos.ts`: `:126` comentario y `:127` `export const` en sitio; `flujoPorClasificacion` y `FLUJOS` tras `:163`.
+- [x] L1a.5 ROJO `server/indicadores.test.ts` (al final): `validarFlujo` (`otro`, `''`, array, `Servicio`, `undefined`), `MENSAJE_FLUJO` nombra cada flujo,
       `recortarPorFlujo(e, null)` con `toBe(e)`, recorte con flujo, `clasificaciones` en la lectura y cuatro consultas. RQ-KP-29, -31.
-- [ ] L1a.6 VERDE `server/indicadores.ts`: en sitio `:2`, `:43`, `:64`, `:65`, `:73`, `:88` (D4); `MENSAJE_FLUJO`, `FlujoValidado`, `validarFlujo`, `recortarPorFlujo` tras `:96` (D3, D5).
-- [ ] L1a.7 ROJO `server/routes/indicadores.test.ts` (al final): M1 (`flujo=equipo-nuevo` sobre los tres flujos), M3 (cuatro valores malos, sin consulta de datos), M5 (csv `soporte-remoto`,
+- [x] L1a.6 VERDE `server/indicadores.ts`: en sitio `:2`, `:43`, `:64`, `:65`, `:73`, `:88` (D4); `MENSAJE_FLUJO`, `FlujoValidado`, `validarFlujo`, `recortarPorFlujo` tras `:96` (D3, D5).
+- [x] L1a.7 ROJO `server/routes/indicadores.test.ts` (al final): M1 (`flujo=equipo-nuevo` sobre los tres flujos), M3 (cuatro valores malos, sin consulta de datos), M5 (csv `soporte-remoto`,
       cabecera de hoy, nombre con flujo), M8 (periodo invertido + `flujo=otro`; `formato=xml&flujo=otro`), M10 (`datos()` = 4), M12 («Equipo Nuevo» y `NULL`). RQ-KP-29, -31.
-- [ ] L1a.8 VERDE `server/routes/indicadores.ts`, 0 líneas insertadas, en sitio: `:7`, `:42`, `:43`, `:44`, `:48`, `:53` (D3, D5). Las tres caracterizaciones de L1a.2 siguen en verde.
-- [ ] L1a.9 Mutación M1: `recortarPorFlujo` devuelve todos los tickets → cae «El recorte filtra».
-- [ ] L1a.10 Mutación M2: recortar a `servicio` sin flujo, y emitir `flujo: null` → caen las caracterizaciones, el `toBe(e)` y las pruebas de hoy.
-- [ ] L1a.11 Mutación M3: `validarFlujo` deja pasar `otro` / `''` / `Servicio` → caen «Valor desconocido» y «Vacío, repetido y otra grafía».
-- [ ] L1a.12 Mutación M5: el csv ignora el recorte → cae «El CSV también filtra».
-- [ ] L1a.13 Mutación M6: el recorte usa `flujoDelTicket` → caen los casos de estado de L1a.3 y L1a.7.
-- [ ] L1a.14 Mutación M8 (regla 1): `validarFlujo` antes de `validarPeriodo` en el GET → cae «Periodo antes que flujo».
-- [ ] L1a.15 Mutación M10: `clasificaciones` por una consulta aparte → cae «Cuatro consultas» (`indicadores.test.ts:58` y el par de la ruta).
-- [ ] L1a.16 Mutación M12 (regla 2): comparar la clasificación sin normalizar → cae «Otra mayúscula» y «Ticket sin clasificación».
+- [x] L1a.8 VERDE `server/routes/indicadores.ts`, 0 líneas insertadas, en sitio: `:7`, `:42`, `:43`, `:44`, `:48`, `:53` (D3, D5). Las tres caracterizaciones de L1a.2 siguen en verde.
+- [x] L1a.9 Mutación M1: `recortarPorFlujo` devuelve todos los tickets → cae «El recorte filtra».
+- [x] L1a.10 Mutación M2: recortar a `servicio` sin flujo, y emitir `flujo: null` → caen las caracterizaciones, el `toBe(e)` y las pruebas de hoy.
+- [x] L1a.11 Mutación M3: `validarFlujo` deja pasar `otro` / `''` / `Servicio` → caen «Valor desconocido» y «Vacío, repetido y otra grafía».
+- [x] L1a.12 Mutación M5: el csv ignora el recorte → cae «El CSV también filtra».
+- [x] L1a.13 Mutación M6: el recorte usa `flujoDelTicket` → caen los casos de estado de L1a.3 y L1a.7.
+- [x] L1a.14 Mutación M8 (regla 1): `validarFlujo` antes de `validarPeriodo` en el GET → cae «Periodo antes que flujo».
+- [x] L1a.15 Mutación M10: `clasificaciones` por una consulta aparte → cae «Cuatro consultas» (`indicadores.test.ts:58` y el par de la ruta).
+- [x] L1a.16 Mutación M12 (regla 2): comparar la clasificación sin normalizar → cae «Otra mayúscula» y «Ticket sin clasificación».
 - [ ] L1a.c Cierre de lote L1a: X.c; estimación **~430 (bajo 720)**; `apply-progress.md` con rojos, mutaciones y medida.
 
 ## Lote L1b — POST, cruce por flujo, clasificación de los sin cruzar, forma (~215 × 1,8 = 390; ≤ 720)

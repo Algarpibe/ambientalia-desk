@@ -304,3 +304,25 @@ describe('RQ-KP-27 · privacidad', () => {
     for (const s of SECRETOS) expect(registro + JSON.stringify(res.body), s).not.toContain(s)
   })
 })
+
+// ── filtro-indicadores-por-flujo (F1F-05, L1a): caracterización de M2 del POST (RQ-KP-32, «el cuerpo de hoy») ─────────────────────────────
+// Escrita ANTES de tocar producción: el `sha256` es el del cuerpo de ese día, sobre un fixture con los cuatro flujos.
+import { createHash } from 'node:crypto'
+
+describe('M2 · caracterización del POST sin flujo: los bytes de hoy', () => {
+  it('sin parámetro `flujo`: ni clave `flujo` ni `deOtroFlujo`, las claves en su orden y el cuerpo idéntico byte a byte', async () => {
+    const alta = (id: string, n: number, estado: string, clasificacion: string | null) =>
+      db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta, classification) VALUES ($1, $2, 's', $3, '2026-12-01T15:00:00Z', '2026-12-01', '2026-12-03', $4)", [id, n, estado, clasificacion])
+    await alta('101', 1001, 'Ticket creado', 'Equipo nuevo'); await alta('102', 1002, 'Rev./Diagnostico', 'Soporte remoto')
+    await alta('103', 1003, 'Por Facturar', 'Servicio'); await alta('104', 1004, 'Ticket creado', null)
+    await alta('105', 1005, 'Ticket creado', 'Equipo nuevo')
+    await db.query("UPDATE tickets SET created_time = '2026-06-01T15:00:00Z' WHERE id = '105'")
+    const f = csvMuestra([fila('101', 1001), fila('102', 1002), fila('103', 1003), fila('105', 1005), fila('999', 9009)])
+    const res = await subir(appWith().app, await adminCookie(), f, { query: PERIODO })
+    expect(res.status).toBe(200)
+    expect(Object.keys(res.body)).toEqual(['periodo', 'fichero', 'cruce', 'comparacion'])
+    expect(Object.keys(res.body.cruce)).toEqual(['cruzados', 'soloEnFichero', 'fueraDelPeriodo', 'soloEnDesk', 'numeroDistinto', 'valoresIlegibles'])
+    expect(res.body.cruce).toMatchObject({ cruzados: 3, soloEnFichero: { total: 1 }, fueraDelPeriodo: { total: 1 }, soloEnDesk: { total: 1 } })
+    expect(createHash('sha256').update(res.text).digest('hex')).toBe('862d1958da8da38ec164e10ddd2158bcb0f1fc66f5e835af60a0f4cbc10623a7')
+  })
+})

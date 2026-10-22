@@ -4,7 +4,7 @@ import { compararIndicadores, diaEnZona, NOMBRES_ZOHO, parDeIndicador, type Indi
 import { requireAuth, requireAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { aCsv } from '../util/csv'
-import { validarPeriodo, leerEntradasIndicadores, tablaIndicadores, type FilaIndicadores } from '../indicadores'
+import { validarPeriodo, validarFlujo, recortarPorFlujo, leerEntradasIndicadores, tablaIndicadores, type FilaIndicadores } from '../indicadores'
 
 const valorDe = <T,>(v: Valor<T>): T | null => (v.tipo === 'valor' ? v.valor : null)
 
@@ -39,17 +39,17 @@ export function registerIndicadoresRoutes(app: Express, deps: { db: Queryable })
   const { db } = deps
   // Escalera: sesión (401) < administrador (403) < parámetros (400) < lectura. Molde de `analisis.ts`.
   app.get('/api/indicadores', requireAuth(db), requireAdmin, asyncHandler(async (req, res) => {
-    const p = validarPeriodo(req.query)
-    if (!p.ok) { res.status(400).json({ error: p.error }); return }
-    const filas = tablaIndicadores(await leerEntradasIndicadores(db, p))
+    const p = validarPeriodo(req.query), fl = validarFlujo(req.query.flujo)
+    if (!p.ok) { res.status(400).json({ error: p.error }); return }; if (!fl.ok) { res.status(400).json({ error: fl.error }); return }
+    const filas = tablaIndicadores(recortarPorFlujo(await leerEntradasIndicadores(db, p), fl.flujo))
     if (p.formato === 'csv') {
       res.set('Content-Type', 'text/csv; charset=utf-8')
       res.set('X-Content-Type-Options', 'nosniff')
-      res.set('Content-Disposition', `attachment; filename="indicadores-${diaEnZona(new Date()) ?? 'hoy'}.csv"`)
+      res.set('Content-Disposition', `attachment; filename="indicadores-${fl.flujo === null ? '' : `${fl.flujo}-`}${diaEnZona(new Date()) ?? 'hoy'}.csv"`)
       res.send(aCsv(CABECERAS_CSV, filas.flatMap(filasCsv)))
       return
     }
     // Sólo con lo ya sincronizado (`custom_fields`): ningún fichero, ninguna escritura. Resumen sin veredicto (RQ-KP-16, -17).
-    res.json({ periodo: { desde: p.desde, hasta: p.hasta }, tickets: filas.map(serializarFila), comparacion: compararIndicadores(filas.flatMap((f) => f.indicadores.map((i) => parDeIndicador(f.ticketId, i)))) })
+    res.json({ periodo: { desde: p.desde, hasta: p.hasta }, ...(fl.flujo === null ? {} : { flujo: fl.flujo }), tickets: filas.map(serializarFila), comparacion: compararIndicadores(filas.flatMap((f) => f.indicadores.map((i) => parDeIndicador(f.ticketId, i)))) })
   }))
 }
