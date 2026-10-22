@@ -126,12 +126,14 @@ población, las mismas claves, sin clave `flujo` y sin sufijo en el nombre.
 
 ### Requirement: RQ-KP-32 · La comparación por flujo y el cubo «de otro flujo»
 
-El POST **SHALL** cruzar el fichero contra **todos** los tickets del periodo y repartir **después**: recortar
-antes llevaría un ticket de otro flujo a «fuera del periodo». Con `flujo`: un ticket del fichero que existe en
+El POST **SHALL** cruzar el fichero contra **todos** los tickets del periodo y repartir **después**: con el reparto
+sin clasificación de RQ-KP-25, recortar antes llevaría un ticket de otro flujo a «fuera del periodo», y con
+clasificación cambiaría los «ID» que se consultan. Con `flujo`: un ticket del fichero que existe en
 Desk y es de otro flujo **SHALL** ir al cubo `deOtroFlujo`, que gana a «fuera del periodo» y a «sólo en el
 fichero»; «sólo en Desk» y «número distinto» **SHALL** contar sólo tickets del flujo pedido; y la comparación
-**SHALL** hacerse sólo con los cruzados del flujo pedido. La clasificación de los tickets fuera del periodo sale de
-la consulta por bloques de `numerosDeTickets` (`apps/desk/server/db/ticketsPorId.ts:15`) con una columna más. La
+**SHALL** hacerse sólo con los cruzados del flujo pedido. La clasificación de los tickets fuera del periodo sale,
+sólo con `flujo`, de `ticketsConClasificacion` (`apps/desk/server/db/ticketsPorId.ts:24`), que consulta por bloques
+como `numerosDeTickets` (`apps/desk/server/db/ticketsPorId.ts:10`) con una columna más y la sustituye. La
 respuesta **SHALL** llevar la clave `flujo` y el cubo `deOtroFlujo` **sólo** con `flujo`; sin él, ambos
 **MUST NOT** aparecer y el cuerpo es el de hoy. El número de consultas **MUST NOT** cambiar.
 
