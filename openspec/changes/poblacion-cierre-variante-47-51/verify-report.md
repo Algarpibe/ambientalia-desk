@@ -164,7 +164,7 @@ Ninguno.
 
 ## 10. Pendientes fuera de la rama
 
-1. Archivo: reapuntar `openspec/specs/kpis/spec.md:1447` de `:70` a `:60`; decidir lo de W1; la fusión del delta mantiene las líneas de los cinco MODIFIED.
+1. Archivo: reapuntar `openspec/specs/kpis/spec.md:1447` de la línea 70 a la 60 de ese módulo; decidir lo de W1; la fusión del delta mantiene las líneas de los cinco MODIFIED.
 2. `main`, orquestador: O-1 y O-2 (sección 7, con S2) en `openspec/config.yaml`; los 7 casos C de la sección 7.
 3. Personas (regla del ciclo 1; archivar NO las da por hechas): P-1 (corregir S-1 a S-11; Gerencia; lista semanal de supuestos) y P-2 (probar en la app los
    indicadores de septiembre por cierre; Gerencia / analista; lista acumulada de pruebas en la app).
