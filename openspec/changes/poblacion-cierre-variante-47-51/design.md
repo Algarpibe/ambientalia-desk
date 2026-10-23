@@ -31,7 +31,7 @@ citados, todo cambio es EN SU MISMA LÍNEA o va AL FINAL del fichero; ninguna l�
 
 | Opción | Contrapartida | Decisión |
 |---|---|---|
-| Fichero nuevo `packages/shared/src/diaDeCierre.ts`, exportado con una línea AL FINAL de `index.ts` (hoy acaba en `:52`; la línea nueva es la 53) | Un fichero más | **Elegida**: `index.ts` está citado por línea en una veintena de artefactos archivados (`index.ts:6`, `:17`, `:29`, `:35`, `:37`…); añadir la línea 53 no mueve ninguna |
+| Fichero nuevo `packages/shared/src/diaDeCierre.ts`, exportado con una línea AL FINAL de `index.ts` (acababa en `packages/shared/src/index.ts:52` en `afe2a1eb`; la línea nueva es la 53) | Un fichero más | **Elegida**: `index.ts` está citado por línea en una veintena de artefactos archivados (`index.ts:6`, `:17`, `:29`, `:35`, `:37`…); añadir la línea 53 no mueve ninguna |
 | Añadirla a `cierreEnCifras.ts` | Cerca de lo que reutiliza | Rechazada: `cierreEnCifras.ts:45`, `:50`, `:51`, `:55` están citados; habría que ir al final igualmente y el fichero no importa el catálogo |
 
 Firma: `diaDeCierreDelTicket(pasos: readonly { transitionId: unknown; performedAt: string; values: unknown }[], closedTime: string | null): DiaCivil | null`.
