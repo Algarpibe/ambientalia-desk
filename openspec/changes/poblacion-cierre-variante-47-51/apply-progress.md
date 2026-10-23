@@ -58,3 +58,59 @@ Cadena X.c ejecutada sobre el commit `a45035ec` (código del lote). El segundo c
 Respecto de la línea base: +1 fichero (`diaDeCierre.test.ts`) y +22 pruebas (11 del día de cierre y 11 de la variante en `indicadores.test.ts`).
 
 Medida del lote (base `afe2a1eb`): `git diff --shortstat --no-renames` más los ficheros sin trackear (0). Cifra final en el informe del lote; techo 800, válvula 720, estimación ~480.
+
+## Lote L2 · servidor (intento 4 del registro) — base `33f5ef91`
+
+Modo: strict TDD. Todo en el worktree de la rama. Los ficheros bajo `apps/desk/server` van en CRLF; los artefactos de `openspec/changes` en LF.
+
+- Commit del orquestador dentro del intento: `cecd82de` reescribió `design.md:34` como cita completa `packages/shared/src/index.ts:52` en `afe2a1eb` (las abreviadas rotas del detector vuelven a 13, 7552 comprobadas). No se tocó.
+- L2.1 línea base (hecha por el orquestador sobre `33f5ef91`, L1 aplicado): typecheck 0, lint 0 errores y 165 avisos, detector 0, `npm test` 0 con 314 ficheros pasan y 3 saltados (317) y 5452 pruebas pasan y 11 saltadas (5463).
+
+### L2.2 · Datos en verde (D6), en su línea
+
+Cada `INSERT` de tickets de las pruebas de lectura lleva ahora `status_type = 'Closed'` y `closed_time` igual a la creación, en la misma línea. Los números de `tasks.md` coinciden con el árbol salvo `indicadores.test.ts`, donde `:61` es el título y la sentencia a cambiar (`UPDATE … created_time = NULL`) es la `:63`, y `migracionMarcadorLectores.test.ts:55` es la línea de `leerEntradasIndicadores` (se antepone ahí `UPDATE tickets SET status_type = 'Closed'`).
+Con el código de hoy, vitest dirigido a `indicadores.test.ts`, `routes/indicadores.test.ts`, `routes/indicadoresComparacion.test.ts` y `migracionMarcadorLectores.test.ts`: 4 ficheros y 151 pruebas, todo en verde (los datos nuevos no cambian nada mientras el corte siga siendo por creación).
+
+### Rojos vistos (antes del verde)
+
+| Tarea | Prueba | Salida | Causa |
+|---|---|---|---|
+| L2.3 | `poblacionPorCierre.test.ts` (nuevo, 17 pruebas): 15 rojas, 2 verdes (caracterización) | `Tests 16 failed \| 45 passed` junto con L2.4; p. ej. «cierre en el periodo, creación fuera»: `expected [] to deeply equal [ 'agosto' ]`; «con 20 cerrados…»: `expected [] to have a length of 20 but got +0`; «El flujo se compone»: `expected [] to deeply equal [ 'en' ]` | El corte de hoy es por la fecha de CREACIÓN y no filtra por `status_type`: los cerrados con creación fuera del periodo no entran. Verdes ya de salida y a propósito: «el marcador sale en la MISMA consulta» y «sólo lectura» (caracterizan lo que ya se cumple y lo que L2 no debe romper) |
+| L2.4 | `indicadores.test.ts`: «la cuarta consulta lleva el mismo WHERE y mismos parámetros…» (`:161` `length` 2 → 0) | `expected 2 to be +0` | Hoy hay dos parámetros de ventana (`created_time`); la aserción roja que el diseño nombra. `:63` (`closed_time = NULL` además de `created_time`) es caracterización: verde antes y después |
+
+### Verde (L2.5)
+
+`apps/desk/server/indicadores.ts` según la tabla de D4, en sitio: `:2`, `:53-54`, `:59`, `:60`, `:64`, `:65`, `:68`, `:69`, `:70`, `:73`, `:77`, `:78`, `:81`, `:84`; `poblacionPorCierre` al final (poda `historial`, `vistos` y `clasificaciones` de lo que no entra, como exige `indicadores.test.ts:219-226`). `:81` conserva el salto del marcador (ahora lo guarda en `marcadores` antes de saltar). `typecheck` 0.
+Colocación (mutación 4), con `git diff -U0` sobre `indicadores.ts`: solo hunks `-2 +2`, `-53,2 +53,2`, `-59,2 +59,2`, `-64,2 +64,2`, `-68,3 +68,3`, `-73 +73`, `-77,2 +77,2`, `-81 +81`, `-84 +84` y `+118,17` tras la última línea. Ninguna línea existente se desplazó. Sólo lectura: ninguna escritura nueva (S-2); la prueba «sólo lectura» lo fija.
+Vitest dirigido (`poblacionPorCierre`, `indicadores`, `routes/indicadores`, `routes/indicadoresComparacion`, `migracionMarcadorLectores`, `cierreMigracionEnCifras`): 6 ficheros y 174 pruebas en verde. Además `routes/encuestaRespuestas.test.ts`, `comparacionExportacion.test.ts` e `indicadoresUrl.test.ts` (los otros consumidores): 3 ficheros y 84 pruebas en verde.
+
+### L2.6 · el POST hereda la población
+
+Dos pruebas al final de `routes/indicadoresComparacion.test.ts` (RQ-KP-35): un «ID» de Desk abierto, anulado o cerrado fuera del periodo cae en `fueraDelPeriodo` con el cuarto cubo en su nombre (S-8); y «El flujo se compone en el POST».
+**Nacieron verdes** (se escribieron con D4 aplicado: el POST hereda la lectura, D5). Comprobación de que la primera sí discrimina: contra `indicadores.ts` de `HEAD` (lectura vieja, restaurada después con el mismo sha256 `24d317a1…f1673f`) cae con `expected 3 to be 1` (cruzaban los tres: abierto, anulado y cerrado fuera). La segunda (flujo) es verde también con la lectura vieja, porque el flujo ya se componía; su discriminante es la mutación M6 (abajo).
+
+### L2.7 · las tres sha256
+
+Corridas tras L2.2 con el código de hoy y otra vez tras L2.5: **recalculado, bytes iguales** en las tres; ningún hash cambió y ningún `it` se borró ni se saltó. Siguen siendo tres: `routes/indicadores.test.ts:263` (`0975f415…992cf`), `:271` (`c83ef69a…ba88be2`) y `routes/indicadoresComparacion.test.ts:326` (`862d1958…10623a7`). Misma población (cierre = creación en los datos) y el 47 y el 51 de esos fixtures siguen sin hitos, como preveía D6. Se registra en `decision/e224b-poblacion-indicadores`, que nombra el commit del lote.
+
+### Mutaciones (sha256 del fichero antes de mutar y tras revertir: coinciden)
+
+| # | Fichero | Qué se cambió | Pruebas que cayeron | sha256 antes → después |
+|---|---|---|---|---|
+| M1 (L2.8) | `indicadores.ts` | `poblacionPorCierre` corta por `diaEnZona(t.creadoEn)` | 12 de `poblacionPorCierre.test.ts`, entre ellas «cierre en el periodo, creación fuera (mutación: cortar por creación)» y «los bordes del periodo» | `24d317a1…f1673f` → `24d317a1…f1673f` |
+| M2 (L2.9) | `indicadores.ts` | quitado el `continue` de `esAnulado` (`:68`) | «un anulado no entra (mutación: dejar entrar anulados)», «sin periodo (S-4)…» y «respuestas de tickets fuera de la población…» | `24d317a1…f1673f` → `24d317a1…f1673f` |
+| M3 (L2.10) | `indicadores.ts` | comentado el `filtros.push` de `:59` | «un abierto no entra (mutación: dejar entrar abiertos)», «sin periodo (S-4)…» y «respuestas de tickets fuera de la población…» | `24d317a1…f1673f` → `24d317a1…f1673f` |
+| M4 (L2.11) | `indicadores.ts` | `poblacionPorCierre` ignora el marcador (`undefined`) | «migrado con la fecha de Zoho (mutación: la fecha de la migración)» y «el marcador no es un paso del cálculo…» | `24d317a1…f1673f` → `24d317a1…f1673f` |
+| M6 GET (L2.12) | `indicadores.ts` | `recortarPorFlujo` devuelve siempre `e` | «El flujo se compone (mutación: dejar de componerlo)» (GET, RQ-KP-35) | `24d317a1…f1673f` → `24d317a1…f1673f` |
+| M6 POST (L2.12) | `routes/indicadoresComparacion.ts` | `fl.flujo` → `null` en `:34` | «El flujo se compone en el POST (mutación: dejar de componerlo)» y siete del bloque RQ-KP-32 | `85ea3bc8…55b` → `85ea3bc8…55b` |
+
+### Hallazgos y supuestos
+
+- `tasks.md` L2.2 cita `indicadores.test.ts:61`/`:63` y `migracionMarcadorLectores.test.ts:55`; las líneas concretas a editar eran `:63` y `:55` (arriba). Sin consecuencias.
+- Supuesto reversible: `fueraDelPeriodo` envuelve la expresión de hoy en `Boolean(…)` para tipar el retorno como booleano; la lógica es la misma de `:70`.
+- Supuesto reversible: los ids de la fila del fichero en las pruebas del POST son numéricos (`901`…), porque el lector de la exportación rechaza ids no numéricos.
+- `sed -i` de Git Bash quitó los CRLF de `indicadores.test.ts` en un paso; se restauraron antes de commitear (el diff trae solo las líneas editadas).
+
+### Cierre de lote (L2.c)
+
+La cadena X.c, sin `npm test` (lo corre el orquestador, solo y en primer plano, sobre el HEAD final), y la medida: ver el informe del lote. Estimación ~530, techo 800, válvula 720.

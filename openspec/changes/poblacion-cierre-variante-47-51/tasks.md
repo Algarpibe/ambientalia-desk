@@ -36,31 +36,31 @@ Una rama, tres lotes (L1, L2, L3); cada lote es UN intento del registro, techo 8
 
 ## Lote L2 · servidor (~245 × 1,8 → ~530 con progreso; ≤ 720)
 
-- [ ] L2.1 Línea base: suite en verde con L1 aplicado.
-- [ ] L2.2 Datos en verde (D6), en su línea, sin mover ninguna: `INSERT` con `status_type = 'Closed'` y `closed_time = created_time` en `routes/indicadores.test.ts`
+- [x] L2.1 Línea base: suite en verde con L1 aplicado.
+- [x] L2.2 Datos en verde (D6), en su línea, sin mover ninguna: `INSERT` con `status_type = 'Closed'` y `closed_time = created_time` en `routes/indicadores.test.ts`
       (`:22`, `:77`, `:105`, `:114`, `:143`, `:154`, `:218`, `:227`, `:251`), `routes/indicadoresComparacion.test.ts` (`:37`, `:127`, `:315`, `:319` con `closed_time` en el `UPDATE`, `:335`),
       `server/indicadores.test.ts` (`:14`, `:191`) y `migracionMarcadorLectores.test.ts:55` (antepone `UPDATE tickets SET status_type = 'Closed'`). Siguen en verde con el código de hoy.
-- [ ] L2.3 ROJO `apps/desk/server/poblacionPorCierre.test.ts` (nuevo): RQ-KP-35 — cierre en el periodo con creación fuera (M1); anulado no entra (M2); abierto con `closed_time` dentro no entra (M3);
+- [x] L2.3 ROJO `apps/desk/server/poblacionPorCierre.test.ts` (nuevo): RQ-KP-35 — cierre en el periodo con creación fuera (M1); anulado no entra (M2); abierto con `closed_time` dentro no entra (M3);
       migrado cuenta con la fecha de Zoho (M4); sin cierre y con periodo no entra, sin periodo sí (S-4); `flujo` se compone en el GET con la prueba «El flujo se compone» (M6); «Los bordes del periodo» (`specs/kpis/spec.md:237-240`: primer y último día inclusivos, un día fuera);
       el escenario MODIFIED de RQ-KP-22 de respuestas de tickets abiertos/anulados (`specs/kpis/spec.md:126-129`). RQ-KP-36 — cuatro consultas, sólo `SELECT`,
       el marcador sale en la misma consulta que el historial y no llega a los indicadores.
-- [ ] L2.4 ROJO en su línea `server/indicadores.test.ts`: `:150` título «mismo WHERE y mismos parámetros» y `:161` `length` 2 → 0 (ESTA es la aserción roja: hoy hay 2 parámetros de ventana).
+- [x] L2.4 ROJO en su línea `server/indicadores.test.ts`: `:150` título «mismo WHERE y mismos parámetros» y `:161` `length` 2 → 0 (ESTA es la aserción roja: hoy hay 2 parámetros de ventana).
       `:61` y `:63` pasan a la prueba de S-4 (`closed_time = NULL` además de `created_time`) y son CARACTERIZACIÓN (verde antes y después: con nulos el resultado es el mismo); su discriminante rojo
       de hoy es un ticket cerrado con creación fuera del periodo y cierre dentro, que se añade en `poblacionPorCierre.test.ts` (L2.3).
-- [ ] L2.5 VERDE `apps/desk/server/indicadores.ts` según la tabla de D4, en sitio (`:2`, `:53-54`, `:59`, `:60`, `:64`, `:65`, `:68`, `:69`, `:70`, `:73`, `:77`, `:78`, `:81`, `:84`); `poblacionPorCierre` al final.
+- [x] L2.5 VERDE `apps/desk/server/indicadores.ts` según la tabla de D4, en sitio (`:2`, `:53-54`, `:59`, `:60`, `:64`, `:65`, `:68`, `:69`, `:70`, `:73`, `:77`, `:78`, `:81`, `:84`); `poblacionPorCierre` al final.
       `:81` conserva el salto. Sólo lectura: ninguna escritura (S-2). `poblacionPorCierre` poda también `clasificaciones` (pasada en la llamada de `:84`) a los tickets admitidos;
       lo exige la prueba existente de `apps/desk/server/indicadores.test.ts:219-226` (`clasificaciones` sólo con admitidos, `size` = n).
-- [ ] L2.6 ROJO `routes/indicadoresComparacion.test.ts` (al final): un «ID» existente en Desk, abierto / anulado / cerrado fuera del periodo, cae en `fueraDelPeriodo`; el cuarto cubo mantiene su nombre (S-8; D5);
+- [x] L2.6 ROJO `routes/indicadoresComparacion.test.ts` (al final): un «ID» existente en Desk, abierto / anulado / cerrado fuera del periodo, cae en `fueraDelPeriodo`; el cuarto cubo mantiene su nombre (S-8; D5);
       `flujo` se compone en el POST (M6). Verde si D4 ya basta: se anota si nació rojo o verde y por qué (el POST hereda la lectura).
-- [ ] L2.7 Las tres sha256 (`routes/indicadores.test.ts:263`, `:271`; `routes/indicadoresComparacion.test.ts:326`): correr; si fallan, copiar a mano el hash «received»; si no, anotar «recalculado, bytes iguales»
+- [x] L2.7 Las tres sha256 (`routes/indicadores.test.ts:263`, `:271`; `routes/indicadoresComparacion.test.ts:326`): correr; si fallan, copiar a mano el hash «received»; si no, anotar «recalculado, bytes iguales»
       (pregunta abierta 1 de D6/RQ-KP-39). El commit nombra `decision/e224b-poblacion-indicadores`. El segundo escenario de RQ-KP-39 (`specs/kpis/spec.md:334-337`) lo cubren las
       caracterizaciones existentes de esas tres pruebas.
-- [ ] L2.8 Mutación M1: `poblacionPorCierre` corta por `diaEnZona(t.creadoEn)` → cae «cierre en el periodo, creación fuera».
-- [ ] L2.9 Mutación M2: quitar el `continue` de `esAnulado` (`:68`) → cae «un anulado no entra».
-- [ ] L2.10 Mutación M3: no empujar el filtro de `:59` → cae «un abierto no entra».
-- [ ] L2.11 Mutación M4 en el servidor: `poblacionPorCierre` ignora el marcador (lo pasa como `undefined`) → cae «migrado con la fecha de Zoho».
-- [ ] L2.12 Mutación M6: `recortarPorFlujo` (`:114-117`) devuelve siempre `e` → cae «El flujo se compone» (RQ-KP-35) en el GET; y `fl.flujo` → `null` en `indicadoresComparacion.ts:34` → cae «El flujo se compone» en el POST (L2.6).
-- [ ] L2.c Cierre de lote L2: X.c; medida; estimación **~530 (≤ 720)**; `apply-progress.md` con rojos, mutaciones y la nota de las sha256.
+- [x] L2.8 Mutación M1: `poblacionPorCierre` corta por `diaEnZona(t.creadoEn)` → cae «cierre en el periodo, creación fuera».
+- [x] L2.9 Mutación M2: quitar el `continue` de `esAnulado` (`:68`) → cae «un anulado no entra».
+- [x] L2.10 Mutación M3: no empujar el filtro de `:59` → cae «un abierto no entra».
+- [x] L2.11 Mutación M4 en el servidor: `poblacionPorCierre` ignora el marcador (lo pasa como `undefined`) → cae «migrado con la fecha de Zoho».
+- [x] L2.12 Mutación M6: `recortarPorFlujo` (`:114-117`) devuelve siempre `e` → cae «El flujo se compone» (RQ-KP-35) en el GET; y `fl.flujo` → `null` en `indicadoresComparacion.ts:34` → cae «El flujo se compone» en el POST (L2.6).
+- [x] L2.c Cierre de lote L2: X.c; medida; estimación **~530 (≤ 720)**; `apply-progress.md` con rojos, mutaciones y la nota de las sha256.
 
 ## Lote L3 · aceptación y barrido (~175 × 1,8 → ~405 con progreso; ≤ 720)
 
