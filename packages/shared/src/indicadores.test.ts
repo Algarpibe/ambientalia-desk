@@ -72,9 +72,9 @@ describe('naturales con signo: 47, 57, 58, 59 (RQ-KP-03, -04, -08)', () => {
       '57:dias_naturales', '58:dias_naturales', '59:dias_naturales',
     ])
   })
-  it('la fórmula de Zoho: el 47 es sin dato aunque haya salida; el 57 es igual que la letra', () => {
+  it('la fórmula de Zoho: el 47 sin cierre es sin dato (falta el cierre del ticket) aunque haya salida; el 57 es igual que la letra', () => {
     const f = calc(tk({ fechas: { [ENT]: '2026-12-16', [SAL]: '2027-01-02', [REV]: '2026-12-10', [COT]: '2026-12-13' } }))
-    expect(de(f, '47').formulaZoho).toEqual({ tipo: 'sin_dato', motivo: 'falta el hito: hora del último cambio de estado, pendiente de decisión' })
+    expect(de(f, '47').formulaZoho).toEqual({ tipo: 'sin_dato', motivo: 'falta el hito: cierre del ticket' })
     expect(de(f, '57').formulaZoho).toEqual({ tipo: 'valor', valor: 3 })
   })
 })
@@ -303,8 +303,8 @@ describe('54 cumplimiento del tiempo promesa (RQ-KP-07, -11)', () => {
   })
 })
 
-describe('47: la variante de Zoho es sin dato aunque haya entrada y salida (RQ-KP-11)', () => {
-  const PEND = { tipo: 'sin_dato', motivo: 'falta el hito: hora del último cambio de estado, pendiente de decisión' }
+describe('47: la variante de Zoho sin cierre del ticket es sin dato aunque haya entrada y salida (RQ-KP-11, RQ-KP-37)', () => {
+  const PEND = { tipo: 'sin_dato', motivo: 'falta el hito: cierre del ticket' }
   it('con entrada y salida presentes', () => {
     const i = de(calc(tk({ fechas: { [ENT]: '2026-10-01', [SAL]: '2026-10-15' } })), '47')
     expect([dato(i), i.formulaZoho]).toEqual([14, PEND])
@@ -329,7 +329,7 @@ describe('57 y 58 con signo (RQ-KP-03, RQ-KP-18)', () => {
 // ---- F1F-05 (indicadores-51-55), lote 1: el 51 sale de la transición de entrega (RQ-KP-02, -09, -10, -11) ----
 const MARCA_ENT = 'transición de entrega'
 const MOTIVO_SIN_ENTREGA = `falta el hito: ${MARCA_ENT}`, MOTIVO_SIN_FIN = 'falta el hito: finalización del servicio'
-const MOTIVO_ZOHO = 'falta el hito: hora del último cambio de estado, pendiente de decisión'
+const MOTIVO_ZOHO = 'falta el hito: cierre del ticket'
 const entregaDe = (transitionId: string, performedAt: string) => ({ transitionId, performedAt, values: {} })
 const AL_CLIENTE = 'entrega_al_cliente', SIN_FACTURA = 'entrega_sin_factura'
 const conFin = tk({ fechas: { [FIN]: '2027-01-05' } })
@@ -398,7 +398,7 @@ describe('51 reentrante: las dos entregas se cuentan juntas (RQ-KP-10)', () => {
 })
 
 describe('51 y 55: variantes de Zoho (RQ-KP-09, -11)', () => {
-  it('el 51 calculado sigue sin variante de Zoho: formulaZoho es el motivo de MOTIVO_H1', () => {
+  it('el 51 calculado sin cierre del ticket: formulaZoho es el motivo «falta el hito: cierre del ticket»', () => {
     const i = de(calc(conFin, [entregaDe(AL_CLIENTE, '2027-01-08T15:00:00Z')]), '51')
     expect(i.valor).toEqual({ tipo: 'valor', valor: 3 })
     expect(i.formulaZoho).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_ZOHO })
@@ -423,5 +423,70 @@ describe('ya no existe la entrada de hora del último cambio de estado (RQ-KP-09
     ['apps/desk/server/indicadores.ts', new URL('../../../apps/desk/server/indicadores.ts', import.meta.url)],
   ])('%s no nombra la entrada de hora del último cambio de estado', (_ruta, url) => {
     expect(readFileSync(fileURLToPath(url), 'utf8')).not.toContain(NOMBRE)
+  })
+})
+
+// ---- F1F-05 (poblacion-cierre-variante-47-51), lote L1: la variante del 47 y del 51 contra el cierre (RQ-KP-37) ----
+describe('47 y 51: la variante de Zoho se calcula contra el cierre del ticket (RQ-KP-37)', () => {
+  const MOTIVO_CIERRE = 'falta el hito: cierre del ticket'
+  const conCierre = (cierre: string | null, fechas: TicketParaIndicadores['fechas']) => tk({ fechas, diaDeCierre: cierre })
+  it('el 47 es cierre − remisión de entrada y la letra no cambia', () => {
+    const i = de(calc(conCierre('2026-09-12', { [ENT]: '2026-09-01', [SAL]: '2026-09-03' })), '47')
+    expect(i.formulaZoho).toEqual({ tipo: 'valor', valor: 11 })
+    expect(i.valor).toEqual({ tipo: 'valor', valor: 2 })
+  })
+  it('el 47 no usa la salida: con cierre y sin salida la variante sale igual', () => {
+    const i = de(calc(conCierre('2026-09-12', { [ENT]: '2026-09-01' })), '47')
+    expect(i.formulaZoho).toEqual({ tipo: 'valor', valor: 11 })
+    expect(i.valor).toEqual({ tipo: 'sin_dato', motivo: 'falta el hito: remisión de salida' })
+  })
+  it('el 51 es cierre − finalización ST y la letra no cambia', () => {
+    const i = de(calc(conCierre('2026-09-14', { [FIN]: '2026-09-02' }), [entregaDe(AL_CLIENTE, '2026-09-04T15:00:00Z')]), '51')
+    expect(i.formulaZoho).toEqual({ tipo: 'valor', valor: 12 })
+    expect(i.valor).toEqual({ tipo: 'valor', valor: 2 })
+  })
+  it('el 51 no usa la entrega: con cierre y sin entrega la variante sale igual', () => {
+    const i = de(calc(conCierre('2026-09-14', { [FIN]: '2026-09-02' })), '51')
+    expect(i.formulaZoho).toEqual({ tipo: 'valor', valor: 12 })
+    expect(i.valor).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_SIN_ENTREGA })
+  })
+  it('natural con signo: cierre anterior a la remisión de entrada vale -2 con orden_invertido', () => {
+    const i = de(calc(conCierre('2026-09-01', { [ENT]: '2026-09-03', [SAL]: '2026-09-05' })), '47')
+    expect(i.formulaZoho).toEqual({ tipo: 'valor', valor: -2 })
+    expect(i.marcas).toEqual(['orden_invertido'])
+  })
+  it('orden_invertido no se duplica cuando la letra ya la trae (51 con entrega antes de la finalización)', () => {
+    const i = de(calc(conCierre('2026-09-01', { [FIN]: '2026-09-05' }), [entregaDe(AL_CLIENTE, '2026-09-03T15:00:00Z')]), '51')
+    expect(i.valor).toEqual({ tipo: 'valor', valor: -2 })
+    expect(i.formulaZoho).toEqual({ tipo: 'valor', valor: -4 })
+    expect(i.marcas).toEqual(['orden_invertido'])
+  })
+  it('un cierre posterior al hito sin letra invertida no añade marcas', () => {
+    expect(de(calc(conCierre('2026-09-12', { [ENT]: '2026-09-01', [SAL]: '2026-09-03' })), '47').marcas).toEqual([])
+  })
+  it('«sin dato» del 47 nombra el hito que falta y, si faltan los dos, manda el de partida', () => {
+    const sinEntrada = de(calc(conCierre('2026-09-12', {})), '47').formulaZoho
+    const sinCierre = de(calc(conCierre(null, { [ENT]: '2026-09-01' })), '47').formulaZoho
+    const sinNinguno = de(calc(conCierre(null, {})), '47').formulaZoho
+    expect(sinEntrada).toEqual({ tipo: 'sin_dato', motivo: 'falta el hito: remisión de entrada' })
+    expect(sinCierre).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_CIERRE })
+    expect(sinNinguno).toEqual({ tipo: 'sin_dato', motivo: 'falta el hito: remisión de entrada' })
+  })
+  it('«sin dato» del 51 nombra el hito que falta y, si faltan los dos, manda la finalización', () => {
+    expect(de(calc(conCierre('2026-09-14', {})), '51').formulaZoho).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_SIN_FIN })
+    expect(de(calc(conCierre(null, { [FIN]: '2026-09-02' })), '51').formulaZoho).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_CIERRE })
+    expect(de(calc(conCierre(null, {})), '51').formulaZoho).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_SIN_FIN })
+  })
+  it('sin el campo diaDeCierre (undefined) equivale a null', () => {
+    const fechas = { [ENT]: '2026-09-01', [FIN]: '2026-09-02' }
+    expect(de(calc(tk({ fechas })), '47').formulaZoho).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_CIERRE })
+    expect(de(calc(tk({ fechas, diaDeCierre: null })), '47').formulaZoho).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_CIERRE })
+  })
+  it('la letra y HITOS_POR_COLUMNA siguen intactas: el cierre no es un hito', () => {
+    expect(HITOS_POR_COLUMNA['47']).toEqual(['Fecha Remisión Entrada', 'Fecha Remisión de Salida'])
+    expect(HITOS_POR_COLUMNA['51']).toEqual(['Fecha Finalización ST'])
+    const f = calc(conCierre('2026-09-12', { [ENT]: '2026-09-01', [SAL]: '2026-09-03', [FIN]: '2026-09-02' }))
+    expect(Object.keys(de(f, '47').hitos)).toEqual([ENT, SAL])
+    expect(Object.keys(de(f, '51').hitos)).toEqual([FIN, MARCA_ENT])
   })
 })

@@ -14,24 +14,24 @@ Una rama, tres lotes (L1, L2, L3); cada lote es UN intento del registro, techo 8
 
 ## Lote L1 · shared (~215 × 1,8 → ~480 con progreso; ≤ 720)
 
-- [ ] L1.1 Línea base: `npm test` y `npm run typecheck` en verde; anotar los avisos de lint (esperado 165).
-- [ ] L1.2 ROJO `packages/shared/src/diaDeCierre.test.ts` (nuevo): `diaDeCierreDelTicket` — (a) mayor `performedAt` entre pasos a Finalizado, sin el marcador;
+- [x] L1.1 Línea base: `npm test` y `npm run typecheck` en verde; anotar los avisos de lint (esperado 165).
+- [x] L1.2 ROJO `packages/shared/src/diaDeCierre.test.ts` (nuevo): `diaDeCierreDelTicket` — (a) mayor `performedAt` entre pasos a Finalizado, sin el marcador;
       (b) sin paso, `closed_time` por `cierreQueCuenta` con el ÚLTIMO marcador; (c) `null`; la transición manda sobre `closed_time` con días distintos (M8);
       migrado de origen `migracion` no cuenta (M4); día en Bogotá (23:30 local no salta). RQ-KP-34, incluido el escenario «La última transición a «Finalizado»»
       (`specs/kpis/spec.md:179-182`) y que una transición a «Anulado» NO cuenta como cierre. Rojo por símbolo inexistente.
-- [ ] L1.3 ROJO guardián de `TRANSICIONES_A_FINALIZADO` (mismo fichero): cada id del conjunto tiene `to === 'Finalizado'` en TODOS los catálogos de
+- [x] L1.3 ROJO guardián de `TRANSICIONES_A_FINALIZADO` (mismo fichero): cada id del conjunto tiene `to === 'Finalizado'` en TODOS los catálogos de
       `CATALOGO_POR_FLUJO` donde aparece, y son los cinco de D1 (S-7). Regla de mutación 2.
-- [ ] L1.4 VERDE `packages/shared/src/diaDeCierre.ts` (nuevo, D1: `Set` derivado de `flujos.ts:19-22`, `diaEnZona` de `fechasDerivadas.ts:63`) y la línea 54 de
+- [x] L1.4 VERDE `packages/shared/src/diaDeCierre.ts` (nuevo, D1: `Set` derivado de `flujos.ts:19-22`, `diaEnZona` de `fechasDerivadas.ts:63`) y la línea 54 de
       `packages/shared/src/index.ts` (al final; hoy acaba en `:52`; la línea nueva es la 53).
-- [ ] L1.5 ROJO `packages/shared/src/indicadores.test.ts`: en su línea `:75`, `:77`, `:306-307`, `:332`, `:401` el motivo esperado pasa a
+- [x] L1.5 ROJO `packages/shared/src/indicadores.test.ts`: en su línea `:75`, `:77`, `:306-307`, `:332`, `:401` el motivo esperado pasa a
       `falta el hito: cierre del ticket` (título en su línea); AL FINAL, pruebas de RQ-KP-37: 47 = cierre − remisión de entrada, 51 = cierre − finalización ST,
       naturales con signo y `orden_invertido` sin duplicar, «sin dato» nombra el hito que falta (parte primero), la letra y `HITOS_POR_COLUMNA` intactas,
       M5 («el 47 no usa la salida», «el 51 no usa la entrega»).
-- [ ] L1.6 VERDE `packages/shared/src/indicadores.ts` en sitio: `:41` (`diaDeCierre?: DiaCivil | null`), `:88` (`MOTIVO_CIERRE`, D2), `:238` y `:241` (D3); `contraCierre` al final.
-- [ ] L1.7 Mutación M4: en `diaDeCierreDelTicket` pasar `null` como cierre de la migración → cae «el cierre de la migración no cuenta».
-- [ ] L1.8 Mutación M8 (regla 1): evaluar `closed_time` ANTES que la transición → cae «la transición manda» (activa las dos fuentes con días distintos).
-- [ ] L1.9 Mutación M5: en `:238`/`:241` pasar como cierre la remisión de salida / la entrega → caen «el 47 no usa la salida» y «el 51 no usa la entrega».
-- [ ] L1.10 Mutación G1 (regla 2): ensuciar lo vigilado — cambiar el `to` de `facturar` en `transitions.ts:262` → cae el guardián de L1.3.
+- [x] L1.6 VERDE `packages/shared/src/indicadores.ts` en sitio: `:41` (`diaDeCierre?: DiaCivil | null`), `:88` (`MOTIVO_CIERRE`, D2), `:238` y `:241` (D3); `contraCierre` al final.
+- [x] L1.7 Mutación M4: en `diaDeCierreDelTicket` pasar `null` como cierre de la migración → cae «el cierre de la migración no cuenta».
+- [x] L1.8 Mutación M8 (regla 1): evaluar `closed_time` ANTES que la transición → cae «la transición manda» (activa las dos fuentes con días distintos).
+- [x] L1.9 Mutación M5: en `:238`/`:241` pasar como cierre la remisión de salida / la entrega → caen «el 47 no usa la salida» y «el 51 no usa la entrega».
+- [x] L1.10 Mutación G1 (regla 2): ensuciar lo vigilado — cambiar el `to` de `facturar` en `transitions.ts:262` → cae el guardián de L1.3.
 - [ ] L1.c Cierre de lote L1: X.c; medida; estimación **~480 (≤ 720)**; `apply-progress.md` con rojos y mutaciones.
 
 ## Lote L2 · servidor (~245 × 1,8 → ~530 con progreso; ≤ 720)

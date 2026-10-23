@@ -38,7 +38,7 @@ export interface TicketParaIndicadores {
   creadoEn: string | null
   diasEntrega: number | null
   fechas: Partial<Record<EtiquetaHito, DiaCivil | null>>
-  camposZoho: Record<string, unknown>
+  camposZoho: Record<string, unknown>; diaDeCierre?: DiaCivil | null // día de cierre (`diaDeCierreDelTicket`); lo pone la lectura, sólo lo usa la variante del 47 y del 51 (RQ-KP-37)
 }
 export interface OpcionesIndicadores {
   cierres: ReadonlySet<DiaCivil>
@@ -85,7 +85,7 @@ const NOMBRE_HITO: Record<EtiquetaHito, string> = {
 /** La marca de la transición `ingreso_a_servicio`: hito del 49, sin columna heredada (RQ-KP-02). */
 const MARCA_INGRESO = 'marca de ingreso a servicio', MARCA_ENTREGA = 'transición de entrega'
 const MOTIVO_PROMESA = 'falta el tiempo promesa'
-const MOTIVO_H1 = 'falta el hito: hora del último cambio de estado, pendiente de decisión'
+const MOTIVO_CIERRE = 'falta el hito: cierre del ticket'
 const MOTIVO_H2 = 'falta el hito: satisfacción del cliente'
 
 const sinDato = (motivo: string): Valor<never> => ({ tipo: 'sin_dato', motivo })
@@ -235,10 +235,10 @@ export function calcularIndicadores(t: TicketParaIndicadores, historial: PasoDel
   const cumple = (v53: Valor<number>, sinPromesa: Valor<string>): Valor<string> =>
     v53.tipo === 'sin_dato' ? v53 : promesa === null ? sinPromesa : valorDe(v53.valor <= promesa ? 'Cumple' : 'No cumple')
   return [
-    natural('47', 'Fecha Remisión Entrada', 'Fecha Remisión de Salida', sinDato(MOTIVO_H1)),
+    armar('47', 'dias_naturales', (h) => contraCierre(naturales('Fecha Remisión Entrada', 'Fecha Remisión de Salida', h), 'Fecha Remisión Entrada', h, t.diaDeCierre ?? null)),
     armar('49', 'dias_habiles', (h) => { const d = diagnostico(h, o.cierres); return { valor: d.valor, formulaZoho: d.formula, marcas: d.marcas, diasNoHabilesDelIntervalo: d.descontados } }),
     armar('50_53', 'dias_habiles', (h) => { const s = servicio(h, o.cierres); return { valor: s.valor, formulaZoho: s.formula, marcas: s.marcas, diasNoHabilesDelIntervalo: s.descontados } }),
-    armar('51', 'dias_naturales', v51, sinDato(MOTIVO_H1)),
+    armar('51', 'dias_naturales', (h) => contraCierre(v51(h), 'Fecha Finalización ST', h, t.diaDeCierre ?? null)),
     armar('54', 'cumplimiento', (h) => {
       const s = servicio(h, o.cierres)
       return { valor: cumple(s.valor, sinDato(MOTIVO_PROMESA)), formulaZoho: cumple(s.formula, valorDe('Cumple')), marcas: s.marcas }
@@ -262,3 +262,16 @@ function hitoEntrega(historial: PasoDelHistorial[]): Hito {
 }
 /** La normalización de cabeceras de `valorDeZoho`, para que el lector de la exportación no tenga una segunda (F1F-05, DD-5). */
 export const normalizarNombreZoho = normalizar
+
+/**
+ * La variante de Zoho del 47 y del 51 (RQ-KP-37, S-11): días naturales `cierre − hito de partida`, con signo y sin tope. La letra (`valor`) no cambia.
+ * Sin dato nombra el hito que falta (la partida manda si faltan los dos); una variante negativa añade `orden_invertido` sin duplicarla.
+ */
+function contraCierre(calculo: Calculo, desde: EtiquetaHito, h: Record<string, Hito>, cierre: DiaCivil | null): Calculo {
+  const inicio = h[desde].dia
+  if (inicio === null) return { ...calculo, formulaZoho: sinDato(`falta el hito: ${NOMBRE_HITO[desde]}`) }
+  if (cierre === null) return { ...calculo, formulaZoho: sinDato(MOTIVO_CIERRE) }
+  const n = diasNaturalesEntre(inicio, cierre)
+  const marcas = n < 0 && !calculo.marcas.includes('orden_invertido') ? [...calculo.marcas, 'orden_invertido' as const] : calculo.marcas
+  return { ...calculo, marcas, formulaZoho: valorDe(n) }
+}
