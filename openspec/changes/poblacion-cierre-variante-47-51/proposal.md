@@ -21,10 +21,10 @@ Gerencia fijó el 22/10 qué tickets cuentan en los nueve indicadores y con qué
 - `decision/h1-fechas-migrados` (`openspec/config.yaml:4854-4871`): en los migrados cuenta la fecha original de Zoho; la
   de la migración no entra en ningún indicador.
 
-Hoy el código hace otra cosa: corta por **creación** en SQL (`apps/desk/server/indicadores.ts:59-60`, sobre
-`t.created_time`) y en memoria (`apps/desk/server/indicadores.ts:67-70`), deja entrar abiertos y anulados, y las
-variantes de Zoho del 47 y del 51 son siempre «sin dato» (`packages/shared/src/indicadores.ts:238`, `:241`, con el
-motivo de `:88`). Con la exportación de septiembre, la población por creación sería un solo ticket (el 998, el único
+Hoy el código hace otra cosa: corta por **creación** en SQL (`apps/desk/server/indicadores.ts:59-60` en `f0eb92c4`, sobre
+`t.created_time`) y en memoria (`apps/desk/server/indicadores.ts:67-70` en `f0eb92c4`), deja entrar abiertos y anulados, y las
+variantes de Zoho del 47 y del 51 son siempre «sin dato» (`packages/shared/src/indicadores.ts:238`, `:241` en `f0eb92c4`, con el
+motivo de `:88` en `f0eb92c4`). Con la exportación de septiembre, la población por creación sería un solo ticket (el 998, el único
 creado en septiembre); por cierre son los trece. Sin este cambio, el contraste de cuatro semanas que pide el maestro
 (Anexo G, `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2957`) compararía poblaciones
 distintas.
@@ -85,7 +85,7 @@ distintas.
   (`apps/desk/server/db/migracionTicketsAbiertos.ts:72-75`; `UPDATE` en `:85-88`). El de origen `migracion` no cuenta
   (`decision/h1-fechas-migrados`, consecuencia 1); mismo criterio que Análisis (`apps/desk/server/analisis.ts:26`).
 - **S-4 · Sin cierre que cuente.** Con periodo no entra; sin periodo entra, coherente con lo que hoy hace RQ-KP-13 con
-  un ticket sin `created_time` (`apps/desk/server/indicadores.ts:69`).
+  un ticket sin `created_time` (`apps/desk/server/indicadores.ts:69` en `f0eb92c4`).
 - **S-5 · Sin periodo.** Todos los cerrados no anulados. «Cerrado» = `status_type = 'Closed'` y estado no anulado
   (precedente `packages/shared/src/cierreEnCifras.ts:53`). El corte en SQL pasa a ser por `status_type`; el del día, en
   memoria con `diaEnZona`, como hoy.

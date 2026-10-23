@@ -64,26 +64,26 @@ Una rama, tres lotes (L1, L2, L3); cada lote es UN intento del registro, techo 8
 
 ## Lote L3 · aceptación y barrido (~175 × 1,8 → ~405 con progreso; ≤ 720)
 
-- [ ] L3.1 Línea base: suite en verde con L2 aplicado.
-- [ ] L3.2 ROJO `apps/desk/server/routes/indicadoresSeptiembre.test.ts` (nuevo, arnés `instalarArnes`/`appWith`/`adminCookie` de `testing/appHarness.ts:34-39`): `GET /api/indicadores?desde=2026-09-01&hasta=2026-09-30` —
+- [x] L3.1 Línea base: suite en verde con L2 aplicado.
+- [x] L3.2 ROJO `apps/desk/server/routes/indicadoresSeptiembre.test.ts` (nuevo, arnés `instalarArnes`/`appWith`/`adminCookie` de `testing/appHarness.ts:34-39`): `GET /api/indicadores?desde=2026-09-01&hasta=2026-09-30` —
       (1) trece tickets; (2) el único creado en septiembre es el 998; (3) `it.each` POR INDICADOR (47, 49, 50·53, 51, 54, 57, 58, 59): `formulaZoho` vs celda de Gerencia, ±1 en números y igualdad en el 54, sólo
       donde hay valor, con el recuento 11, 9, 11, 12, 9, 9, 9, 9; (4) toda clave del fixture está en la lista cerrada de S-10. Rojo por fixture inexistente.
-- [ ] L3.3 VERDE `apps/desk/server/testing/septiembre2026.ts` (nuevo): `TICKETS_SEPTIEMBRE` (`sep-01`…`sep-13`) y `sembrarSeptiembre(db)` según D7 (mediodía de Bogotá, `status_type = 'Closed'`, cada fecha en su
+- [x] L3.3 VERDE `apps/desk/server/testing/septiembre2026.ts` (nuevo): `TICKETS_SEPTIEMBRE` (`sep-01`…`sep-13`) y `sembrarSeptiembre(db)` según D7 (mediodía de Bogotá, `status_type = 'Closed'`, cada fecha en su
       columna de `COLUMNA_DE_HITO`, `server/indicadores.ts:12-18`). Datos comprobados a mano contra el CSV (sin copiarlo); sin contacto, asunto, serial, `cf_codigo_servicio` ni tipo de servicio.
-- [ ] L3.4 Mutación M1 en la aceptación: cortar por creación → cae (1) trece tickets.
-- [ ] L3.5 Mutación M7-47 (regla 2): en el FIXTURE, la celda `gerencia['47']` de un ticket +2 → cae la fila del 47; revertir.
-- [ ] L3.6 Mutación M7-49: ídem `gerencia['49']` → cae la fila del 49.
-- [ ] L3.7 Mutación M7-50·53: ídem `gerencia['50_53']` → cae la fila del 50·53.
-- [ ] L3.8 Mutación M7-51: ídem `gerencia['51']` → cae la fila del 51.
-- [ ] L3.9 Mutación M7-54: ídem `gerencia['54']` (`Cumple` → `No cumple`) → cae la fila del 54.
-- [ ] L3.10 Mutación M7-57: ídem `gerencia['57']` +2 → cae la fila del 57.
-- [ ] L3.11 Mutación M7-58: ídem `gerencia['58']` +2 → cae la fila del 58.
-- [ ] L3.12 Mutación M7-59: ídem `gerencia['59']` +2 → cae la fila del 59.
-- [ ] L3.13 **Barrido de la regla de mutación 4** sobre `apps/desk/server/indicadores.ts` y `packages/shared/src/indicadores.ts`: (1) `git diff -U0 <base> -- <fichero>` sólo con trozos en sitio o tras la última línea;
+- [x] L3.4 Mutación M1 en la aceptación: cortar por creación → cae (1) trece tickets.
+- [x] L3.5 Mutación M7-47 (regla 2): en el FIXTURE, la celda `gerencia['47']` de un ticket +2 → cae la fila del 47; revertir.
+- [x] L3.6 Mutación M7-49: ídem `gerencia['49']` → cae la fila del 49.
+- [x] L3.7 Mutación M7-50·53: ídem `gerencia['50_53']` → cae la fila del 50·53.
+- [x] L3.8 Mutación M7-51: ídem `gerencia['51']` → cae la fila del 51.
+- [x] L3.9 Mutación M7-54: ídem `gerencia['54']` (`Cumple` → `No cumple`) → cae la fila del 54.
+- [x] L3.10 Mutación M7-57: ídem `gerencia['57']` +2 → cae la fila del 57.
+- [x] L3.11 Mutación M7-58: ídem `gerencia['58']` +2 → cae la fila del 58.
+- [x] L3.12 Mutación M7-59: ídem `gerencia['59']` +2 → cae la fila del 59.
+- [x] L3.13 **Barrido de la regla de mutación 4** sobre `apps/desk/server/indicadores.ts` y `packages/shared/src/indicadores.ts`: (1) `git diff -U0 <base> -- <fichero>` sólo con trozos en sitio o tras la última línea;
       (2) `git grep -nE "indicadores\.ts:[0-9]+"` (formas completas, SIN excluir `openspec/changes/archive/`), cada resultado leído contra lo que afirma su frase (casos A/B/C); (3) pase de abreviadas (`:NN`) en cada
       fichero que ya cita el módulo; (4) detector de pre-push. Conocido: `openspec/specs/kpis/spec.md:1447` cita `server/indicadores.ts:70` → caso A (se reapunta a `:60` al archivar, misma línea);
       `DEPLOY.md:615` (`:85`) y `migracionMarcadorLectores.test.ts:54`, `:58` siguen ciertas. NO se toca `openspec/config.yaml` (ver «Fuera de la rama»).
-- [ ] L3.14 Tabla de la regla invariable 13 (mutación 3): cero decisiones nuevas del cliente (no se toca `apps/desk/src`); se anota en `apply-progress.md` con `git diff --stat` que lo prueba.
+- [x] L3.14 Tabla de la regla invariable 13 (mutación 3): cero decisiones nuevas del cliente (no se toca `apps/desk/src`); se anota en `apply-progress.md` con `git diff --stat` que lo prueba.
 - [ ] L3.c Cierre de lote L3: X.c; medida; estimación **~405 (≤ 720)**; `apply-progress.md` con las 8 mutaciones M7 por indicador, rojas y restauradas.
 
 ## Fuera de la rama — tareas del orquestador en `main` (no se cuentan)
