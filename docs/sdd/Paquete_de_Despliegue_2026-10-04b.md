@@ -975,7 +975,7 @@ confirma antes de que exista la etiqueta. Mientras no haya respuesta rige lo con
 así, no hay propuesta ni aviso (E-162 b). Y la derivación es propuesta, no imposición (E-160).
 
 **R43 · F1F-05: la ruta sin periodo carga todos los tickets, sin tope, y el enlace no pasa periodo**
-(`apps/desk/server/indicadores.ts:61`, `apps/desk/server/indicadores.ts:69`, `apps/desk/src/components/Analisis.tsx:83`;
+(`apps/desk/server/indicadores.ts:61` en `c35dedd0`, `apps/desk/server/indicadores.ts:69` en `c35dedd0`, superadas por F1F-05, `poblacion-cierre-variante-47-51`: hoy carga sólo los cerrados no anulados, `apps/desk/server/indicadores.ts:59` y `apps/desk/server/indicadores.ts:68`; `apps/desk/src/components/Analisis.tsx:83`;
 `openspec/changes/archive/2026-10-03-continuidad-indicadores/archive-report.md:89`). Su coste en producción es
 **hipótesis sin medir**. Cómo entrega la base real una columna de fecha sólo se probó con filas simuladas
 (`openspec/changes/archive/2026-10-03-continuidad-indicadores/archive-report.md:125-127`).

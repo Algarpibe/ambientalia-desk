@@ -48,8 +48,8 @@ Ediciones **en sitio** (misma cantidad de líneas) y un bloque al final:
 | `packages/shared/src/indicadores.ts:241` en `42a4828` | `armar('51', 'dias_naturales', v51, sinDato(MOTIVO_H1)),` |
 | `packages/shared/src/indicadores.ts:246` en `42a4828` | sin el cuarto argumento: `armar('55', 'calificacion', () => ({ valor: v55, marcas: [] })),` (DD-13) |
 
-`MOTIVO_H1` (`packages/shared/src/indicadores.ts:88`) **se conserva** con su texto: sigue siendo el motivo de la
-variante de Zoho del 47 (`packages/shared/src/indicadores.ts:238`) y del 51 (RQ-KP-11). `v55`
+`MOTIVO_H1` (`packages/shared/src/indicadores.ts:88` en `4773b231`; superado por F1F-05, `poblacion-cierre-variante-47-51`: hoy es `MOTIVO_CIERRE`) **se conserva** con su texto: sigue siendo el motivo de la
+variante de Zoho del 47 (`packages/shared/src/indicadores.ts:238` en `4773b231`; hoy el 47 y el 51 van contra el cierre, `packages/shared/src/indicadores.ts:238` y `packages/shared/src/indicadores.ts:241`) y del 51 (RQ-KP-11). `v55`
 (`packages/shared/src/indicadores.ts:233`) no cambia.
 
 ```ts

@@ -87,7 +87,7 @@ export function repartirSinCruzar(sinCruzar: readonly FilaExportacion[], existen
 
 La clave es `fila.id === ticket.id`, igualdad de texto; el número nunca cruza (RQ-KP-24). `sinCruzar` se reparte con el mapa de
 `ticketsPorId`: si el «ID» existe en Desk es «fuera del periodo», si no «sólo en el fichero» (S-N). Sin `desde` ni `hasta` salen
-todos los tickets (`apps/desk/server/indicadores.ts:70`), así que «fuera del periodo» queda vacío por construcción.
+todos los tickets (`apps/desk/server/indicadores.ts:70` en `b5233523`; superada por F1F-05, `poblacion-cierre-variante-47-51`: hoy salen sólo los cerrados no anulados, `apps/desk/server/indicadores.ts:59`), así que «fuera del periodo» queda vacío por construcción.
 
 `apps/desk/server/db/ticketsPorId.ts` (nuevo): `numerosDeTickets(db, ids, trozo = 5000): Promise<Map<string, number>>`. Con
 `ids` vacío no emite nada. **Número de consultas de la ruta:** las cuatro de `leerEntradasIndicadores`

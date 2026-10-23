@@ -244,7 +244,7 @@ La pregunta es del molde H5: ¿algún lector asume el catálogo de servicio y tr
 | Alarmas de SLA | Sí, por exclusión | `apps/desk/server/db/sla.ts:48-49` descarta lo que no es de servicio | Correcto: un `Notificado` de equipo nuevo no dispara la alarma de servicio |
 | Historial y hoja de vida | No lo necesitan | Leen nombres y estados ya escritos en `ticket_transitions` | Correcto |
 | Vistas del tablero y «Mis tickets» | No lo necesitan | `apps/desk/src/lib/boardView.ts:39` y `apps/desk/src/lib/boardView.ts:47-48` | Correcto, con el matiz de B-5 |
-| **Indicadores** | **No** | `apps/desk/server/indicadores.ts:57-64`: la consulta filtra sólo por periodo | **B-3** |
+| **Indicadores** | **No** | `apps/desk/server/indicadores.ts:57-64` en `76380569`: la consulta filtra sólo por periodo (superado por F1F-05, `poblacion-cierre-variante-47-51`: hoy filtra por `status_type`, `apps/desk/server/indicadores.ts:59`) | **B-3** |
 | **Columnas del tablero** | **No** | `packages/shared/src/columns.ts:4-5` declara que son los estados de servicio | **B-4** |
 | **Mapa generado** | **No** | `scripts/generar-mapa-blueprint.ts:29` en `a26ed48` | **B-1** |
 

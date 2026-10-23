@@ -4093,7 +4093,7 @@ decisiones_de_gerencia_adenda:
     consecuencias: |
       (1) EL 51 SE CIERRA CON LA HORA DE LA TRANSICIÓN DE ENTREGA. Esa hora SÍ está guardada: cada transición hecha en la
       aplicación deja la suya (`packages/zoho-sync/src/db/schema.sql:57-61`). Hoy el 51 sale «sin dato»
-      (`packages/shared/src/indicadores.ts:88-89`).
+      (`packages/shared/src/indicadores.ts:88-89` en `f0eb92c4`; hoy ese motivo es `MOTIVO_CIERRE`, «falta el hito: cierre del ticket», `packages/shared/src/indicadores.ts:88`).
       (2) «LA TRANSICIÓN DE ENTREGA» SON DOS EN EL CATÁLOGO: «Entrega al cliente» y «Entrega al cliente sin factura»
       (`packages/shared/src/transitions.ts:248-251`). Las dos son la entrega física y las dos piden la fecha de la remisión
       de salida. SUPUESTO (reversible): vale la que tenga el ticket.
@@ -5196,9 +5196,9 @@ decisiones_de_gerencia_adenda:
       (2) El periodo es el de CIERRE, no el de creación, y sólo entran tickets cerrados.
       (3) Los anulados quedan fuera.
       (4) Cada indicador cuenta sólo los tickets que tienen sus dos hitos.
-      (5) HOY el código corta por día de creación (`apps/desk/server/indicadores.ts:59-60` filtra por `created_time`, y
-      `apps/desk/server/indicadores.ts:67-70` descarta por el día de creación en Bogotá) y no excluye los anulados. La
-      corrección es contenido de F1F-05, `cierra: no`.
+      (5) HOY el código corta por día de creación (`apps/desk/server/indicadores.ts:59-60` en `f0eb92c4` filtra por `created_time`, y
+      `apps/desk/server/indicadores.ts:67-70` en `f0eb92c4` descarta por el día de creación en Bogotá) y no excluye los anulados. La
+      corrección es contenido de F1F-05, `cierra: no`. La hizo `poblacion-cierre-variante-47-51`: hoy entran sólo los cerrados (`apps/desk/server/indicadores.ts:59`), los anulados se saltan (`apps/desk/server/indicadores.ts:68`) y el periodo se corta por el día de cierre (`apps/desk/server/indicadores.ts:130`).
       (6) Para los migrados, la fecha de cierre es la original de Zoho (`decision/h1-fechas-migrados`).
       (7) El contraste con la exportación de septiembre lo hace el analista antes de la tanda.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e224b-poblacion-indicadores) · resuelve la consecuencia (2) de decision/e224-indicadores-como-zoho-y-por-flujo"
