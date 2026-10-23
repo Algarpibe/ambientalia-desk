@@ -34,7 +34,7 @@ const SOBRE_EL_LIMITE = Buffer.alloc(LIMITE_SUBIDA_BYTES + 1, 0x61)
 
 /** Un ticket con 59 de la aplicación = días entre el 2026-12-01 y `venta` (cotización fija). */
 const sembrar = (id: string, number: number, venta: string, creado = '2026-12-01T15:00:00Z', zoho = '{}') =>
-  db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta, custom_fields) VALUES ($1, $2, 's', 'x', $3, '2026-12-01', $4, $5)", [id, number, creado, venta, zoho])
+  db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, fecha_cotizacion, fecha_orden_venta, custom_fields) VALUES ($1, $2, 's', 'x', $3, 'Closed', $3, '2026-12-01', $4, $5)", [id, number, creado, venta, zoho])
 
 function conEspia(): { app: ReturnType<typeof appWith>['app']; zohoFetch: ReturnType<typeof appWith>['zohoFetch']; todas: string[]; tickets: () => string[]; datos: () => string[] } {
   const todas: string[] = []
@@ -124,7 +124,7 @@ describe('RQ-KP-26 · el cuerpo de la comparación', () => {
   })
 
   it.each([['  Cumple  ', 1, 0], ['no cumple', 0, 1]])('camino único del 54: «%s» llega por el recorte de valorDeZoho y se compara con el valor de la aplicación', async (celda, coincide, difiere) => {
-    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, dias_entrega, fecha_orden_venta, fecha_finalizacion_st) VALUES ('777', 7, 's', 'Finalizado', '2026-10-02T15:00:00Z', 'ST-1', 4, '2026-10-08', '2026-10-15')")
+    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, codigo_servicio, dias_entrega, fecha_orden_venta, fecha_finalizacion_st) VALUES ('777', 7, 's', 'Finalizado', '2026-10-02T15:00:00Z', 'Closed', '2026-10-02T15:00:00Z', 'ST-1', 4, '2026-10-08', '2026-10-15')")
     const res = await subir(appWith().app, await adminCookie(), csvMuestra([fila('777', 7, { [PROMESA]: celda })]))
     expect(col(res.body.comparacion, '54')).toMatchObject({ comparados: 1, coincidentes: coincide, diferentes: difiere })
   })
@@ -312,11 +312,11 @@ import { createHash } from 'node:crypto'
 describe('M2 · caracterización del POST sin flujo: los bytes de hoy', () => {
   it('sin parámetro `flujo`: ni clave `flujo` ni `deOtroFlujo`, las claves en su orden y el cuerpo idéntico byte a byte', async () => {
     const alta = (id: string, n: number, estado: string, clasificacion: string | null) =>
-      db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta, classification) VALUES ($1, $2, 's', $3, '2026-12-01T15:00:00Z', '2026-12-01', '2026-12-03', $4)", [id, n, estado, clasificacion])
+      db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, fecha_cotizacion, fecha_orden_venta, classification) VALUES ($1, $2, 's', $3, '2026-12-01T15:00:00Z', 'Closed', '2026-12-01T15:00:00Z', '2026-12-01', '2026-12-03', $4)", [id, n, estado, clasificacion])
     await alta('101', 1001, 'Ticket creado', 'Equipo nuevo'); await alta('102', 1002, 'Rev./Diagnostico', 'Soporte remoto')
     await alta('103', 1003, 'Por Facturar', 'Servicio'); await alta('104', 1004, 'Ticket creado', null)
     await alta('105', 1005, 'Ticket creado', 'Equipo nuevo')
-    await db.query("UPDATE tickets SET created_time = '2026-06-01T15:00:00Z' WHERE id = '105'")
+    await db.query("UPDATE tickets SET created_time = '2026-06-01T15:00:00Z', closed_time = '2026-06-01T15:00:00Z' WHERE id = '105'")
     const f = csvMuestra([fila('101', 1001), fila('102', 1002), fila('103', 1003), fila('105', 1005), fila('999', 9009)])
     const res = await subir(appWith().app, await adminCookie(), f, { query: PERIODO })
     expect(res.status).toBe(200)
@@ -332,7 +332,7 @@ import { MENSAJE_FLUJO } from '../indicadores'
 
 /** Un ticket con estado y clasificación a elección; los estados que usa el fixture separan `flujoDelTicket` del predicado por clasificación (M6). */
 const altaFlujo = (id: string, number: number, estado: string, clasificacion: string | null, creado = '2026-12-01T15:00:00Z') =>
-  db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta, classification) VALUES ($1, $2, 's', $3, $4, '2026-12-01', '2026-12-03', $5)", [id, number, estado, creado, clasificacion])
+  db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, fecha_cotizacion, fecha_orden_venta, classification) VALUES ($1, $2, 's', $3, $4, 'Closed', $4, '2026-12-01', '2026-12-03', $5)", [id, number, estado, creado, clasificacion])
 const FUERA = '2026-06-01T15:00:00Z'
 /** Periodo: 111 EN, 222 SR, 333 EN heredado (ausente del fichero), 777 servicio (ausente). Fuera: 444 servicio, 555 EN. Ausente de Desk: 666. Una fila mala. */
 async function escenarioFlujos(): Promise<Buffer> {
@@ -487,5 +487,37 @@ describe('RQ-KP-32 · las mismas consultas con y sin flujo (M10)', () => {
     const con = await parametros(`${PERIODO_QS}&flujo=equipo-nuevo`)
     expect(sin).toEqual(['444', '555', '666'])
     expect(con).toEqual(sin)
+  })
+})
+
+// ── poblacion-cierre-variante-47-51 (F1F-05, L2): el POST hereda la población por cierre (RQ-KP-35, S-8, D5) ───────────────────────────────
+/** Un ticket con estado, tipo de estado, creación y cierre a elección (el periodo de estas pruebas es diciembre de 2026). */
+const altaCierre = (id: string, number: number, estado: string, tipo: 'Open' | 'Closed', creado: string, cerrado: string | null, clasificacion: string | null = null) =>
+  db.query("INSERT INTO tickets (id, number, subject, status, status_type, created_time, closed_time, classification) VALUES ($1, $2, 's', $3, $4, $5, $6, $7)", [id, number, estado, tipo, creado, cerrado, clasificacion])
+
+describe('RQ-KP-35 · el POST lee la misma población por cierre', () => {
+  it('un «ID» que existe en Desk como abierto, anulado o cerrado fuera del periodo cae en fueraDelPeriodo; el cuarto cubo mantiene su nombre (S-8)', async () => {
+    await altaCierre('901', 2001, 'En Proceso', 'Open', '2026-12-02T15:00:00Z', '2026-12-10T15:00:00Z')
+    await altaCierre('902', 2002, 'Anulado', 'Closed', '2026-12-02T15:00:00Z', '2026-12-10T15:00:00Z')
+    await altaCierre('903', 2003, 'Finalizado', 'Closed', '2026-12-02T15:00:00Z', '2027-01-10T15:00:00Z')
+    await altaCierre('904', 2004, 'Finalizado', 'Closed', '2026-11-02T15:00:00Z', '2026-12-10T15:00:00Z')
+    const f = csvMuestra([fila('901', 2001), fila('902', 2002), fila('903', 2003), fila('904', 2004)])
+    const res = await subirQs(appWith().app, f, PERIODO_QS)
+    expect(res.status).toBe(200)
+    expect(Object.keys(res.body.cruce)).toEqual(['cruzados', 'soloEnFichero', 'fueraDelPeriodo', 'soloEnDesk', 'numeroDistinto', 'valoresIlegibles'])
+    expect(res.body.cruce.cruzados).toBe(1)
+    expect(idsDe(res.body.cruce.fueraDelPeriodo)).toEqual(['901', '902', '903'])
+    expect(res.body.cruce.soloEnFichero.total).toBe(0)
+    expect(res.body.cruce.soloEnDesk.total).toBe(0)
+  })
+  it('El flujo se compone en el POST (mutación: dejar de componerlo): con flujo=equipo-nuevo cruza el de equipo nuevo y el de servicio cae en «De otro flujo»', async () => {
+    await altaCierre('911', 2101, 'Finalizado', 'Closed', '2026-12-02T15:00:00Z', '2026-12-10T15:00:00Z', 'Equipo nuevo')
+    await altaCierre('912', 2102, 'Finalizado', 'Closed', '2026-12-02T15:00:00Z', '2026-12-10T15:00:00Z', 'Servicio')
+    const f = csvMuestra([fila('911', 2101), fila('912', 2102)])
+    const res = await subirQs(appWith().app, f, `${PERIODO_QS}&flujo=equipo-nuevo`)
+    expect(res.status).toBe(200)
+    expect(res.body.cruce.cruzados).toBe(1)
+    expect(res.body.cruce.deOtroFlujo).toEqual({ total: 1, tickets: [{ id: '912', numero: 2102 }] })
+    expect(res.body.cruce.fueraDelPeriodo.total).toBe(0)
   })
 })

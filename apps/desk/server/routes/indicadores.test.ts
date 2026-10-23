@@ -19,7 +19,7 @@ function conEspia(): { app: ReturnType<typeof appWith>['app']; datos: () => stri
 /** KP-18: el verbo de CADA sentencia ejecutada (la comprobación de sesión incluida) es SELECT; un `UPDATE` o `INSERT` en la ruta lo rompe. */
 const noSelect = (sentencias: string[]): string[] => sentencias.filter((s) => !/^\s*SELECT\b/i.test(s))
 async function k2(): Promise<void> {
-  await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, dias_entrega, fecha_orden_venta, fecha_finalizacion_st) VALUES ('a', 1, 's', 'Finalizado', '2026-10-02T15:00:00Z', 'ST-1', 4, '2026-10-08', '2026-10-15')")
+  await db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, codigo_servicio, dias_entrega, fecha_orden_venta, fecha_finalizacion_st) VALUES ('a', 1, 's', 'Finalizado', '2026-10-02T15:00:00Z', 'Closed', '2026-10-02T15:00:00Z', 'ST-1', 4, '2026-10-08', '2026-10-15')")
 }
 
 describe('RQ-KP-12 · guardas y su orden', () => {
@@ -74,7 +74,7 @@ describe('RQ-KP-13 · la forma del JSON', () => {
     expect(ind[4]).toMatchObject({ columna: '54', valor: 'Cumple', sinFinalizar: false })
   })
   it('el negativo del 59 sale como número con sus dos hitos (RQ-KP-13)', async () => {
-    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta) VALUES ('c', 3, 's', 'x', '2026-12-01T15:00:00Z', '2026-12-10', '2026-12-09')")
+    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, fecha_cotizacion, fecha_orden_venta) VALUES ('c', 3, 's', 'x', '2026-12-01T15:00:00Z', 'Closed', '2026-12-01T15:00:00Z', '2026-12-10', '2026-12-09')")
     const res = await request(appWith().app).get(RUTA).set('Cookie', await adminCookie())
     const i59 = res.body.tickets[0].indicadores[8]
     expect(i59).toMatchObject({ columna: '59', valor: -1, unidad: 'dias_naturales', estado: 'calculado' })
@@ -102,7 +102,7 @@ describe('RQ-KP-15 · formato=csv', () => {
   })
   it('una fila por ticket e indicador: 9 por ticket, en el orden de RQ-KP-01', async () => {
     await k2()
-    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio) VALUES ('b', 2, 's', 'x', '2026-10-03T15:00:00Z', 'ST-2')")
+    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, codigo_servicio) VALUES ('b', 2, 's', 'x', '2026-10-03T15:00:00Z', 'Closed', '2026-10-03T15:00:00Z', 'ST-2')")
     const lineas = ((await pedir()).text).slice(1).split('\r\n').filter((l) => l !== '')
     expect(lineas).toHaveLength(1 + 2 * 9)
     expect(lineas.slice(1, 10).map((l) => l.split(';')[2])).toEqual(['47', '49', '50_53', '51', '54', '55', '57', '58', '59'])
@@ -111,7 +111,7 @@ describe('RQ-KP-15 · formato=csv', () => {
     expect(lineas[10]).toMatch(/^b;ST-2;47;/)
   })
   it('una celda de texto con fórmula sale neutralizada y un negativo sale como número', async () => {
-    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, fecha_cotizacion, fecha_orden_venta) VALUES ('c', 3, 's', 'x', '2026-12-01T15:00:00Z', '=HYPERLINK(\"x\")', '2026-12-10', '2026-12-09')")
+    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, codigo_servicio, fecha_cotizacion, fecha_orden_venta) VALUES ('c', 3, 's', 'x', '2026-12-01T15:00:00Z', 'Closed', '2026-12-01T15:00:00Z', '=HYPERLINK(\"x\")', '2026-12-10', '2026-12-09')")
     const lineas = ((await pedir()).text).slice(1).split('\r\n')
     expect(lineas[1]).toMatch(/^c;"'=HYPERLINK\(""x""\)";47;/)
     expect(lineas.find((l) => l.split(';')[2] === '59')).toMatch(/;dias_naturales;-1;calculado;/)
@@ -140,7 +140,7 @@ describe('RQ-KP-17 · resumen de comparación', () => {
   const pedir = async () => (await request(appWith().app).get(RUTA).set('Cookie', await adminCookie())).body.comparacion
   const en = (c: { porColumna: Array<{ columna: string }> }, columna: string) => c.porColumna.find((x) => x.columna === columna) as unknown as Record<string, unknown> & { variante: Record<string, unknown>; diferencias: Array<Record<string, unknown>> }
   const ov = (id: string, n: number, cot: string, venta: string, zoho: string | null) =>
-    db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta, custom_fields) VALUES ($1, $2, 's', 'x', '2026-12-01T15:00:00Z', $3, $4, $5)", [id, n, cot, venta, zoho === null ? '{}' : `{"Tiempo de orden de Venta": ${zoho}}`])
+    db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, fecha_cotizacion, fecha_orden_venta, custom_fields) VALUES ($1, $2, 's', 'x', '2026-12-01T15:00:00Z', 'Closed', '2026-12-01T15:00:00Z', $3, $4, $5)", [id, n, cot, venta, zoho === null ? '{}' : `{"Tiempo de orden de Venta": ${zoho}}`])
 
   it('sin valores de Zoho en los datos sincronizados: mensaje y porcentaje null en cada indicador', async () => {
     await k2()
@@ -151,7 +151,7 @@ describe('RQ-KP-17 · resumen de comparación', () => {
     expect(c.tickets.porcentaje).toBeNull()
   })
   it('con valor de Zoho pero sin ningún par comparable: «sin pares comparables» y porcentaje null', async () => {
-    await db.query(`INSERT INTO tickets (id, number, subject, status, created_time, custom_fields) VALUES ('s', 7, 's', 'x', '2026-12-01T15:00:00Z', '{"Tiempo de orden de Venta": 3}')`)
+    await db.query(`INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, custom_fields) VALUES ('s', 7, 's', 'x', '2026-12-01T15:00:00Z', 'Closed', '2026-12-01T15:00:00Z', '{"Tiempo de orden de Venta": 3}')`)
     const c = await pedir()
     expect(c).toMatchObject({ comparable: false, mensaje: 'sin pares comparables' })
     expect(en(c, '59')).toMatchObject({ comparados: 0, sinComparar: 1, porcentaje: null })
@@ -215,7 +215,7 @@ describe('RQ-KP-22 y RQ-KP-14 · el 55 por la ruta', () => {
   })
   it('una respuesta de un ticket fuera del periodo: el ticket no sale y su respuesta no afecta a otro', async () => {
     await k2()
-    await db.query("INSERT INTO tickets (id, number, subject, status, created_time) VALUES ('f', 9, 's', 'x', '2026-06-02T15:00:00Z')")
+    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time) VALUES ('f', 9, 's', 'x', '2026-06-02T15:00:00Z', 'Closed', '2026-06-02T15:00:00Z')")
     await respuesta('f', 'Mala', '2026-10-05T15:00:00Z')
     const res = await request(appWith().app).get(RUTA).query({ desde: '2026-10-01' }).set('Cookie', await adminCookie())
     expect(res.body.tickets.map((t: { ticketId: string }) => t.ticketId)).toEqual(['a'])
@@ -224,7 +224,7 @@ describe('RQ-KP-22 y RQ-KP-14 · el 55 por la ruta', () => {
   })
   it('veinte tickets, algunos con respuestas: cuatro lecturas de datos y ninguna sentencia que no sea SELECT, en JSON y en CSV', async () => {
     for (let i = 1; i <= 20; i++) {
-      await db.query("INSERT INTO tickets (id, number, subject, status, created_time) VALUES ($1, $2, 's', 'x', '2026-10-02T15:00:00Z')", [`t${i}`, i])
+      await db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time) VALUES ($1, $2, 's', 'x', '2026-10-02T15:00:00Z', 'Closed', '2026-10-02T15:00:00Z')", [`t${i}`, i])
       if (i % 2 === 0) await respuesta(`t${i}`, 'Bien', '2026-10-06T10:00:00Z')
     }
     const antes = (await db.query('SELECT id FROM public.encuesta_respuestas ORDER BY id')).rows
@@ -248,7 +248,7 @@ const sha256 = (texto: string): string => createHash('sha256').update(texto).dig
 /** Estados que SEPARAN `flujoDelTicket` del predicado por clasificación (M6): ninguno es de equipo nuevo ni de soporte remoto. */
 async function cuatroFlujos(): Promise<void> {
   const alta = (id: string, n: number, estado: string, clasificacion: string | null) =>
-    db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, classification) VALUES ($1, $2, 's', $3, '2026-10-02T15:00:00Z', $4, $5)", [id, n, estado, `ST-${n}`, clasificacion])
+    db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, codigo_servicio, classification) VALUES ($1, $2, 's', $3, '2026-10-02T15:00:00Z', 'Closed', '2026-10-02T15:00:00Z', $4, $5)", [id, n, estado, `ST-${n}`, clasificacion])
   await alta('en', 1, 'Ticket creado', 'Equipo nuevo'); await alta('sr', 2, 'Rev./Diagnostico', 'Soporte remoto')
   await alta('sv', 3, 'Por Facturar', 'Servicio'); await alta('nu', 4, 'Ticket creado', null)
 }
