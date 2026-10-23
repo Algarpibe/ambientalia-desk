@@ -5240,6 +5240,26 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-05 (variante Zoho del 47 y del 51)"
+
+  - clave: "decision/deuda-lectura-indicadores-en-memoria"
+    fecha: "2026-10-23"
+    pregunta: |
+      Las dos observaciones del analista sobre `poblacion-cierre-variante-47-51` (F1F-05): (1) la lectura de indicadores
+      trae todos los tickets cerrados con todas sus transiciones en cada consulta y recorta por día de cierre en memoria
+      (`apps/desk/server/indicadores.ts`, `poblacionPorCierre`); (2) el bundle crece +97 B por `TRANSICIONES_A_FINALIZADO`,
+      que el cliente no usa.
+    respuesta_textual: |
+      «Las dos observaciones quedan aceptadas. La primera se anota en la deuda técnica (M11.7 del maestro, vía expediente) con esta condición de revisión: cuando Análisis tarde más de dos segundos en cargar o haya más de 5.000 tickets cerrados, la lectura de indicadores pasa a filtrar por periodo en la base en lugar de en memoria. No se construye nada ahora. La segunda, sin acción.»
+    consecuencias: |
+      (1) Deuda técnica registrada, sin tanda: no se construye nada ahora.
+      (2) Condición de revisión: Análisis tarda más de dos segundos en cargar, o hay más de 5.000 tickets cerrados. Cuando
+      se cumpla, la lectura de indicadores pasa a filtrar por periodo en la base en lugar de en memoria.
+      (3) La observación del bundle no lleva acción.
+      (4) Pasa al expediente R08.4, §15, para M11.7 de la R08.5.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/deuda-lectura-indicadores-en-memoria) · docs/sdd/R08.4_Expediente_de_cambios.md §15"
+    maestro_pasaje: "M11.7 (R08.4.md:127)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "ninguna (deuda técnica con condición de revisión)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
