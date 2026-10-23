@@ -84,7 +84,7 @@ Una rama, tres lotes (L1, L2, L3); cada lote es UN intento del registro, techo 8
       fichero que ya cita el módulo; (4) detector de pre-push. Conocido: `openspec/specs/kpis/spec.md:1447` cita `server/indicadores.ts:70` → caso A (se reapunta a `:60` al archivar, misma línea);
       `DEPLOY.md:615` (`:85`) y `migracionMarcadorLectores.test.ts:54`, `:58` siguen ciertas. NO se toca `openspec/config.yaml` (ver «Fuera de la rama»).
 - [x] L3.14 Tabla de la regla invariable 13 (mutación 3): cero decisiones nuevas del cliente (no se toca `apps/desk/src`); se anota en `apply-progress.md` con `git diff --stat` que lo prueba.
-- [ ] L3.c Cierre de lote L3: X.c; medida; estimación **~405 (≤ 720)**; `apply-progress.md` con las 8 mutaciones M7 por indicador, rojas y restauradas.
+- [x] L3.c Cierre de lote L3: X.c; medida; estimación **~405 (≤ 720)**; `apply-progress.md` con las 8 mutaciones M7 por indicador, rojas y restauradas.
 
 ## Fuera de la rama — tareas del orquestador en `main` (no se cuentan)
 

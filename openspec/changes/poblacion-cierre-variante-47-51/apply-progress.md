@@ -171,3 +171,15 @@ En cada M7 cae EXACTAMENTE la fila de su indicador y las otras 10 siguen verdes 
 | D2 | Qué día es «el cierre» y el corte por periodo | servidor y `shared` | `packages/shared/src/diaDeCierre.ts:28`; `apps/desk/server/indicadores.ts:130` (corte) |
 | D3 | El 47 y el 51 contra el cierre | `shared` | `packages/shared/src/indicadores.ts:238`, `:241`, `:270` |
 | D4 | Cliente: nada nuevo (`Analisis.tsx` pinta lo que devuelve la ruta) | — | `git diff --stat … apps/desk/src` vacío |
+
+### Cierre de lote (L3.c)
+
+Cadena X.c sobre el HEAD final, sin `npm test` (lo corre el orquestador, solo y en primer plano). `npm run typecheck`: salida 0. `npm run lint`: salida 0, 0 errores y **165 avisos** (sin cambio). Detector de citas (`cli.ts --sha HEAD`): salida 0, 7593 comprobadas, **13** abreviadas rotas informativas (las mismas que en `main`), 0 cabeceras R-1 inválidas; la primera pasada dio 2 bloqueantes, ambos de este `apply-progress.md` (dos citas escritas con forma de ruta a ficheros que no existen con ese nombre), pasadas a prosa. Vitest dirigido (`indicadoresSeptiembre`, `indicadores`, `routes/indicadores`, `routes/indicadoresComparacion`, `poblacionPorCierre`, `migracionMarcadorLectores`, `shared/indicadores`, `diaDeCierre`): 8 ficheros y **311 pruebas** en verde.
+Medida del lote (base `95f93c13`, `git diff --shortstat --no-renames` más lo nuevo sin trackear, que es 0): cifra exacta en el informe del lote; estimación ~405, techo 800, válvula 720.
+
+### Hallazgos y supuestos
+
+- Supuesto reversible: el fixture lleva `numero` además del `id` sintético (S-10 lo permite: «número»); y `estado` literal `Finalizado` en los trece (la exportación sólo trae cerrados).
+- Supuesto reversible: la prueba de aceptación no lee el CSV (pasaría roja en el checkout principal, donde existe sin trackear); que el fixture no copia datos personales lo revisa verify a mano, campo a campo contra `CLAVES_DEL_FIXTURE`.
+- Hallazgo: las 8 celdas coinciden dentro de ±1 sin ajustar nada de L1 ni de L2; no hizo falta tocar código de producción.
+- Hallazgo: el barrido encontró 7 citas SUPERADAS (caso C) en `docs/sdd` y `archive/` que no se editan aquí (ver tabla); y las dos de `config.yaml` (O-1, O-2) son las únicas B que quedan para `main`.
