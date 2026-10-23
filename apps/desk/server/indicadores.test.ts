@@ -11,7 +11,7 @@ function espia(): { q: Queryable; textos: string[] } {
   return { textos, q: { query: ((sql: string, p?: unknown[]) => { textos.push(sql); return db.query(sql, p) }) as Queryable['query'] } }
 }
 async function ticket(id: string, n: number, creado: string, extra = ''): Promise<void> {
-  await db.query(`INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, dias_entrega, fecha_orden_venta ${extra ? ',' + extra.split('=')[0] : ''}) VALUES ($1, $2, 's', 'Finalizado', $3, 'ST-' || $2, 4, '2026-10-08' ${extra ? ',' + extra.split('=')[1] : ''})`, [id, n, creado])
+  await db.query(`INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, codigo_servicio, dias_entrega, fecha_orden_venta ${extra ? ',' + extra.split('=')[0] : ''}) VALUES ($1, $2, 's', 'Finalizado', $3, 'Closed', $3, 'ST-' || $2, 4, '2026-10-08' ${extra ? ',' + extra.split('=')[1] : ''})`, [id, n, creado])
 }
 async function paso(id: string, transicion: string, valores: Record<string, unknown>, cuando: string): Promise<void> {
   await db.query('INSERT INTO ticket_transitions (ticket_id, transition_id, values, performed_at) VALUES ($1, $2, $3, $4)', [id, transicion, JSON.stringify(valores), cuando])
@@ -60,7 +60,7 @@ describe('leerEntradasIndicadores (RQ-KP-14)', () => {
   })
   it('un ticket sin created_time: sale sin periodo (RQ-KP-13, «todos») y no sale con periodo (no se puede situar)', async () => {
     await ticket('sin', 1, '2026-10-02T15:00:00Z')
-    await db.query("UPDATE tickets SET created_time = NULL WHERE id = 'sin'")
+    await db.query("UPDATE tickets SET created_time = NULL, closed_time = NULL WHERE id = 'sin'")
     expect((await leerEntradasIndicadores(db, sinPeriodo)).tickets.map((t) => t.id)).toEqual(['sin'])
     expect((await leerEntradasIndicadores(db, { desde: '2026-10-01', hasta: null })).tickets).toEqual([])
     expect((await leerEntradasIndicadores(db, { desde: null, hasta: '2026-10-31' })).tickets).toEqual([])
@@ -147,7 +147,7 @@ describe('el 55 desde la encuesta (F1F-05 lote 3, RQ-KP-22 y RQ-KP-14)', () => {
     expect([...e.calificaciones.keys()]).toEqual([])
     expect(await valor55('dentro', { desde: '2026-10-01', hasta: '2026-10-31' })).toEqual({ tipo: 'sin_dato', motivo: 'falta el hito: satisfacción del cliente' })
   })
-  it('la cuarta consulta se acota por el periodo: el mismo JOIN y los mismos parámetros que la del historial', async () => {
+  it('la cuarta consulta lleva el mismo WHERE y mismos parámetros que la del historial (ya no hay ventana ligada)', async () => {
     await ticket('a', 1, '2026-10-02T15:00:00Z')
     const { q, textos } = espia()
     const llamadas: unknown[][] = []
@@ -158,7 +158,7 @@ describe('el 55 desde la encuesta (F1F-05 lote 3, RQ-KP-22 y RQ-KP-14)', () => {
     expect(textos).toHaveLength(4)
     expect(String(encuesta[0])).toMatch(/FROM public\.encuesta_respuestas e JOIN tickets t ON t\.id = e\.ticket_id WHERE /)
     expect(encuesta[1]).toEqual(historial[1])
-    expect((encuesta[1] as unknown[]).length).toBe(2)
+    expect((encuesta[1] as unknown[]).length).toBe(0)
   })
   it('veinte tickets, algunos con respuestas y otros sin ellas: son EXACTAMENTE cuatro consultas, todas SELECT', async () => {
     for (let i = 1; i <= 20; i++) {
@@ -188,7 +188,7 @@ import { validarFlujo, MENSAJE_FLUJO, recortarPorFlujo } from './indicadores'
 
 /** Un ticket con su clasificación y un estado a elección. */
 async function conClasificacion(id: string, n: number, estado: string, clasificacion: string | null, creado = '2026-10-02T15:00:00Z'): Promise<void> {
-  await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, classification) VALUES ($1, $2, 's', $3, $4, $5, $6)", [id, n, estado, creado, `ST-${n}`, clasificacion])
+  await db.query("INSERT INTO tickets (id, number, subject, status, created_time, status_type, closed_time, codigo_servicio, classification) VALUES ($1, $2, 's', $3, $4, 'Closed', $4, $5, $6)", [id, n, estado, creado, `ST-${n}`, clasificacion])
 }
 /** Estados que SEPARAN `flujoDelTicket` del predicado por clasificación (M6): `Ticket creado`, `Rev./Diagnostico` y `Por Facturar`. */
 async function cuatroFlujos(): Promise<void> {
