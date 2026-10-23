@@ -46,4 +46,15 @@ Nota sobre G1: el guardián «cada id del conjunto tiene to === “Finalizado”
 
 ### Cierre de lote (L1.c)
 
-Se completa al final del lote: ver abajo.
+Cadena X.c ejecutada sobre el commit `a45035ec` (código del lote). El segundo commit del lote sólo toca `apply-progress.md` y `tasks.md`, así que la cadena no se repite sobre él.
+
+| Paso | Resultado |
+|---|---|
+| `npm run typecheck` | salida 0 |
+| `npm run lint` | salida 0, 0 errores y **165 avisos** (sin cambio) |
+| detector de citas (`cli.ts --sha HEAD`) | salida 0: 7551 comprobadas, 14 abreviadas rotas informativas (no bloquean), 0 cabeceras R-1 inválidas |
+| `npm test` | salida 0: 314 ficheros pasan y 3 saltados (317); 5452 pruebas pasan y 11 saltadas (5463); 594 s |
+
+Respecto de la línea base: +1 fichero (`diaDeCierre.test.ts`) y +22 pruebas (11 del día de cierre y 11 de la variante en `indicadores.test.ts`).
+
+Medida del lote (base `afe2a1eb`): `git diff --shortstat --no-renames` más los ficheros sin trackear (0). Cifra final en el informe del lote; techo 800, válvula 720, estimación ~480.

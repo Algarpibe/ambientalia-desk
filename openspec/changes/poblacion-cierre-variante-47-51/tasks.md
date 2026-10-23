@@ -32,7 +32,7 @@ Una rama, tres lotes (L1, L2, L3); cada lote es UN intento del registro, techo 8
 - [x] L1.8 Mutación M8 (regla 1): evaluar `closed_time` ANTES que la transición → cae «la transición manda» (activa las dos fuentes con días distintos).
 - [x] L1.9 Mutación M5: en `:238`/`:241` pasar como cierre la remisión de salida / la entrega → caen «el 47 no usa la salida» y «el 51 no usa la entrega».
 - [x] L1.10 Mutación G1 (regla 2): ensuciar lo vigilado — cambiar el `to` de `facturar` en `transitions.ts:262` → cae el guardián de L1.3.
-- [ ] L1.c Cierre de lote L1: X.c; medida; estimación **~480 (≤ 720)**; `apply-progress.md` con rojos y mutaciones.
+- [x] L1.c Cierre de lote L1: X.c; medida; estimación **~480 (≤ 720)**; `apply-progress.md` con rojos y mutaciones.
 
 ## Lote L2 · servidor (~245 × 1,8 → ~530 con progreso; ≤ 720)
 
