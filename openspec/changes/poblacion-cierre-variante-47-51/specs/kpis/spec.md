@@ -321,14 +321,15 @@ y **MUST NOT** llevar contacto, asunto, serial, `cf_codigo_servicio` ni tipo de 
 ### Requirement: RQ-KP-39 · Las caracterizaciones sha256 se actualizan por decisión
 
 Las tres caracterizaciones sha256 (`apps/desk/server/routes/indicadores.test.ts:263`, `:271`;
-`apps/desk/server/routes/indicadoresComparacion.test.ts:326`) **SHALL** actualizarse, no borrarse, y el commit **SHALL**
-nombrar `decision/e224b-poblacion-indicadores`. Las pruebas de `packages/shared/src/indicadores.test.ts` que fijan «sin dato» en 47 y 51 se
+`apps/desk/server/routes/indicadoresComparacion.test.ts:326`) **SHALL** actualizarse, no borrarse: sus tickets pasan a
+ser cerrados (`status_type = 'Closed'`) y el hash se recalcula sobre el cuerpo nuevo; si el cuerpo no cambia byte a byte,
+el hash se conserva y el informe lo dice. El commit **SHALL** nombrar `decision/e224b-poblacion-indicadores`. Las pruebas de `packages/shared/src/indicadores.test.ts` que fijan «sin dato» en 47 y 51 se
 actualizan por `decision/e224c-formulas-47-51-y-contraste`.
 
 #### Scenario: Siguen siendo tres
 - GIVEN las pruebas tras el cambio
 - WHEN se cuentan las caracterizaciones sha256
-- THEN siguen siendo tres, con el hash nuevo, y ningún `it` fue borrado ni saltado
+- THEN siguen siendo tres, con el hash recalculado sobre tickets cerrados, y ningún `it` fue borrado ni saltado
 
 #### Scenario: Un cambio de respuesta ajeno a la decisión las rompe
 - GIVEN una respuesta con un campo extra sin relación con la decisión
