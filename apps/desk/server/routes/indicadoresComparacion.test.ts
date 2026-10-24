@@ -323,7 +323,7 @@ describe('M2 · caracterización del POST sin flujo: los bytes de hoy', () => {
     expect(Object.keys(res.body)).toEqual(['periodo', 'fichero', 'cruce', 'comparacion'])
     expect(Object.keys(res.body.cruce)).toEqual(['cruzados', 'soloEnFichero', 'fueraDelPeriodo', 'soloEnDesk', 'numeroDistinto', 'valoresIlegibles'])
     expect(res.body.cruce).toMatchObject({ cruzados: 3, soloEnFichero: { total: 1 }, fueraDelPeriodo: { total: 1 }, soloEnDesk: { total: 1 } })
-    expect(createHash('sha256').update(res.text).digest('hex')).toBe('862d1958da8da38ec164e10ddd2158bcb0f1fc66f5e835af60a0f4cbc10623a7')
+    expect(createHash('sha256').update(res.text).digest('hex')).toBe('265b7cbf856ba8d38116f4a9e2efaf4722c33d52d25f9ff4d625ee86c1f9273c') // recalculado por decision/f1f05-variante-juzga-el-95 (ticketsVariante y nota)
   })
 })
 

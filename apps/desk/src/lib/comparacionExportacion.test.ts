@@ -61,7 +61,7 @@ function respuesta(sobre: Partial<ComparacionExportacion> = {}): ComparacionExpo
         { columna: '49', comparados: 5, coincidentes: 4, diferentes: 1, sinComparar: 2, porcentaje: 80, diferencias: [], variante: { comparados: 5, coincidentes: 5, diferentes: 0, sinComparar: 2, porcentaje: 100, diferencias: [] } },
         { columna: '54', comparados: 0, coincidentes: 0, diferentes: 0, sinComparar: 7, porcentaje: null, diferencias: [], variante: { comparados: 0, coincidentes: 0, diferentes: 0, sinComparar: 7, porcentaje: null, diferencias: [] } },
       ],
-      tickets: { comparados: 5, coincidentes: 4, porcentaje: 80 },
+      tickets: { comparados: 5, coincidentes: 4, porcentaje: 80 }, ticketsVariante: { comparados: 5, coincidentes: 5, porcentaje: 100 },
       nota: 'Nota del servidor',
     },
   }
