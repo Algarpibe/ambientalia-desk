@@ -5314,7 +5314,7 @@ decisiones_de_gerencia_adenda:
       (3) Cambio de código dentro de F1F-05, antes del 16/11.
       (4) El ensayo de septiembre se repite con periodo (01/09 al 30/09).
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f05-variante-juzga-el-95) · precisa el 95 % de decision/e009b-lista-indicadores"
-    maestro_pasaje: "Anexo G (R08.4.md:2954)"
+    maestro_pasaje: "Anexo G (R08.4.md:2957)"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1F-05 (la comparación juzga con la variante)"
 trabajo_sin_ficha_declarado:
