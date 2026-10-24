@@ -19,7 +19,7 @@ Modo: strict TDD. Todo en el worktree de la rama `comparacion-juzga-variante`. L
 ### Verdes
 
 - L1.5: `apps/desk/server/testing/septiembre2026.ts`, `idDe` opcional en su línea (`:55`) e `idDe(t)` en `:60`. `indicadoresSeptiembre.test.ts` no cambia: 11 de 11.
-- L1.6: `packages/shared/src/indicadoresComparacion.ts` según D1-D3, en sitio: `:2`, `:10`, `:45`, `:92`, `:106-107`, `:110`, `:119-120`, `:126`; `LecturaTickets`, `PorTicket` y `lecturaPorTicket` al final (`:130-138`). `:9` sigue siendo `MENSAJE_SIN_PARES` y `:90` la firma de `compararIndicadores`.
+- L1.6: `packages/shared/src/indicadoresComparacion.ts` según D1-D3, en sitio: `:2`, `:10`, `:45`, `:92`, `:106-107`, `:110`, `:119-120`, `:126`; `LecturaTickets`, `PorTicket` y `lecturaPorTicket` al final (nueve líneas nuevas tras la última de la base). `:9` sigue siendo `MENSAJE_SIN_PARES` y `:90` la firma de `compararIndicadores`.
 - L1.7: `apps/desk/src/lib/comparacionExportacion.test.ts:64` gana `ticketsVariante` en la misma línea. `typecheck` salida 0.
 - **Aceptación 13/13 sin ajustar nada:** tras D2, `ticketsVariante` da `{13,13,100}`, la variante por indicador da 47→11, 49→9, 50·53→11, 51→12, 54/57/58/59→9 al 100 % y la 55 `comparados` 0 con `porcentaje` `null`. Las expectativas no se tocaron.
 - Hallazgo de la prueba nueva: dos llamadas a `adminCookie()` en una prueba chocan con `users_pkey` (una sesión de administrador por prueba, como en `indicadoresComparacion.test.ts`); se memoiza por base, con el mismo molde.
