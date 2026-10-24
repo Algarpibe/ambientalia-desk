@@ -21,12 +21,12 @@ del 16/11. La comprobación del maestro está en el Anexo G
 
 Hoy el código no lo cumple en tres puntos:
 
-- La lectura por ticket sólo cuenta la letra: `if (contra === 'valor' && …)` (`packages/shared/src/indicadoresComparacion.ts:106`),
-  y `tickets` se cierra con ella (`packages/shared/src/indicadoresComparacion.ts:126`). La variante sólo existe por indicador.
+- La lectura por ticket sólo cuenta la letra: `if (contra === 'valor' && …)` (`packages/shared/src/indicadoresComparacion.ts:106` en `e1a92b59`),
+  y `tickets` se cierra con ella (`packages/shared/src/indicadoresComparacion.ts:126` en `e1a92b59`). La variante sólo existe por indicador.
 - La nota dice lo contrario de la decisión: «La letra de Gerencia no precisa cuál es «el 95 % de los tickets»…»
-  (`packages/shared/src/indicadoresComparacion.ts:10`), y la cabecera, que «el 95 % de la letra lo juzgan las personas» (`:2`).
-- La pantalla no pinta la variante: una sola tabla con los recuentos de la letra (`apps/desk/src/lib/comparacionExportacion.ts:68-72`;
-  `apps/desk/src/components/ComparacionExportacion.tsx:50-59`). El ensayo del 24/10 enseñó tickets 3/12 = 25 % con la letra; la
+  (`packages/shared/src/indicadoresComparacion.ts:10` en `e1a92b59`), y la cabecera, que «el 95 % de la letra lo juzgan las personas» (`:2`).
+- La pantalla no pinta la variante: una sola tabla con los recuentos de la letra (`apps/desk/src/lib/comparacionExportacion.ts:68-72` en `e1a92b59`;
+  `apps/desk/src/components/ComparacionExportacion.tsx:50-59` en `e1a92b59`). El ensayo del 24/10 enseñó tickets 3/12 = 25 % con la letra; la
   variante, recalculada por el analista, da 13/13 (`openspec/config.yaml:5304-5306`).
 
 `cierra: no`: F1F-05 sigue abierta por la encuesta (55) y la medición en paralelo del 16/11 al 14/12.
@@ -87,9 +87,9 @@ Con o sin `flujo` y periodo, la regla es la misma: el `POST` hereda el tipo por 
 - **S-2 · La 55 dice «sin pares comparables».** La premisa del encargo («que siga diciéndolo») es **falsa**: hoy ninguna fila
   lo dice. La frase sólo sale como `mensaje` global cuando no hay ningún par comparable
   (`packages/shared/src/indicadoresComparacion.ts:123`), y una fila con `comparados = 0` pinta «—»
-  (`apps/desk/src/lib/comparacionExportacion.ts:48`). Supuesto: en la tabla de la VARIANTE, un `porcentaje` `null` (indicador o
+  (`apps/desk/src/lib/comparacionExportacion.ts:48` en `e1a92b59`). Supuesto: en la tabla de la VARIANTE, un `porcentaje` `null` (indicador o
   tickets) se pinta con `MENSAJE_SIN_PARES` importado de `@ambientalia/shared` (`packages/shared/src/indicadoresComparacion.ts:9`);
-  en la de la letra sigue «—» (`apps/desk/src/lib/comparacionExportacion.test.ts:93-98` intacta). Razón: Gerencia fijó que «la 55
+  en la de la letra sigue «—» (`apps/desk/src/lib/comparacionExportacion.test.ts:93-98` en `e1a92b59`, intacta entonces; L2 reescribió sus líneas 95 y 98 para leer `tablas[1]` y la afirmación «—» sigue igual). Razón: Gerencia fijó que «la 55
   queda «sin pares comparables»» (`openspec/config.yaml:5271`, consecuencia en `:5290`).
 - **S-3 · Rótulos.** Variante: «Variante de la fórmula de Zoho · cuenta para el 95 %»; letra: «Letra de la aplicación ·
   informativa». Sólo texto, sin color ni semáforo.
@@ -104,7 +104,7 @@ Con o sin `flujo` y periodo, la regla es la misma: el `POST` hereda el tipo por 
   cambia y queda como guardián de que el CSV no se tocó. La prueba C13 (`packages/shared/src/indicadoresComparacion.test.ts:136-141`),
   que exige «no precisa» en la nota, se actualiza por la misma decisión.
 - **S-6 · Cuerpos.** Sólo cambian `comparacion.ticketsVariante` (nuevo) y `comparacion.nota` (texto); ver la tabla de arriba.
-- **S-7 · Fila de tickets.** Como hoy en la letra (`apps/desk/src/components/ComparacionExportacion.tsx:57`), la de la variante
+- **S-7 · Fila de tickets.** Como hoy en la letra (`apps/desk/src/components/ComparacionExportacion.tsx:57` en `e1a92b59`), la de la variante
   pinta comparados, coinciden y porcentaje; «Difieren» y «Sin comparar» por ticket quedan vacíos: el cliente no resta (regla 13).
   Si Gerencia los quiere, los añade el servidor.
 

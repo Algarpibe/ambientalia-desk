@@ -91,7 +91,7 @@ Dos pruebas al final de `routes/indicadoresComparacion.test.ts` (RQ-KP-35): un �
 
 ### L2.7 · las tres sha256
 
-Corridas tras L2.2 con el código de hoy y otra vez tras L2.5: **recalculado, bytes iguales** en las tres; ningún hash cambió y ningún `it` se borró ni se saltó. Siguen siendo tres: `routes/indicadores.test.ts:263` (`0975f415…992cf`), `:271` (`c83ef69a…ba88be2`) y `routes/indicadoresComparacion.test.ts:326` (`862d1958…10623a7`). Misma población (cierre = creación en los datos) y el 47 y el 51 de esos fixtures siguen sin hitos, como preveía D6. Se registra en `decision/e224b-poblacion-indicadores`, que nombra el commit del lote.
+Corridas tras L2.2 con el código de hoy y otra vez tras L2.5: **recalculado, bytes iguales** en las tres; ningún hash cambió y ningún `it` se borró ni se saltó. Siguen siendo tres: `routes/indicadores.test.ts:263` en `e1a92b59` (`0975f415…992cf`), `:271` (`c83ef69a…ba88be2`) y `routes/indicadoresComparacion.test.ts:326` en `e1a92b59` (`862d1958…10623a7`); los dos de cuerpo JSON los recalculó después `comparacion-juzga-variante` (L1). Misma población (cierre = creación en los datos) y el 47 y el 51 de esos fixtures siguen sin hitos, como preveía D6. Se registra en `decision/e224b-poblacion-indicadores`, que nombra el commit del lote.
 
 ### Mutaciones (sha256 del fichero antes de mutar y tras revertir: coinciden)
 
