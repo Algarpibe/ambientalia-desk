@@ -238,7 +238,7 @@ Sin migración ni datos. Tras el despliegue, Gerencia repite septiembre con peri
 
 ## Riesgos y preguntas abiertas
 
-- **SP-6 quedaba desfasada** (`openspec/specs/kpis/spec.md:32`: «la letra no precisa cuál es el 95 %»). Resuelto por el orquestador
+- **SP-6 quedaba desfasada** (`openspec/specs/kpis/spec.md:32` en `e1a92b59`: «la letra no precisa cuál es el 95 %»). Resuelto por el orquestador
   en el delta: MODIFIED de la fila SP-6, una línea a igual longitud (molde de la SP-5 de `poblacion-cierre-variante-47-51`).
 - Los dos hashes nuevos sólo se conocen ejecutando; el apply los toma con el resto en verde.
 - Si RQ-KP-38 no estuviera verde en `e1a92b59`, la aceptación (2) y (3) no lo estaría: se comprueba antes de escribir la prueba nueva.

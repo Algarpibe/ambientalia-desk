@@ -122,7 +122,7 @@ D1-D8 y D10 implementados como se dicen; D9 completo (§4); D11 (dos intentos �
 **CRITICAL: 0.**
 
 **WARNING (1)**
-1. `openspec/changes/comparacion-juzga-variante/apply-progress.md:72` y `:160` dejan la medida del ledger de cada lote en «ver el informe del lote»: la cifra exacta (`git diff --shortstat --no-renames` más `wc -l` de lo nuevo) no está en el repositorio, y la obligación del 2026-09-28 pide registrar ESO. No puedo comprobar desde el repositorio el techo de 720 de los intentos 3 y 4; el orquestador debe dejar las dos cifras en el informe del lote o al cerrar.
+1. Las líneas 72 y 160 del `apply-progress.md` de este cambio dejan la medida del ledger de cada lote en «ver el informe del lote»: la cifra exacta (`git diff --shortstat --no-renames` más `wc -l` de lo nuevo) no está en el repositorio, y la obligación del 2026-09-28 pide registrar ESO. No puedo comprobar desde el repositorio el techo de 720 de los intentos 3 y 4; el orquestador debe dejar las dos cifras en el informe del lote o al cerrar.
 
 **SUGGESTION (3)**
 1. `lib.t:257` es un `for … of` sobre `tablas`; hoy no puede ser fantasma (`lib.t:224` fija dos), pero un `expect(…tablas).toHaveLength(2)` en la misma prueba lo haría explícito.
