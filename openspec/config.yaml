@@ -5297,6 +5297,26 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (procedimiento de F1F-05; trabajo de personas)"
+
+  - clave: "decision/f1f05-variante-juzga-el-95"
+    fecha: "2026-10-24"
+    pregunta: |
+      El ensayo de la comparación de septiembre en producción (24/10) mostró sólo la letra: 47 4/11, 50·53 5/11, 49 y 51
+      sin comparar, tickets 3/12 = 25 %; la variante, recalculada por el analista con el código de 17e3a031 sobre el fichero
+      de referencia, da 47 11/11, 49 9/9, 50·53 11/11, 51 12/12, 54/57/58/59 9/9 y tickets 13/13. ¿Qué lectura juzga el
+      95 % de `decision/e009b-lista-indicadores`?
+    respuesta_textual: |
+      «Para el 95 % cuenta la variante de Zoho. La letra de la aplicación se publica como información, con sus diferencias explicadas por definición. Cambio pequeño antes del 16/11, dentro de F1F-05: la pantalla muestra la variante y la lectura por ticket se calcula también con ella. Repito la comparación de septiembre con el periodo del 01/09 al 30/09 y te paso el «Sólo en Desk».»
+    consecuencias: |
+      (1) El 95 % se juzga con la variante (`formula_zoho`), por indicador y por ticket.
+      (2) La letra se publica como información y sus diferencias se explican por definición: el 49 y el 51 exigen hitos que
+      sólo existen en la aplicación; el 47 mide hasta la remisión de salida; el 50·53 descuenta festivos.
+      (3) Cambio de código dentro de F1F-05, antes del 16/11.
+      (4) El ensayo de septiembre se repite con periodo (01/09 al 30/09).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f05-variante-juzga-el-95) · precisa el 95 % de decision/e009b-lista-indicadores"
+    maestro_pasaje: "Anexo G (R08.4.md:2954)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1F-05 (la comparación juzga con la variante)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
