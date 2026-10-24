@@ -5257,9 +5257,46 @@ decisiones_de_gerencia_adenda:
       (3) La observación del bundle no lleva acción.
       (4) Pasa al expediente R08.4, §15, para M11.7 de la R08.5.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/deuda-lectura-indicadores-en-memoria) · docs/sdd/R08.4_Expediente_de_cambios.md §15"
-    maestro_pasaje: "M11.7 (R08.4.md:127)"
+    maestro_pasaje: "M11.7 (R08.4.md:3529)"
     maestro_revision: "R08.4"
     tanda_que_abre: "ninguna (deuda técnica con condición de revisión)"
+
+  - clave: "decision/f1f05-referencia-semanal-indicadores"
+    fecha: "2026-10-23"
+    pregunta: |
+      La medición en paralelo de F1F-05 (`decision/e009b-lista-indicadores`: ≥ 95 % de tickets coincidentes, un día de
+      tolerancia): ¿quién genera el fichero de referencia de Zoho, con qué fuente para las columnas 47–59, en qué formato
+      y dónde queda, quién ejecuta la comparación, y cómo se carga en enero la encuesta del formulario?
+    respuesta_textual: |
+      «El fichero de referencia semanal (columnas 47–59) lo genera Gerencia con el conector de Zoho Desk, cada lunes del 16/11 al 14/12, y queda en docs/sdd/Referencia_Indicadores_Zoho_<fecha>.csv. Tú lo pasas por la comparación y guardas el veredicto en el parte. La 55 queda «sin pares comparables» hasta enero. La carga de la encuesta de enero la hace un administrador por la API, con el fichero del formulario; no se construye pantalla antes del corte.
+
+      Fuente de las columnas 47–59: las fórmulas del diccionario de campos aplicadas a los campos de Zoho leídos por el conector, validadas contra la hoja antigua. La hoja de 59 columnas no se usa como referencia.
+
+      El fichero semanal lo genera Gerencia cada lunes del 16/11 al 14/12, con las doce cabeceras exactas y el ID interno de Zoho, y queda sin trackear en docs/sdd/Referencia_Indicadores_Zoho_<fecha>.csv. El de septiembre ya está en ese formato. La comparación la ejecuto yo en producción desde Análisis y te paso el resultado; tú escribes el veredicto en el parte.»
+    nota_de_fuente: |
+      La respuesta llegó en dos mensajes del mismo día; el primero dejaba la fuente entre corchetes con dos opciones y el
+      segundo la resuelve. Se recogen los dos.
+    consecuencias: |
+      (1) La medición en paralelo de F1F-05 (`decision/e009b-lista-indicadores`, ≥ 95 %, un día de tolerancia) tiene
+      procedimiento: Gerencia genera el fichero cada lunes del 16/11 al 14/12 (cinco lunes: 16/11, 23/11, 30/11, 07/12 y
+      14/12), un administrador lo compara en producción (Análisis, `POST /api/indicadores/comparacion`,
+      `apps/desk/server/routes/indicadoresComparacion.ts:25`) y el analista escribe el veredicto en el parte de esa semana.
+      (2) Formato: las doce cabeceras que exige `apps/desk/server/comparacion/leerExportacion.ts:5-19` (ID interno, ID de
+      la solicitud y los diez nombres del diccionario). El analista comprobó el 23/10 que el fichero de septiembre se lee
+      con 13 filas, 0 rechazadas y 0 ilegibles.
+      (3) Fuente: las fórmulas del diccionario (`decision/e224c-formulas-47-51-y-contraste`) aplicadas a los campos de Zoho
+      leídos por el conector, no la hoja de 59 columnas.
+      (4) Los ficheros semanales quedan SIN TRACKEAR: llevan nombres de clientes.
+      (5) La 55 queda «sin pares comparables» (`packages/shared/src/indicadoresComparacion.ts:9`) hasta enero, coherente
+      con `decision/f1f03-criterio-aceptacion-corregido`, que la acepta medida a mano hasta entonces.
+      (6) La carga de enero de la encuesta la hace un administrador por la API ya construida (`POST
+      /api/indicadores/encuesta`, `apps/desk/server/routes/encuestaRespuestas.ts:19`) con el fichero del formulario de
+      Google; no se construye pantalla antes del corte. Precisa la consecuencia (2) de
+      `decision/encuesta-entre-corte-e-independencia`, que anotaba la carga «sin destino».
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f05-referencia-semanal-indicadores) · precisa la consecuencia (2) de decision/encuesta-entre-corte-e-independencia"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (procedimiento de F1F-05; trabajo de personas)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
