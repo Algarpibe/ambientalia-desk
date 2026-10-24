@@ -1,5 +1,5 @@
 // Comparación de los indicadores con lo que Zoho ya calculó (F1F-05, RQ-KP-16). Módulo PURO.
-// La aplicación NO decide si se aprueba: no hay umbral, semáforo ni veredicto. El 95 % de la letra lo juzgan las personas.
+// La aplicación NO decide si se aprueba: no hay umbral, semáforo ni veredicto. El 95 % se juzga con la variante de Zoho y la letra es informativa (decision/f1f05-variante-juzga-el-95).
 import type { DiaCivil } from './calendarioLaboral'
 import type { ColumnaIndicador, Indicador, Valor } from './indicadores'
 
@@ -7,7 +7,7 @@ import type { ColumnaIndicador, Indicador, Valor } from './indicadores'
 export const TOLERANCIA_DIAS = 1
 export const MENSAJE_SIN_ZOHO = 'sin valor de Zoho con que comparar'
 export const MENSAJE_SIN_PARES = 'sin pares comparables'
-export const NOTA_PORCENTAJES = 'La letra de Gerencia no precisa cuál es «el 95 % de los tickets»: se publican las dos lecturas, por indicador y de tickets en que todo lo comparable coincide. La aplicación no decide si se aprueba.'
+export const NOTA_PORCENTAJES = 'El 95 % se juzga con la variante de la fórmula de Zoho, por indicador y por ticket. La letra de la aplicación es informativa: sus diferencias se explican por definición. La aplicación no decide si se aprueba.'
 
 const COLUMNAS: readonly ColumnaIndicador[] = ['47', '49', '50_53', '51', '54', '55', '57', '58', '59']
 const TEXTOS: readonly ColumnaIndicador[] = ['54', '55']
@@ -42,7 +42,7 @@ export interface ResumenComparacion {
   mensaje: string | null
   tolerancia: number
   porColumna: ResumenColumna[]
-  tickets: { comparados: number; coincidentes: number; porcentaje: number | null }
+  tickets: LecturaTickets; ticketsVariante: LecturaTickets
   nota: string
 }
 
@@ -89,7 +89,7 @@ const cerrar = (c: Conteo): Conteo => ({ ...c, porcentaje: porcentaje(c.coincide
 
 export function compararIndicadores(pares: ParComparacion[], tolerancia: number = TOLERANCIA_DIAS): ResumenComparacion {
   const cols = new Map(COLUMNAS.map((c) => [c, { letra: vacio(), variante: vacio(), diferencias: [] as Diferencia[], diferenciasVariante: [] as Diferencia[] }]))
-  const porTicket = new Map<string, { comparados: number; todoCoincide: boolean }>()
+  const porTicket = { valor: new Map<string, PorTicket>(), formula_zoho: new Map<string, PorTicket>() }
   let conZoho = 0
   for (const p of pares) {
     const acc = cols.get(p.columna)
@@ -103,11 +103,11 @@ export function compararIndicadores(pares: ParComparacion[], tolerancia: number 
         const lista = contra === 'valor' ? acc.diferencias : acc.diferenciasVariante
         lista.push({ ticketId: p.ticketId, columna: p.columna, contra, app: e.app, zoho: e.zoho, delta: e.delta, hitos: p.hitos, reentrante: p.reentrante, diasNoHabiles: p.diasNoHabiles })
       }
-      if (contra === 'valor' && e.r !== 'sin') {
-        const t = porTicket.get(p.ticketId) ?? { comparados: 0, todoCoincide: true }
+      if (e.r !== 'sin') {
+        const t = porTicket[contra].get(p.ticketId) ?? { comparados: 0, todoCoincide: true }
         t.comparados++
         if (e.r === 'difiere') t.todoCoincide = false
-        porTicket.set(p.ticketId, t)
+        porTicket[contra].set(p.ticketId, t)
       }
     }
   }
@@ -116,14 +116,23 @@ export function compararIndicadores(pares: ParComparacion[], tolerancia: number 
     return { columna, ...cerrar(a.letra), diferencias: a.diferencias, variante: { ...cerrar(a.variante), diferencias: a.diferenciasVariante } }
   })
   const hayPares = porColumna.some((c) => c.comparados > 0 || c.variante.comparados > 0)
-  const ts = [...porTicket.values()]
-  const coinc = ts.filter((t) => t.todoCoincide).length
+  const tickets = lecturaPorTicket(porTicket.valor)
+  const ticketsVariante = lecturaPorTicket(porTicket.formula_zoho)
   return {
     comparable: hayPares,
     mensaje: conZoho === 0 ? MENSAJE_SIN_ZOHO : hayPares ? null : MENSAJE_SIN_PARES,
     tolerancia,
     porColumna,
-    tickets: { comparados: ts.length, coincidentes: coinc, porcentaje: porcentaje(coinc, ts.length) },
+    tickets, ticketsVariante,
     nota: NOTA_PORCENTAJES,
   }
+}
+
+/** La lectura por ticket de UNA lectura (la letra o la variante): comparado si tiene un par comparable, coincidente si todos coinciden (RQ-KP-40). */
+export interface LecturaTickets { comparados: number; coincidentes: number; porcentaje: number | null }
+type PorTicket = { comparados: number; todoCoincide: boolean }
+function lecturaPorTicket(mapa: Map<string, PorTicket>): LecturaTickets {
+  const ts = [...mapa.values()]
+  const coinc = ts.filter((t) => t.todoCoincide).length
+  return { comparados: ts.length, coincidentes: coinc, porcentaje: porcentaje(coinc, ts.length) }
 }

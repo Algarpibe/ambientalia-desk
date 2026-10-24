@@ -73,7 +73,7 @@ M6 GET y M6 POST en L2; M1 y las ocho M7 (47, 49, 50·53, 51, 54, 57, 58, 59; re
 | RQ-KP-36 | 2 | `apps/desk/server/indicadores.ts:76`, `:81` | `apps/desk/server/poblacionPorCierre.test.ts:122`, `:133`, `:139`, `:146` | COMPLIANT |
 | RQ-KP-37 | 4 | `packages/shared/src/indicadores.ts:238`, `:241`, `:270-277` | `packages/shared/src/indicadores.test.ts:433`, `:443`, `:453`, `:467`, `:475` | COMPLIANT |
 | RQ-KP-38 | 4 | `apps/desk/server/testing/septiembre2026.ts:22-49` | `apps/desk/server/routes/indicadoresSeptiembre.test.ts:30`, `:36`, `:55` y las ocho filas de `it.each` (`:42`) | COMPLIANT |
-| RQ-KP-39 | 2 | `apps/desk/server/routes/indicadores.test.ts:263`, `:271`; `apps/desk/server/routes/indicadoresComparacion.test.ts:326` | Los tres hashes conservan sus bytes (`0975f415…992cf`, `c83ef69a…ba88be2`, `862d1958…10623a7`); el `git diff` no toca ninguna línea con sha256; ningún `it` borrado ni saltado (tres títulos reescritos en su línea) | COMPLIANT |
+| RQ-KP-39 | 2 | `apps/desk/server/routes/indicadores.test.ts:263` en `e1a92b59`, `:271`; `apps/desk/server/routes/indicadoresComparacion.test.ts:326` en `e1a92b59` | Los tres hashes conservan sus bytes (`0975f415…992cf`, `c83ef69a…ba88be2`, `862d1958…10623a7`); el `git diff` no toca ninguna línea con sha256; ningún `it` borrado ni saltado (tres títulos reescritos en su línea) | COMPLIANT |
 
 Líneas de los MODIFIED: RQ-KP-11 = 51, RQ-KP-13 = 22, RQ-KP-22 = 40 y RQ-KP-25 = 31, tanto en la spec viva de `f0eb92c4` como en el delta (medido con
 `awk` sobre ambas); SP-5 es una línea en las dos. La fusión no desplaza nada de la spec viva.

@@ -133,11 +133,11 @@ describe('compararIndicadores (RQ-KP-16)', () => {
     expect(compararIndicadores([par('59', v(4), 4)])).toMatchObject({ comparable: true, mensaje: null })
   })
 
-  it('C13 · sin veredicto: ninguna clave de aprobado, semáforo, umbral ni meta, y la nota dice que la letra no precisa el 95 %', () => {
+  it('C13 · sin veredicto: ninguna clave de aprobado, semáforo, umbral ni meta, y la nota ya no dice que el 95 % esté sin precisar', () => {
     const r = compararIndicadores([par('59', v(4), 4)])
     const claves = (JSON.stringify(r).match(/"([^"]+)":/g) ?? []).join(' ').toLowerCase()
     expect(claves).not.toMatch(/aprob|suspen|sem[aá]foro|umbral|meta|color|veredicto/)
-    expect(r.nota).toContain('no precisa')
+    expect(r.nota).not.toContain('no precisa')
     expect(r.nota).toContain('no decide si se aprueba')
   })
 
@@ -156,5 +156,60 @@ describe('compararIndicadores (RQ-KP-16)', () => {
       ticketId: 't9', columna: '50_53', app: v(6), variante: v(8), zoho: 8,
       hitos: [{ nombre: 'Fecha Finalización ST', dia: '2027-01-05', fuente: 'columna_heredada' }], reentrante: false, diasNoHabiles: ['2027-01-01'],
     })
+  })
+})
+
+// ── comparacion-juzga-variante (F1F-05, L1 · RQ-KP-40): la lectura por ticket de la variante y la nota del 95 % ─────────────────────────────────
+// `decision/f1f05-variante-juzga-el-95`: el 95 % se juzga con la variante de Zoho; la letra es informativa. Cifras a mano.
+describe('ticketsVariante (RQ-KP-40)', () => {
+  /** a: la letra difiere (6 contra 8) y la variante coincide; b: ambas coinciden. */
+  const dos = () => compararIndicadores([
+    par('59', v(6), 8, { ticketId: 'a', variante: v(8) }),
+    par('59', v(4), 4, { ticketId: 'b', variante: v(4) }),
+  ])
+
+  it('la variante y la letra difieren por ticket', () => {
+    const r = dos()
+    expect(r.ticketsVariante).toEqual({ comparados: 2, coincidentes: 2, porcentaje: 100 })
+    expect(r.ticketsVariante).not.toEqual(r.tickets)
+  })
+
+  it('`tickets` sigue siendo la letra', () => {
+    expect(dos().tickets).toEqual({ comparados: 2, coincidentes: 1, porcentaje: 50 })
+  })
+
+  it('un ticket coincide sólo si coinciden todos sus pares comparables de la variante', () => {
+    const r = compararIndicadores([
+      par('59', v(4), 4, { ticketId: 'a', variante: v(4) }), par('58', v(2), 9, { ticketId: 'a', variante: v(2) }),
+      par('59', v(4), 4, { ticketId: 'b', variante: v(4) }), par('58', v(2), 2, { ticketId: 'b', variante: v(2) }),
+    ])
+    expect(r.ticketsVariante).toEqual({ comparados: 2, coincidentes: 1, porcentaje: 50 })
+  })
+
+  it('un par sin variante comparable no hace comparado al ticket', () => {
+    const r = compararIndicadores([par('59', v(4), 4, { ticketId: 'a', variante: SD }), par('58', v(2), 2, { ticketId: 'b', variante: v(2) })])
+    expect(r.ticketsVariante).toEqual({ comparados: 1, coincidentes: 1, porcentaje: 100 })
+    expect(r.tickets).toEqual({ comparados: 2, coincidentes: 2, porcentaje: 100 })
+  })
+
+  it('sin tickets comparados en la variante el porcentaje es null, nunca 0 ni 100', () => {
+    const r = compararIndicadores([par('59', v(4), 4)])
+    expect(r.ticketsVariante).toEqual({ comparados: 0, coincidentes: 0, porcentaje: null })
+  })
+
+  it('la clave ticketsVariante va entre tickets y nota', () => {
+    expect(Object.keys(dos())).toEqual(['comparable', 'mensaje', 'tolerancia', 'porColumna', 'tickets', 'ticketsVariante', 'nota'])
+  })
+
+  it('la nota dice quién juzga: la variante de Zoho cuenta para el 95 % y la letra es informativa', () => {
+    const { nota } = dos()
+    expect(nota).toContain('se juzga con la variante de la fórmula de Zoho')
+    expect(nota).toContain('informativa')
+    expect(nota).toContain('por indicador y por ticket')
+    expect(nota).not.toContain('no precisa')
+  })
+
+  it('la nota no decide: ni aprobado, ni umbral, ni semáforo, ni veredicto', () => {
+    expect(dos().nota).not.toMatch(/aprob|umbral|sem[aá]foro|veredicto/i)
   })
 })

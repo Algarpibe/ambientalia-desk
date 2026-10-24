@@ -1,7 +1,7 @@
 # Reconciliación
 
-**Commit medido:** `78e7ed14` · **Fecha del commit:** 2026-10-23
-**Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
+**Commit medido:** `16477427` · **Fecha del commit:** 2026-10-24
+**Árbol de trabajo:** limpio
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
 este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la pasada anterior.
@@ -61,25 +61,7 @@ Hallazgos (informativos, no bloquean):
 
 ## 6 · Ficheros de docs/sdd sin trackear
 
-  16 sin trackear
-
-Hallazgos (informativos, no bloquean):
-  - `docs/sdd/Evidencia_Transporte_Tarea_Programada_2026-09-18.txt` — en disco y fuera del índice
-  - `docs/sdd/Export_Zoho_Tickets_cerrados_2026-09.csv` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-09-18.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-09-22.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-09-24.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-09-28.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-01.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-01b.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-01c.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-06.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-09.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-13.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-17.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-20.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-23.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-23b.md` — en disco y fuera del índice
+  0 sin trackear
 
 ---
 

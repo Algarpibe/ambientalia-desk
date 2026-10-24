@@ -1,7 +1,7 @@
 // Cliente de la comparación con la exportación de Zoho (F1F-05, RQ-KP-28). Lo único decidible del cliente vive aquí, en `.ts`,
 // porque los `.tsx` están fuera de la red de pruebas por decisión de Gerencia (F0-00). Regla invariable 13: el cliente NO lee el
 // fichero, NO cruza, NO calcula porcentajes ni valida el periodo; sólo arma la petición y repite lo que el servidor devolvió.
-import { NOMBRES_ZOHO, NOMBRE_FLUJO, type ComparacionExportacion as RespuestaComparacion } from '@ambientalia/shared'
+import { MENSAJE_SIN_PARES, NOMBRES_ZOHO, NOMBRE_FLUJO, type Conteo, type ComparacionExportacion as RespuestaComparacion } from '@ambientalia/shared'
 
 /** Ruta relativa de `POST /api/indicadores/comparacion`: mismo origen, la cookie de sesión viaja sola. */
 const RUTA = '/api/indicadores/comparacion'
@@ -36,16 +36,16 @@ export interface VistaComparacion {
   periodo: string
   recuentos: FilaCifra[]
   mensaje: string | null
-  columnas: FilaColumnaVista[]
-  tickets: { comparados: string; coincidentes: string; porcentaje: string }
+  /** Dos tablas en orden: la variante de Zoho primero (cuenta para el 95 %) y la letra después (informativa). */
+  tablas: TablaVista[]
   listas: ListaVista[]
   nota: string
 }
 
 const SIN_DATO = '—'
 const n = (x: number): string => String(x)
-/** El porcentaje es del servidor; aquí sólo se escribe con coma decimal. `null` es «—», nunca 0. */
-const pct = (p: number | null): string => (p === null ? SIN_DATO : `${String(p).replace('.', ',')} %`)
+/** El porcentaje es del servidor; aquí sólo se escribe con coma decimal. `null` es `vacio` («—» por omisión), nunca 0. */
+const pct = (p: number | null, vacio = SIN_DATO): string => (p === null ? vacio : `${String(p).replace('.', ',')} %`)
 
 /** Repite la respuesta del servidor en filas listas para pintar: no suma, no divide, no compara y no lleva color, meta ni veredicto. */
 export function vistaComparacion(r: RespuestaComparacion): VistaComparacion {
@@ -65,11 +65,11 @@ export function vistaComparacion(r: RespuestaComparacion): VistaComparacion {
       { etiqueta: 'Valores ilegibles', valor: n(c.valoresIlegibles.total) },
     ],
     mensaje: r.comparacion.mensaje,
-    columnas: r.comparacion.porColumna.map((k) => ({
-      nombre: NOMBRES_ZOHO[k.columna][0], comparados: n(k.comparados), coincidentes: n(k.coincidentes),
-      diferentes: n(k.diferentes), sinComparar: n(k.sinComparar), porcentaje: pct(k.porcentaje),
-    })),
-    tickets: { comparados: n(r.comparacion.tickets.comparados), coincidentes: n(r.comparacion.tickets.coincidentes), porcentaje: pct(r.comparacion.tickets.porcentaje) },
+    // La variante (la que se juzga) va antes que la letra (informativa); cada tabla lee SU clave del servidor.
+    tablas: [
+      tablaVista(ROTULO_VARIANTE, r.comparacion.porColumna, (k) => k.variante, r.comparacion.ticketsVariante, MENSAJE_SIN_PARES),
+      tablaVista(ROTULO_LETRA, r.comparacion.porColumna, (k) => k, r.comparacion.tickets, SIN_DATO),
+    ],
     listas: [
       { titulo: 'Filas rechazadas', total: n(r.fichero.rechazadas.length), lineas: r.fichero.rechazadas.map((f) => `Fila ${f.fila} · ${f.columna} · ${f.motivo}`) },
       { titulo: 'Sólo en el fichero', total: n(c.soloEnFichero.total), lineas: refs(c.soloEnFichero.tickets) },
@@ -79,5 +79,22 @@ export function vistaComparacion(r: RespuestaComparacion): VistaComparacion {
       { titulo: 'Valores ilegibles', total: n(c.valoresIlegibles.total), lineas: c.valoresIlegibles.valores.map((v) => `Fila ${v.fila} · ${v.columna}`) },
     ],
     nota: r.comparacion.nota,
+  }
+}
+
+export interface TablaVista { titulo: string; columnas: FilaColumnaVista[]; tickets: { comparados: string; coincidentes: string; porcentaje: string } }
+/** Rótulos de las dos tablas (S-3): la regla del 95 % la dice la nota del servidor; aquí sólo se nombra cada lectura. */
+export const ROTULO_VARIANTE = 'Variante de la fórmula de Zoho · cuenta para el 95 %'
+export const ROTULO_LETRA = 'Letra de la aplicación · informativa'
+
+/** Una tabla ya en texto: la cifra es del servidor (`conteo` elige la lectura); sin dato se escribe `vacio`, nunca 0. No suma ni divide. */
+function tablaVista(titulo: string, porColumna: RespuestaComparacion['comparacion']['porColumna'], conteo: (k: RespuestaComparacion['comparacion']['porColumna'][number]) => Conteo, tickets: RespuestaComparacion['comparacion']['tickets'], vacio: string): TablaVista {
+  return {
+    titulo,
+    columnas: porColumna.map((k) => {
+      const c = conteo(k)
+      return { nombre: NOMBRES_ZOHO[k.columna][0], comparados: n(c.comparados), coincidentes: n(c.coincidentes), diferentes: n(c.diferentes), sinComparar: n(c.sinComparar), porcentaje: pct(c.porcentaje, vacio) }
+    }),
+    tickets: { comparados: n(tickets.comparados), coincidentes: n(tickets.coincidentes), porcentaje: pct(tickets.porcentaje, vacio) },
   }
 }

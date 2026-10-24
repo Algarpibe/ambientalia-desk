@@ -260,7 +260,7 @@ describe('M2 · caracterización sin flujo: los bytes de hoy (escrita antes de l
     expect(res.status).toBe(200)
     expect(Object.keys(res.body)).toEqual(['periodo', 'tickets', 'comparacion'])
     expect(res.body.tickets.map((t: { ticketId: string }) => t.ticketId)).toEqual(['en', 'sr', 'sv', 'nu'])
-    expect(sha256(res.text)).toBe('0975f415450ecfb42cb419fa9eac640c80b143f0278940792c6e30db603992cf')
+    expect(sha256(res.text)).toBe('95cb5026e86301d24c727983f8f31d08490b880f4df6172a33d45cc80414a984') // recalculado por decision/f1f05-variante-juzga-el-95 (ticketsVariante y nota)
   })
   it('GET csv sin parámetros: el cuerpo es idéntico byte a byte y el nombre es el de hoy', async () => {
     await cuatroFlujos()

@@ -52,12 +52,12 @@ export const TICKETS_SEPTIEMBRE: readonly TicketSeptiembre[] = [
  * Siembra los trece en `tickets`: creación y cierre a mediodía de Bogotá (17:00Z, el día no depende de la zona), `status_type = 'Closed'`, `fecha_creacion_ticket` = creación
  * y cada fecha en su columna de `COLUMNA_DE_HITO` (`apps/desk/server/indicadores.ts`). Sin transiciones: el cierre sale de `closed_time` (S-1, caso b).
  */
-export async function sembrarSeptiembre(db: Queryable): Promise<void> {
+export async function sembrarSeptiembre(db: Queryable, idDe: (t: TicketSeptiembre) => string = (t) => t.id): Promise<void> {
   for (const t of TICKETS_SEPTIEMBRE) {
     await db.query(
       `INSERT INTO tickets (id, number, status, status_type, classification, created_time, closed_time, dias_entrega, fecha_creacion_ticket, fecha_remision_entrada, fecha_remision_salida, fecha_revision_informe, fecha_cotizacion, fecha_orden_compra, fecha_orden_venta, fecha_recepcion_repuestos, fecha_finalizacion_st)
        VALUES ($1, $2, $3, 'Closed', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
-      [t.id, t.numero, t.estado, t.clasificacion, `${t.creado}T17:00:00Z`, `${t.cerrado}T17:00:00Z`, t.diasEntrega, t.creado, t.remisionEntrada, t.remisionSalida, t.revisionInforme, t.cotizacion, t.ordenCompra, t.ordenVenta, t.recepcionRepuestos, t.finalizacionSt],
+      [idDe(t), t.numero, t.estado, t.clasificacion, `${t.creado}T17:00:00Z`, `${t.cerrado}T17:00:00Z`, t.diasEntrega, t.creado, t.remisionEntrada, t.remisionSalida, t.revisionInforme, t.cotizacion, t.ordenCompra, t.ordenVenta, t.recepcionRepuestos, t.finalizacionSt],
     )
   }
 }
