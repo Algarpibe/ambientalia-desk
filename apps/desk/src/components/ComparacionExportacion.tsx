@@ -48,15 +48,20 @@ export function ComparacionExportacion({ flujo }: { flujo?: string }) {
             ))}
           </div>
           {v.mensaje && <div className="text-slate-600">{v.mensaje}</div>}
-          <table className="w-full text-left">
-            <thead><tr className="text-slate-500"><th className="py-1">Indicador</th><th>Comparados</th><th>Coinciden</th><th>Difieren</th><th>Sin comparar</th><th>Porcentaje</th></tr></thead>
-            <tbody>
-              {v.columnas.map((c) => (
-                <tr key={c.nombre} className="border-t border-slate-100"><td className="py-1">{c.nombre}</td><td>{c.comparados}</td><td>{c.coincidentes}</td><td>{c.diferentes}</td><td>{c.sinComparar}</td><td>{c.porcentaje}</td></tr>
-              ))}
-              <tr className="border-t border-slate-200 font-bold"><td className="py-1">Tickets</td><td>{v.tickets.comparados}</td><td>{v.tickets.coincidentes}</td><td /><td /><td>{v.tickets.porcentaje}</td></tr>
-            </tbody>
-          </table>
+          {v.tablas.map((t) => (
+            <div key={t.titulo} className="flex flex-col gap-1">
+              <div className="text-slate-600">{t.titulo}</div>
+              <table className="w-full text-left">
+                <thead><tr className="text-slate-500"><th className="py-1">Indicador</th><th>Comparados</th><th>Coinciden</th><th>Difieren</th><th>Sin comparar</th><th>Porcentaje</th></tr></thead>
+                <tbody>
+                  {t.columnas.map((c) => (
+                    <tr key={c.nombre} className="border-t border-slate-100"><td className="py-1">{c.nombre}</td><td>{c.comparados}</td><td>{c.coincidentes}</td><td>{c.diferentes}</td><td>{c.sinComparar}</td><td>{c.porcentaje}</td></tr>
+                  ))}
+                  <tr className="border-t border-slate-200 font-bold"><td className="py-1">Tickets</td><td>{t.tickets.comparados}</td><td>{t.tickets.coincidentes}</td><td /><td /><td>{t.tickets.porcentaje}</td></tr>
+                </tbody>
+              </table>
+            </div>
+          ))}
           {v.listas.map((l) => (
             <details key={l.titulo}>
               <summary className="cursor-pointer text-slate-600">{l.titulo} ({l.total})</summary>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { NOMBRES_ZOHO, type ComparacionExportacion } from '@ambientalia/shared'
+import { NOMBRES_ZOHO, MENSAJE_SIN_PARES, type ComparacionExportacion } from '@ambientalia/shared'
 import { urlComparacion, ACEPTA_EXPORTACION, puedeComparar, mensajeDeError, vistaComparacion } from './comparacionExportacion'
 
 /** F1F-05, lote 4 (RQ-KP-28): lo decidible del cliente de la comparación. El `.tsx` sólo pinta; el servidor decide. */
@@ -87,20 +87,20 @@ describe('vistaComparacion (RQ-KP-28: repite lo que el servidor devolvió, sin s
   })
   it('una fila por columna, con el primer nombre de Zoho y el porcentaje del servidor', () => {
     const v = vistaComparacion(respuesta())
-    expect(v.columnas.map((c) => c.nombre)).toEqual([NOMBRES_ZOHO['49'][0], NOMBRES_ZOHO['54'][0]])
-    expect(v.columnas[0]).toMatchObject({ comparados: '5', coincidentes: '4', diferentes: '1', sinComparar: '2', porcentaje: '80 %' })
+    expect(v.tablas[1].columnas.map((c) => c.nombre)).toEqual([NOMBRES_ZOHO['49'][0], NOMBRES_ZOHO['54'][0]])
+    expect(v.tablas[1].columnas[0]).toMatchObject({ comparados: '5', coincidentes: '4', diferentes: '1', sinComparar: '2', porcentaje: '80 %' })
   })
   it('porcentaje null: «—», nunca 0 ni 100', () => {
     const v = vistaComparacion(respuesta())
-    expect(v.columnas[1].porcentaje).toBe('—')
+    expect(v.tablas[1].columnas[1].porcentaje).toBe('—')
     const r = respuesta()
     r.comparacion.tickets.porcentaje = null
-    expect(vistaComparacion(r).tickets.porcentaje).toBe('—')
+    expect(vistaComparacion(r).tablas[1].tickets.porcentaje).toBe('—')
   })
   it('no recalcula el porcentaje: un 55,5 incoherente con los recuentos se repite', () => {
     const r = respuesta()
     r.comparacion.porColumna[0].porcentaje = 55.5
-    expect(vistaComparacion(r).columnas[0].porcentaje).toBe('55,5 %')
+    expect(vistaComparacion(r).tablas[1].columnas[0].porcentaje).toBe('55,5 %')
   })
   it('los listados llevan el total del servidor y un ticket por línea; el número ilegible se dice', () => {
     const v = vistaComparacion(respuesta())
@@ -213,6 +213,55 @@ describe('vistaComparacion con flujo y «De otro flujo» (RQ-KP-33, M11): sólo 
   })
   it('no muta la respuesta con `deOtroFlujo`', () => {
     const r = otro()
+    const copia = JSON.parse(JSON.stringify(r))
+    vistaComparacion(r)
+    expect(r).toEqual(copia)
+  })
+})
+
+/** F1F-05 (RQ-KP-41, decision/f1f05-variante-juzga-el-95): el 95 % se juzga con la variante de Zoho, que va PRIMERO; la letra va después, informativa. Los rótulos se escriben aquí como literales para que un intercambio se vea. */
+describe('vistaComparacion con la variante primero (RQ-KP-41): dos tablas ordenadas, sin calcular', () => {
+  it('la variante va primero con su rótulo', () => {
+    expect(vistaComparacion(respuesta()).tablas.map((t) => t.titulo)).toEqual(['Variante de la fórmula de Zoho · cuenta para el 95 %', 'Letra de la aplicación · informativa'])
+  })
+  it('la tabla de la variante lee la variante', () => {
+    const v = vistaComparacion(respuesta())
+    expect(v.tablas[0].columnas.map((c) => c.nombre)).toEqual([NOMBRES_ZOHO['49'][0], NOMBRES_ZOHO['54'][0]])
+    expect(v.tablas[0].columnas[0]).toMatchObject({ comparados: '5', coincidentes: '5', diferentes: '0', sinComparar: '2', porcentaje: '100 %' })
+    expect(v.tablas[1].columnas[0]).toMatchObject({ comparados: '5', coincidentes: '4', diferentes: '1', sinComparar: '2', porcentaje: '80 %' })
+  })
+  it('los tickets salen de su clave: la variante de `ticketsVariante` y la letra de `tickets`', () => {
+    const v = vistaComparacion(respuesta())
+    expect(v.tablas[0].tickets).toEqual({ comparados: '5', coincidentes: '5', porcentaje: '100 %' })
+    expect(v.tablas[1].tickets).toEqual({ comparados: '5', coincidentes: '4', porcentaje: '80 %' })
+  })
+  it('la 55 de la variante dice `MENSAJE_SIN_PARES` (importado de shared) y la de los tickets también', () => {
+    const r = respuesta()
+    r.comparacion.porColumna[1].columna = '55'
+    r.comparacion.ticketsVariante.porcentaje = null
+    const v = vistaComparacion(r)
+    expect(v.tablas[0].columnas[1].nombre).toBe(NOMBRES_ZOHO['55'][0])
+    expect(v.tablas[0].columnas[1].porcentaje).toBe(MENSAJE_SIN_PARES)
+    expect(v.tablas[0].tickets.porcentaje).toBe(MENSAJE_SIN_PARES)
+  })
+  it('la letra sigue pintando «—» donde la variante dice la frase', () => {
+    const r = respuesta()
+    r.comparacion.tickets.porcentaje = null
+    const v = vistaComparacion(r)
+    expect(v.tablas[1].columnas[1].porcentaje).toBe('—')
+    expect(v.tablas[1].tickets.porcentaje).toBe('—')
+    expect(v.tablas[0].columnas[1].porcentaje).toBe(MENSAJE_SIN_PARES)
+    expect(v.tablas[0].tickets.porcentaje).toBe('100 %')
+  })
+  it('la fila de tickets no trae «Difieren» ni «Sin comparar»: el servidor no los da (S-7)', () => {
+    for (const t of vistaComparacion(respuesta()).tablas) expect(Object.keys(t.tickets)).toEqual(['comparados', 'coincidentes', 'porcentaje'])
+  })
+  it('la frase «sin pares comparables» sólo viene de shared: el cliente no la escribe', async () => {
+    const { readFileSync } = await import('node:fs')
+    expect(readFileSync(new URL('./comparacionExportacion.ts', import.meta.url), 'utf8')).not.toContain(MENSAJE_SIN_PARES)
+  })
+  it('no muta la respuesta con las dos tablas', () => {
+    const r = respuesta()
     const copia = JSON.parse(JSON.stringify(r))
     vistaComparacion(r)
     expect(r).toEqual(copia)
