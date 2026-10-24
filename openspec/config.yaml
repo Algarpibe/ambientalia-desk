@@ -5317,6 +5317,31 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "Anexo G (R08.4.md:2957)"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1F-05 (la comparación juzga con la variante)"
+
+  - clave: "decision/f1f05-creacion-del-49-campo-manual"
+    fecha: "2026-10-24"
+    pregunta: |
+      El ensayo de septiembre en producción (24/10, periodo 01/09-30/09) dio la variante del 49 en 6/8 y los tickets en
+      11/13 (84,6 %). Las dos diferencias (940 y 941) y el ticket sin comparar (972) vienen de la fecha de creación: la
+      referencia de Gerencia usaba la creación del ticket en Zoho (07/05, 07/05, 03/08) y la aplicación usa la columna
+      `fecha_creacion_ticket` (`packages/zoho-sync/src/db/rows.ts:103`), el campo manual «Fecha creación ticket» (20/05,
+      21/05, vacío). ¿Cuál es «creación» en el 49?
+    respuesta_textual: |
+      ««Creación» en el 49 es el campo «Fecha creación ticket», el que se rellena a mano, no la fecha de creación del ticket en Zoho. Lo he verificado contra el histórico: en los 9 tickets antiguos donde ambas fechas difieren, el 49 de Zoho coincide siempre con el campo manual. La aplicación está bien; el error estaba en mi referencia, que regenero con ese campo y vuelvo a pasar. No hay cambio en packages/shared. Que el campo esté vacío o retrasado en algunos tickets es un defecto del dato de Zoho que se arrastra igual a la comparación; queda anotado como revisión futura de la definición del 49, fuera del alcance de F1F-05. El JSON de docs/sdd no se commitea, de acuerdo.»
+    consecuencias: |
+      (1) «Creación» del 49 = campo manual «Fecha creación ticket»; la aplicación ya lo usa: sin cambio de código.
+      (2) Gerencia regenera la referencia de septiembre con ese campo y repite la comparación; esperado: 49 en 8/8 y
+      tickets 13/13.
+      (3) El fixture `apps/desk/server/testing/septiembre2026.ts` usa una sola fecha (`creado`) para la creación y el campo
+      manual, y sus 49 de 940, 941 y 972 (15, 15 y 2) son de la definición descartada: se corrige con la referencia
+      regenerada como fuente, en un cambio aparte.
+      (4) Campo vacío o retrasado = defecto del dato de Zoho, que la comparación arrastra igual; revisión futura de la
+      definición del 49, fuera de F1F-05, anotada en el expediente R08.4 §16.
+      (5) Los JSON de comparación de `docs/sdd` no se commitean.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f05-creacion-del-49-campo-manual) · precisa decision/e224c-formulas-47-51-y-contraste · revisión futura en docs/sdd/R08.4_Expediente_de_cambios.md §16"
+    maestro_pasaje: "Anexo G (R08.4.md:2954)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "ninguna (precisa decision/e224c-formulas-47-51-y-contraste)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
