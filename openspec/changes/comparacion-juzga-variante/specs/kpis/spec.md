@@ -6,11 +6,15 @@ Delta sobre `openspec/specs/kpis/spec.md`. Tanda F1F-05 (`cierra: no`). Propuest
 `decision/f1f05-referencia-semanal-indicadores`. «El GET» es `GET /api/indicadores`; «el POST» es
 `POST /api/indicadores/comparacion` (RQ-KP-26). Las citas a la spec viva van por RQ-KP-NN.
 
-**Nota de fusión.** El bloque `MODIFIED` conserva EXACTAMENTE el número de líneas de su bloque vivo (RQ-KP-16: 53) y
-TODOS sus escenarios (seis), para que la fusión no desplace ninguna línea de la spec viva, muy citada por `spec.md:NNNN`.
-Lo nuevo va en `ADDED`, al final, tras RQ-KP-39. RQ-KP-17, RQ-KP-18 y RQ-KP-28 siguen ciertos y no se tocan.
+**Nota de fusión.** Cada bloque `MODIFIED` conserva EXACTAMENTE el número de líneas de su bloque vivo (SP-6: 1 línea;
+RQ-KP-16: 53) y TODOS sus escenarios, para que la fusión no desplace ninguna línea de la spec viva, muy citada por
+`spec.md:NNNN`. Lo nuevo va en `ADDED`, al final, tras RQ-KP-39. RQ-KP-17, RQ-KP-18 y RQ-KP-28 siguen ciertos y no se tocan.
 
 ## MODIFIED Requirements
+
+### Fila SP-6 de la tabla «0 · Procedencia y método» (1 línea)
+
+| SP-6 | Se publican DOS lecturas del porcentaje, por indicador y por ticket; el 95 % se juzga con la variante de Zoho y la letra es informativa (`decision/f1f05-variante-juzga-el-95`; RQ-KP-40) | Spec |
 
 ### Requirement: RQ-KP-16 · Comparación por pares con tolerancia de un día
 
