@@ -126,7 +126,7 @@ export async function countTickets(db: Queryable): Promise<number> {
   return res.rows[0].n as number
 }
 
-import type { TicketRefs, DetailRefs } from './mappers'; import { sqlBusquedaTickets } from './busquedaTickets'; import type { BusquedaTickets } from '@ambientalia/shared'
+import type { TicketRefs, DetailRefs } from './mappers'; import { sqlBusquedaTickets } from './busquedaTickets'; import { conEstadoNormalizado, type BusquedaTickets } from '@ambientalia/shared'
 
 export interface TicketWithRefs { row: TicketRow; refs: TicketRefs }
 
@@ -136,7 +136,7 @@ export async function setTicketRead(db: Queryable, userId: string, ticketId: str
 }
 
 function mapTicketRowWithRefs(row: any): TicketWithRefs {
-  return { row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)), derivadoNombre: row.derivado_nombre, derivadoCargo: row.derivado_cargo } }
+  return { row: conEstadoNormalizado(row) as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)), derivadoNombre: row.derivado_nombre, derivadoCargo: row.derivado_cargo } }
 }
 
 export async function getActiveTickets(db: Queryable, userId = '', busqueda?: BusquedaTickets | null): Promise<TicketWithRefs[]> {
@@ -206,7 +206,7 @@ export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ ro
   if (!row) return null
   const contactName = [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null
   return {
-    row: row as TicketRow,
+    row: conEstadoNormalizado(row) as TicketRow,
     refs: {
       accountName: row.account_name, agentName: row.agent_name, contactName,
       contactPhone: row.c_phone, email: row.c_email ?? ((row.raw as any)?.email ?? null),
