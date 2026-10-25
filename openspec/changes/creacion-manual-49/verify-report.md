@@ -40,11 +40,11 @@ Barrido `septiembre2026.ts:NN` (14 resultados), cada uno leído contra el ficher
 
 | Cita | Clase | Comprobación |
 |---|---|---|
-| `kpis/spec.md:1776` (`:55-63`) | A | `:55` es `sembrarSeptiembre` y `:63` su cierre |
-| Archivada `openspec/changes/archive/2026-10-24-comparacion-juzga-variante/proposal.md:97` (`:55-63`) y `specs/kpis/spec.md:199` | A | Mismo bloque |
-| Archivada `openspec/changes/archive/2026-10-24-comparacion-juzga-variante/verify-report.md:61` (`:55,60`) | A | `:55` función, `:60` valores |
-| Archivada `openspec/changes/archive/2026-10-24-comparacion-juzga-variante/design.md:111` (`:60`) | A para la línea; B para «siembra sep-01…» | `:60` sigue siendo la siembra; el 9.º valor cambió, lo citado es otra cosa |
-| Archivada `openspec/changes/archive/2026-10-23-poblacion-cierre-variante-47-51/verify-report.md:75` (`:22-49`) | A | `:22` abre el array y `:49` lo cierra |
+| `kpis/spec.md:1776` (`apps/desk/server/testing/septiembre2026.ts:55-63`) | A | `:55` es `sembrarSeptiembre` y `:63` su cierre |
+| Archivada `openspec/changes/archive/2026-10-24-comparacion-juzga-variante/proposal.md:97` (`apps/desk/server/testing/septiembre2026.ts:55-63`) y `specs/kpis/spec.md:199` | A | Mismo bloque |
+| Archivada `openspec/changes/archive/2026-10-24-comparacion-juzga-variante/verify-report.md:61` (`apps/desk/server/testing/septiembre2026.ts:55,60`) | A | `:55` función, `:60` valores |
+| Archivada `openspec/changes/archive/2026-10-24-comparacion-juzga-variante/design.md:111` (`apps/desk/server/testing/septiembre2026.ts:60`) | A para la línea; B para «siembra sep-01…» | `:60` sigue siendo la siembra; el 9.º valor cambió, lo citado es otra cosa |
+| Archivada `openspec/changes/archive/2026-10-23-poblacion-cierre-variante-47-51/verify-report.md:75` (`apps/desk/server/testing/septiembre2026.ts:22-49`) | A | `:22` abre el array y `:49` lo cierra |
 | `apply-progress.md:15` (`:11`), `:36` (`:60`), `:61` (`:55-63`) | A | Correctas |
 | `design.md:13` (`:60`) | A | Va anclada «en `186c2fe4`» |
 | `specs/kpis/spec.md:44` (`:55-63`) del delta | A | Correcta |
