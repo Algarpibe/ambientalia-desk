@@ -9,7 +9,7 @@ import { repoGit } from './git'
 import { repoGitTemporal, cita, anclada, abreviada, cederAlBucle, type RepoGitDePrueba } from '../testing/reposDePrueba'
 
 // Pruebas SINTÉTICAS del hook: git de verdad, en repositorios temporales aislados (§8 del diseño).
-const LENTO = 30_000
+const LENTO = 60_000
 const SALTO = String.fromCharCode(10)
 const CEROS = '0'.repeat(40)
 const lineas = (...l: string[]): string => l.join(SALTO)

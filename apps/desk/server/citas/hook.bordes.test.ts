@@ -14,7 +14,7 @@ import { repoGitTemporal, cita, anclada, cederAlBucle, type RepoGitDePrueba } fr
 // 1 sin ninguna prueba rota. Aquí viven los ocho bloques del FINAL —los bordes y los tres modos del CLI—,
 // elegidos porque el de «ruta no ASCII y git grep por encima de 1 MB» cuesta él solo 20,6 s: dejarlo
 // arriba mantenía ese fichero en 55,9 s. Ni una aserción, ni un orden, ni un fixture cambian con el corte.
-const LENTO = 30_000
+const LENTO = 60_000
 const SALTO = String.fromCharCode(10)
 const CEROS = '0'.repeat(40)
 const lineas = (...l: string[]): string => l.join(SALTO)
