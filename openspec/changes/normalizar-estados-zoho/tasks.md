@@ -25,12 +25,12 @@ lo demás son ficheros nuevos o bloques añadidos al final (`packages/shared/src
 
 ## Lote L2 · SELECT-only del servidor y reloj (filas 8-15; ~190 brutas)
 
-- [ ] L2.1 Línea base verde de `apps/desk/server/db/informeContrato.test.ts`, `apps/desk/server/relojSla.test.ts`, `apps/desk/server/db/migracionTicketsAbiertos.test.ts`, `apps/desk/server/migracionTicketsAbiertosRuta.test.ts` y el L1 ya cerrado.
-- [ ] L2.2 ROJO: bloque L2 AÑADIDO al final de `apps/desk/server/normalizarEstadosZoho.test.ts`, cada fila con su gemelo: `GET /api/accounts/:id` (8); `getAnalisisRows` (9); indicadores con ` Anulado` y `Anulado` cerrados (10); `POST /api/tickets/:id/reasignar` sin `403` (11); `migrarTicketsAbiertos` en seco con `negativa` nula (13); `Ticket  creado` con remisión `ok` → `Remisión creada`, `from_status` `Ticket creado` (14); `secuenciaDelReloj` directa en los dos sentidos (15).
-- [ ] L2.3 ROJO: bloque añadido al final de `apps/desk/server/db/informeContrato.test.ts` con `subOV` y `servicio` (fila 12): `Finalizado ` y gemelo, ambos ejecutados.
-- [ ] L2.4 Anotar los rojos en `apply-progress.md`.
-- [ ] L2.5 VERDE en sitio (importación en la línea indicada de cada fichero, sin líneas nuevas): `apps/desk/server/db/directory.ts:26`; `apps/desk/server/analisis.ts:20`; `apps/desk/server/indicadores.ts:66`; `apps/desk/server/db/reasignaciones.ts:18`; `apps/desk/server/db/informeContrato.ts:45`; `apps/desk/server/db/migracionTicketsAbiertos.ts:36`; `apps/desk/server/db/estadoPorRemision.ts:40`; `apps/desk/server/db/relojSla.ts:45` y `:58`. Filas 8-15 (la 17 llega normalizada de la 9).
-- [ ] L2.6 Filas «no le afecta» (7, 16, 22-27): confirmar por la prueba o prueba citada en el diseño que sigue verde; sin edición.
+- [x] L2.1 Línea base verde de `apps/desk/server/db/informeContrato.test.ts`, `apps/desk/server/relojSla.test.ts`, `apps/desk/server/db/migracionTicketsAbiertos.test.ts`, `apps/desk/server/migracionTicketsAbiertosRuta.test.ts` y el L1 ya cerrado.
+- [x] L2.2 ROJO: bloque L2 AÑADIDO al final de `apps/desk/server/normalizarEstadosZoho.test.ts`, cada fila con su gemelo: `GET /api/accounts/:id` (8); `getAnalisisRows` (9); indicadores con ` Anulado` y `Anulado` cerrados (10); `POST /api/tickets/:id/reasignar` sin `403` (11); `migrarTicketsAbiertos` en seco con `negativa` nula (13); `Ticket  creado` con remisión `ok` → `Remisión creada`, `from_status` `Ticket creado` (14); `secuenciaDelReloj` directa en los dos sentidos (15).
+- [x] L2.3 ROJO: bloque añadido al final de `apps/desk/server/db/informeContrato.test.ts` con `subOV` y `servicio` (fila 12): `Finalizado ` y gemelo, ambos ejecutados.
+- [x] L2.4 Anotar los rojos en `apply-progress.md`.
+- [x] L2.5 VERDE en sitio (importación en la línea indicada de cada fichero, sin líneas nuevas): `apps/desk/server/db/directory.ts:26`; `apps/desk/server/analisis.ts:20`; `apps/desk/server/indicadores.ts:66`; `apps/desk/server/db/reasignaciones.ts:18`; `apps/desk/server/db/informeContrato.ts:45`; `apps/desk/server/db/migracionTicketsAbiertos.ts:36`; `apps/desk/server/db/estadoPorRemision.ts:40`; `apps/desk/server/db/relojSla.ts:45` y `:58`. Filas 8-15 (la 17 llega normalizada de la 9).
+- [x] L2.6 Filas «no le afecta» (7, 16, 22-27): confirmar por la prueba o prueba citada en el diseño que sigue verde; sin edición.
 - [ ] L2.c Cierre: CC; regla 13 (`git diff --stat` sobre `apps/desk/src` vacío); `apply-progress.md`.
 
 ## Lote L3 · SQL que filtra, imitación de pg-mem e integración (filas 18-21; ~280 brutas)

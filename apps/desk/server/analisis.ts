@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { esIdProvisional, cierreQueCuenta, type AnalisisRow } from '@ambientalia/shared'
+import { esIdProvisional, cierreQueCuenta, conEstadoNormalizado, type AnalisisRow } from '@ambientalia/shared'
 import { nombresProvisionales } from './db/clientesProvisionales'; import { cierresPuestosPorMigracion } from './db/cierresDeMigracion'; import { tiemposDelRelojPorTicket } from './db/relojSla'
 
 function toIso(v: unknown): string | null {
@@ -17,7 +17,7 @@ export async function getAnalisisRows(db: Queryable, ahora: Date = new Date()): 
      LEFT JOIN clients cl ON t.client_id=cl.id
      LEFT JOIN agents g ON t.assignee_id=g.id`,
   )
-  const filas = r.rows as any[]
+  const filas = (r.rows as any[]).map(conEstadoNormalizado)
   // Segunda consulta (F1B-15, RQ-TC-34): el cliente provisional no está en la vista `clients` del JOIN.
   const [provisionales, migracion, tiempos] = await Promise.all([nombresProvisionales(db, filas.filter((x) => !x.cliente && esIdProvisional(x.client_id)).map((x) => x.client_id)), cierresPuestosPorMigracion(db), tiemposDelRelojPorTicket(db, filas, ahora)]) // F1C-06: tercera consulta fija, sólo si hay cerradas
   return filas.map((x) => ({

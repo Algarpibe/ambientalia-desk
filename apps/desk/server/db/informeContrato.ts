@@ -1,7 +1,7 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { creadasDelLote, saldoPorLote } from '@ambientalia/zoho-sync/books/subOV'
 import {
-  diaEnZona, diasEntre, estadoContrato, estadoSubOV, porcentaje, trimestresDelContrato, INFORME_NO_DISPONIBLE, llegadaQueCuenta,
+  diaEnZona, diasEntre, normalizarSiTexto, estadoContrato, estadoSubOV, porcentaje, trimestresDelContrato, INFORME_NO_DISPONIBLE, llegadaQueCuenta,
   type Contrato, type DiaCivil, type InformeContrato, type ServicioDelInforme, type SubOVDelInforme,
 } from '@ambientalia/shared'
 
@@ -42,7 +42,7 @@ export async function informeContrato(db: Queryable, contrato: Contrato, hoy: Di
   for (const so of creadas) {
     const a = asoc.find((x) => x.numero === so.number || (x.salesorder_id != null && String(x.salesorder_id) === so.id))
     const t = a ? tickets.get(String(a.ticket_id)) : undefined
-    const estado = estadoSubOV(t ? t.status : null)
+    const estado = estadoSubOV(t ? normalizarSiTexto(t.status) : null)
     const llegada = estado === 'ejecutada' && t ? primera.get(String(t.id)) : undefined
     const fechaEjecucion = llegada ? diaEnZona(llegada) : null
     subOV.push({ numero: so.number, salesorderId: so.id, estado, ticketId: t ? String(t.id) : null, ticketNumber: t?.number ?? null, fechaEjecucion })

@@ -8,7 +8,7 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
   TRANSICION_REMISION_CONFIRMADA,
-  TRANSICION_REMISION_RETIRADA,
+  TRANSICION_REMISION_RETIRADA, normalizarSiTexto,
 } from '@ambientalia/shared'
 import { applyTransition } from '@ambientalia/zoho-sync/db/repo'
 
@@ -37,7 +37,7 @@ export async function sincronizarEstadoPorRemision(db: Queryable, ticketId: stri
   if (!ticketId) return
 
   const t = await db.query('SELECT status FROM tickets WHERE id = $1', [ticketId])
-  const actual = (t.rows[0] as { status?: string } | undefined)?.status
+  const actual = normalizarSiTexto((t.rows[0] as { status?: string } | undefined)?.status)
   if (actual === undefined || ![...TRANSICION_REMISION_CONFIRMADA.from, ...TRANSICION_REMISION_RETIRADA.from].some((s) => s === actual)) return
 
   const c = await db.query(

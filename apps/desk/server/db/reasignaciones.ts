@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { enTransaccion } from './transaccion'
+import { enTransaccion } from './transaccion'; import { normalizarEstado } from '@ambientalia/shared'
 
 /**
  * Acceso a `public.reasignaciones` y al cambio de `tickets.derivado_a` (reasignacion-con-motivo, F1B-05; `tickets-core`
@@ -15,7 +15,7 @@ export interface TicketParaReasignar { id: string; numero: number; status: strin
 export async function ticketParaReasignar(db: Queryable, ticketId: string): Promise<TicketParaReasignar | null> {
   const r = await db.query('SELECT id, number, status, classification, derivado_a FROM tickets WHERE id = $1', [ticketId])
   const f = r.rows[0] as Record<string, unknown> | undefined
-  return f ? { id: String(f.id), numero: Number(f.number), status: String(f.status), classification: f.classification == null ? null : String(f.classification), derivadoA: f.derivado_a == null ? null : String(f.derivado_a) } : null
+  return f ? { id: String(f.id), numero: Number(f.number), status: normalizarEstado(String(f.status)), classification: f.classification == null ? null : String(f.classification), derivadoA: f.derivado_a == null ? null : String(f.derivado_a) } : null
 }
 
 export interface Reasignar { ticketId: string; de: string | null; a: string; motivo: string; por: string }

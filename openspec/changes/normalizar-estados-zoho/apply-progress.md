@@ -89,3 +89,72 @@ Decisiones del cliente sobre el estado (tabla de `design.md` «Regla 13 / mutaci
   `apps/desk/server/citas/cli.test.ts:18` y `:35`. +4/−4.
 - **No es contenido de F1F-01:** no realiza nada de RQ-ZS-24 ni de RQ-TC-40. Se trae para que el `npm test` de esta rama no caiga por
   plazo en esta máquina. **La medida del intento 3 incluye sus 8 líneas** (4 insertadas y 4 borradas).
+
+## Lote L2
+
+Base del intento: `51e1e9a7`.
+
+### L2.1 Línea base (antes de editar)
+
+`npx vitest run` sobre `informeContrato.test.ts`, `relojSla.test.ts`, `migracionTicketsAbiertos.test.ts`, `migracionTicketsAbiertosRuta.test.ts` y los cuatro
+ficheros de L1 → **8 ficheros, 119 pruebas, todas en verde** (12 + 19 + 18 + 36 + 14 + 10 + 6 + 4).
+
+### L2.2-L2.4 Rojos, vistos ANTES del verde
+
+Bloque L2 añadido al final de `apps/desk/server/normalizarEstadosZoho.test.ts` (sin tocar una línea existente) y bloque de la fila 12 al final de
+`apps/desk/server/db/informeContrato.test.ts`. Los ocho ficheros de producción siguen sin editar. En todos, la causa es la esperada: el lector devuelve el crudo.
+
+| Fila | Prueba | Aserción observada | Causa |
+|---|---|---|---|
+| 8 | `normalizarEstadosZoho.test.ts` · `GET /api/accounts/:id` | `dos: 'Notificación  Comercial'` recibido, `'Notificación Comercial'` esperado | `directory.ts:26` copia `x.status` |
+| 9 | ídem · `getAnalisisRows` | `'Notificación  Comercial'` recibido en vez de `'Notificación Comercial'` | `analisis.ts:20` pasa la fila cruda |
+| 10 | ídem · indicadores | recibido `[['a1',' Anulado'],['ok','Finalizado']]`, esperado `[['ok','Finalizado']]` | `esAnulado(' Anulado')` es falso: el ticket entra |
+| 11 | ídem · reasignar | `expect(dos.status).toBe(uno.status)`: `403` recibido, `422` esperado (el gemelo, con el permiso pasado, cae en «motivo obligatorio») | `reasignaciones.ts:18` lee el crudo y `puedeReasignar` no lo encuentra en ningún `from` |
+| 13 | ídem · `migrarTicketsAbiertos` en seco | `expected { …(2) } to be null` (`negativa`) | el de dos espacios no tiene equivalencia |
+| 14 | ídem · `sincronizarEstadoPorRemision` | `expected 'Ticket  creado' to be 'Remisión creada'` | `estadoPorRemision.ts:40` compara el crudo con `TRANSICION_REMISION_*.from` |
+| 15 | ídem · reloj, ticket sucio | `expected null to deeply equal [ … ]` | `relojSla.ts:58` compara `Notificación Comercial` con `Notificación  Comercial` |
+| 15 | ídem · reloj, historial sucio | `expected null to deeply equal [ … ]` | ídem, al revés |
+| 15 | ídem · reloj, origen sucio | `estado: 'Ingresado  '` recibido, `'Ingresado'` esperado | `relojSla.ts:45` no normaliza `de` |
+| 12 | `informeContrato.test.ts` · `Finalizado ` | `[ 'OV-2026-170-01', 'en_curso' ]` recibido, `'ejecutada'` esperado | `informeContrato.ts:45` pasa el crudo a `estadoSubOV` |
+
+Verdes a propósito en el rojo (fijan lo que NO debe cambiar y son el gemelo limpio): el gemelo `uno` en cada fila, la precondición de crudo, la segunda prueba de la fila 12
+(`En  Reparación` sigue `en_curso`) y el caso del reloj con ambos lados limpios.
+
+### L2.5 Verde en sitio
+
+Ocho ficheros de producción, cada hunk una línea por una línea (`wc -l` antes y después idéntico: `directory.ts` 69, `reasignaciones.ts` 53, `informeContrato.ts` 77,
+`migracionTicketsAbiertos.ts` 106, `estadoPorRemision.ts` 61, `relojSla.ts` 109, `analisis.ts` 52, `indicadores.ts` 134). Todas las funciones salen de `@ambientalia/shared`.
+
+| Fila | Línea | Edición |
+|---|---|---|
+| 8 | `apps/desk/server/db/directory.ts:2`, `:26` | importa `normalizarEstado`; `status: normalizarEstado(x.status ?? '')` |
+| 9 (y 17) | `apps/desk/server/analisis.ts:2`, `:20` | importa `conEstadoNormalizado`; `const filas = (r.rows as any[]).map(conEstadoNormalizado)` |
+| 10 | `apps/desk/server/indicadores.ts:2`, `:66` | importa `conEstadoNormalizado`; `for (const r of rt.rows.map(conEstadoNormalizado)) {` |
+| 11 | `apps/desk/server/db/reasignaciones.ts:2`, `:18` | segunda sentencia de importación en la misma línea física (el fichero no importaba de `shared`); `status: normalizarEstado(String(f.status))` |
+| 12 | `apps/desk/server/db/informeContrato.ts:4`, `:45` | importa `normalizarSiTexto`; `estadoSubOV(t ? normalizarSiTexto(t.status) : null)` |
+| 13 | `apps/desk/server/db/migracionTicketsAbiertos.ts:5`, `:36` | importa `normalizarEstado`; `status: normalizarEstado(String(f.status))` |
+| 14 | `apps/desk/server/db/estadoPorRemision.ts:11`, `:40` | importa `normalizarSiTexto`; `const actual = normalizarSiTexto(… ?.status)` (el `undefined` sigue pasando a `:41`) |
+| 15 | `apps/desk/server/db/relojSla.ts:3`, `:45`, `:58` | importa `normalizarSiTexto`; `de`/`hacia` normalizados y `=== normalizarSiTexto(ticket.status)` |
+
+Verde: `normalizarEstadosZoho.test.ts` 15/15 y `informeContrato.test.ts` 14/14; con los demás ficheros del lote y sus pruebas vecinas (`directory`, `analisis`,
+`indicadores`, `reasignaciones`, `estadoPorRemision`, `relojSla`, `migracionTicketsAbiertos`, `migracionTicketsAbiertosRuta`): **10 ficheros, 185 pruebas en verde**.
+Ninguna prueba existente se tocó ni cambió de resultado.
+
+### L2.6 Filas «no le afecta» (7, 16, 22-27)
+
+Sin edición. `packages/zoho-sync/src/sync.test.ts` (fila 7), `packages/zoho-sync/src/db/repo.test.ts` (filas 16 y 22; fija `TICKET_COLS` en `:544`),
+`apps/desk/server/services/avisoFacturacionVencida.test.ts` (22), `apps/desk/server/services/ticketService.test.ts` (16 y 23), `apps/desk/server/db/traspaso.test.ts` (24),
+`apps/desk/server/db/conversacion.test.ts` y `apps/desk/server/db/historial.test.ts` (25), `apps/desk/server/db/equipos.test.ts` (26),
+`apps/desk/server/db/eliminarTicket.test.ts` (27), `apps/desk/server/superficieSaliente.test.ts`, `packages/shared/src/migracionTickets.test.ts` y
+`apps/desk/server/ordenVentaUnTicket.test.ts`: **12 ficheros, 368 pruebas en verde**.
+
+### TDD Cycle Evidence (L2)
+
+| Tarea | Fichero de prueba | Capa | Línea base | ROJO | VERDE | Triangulación | Refactor |
+|---|---|---|---|---|---|---|---|
+| L2.2 filas 8-11, 13-15 | `apps/desk/server/normalizarEstadosZoho.test.ts` | HTTP (supertest + pg-mem) y unitaria directa | 6/6 del bloque L1 | 9 de 9 rojas del bloque nuevo, por el crudo | 15/15 | gemelo limpio en cada fila; reloj en los dos sentidos más el origen | nada |
+| L2.3 fila 12 | `apps/desk/server/db/informeContrato.test.ts` | Integración pg-mem | 12/12 | 1 de 2 roja | 14/14 | `Finalizado ` y `Finalizado`; `En  Reparación` sigue en curso | nada |
+
+### Medida del intento (L2.c la cierra el orquestador)
+
+- `git diff --shortstat --no-renames 51e1e9a7` → 12 ficheros, **230 inserciones, 23 borrados** (253). De ellas, código y pruebas: 155 inserciones y 17 borrados (172); el resto son `apply-progress.md` (+69) y `tasks.md` (6/6). Sin ficheros nuevos sin trackear (todo es edición de ficheros ya versionados). Ningún binario.

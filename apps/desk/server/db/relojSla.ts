@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
-  FROM_STATUS_CREACION, ESTADOS_TERMINALES_DEL_RELOJ, etapasDesdeHistoria, tiemposDelReloj,
+  FROM_STATUS_CREACION, ESTADOS_TERMINALES_DEL_RELOJ, etapasDesdeHistoria, tiemposDelReloj, normalizarSiTexto,
   type HistorialTransition, type PasoDelReloj, type TiemposDelReloj,
 } from '@ambientalia/shared'
 import { esCreacion, json } from './ticketFuentes'
@@ -42,7 +42,7 @@ export function secuenciaDelReloj(
   const entradas: Array<{ t: number; de: string | null; hacia: string | null }> = [
     ...filasApp.filter((f) => !esCreacion(f)).sort((x, y) => Number(x.id) - Number(y.id))
       .map((f) => ({ t: instanteDe(f.performed_at), de: (f.from_status as string | null) ?? null, hacia: (f.to_status as string | null) ?? null })),
-    ...etapasZoho.map((e) => ({ t: instanteDe(e.performedAt), de: e.fromStatus ?? null, hacia: e.toStatus ?? null })),
+    ...etapasZoho.map((e) => ({ t: instanteDe(e.performedAt), de: normalizarSiTexto(e.fromStatus) ?? null, hacia: normalizarSiTexto(e.toStatus) ?? null })),
   ].sort((x, y) => x.t - y.t) // el orden estable conserva el de `id` y deja a la app antes que a Zoho en un empate
   if (entradas.length === 0 && !foto) return null
   if (entradas.some((e) => Number.isNaN(e.t) || !e.hacia)) return null
@@ -55,7 +55,7 @@ export function secuenciaDelReloj(
     { estado: inicial, desde: new Date(creado) },
     ...entradas.map((e) => ({ estado: e.hacia as string, desde: new Date(e.t) })),
   ]
-  return pasos[pasos.length - 1].estado === ticket.status ? pasos : null
+  return pasos[pasos.length - 1].estado === normalizarSiTexto(ticket.status) ? pasos : null
 }
 
 /**
