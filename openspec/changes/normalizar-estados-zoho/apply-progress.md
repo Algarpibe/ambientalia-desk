@@ -71,3 +71,21 @@ Decisiones del cliente sobre el estado (tabla de `design.md` «Regla 13 / mutaci
 - Sin trackear (`wc -l`): `normalizarEstado.ts` 18, `normalizarEstado.test.ts` 99, `estadoNormalizado.test.ts` 93, `normalizarEstadosZoho.test.ts` 106, `estadosZohoCatalogo.test.ts` 51 = **367**.
 - Bruto de código y pruebas: **378** (< ~400). Con este `apply-progress.md` (artefacto) sube a ~430. **No se muda L1.5**: el catálogo se queda en L1.
 - Ningún binario.
+
+### L1.c Cierre del intento 3 (orquestador)
+
+- Commit `e4fe78d7` sobre `f61b0b60`: detector 0 (13 abreviadas, informativas), typecheck 0, lint 0 errores (171 avisos).
+- `npm test` SOLO con log: dos pasadas en 1, sólo por plazo y sólo en el hook de citas. `npmtest-nez-i3-165826.log`: una roja,
+  «nombre no ASCII» de `apps/desk/server/citas/hook.bordes.test.ts` (30.979 ms). `npmtest-nez-i3b-173210.log`: cuatro rojas, «nombre no
+  ASCII» (32.533 ms) y M20 (43.249 ms) de `apps/desk/server/citas/hook.bordes.test.ts`, M1 (33.571 ms) y «rama nueva» (41.012 ms) de
+  `apps/desk/server/citas/hook.test.ts`, todas «Test timed out in 30000ms». Ninguna de este cambio, que no toca `apps/desk/server/citas/`.
+
+### Apoyo fuera del contenido de F1F-01: cherry-pick de `029e46b5` (main)
+
+- **Qué:** `git cherry-pick 029e46b5` (commit de `main`, fuera-del-plan, `decision/excepcion-plazos-hook-citas` en
+  `openspec/config.yaml` → `decisiones_de_gerencia_adenda`, por clave; su registro es `88f653c9`, que NO se trae). En esta rama es `793ca755`.
+- **Contenido:** sólo ficheros de prueba, en sitio, sin mover líneas: `LENTO` de 30_000 a 60_000 en
+  `apps/desk/server/citas/hook.test.ts:12` y `apps/desk/server/citas/hook.bordes.test.ts:17`, y `{ timeout: 60_000 }` en
+  `apps/desk/server/citas/cli.test.ts:18` y `:35`. +4/−4.
+- **No es contenido de F1F-01:** no realiza nada de RQ-ZS-24 ni de RQ-TC-40. Se trae para que el `npm test` de esta rama no caiga por
+  plazo en esta máquina. **La medida del intento 3 incluye sus 8 líneas** (4 insertadas y 4 borradas).
