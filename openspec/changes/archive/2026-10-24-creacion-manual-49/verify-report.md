@@ -71,7 +71,7 @@ S-4 respetado (23 inserciones y 23 borrados, sin desplazar líneas); S-5 respeta
 Ninguno.
 
 ### AVISOS
-1. `openspec/changes/creacion-manual-49/proposal.md:26` cita `septiembre2026.ts:60` diciendo que usa `t.creado` en `fecha_creacion_ticket`.
+1. `openspec/changes/archive/2026-10-24-creacion-manual-49/proposal.md:26` cita `septiembre2026.ts:60` diciendo que usa `t.creado` en `fecha_creacion_ticket`.
    Era cierto en `186c2fe4` y es falso en HEAD (caso B, sin ancla; `design.md:13` sí la lleva). La tarea A.1
    (`tasks.md:31`) ya está prevista y pendiente: anclar «en `186c2fe4`» antes de la mudanza al archivo. No bloquea.
 

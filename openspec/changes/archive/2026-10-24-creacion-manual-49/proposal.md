@@ -23,7 +23,7 @@ Gerencia decidió el 24/10 qué es «creación» en el 49: `decision/f1f05-creac
 
 Este cambio cumple la consecuencia (3) (`openspec/config.yaml:5335-5337`): el fixture
 `apps/desk/server/testing/septiembre2026.ts` usa una sola fecha, `creado`, para la creación del ticket y para el campo
-manual (`apps/desk/server/testing/septiembre2026.ts:60`, `t.creado` en `created_time` y en `fecha_creacion_ticket`), y sus
+manual (`apps/desk/server/testing/septiembre2026.ts:60` en `186c2fe4`, `t.creado` en `created_time` y en `fecha_creacion_ticket`), y sus
 49 de 940, 941 y 972 son de la definición descartada. La aplicación ya lee el campo manual: columna
 `fecha_creacion_ticket` (`packages/zoho-sync/src/db/rows.ts:103`), hito del 49 (`packages/shared/src/indicadores.ts:54`,
 fórmula en `:190-193`) y su mapa a columna (`apps/desk/server/indicadores.ts:13`). Comprobación del maestro: Anexo G

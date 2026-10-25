@@ -28,9 +28,9 @@ más `wc -l` de lo nuevo sin trackear; el informe que cada fase genera cuenta). 
 
 ## Archive
 
-- [ ] A.1 Anclar en `proposal.md:26` «en `186c2fe4`» a la descripción de `septiembre2026.ts:60` (dos veces `t.creado`) ANTES de la mudanza (caso B; sin renumerar, misma línea).
-- [ ] A.2 Fusionar por script el delta en `openspec/specs/kpis/spec.md`, comparando bloques: RQ-KP-38 (26 líneas, `:1607-1632`) y RQ-KP-42 (35 líneas, `:1774-1808`); cambian sólo `:1612`, `:1781` y `:1793`. Comprobar `wc -l` = 1808 y que `:1776` sigue valiendo. Medir la fusión (`git diff --shortstat --no-renames`) ANTES de aplicar: debe ser ≪ 800 (regla del archivo).
-- [ ] A.3 Escribir `archive-report.md` (una línea con qué parte de F1F-05 cubrió y qué dejó fuera, para el `cierra: no`); mudar la carpeta a `openspec/changes/archive/2026-10-24-creacion-manual-49/`. Abrir el intento de archive con techo que cubra la mudanza (2 × carpeta + 800); el commit de archivo contiene SÓLO el cambio (`git show --numstat`).
+- [x] A.1 Anclar en `proposal.md:26` «en `186c2fe4`» a la descripción de `septiembre2026.ts:60` (dos veces `t.creado`) ANTES de la mudanza (caso B; sin renumerar, misma línea).
+- [x] A.2 Fusionar por script el delta en `openspec/specs/kpis/spec.md`, comparando bloques: RQ-KP-38 (26 líneas, `:1607-1632`) y RQ-KP-42 (35 líneas, `:1774-1808`); cambian sólo `:1612`, `:1781` y `:1793`. Comprobar `wc -l` = 1808 y que `:1776` sigue valiendo. Medir la fusión (`git diff --shortstat --no-renames`) ANTES de aplicar: debe ser ≪ 800 (regla del archivo).
+- [x] A.3 Escribir `archive-report.md` (una línea con qué parte de F1F-05 cubrió y qué dejó fuera, para el `cierra: no`); mudar la carpeta a `openspec/changes/archive/2026-10-24-creacion-manual-49/`. Abrir el intento de archive con techo que cubra la mudanza (2 × carpeta + 800); el commit de archivo contiene SÓLO el cambio (`git show --numstat`).
 
 ## Tareas de persona — fuera del recuento
 

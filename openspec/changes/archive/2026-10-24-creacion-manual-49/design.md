@@ -85,9 +85,9 @@ Ninguna línea se desplaza (D1, D2, S-2), así que se comprueba qué AFIRMA cada
   trece). Las que dicen «49 → 9» o describen la siembra de `t.creado` son ciertas de su fecha.
 - **Pruebas citadas desde el archivo:** de `apps/desk/server/routes/indicadoresSeptiembre.test.ts`, las líneas 30, 36, 42 y 55;
   `apps/desk/server/routes/indicadoresComparacionSeptiembre.test.ts` no tiene citas archivadas. Ninguna cambia de sitio.
-- **De este cambio, al cerrar:** `openspec/changes/creacion-manual-49/proposal.md:26` describe la línea 60 del fixture como hoy
+- **De este cambio, al cerrar:** `openspec/changes/archive/2026-10-24-creacion-manual-49/proposal.md:26` describe la línea 60 del fixture como hoy
   (dos veces `t.creado`): tras el apply se ancla «en `186c2fe4`» en la misma línea. Sus demás citas al fixture
-  (`openspec/changes/creacion-manual-49/proposal.md:38-41`) nombran lo que se edita y siguen ciertas.
+  (`openspec/changes/archive/2026-10-24-creacion-manual-49/proposal.md:38-41`) nombran lo que se edita y siguen ciertas.
 
 Al cerrar se repite `grep -rnoE "septiembre2026\.ts:[0-9]+(-[0-9]+)?"` y un segundo pase por las abreviadas de los ficheros
 que citan el módulo.
