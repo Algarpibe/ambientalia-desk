@@ -22,9 +22,9 @@ más `wc -l` de lo nuevo sin trackear; el informe que cada fase genera cuenta). 
 
 ## Verify
 
-- [ ] V.1 Contrastar el diff contra `specs/kpis/spec.md`: las siete celdas del `proposal.md` (940, 941, 957, 972 en `fechaCreacionTicket` y 49 de 940, 941, 972), 49 → 8 en las dos pruebas, nada más. Releer los 49 con la aritmética de lunes a viernes hasta el 28/05 (15, 6 y 5).
-- [ ] V.2 Repetir `npm test`, typecheck, lint y detector de citas; barrido de la regla de mutación 4: `grep -rnoE "septiembre2026\.ts:[0-9]+(-[0-9]+)?"` y pase por las abreviadas de los ficheros que citan el módulo; cada resultado leído contra lo que afirma (A/B/C). Las archivadas que describen `t.creado` o «49 → 9» son caso B y no se tocan (D5).
-- [ ] V.3 Regla invariable 13 (mutación 3): dejar escrito «sin cambio en `apps/desk/src` ni `packages/`: no hay decisión de cliente que enfrentar» con `git diff --stat` vacío como prueba. Escribir `verify-report.md` (cuenta como sumando del intento).
+- [x] V.1 Contrastar el diff contra `specs/kpis/spec.md`: las siete celdas del `proposal.md` (940, 941, 957, 972 en `fechaCreacionTicket` y 49 de 940, 941, 972), 49 → 8 en las dos pruebas, nada más. Releer los 49 con la aritmética de lunes a viernes hasta el 28/05 (15, 6 y 5).
+- [x] V.2 Repetir `npm test`, typecheck, lint y detector de citas; barrido de la regla de mutación 4: `grep -rnoE "septiembre2026\.ts:[0-9]+(-[0-9]+)?"` y pase por las abreviadas de los ficheros que citan el módulo; cada resultado leído contra lo que afirma (A/B/C). Las archivadas que describen `t.creado` o «49 → 9» son caso B y no se tocan (D5).
+- [x] V.3 Regla invariable 13 (mutación 3): dejar escrito «sin cambio en `apps/desk/src` ni `packages/`: no hay decisión de cliente que enfrentar» con `git diff --stat` vacío como prueba. Escribir `verify-report.md` (cuenta como sumando del intento).
 
 ## Archive
 
