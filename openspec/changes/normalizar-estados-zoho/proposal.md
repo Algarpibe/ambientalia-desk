@@ -1,7 +1,7 @@
 ---
 tanda: F1F-01
 motivo: ""
-capacidad: [zoho-sync]
+capacidad: [zoho-sync, tickets-core]
 maestro: []
 cierra: no
 toca_maestro: no
@@ -52,8 +52,8 @@ origen_cabecera: declarada
 
 ## Capacidades
 
-- **Nuevas:** ninguna. **Modificadas:** `zoho-sync`, con un requisito nuevo (RQ-ZS-24): la regla, sus dos formas, dónde se aplica y
-  que nunca reescribe la columna. Tablero, transiciones y alarmas van como escenarios de ese requisito; sin deltas en otras capacidades.
+- **Nuevas:** ninguna. **Modificadas:** `zoho-sync`, requisito nuevo RQ-ZS-24 (la regla, sus dos formas, dónde se aplica, que no reescribe la
+  columna; tablero, transiciones y alarmas son escenarios suyos), y `tickets-core`, RQ-TC-40: la igualdad exacta es sobre el estado ya normalizado.
 
 ## Enfoque
 
