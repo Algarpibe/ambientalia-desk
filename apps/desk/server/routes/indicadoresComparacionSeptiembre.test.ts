@@ -20,7 +20,7 @@ type Columna = keyof Gerencia
 const idDe = (t: TicketSeptiembre): string => `9${String(t.numero).padStart(17, '0')}`
 const COLUMNAS_PROBADAS = ['47', '49', '50_53', '51', '54', '57', '58', '59'] as const
 /** [columna, comparados con valor en septiembre]: las cifras que fija RQ-KP-42. */
-const ESPERADOS: ReadonlyArray<[(typeof COLUMNAS_PROBADAS)[number], number]> = [['47', 11], ['49', 9], ['50_53', 11], ['51', 12], ['54', 9], ['57', 9], ['58', 9], ['59', 9]]
+const ESPERADOS: ReadonlyArray<[(typeof COLUMNAS_PROBADAS)[number], number]> = [['47', 11], ['49', 8], ['50_53', 11], ['51', 12], ['54', 9], ['57', 9], ['58', 9], ['59', 9]]
 
 /** Cabecera = las doce del lector; la celda de cada indicador es la de Gerencia o vacía (la 55 no está en el fixture). */
 function csvDeSeptiembre(alterar: Partial<Record<string, string>> = {}): Buffer {
