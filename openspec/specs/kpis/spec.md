@@ -1609,7 +1609,7 @@ salida ni contra la entrega, ni usar `MOTIVO_H1`.
 Una prueba **SHALL** cargar un fixture anonimizado de los trece tickets de la exportación de septiembre y pedir a la
 ruta septiembre. El fixture **SHALL** llevar SÓLO número, clasificación, estado, fechas y las columnas 47 a 59 (S-10),
 y **MUST NOT** llevar contacto, asunto, serial, `cf_codigo_servicio` ni tipo de servicio. Se compara con tolerancia de
-±1 día (S-9) en las celdas con valor: 47 → 11, 49 → 9, 50·53 → 11, 51 → 12, 54 → 9, 57 → 9, 58 → 9, 59 → 9.
+±1 día (S-9) en las celdas con valor: 47 → 11, 49 → 8 (`decision/f1f05-creacion-del-49-campo-manual`), 50·53 → 11, 51 → 12, 54 → 9, 57 → 9, 58 → 9, 59 → 9.
 
 #### Scenario: Septiembre por cierre son trece
 - GIVEN el fixture y el periodo `2026-09-01` a `2026-09-30`
@@ -1778,7 +1778,7 @@ con un CSV generado EN MEMORIA desde las celdas de Gerencia, con las doce cabece
 `apps/desk/server/comparacion/leerExportacion.ts:5-19` (las dos de 50·53 con la misma celda; la 55 vacía), y periodo
 `2026-09-01` a `2026-09-30` (S-4). **No se escribe a disco** y el CSV de Gerencia **MUST NOT** copiarse al repositorio (está
 sin trackear y lleva clientes). La respuesta **SHALL** dar, en `ticketsVariante`, 13 comparados y 13 coincidentes (100 %), y
-100 % de la variante por indicador en 47 (11 comparados), 49 (9), 50·53 (11), 51 (12), 54, 57, 58 y 59 (9 cada uno); la 55
+100 % de la variante por indicador en 47 (11 comparados), 49 (8, `decision/f1f05-creacion-del-49-campo-manual`), 50·53 (11), 51 (12), 54, 57, 58 y 59 (9 cada uno); la 55
 sin pares comparables (`porcentaje` `null`). La letra sólo se publica como información: la prueba **MUST NOT** exigirle un
 porcentaje.
 
@@ -1790,7 +1790,7 @@ porcentaje.
 #### Scenario: Septiembre da 100 % por indicador con la variante
 - GIVEN la misma respuesta
 - WHEN se leen los indicadores de tiempo
-- THEN la variante es 100 % con 11 comparados en el 47, 9 en el 49, 11 en el 50·53, 12 en el 51 y 9 en el 54, el 57, el 58 y el 59
+- THEN la variante es 100 % con 11 comparados en el 47, 8 en el 49, 11 en el 50·53, 12 en el 51 y 9 en el 54, el 57, el 58 y el 59
 
 #### Scenario: La 55 queda sin pares comparables
 - GIVEN la columna 55 vacía en el CSV

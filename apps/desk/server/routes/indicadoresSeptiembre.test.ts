@@ -40,7 +40,7 @@ describe('RQ-KP-38 · aceptación con los trece tickets de septiembre', () => {
 
   // [indicador, columna de la respuesta, clave de Gerencia, celdas con valor]: las que el delta fija (RQ-KP-38).
   it.each<[string, string, keyof TicketSeptiembre['gerencia'], number]>([
-    ['47', '47', '47', 11], ['49', '49', '49', 9], ['50·53', '50_53', '50_53', 11], ['51', '51', '51', 12],
+    ['47', '47', '47', 11], ['49', '49', '49', 8], ['50·53', '50_53', '50_53', 11], ['51', '51', '51', 12],
     ['54', '54', '54', 9], ['57', '57', '57', 9], ['58', '58', '58', 9], ['59', '59', '59', 9],
   ])('indicador %s: formulaZoho coincide con la celda de Gerencia (±1 en números, igualdad en el 54)', async (_nombre, columna, clave, esperadas) => {
     const filas = await septiembre()
