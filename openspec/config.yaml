@@ -5342,6 +5342,44 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "Anexo G (R08.4.md:2954)"
     maestro_revision: "R08.4"
     tanda_que_abre: "ninguna (precisa decision/e224c-formulas-47-51-y-contraste)"
+
+  - clave: "decision/e249-normalizar-al-leer"
+    fecha: "2026-10-25"
+    pregunta: |
+      E-249: normalizar el estado sólo al sincronizar deja como están las filas ya guardadas con espacios repetidos
+      hasta que Zoho las vuelva a mandar (consecuencia (3)(a) de decision/estados-zoho-espacios). ¿Cómo se corrigen, y
+      cuándo tiene que verse bien el ticket #1004 («Notificación  Comercial», con dos espacios)?
+    respuesta_textual: |
+      «E-249: opción A, normalizar al leer y al sincronizar en la misma función de packages/shared, sin escribir datos; #1004 debe quedar bien en cuanto se despliegue.»
+    consecuencias: |
+      (1) Resuelve la (3)(a) de decision/estados-zoho-espacios (registrada por Supervisión en
+      `decisiones_de_gerencia_panel`; a 25/10/2026, sin commitear) sin escribir en desk-db: ninguna fila se reescribe.
+      (2) UNA sola función en `packages/shared`, usada por la sincronización (`packages/zoho-sync/src/db/mappers.ts:47`)
+      y por toda lectura del estado.
+      (3) Tanda F1F-01 (`cierra: no`), dentro del plan.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e249-normalizar-al-leer) · resuelve la (3)(a) de decision/estados-zoho-espacios · docs/sdd/ENTRADA.md → E-249"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-01 (normalizar estados de Zoho)"
+
+  - clave: "decision/e090-areas-soporte-remoto"
+    fecha: "2026-10-25"
+    pregunta: |
+      E-090: ¿de qué área son las cuatro transiciones del flujo de soporte remoto —«Asignación», «Ejecutar», «Soporte
+      pendiente» y «Continuación soporte»—? Hasta hoy son de Servicio Técnico por supuesto (S-1 de
+      `blueprint-soporte-remoto`), no por decisión; la duda concreta era «Asignación», que podría ser de Comercial.
+    respuesta_textual: |
+      «E-090: las cuatro transiciones del soporte remoto («Asignación», «Ejecutar», «Soporte pendiente» y «Continuación soporte») son de Servicio Técnico; cerrar S-1 como decisión de Gerencia en config.yaml.»
+    consecuencias: |
+      (1) Cierra el supuesto S-1 de `blueprint-soporte-remoto`, que la spec viva llama «*Hipótesis*, no cerrada»
+      (`openspec/specs/transitions-soporte-remoto/spec.md:83`, §2, RQ-SR-02).
+      (2) El catálogo ya lo cumple (`packages/shared/src/transitions.ts:388` y siguientes: las cuatro llevan
+      `area: 'Servicio Técnico'`): sin cambio de código.
+      (3) La spec se corrige en un cambio con ficha de F1B-09 (`cierra: no`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e090-areas-soporte-remoto) · docs/sdd/ENTRADA.md → E-090"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-09 (áreas del soporte remoto)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
