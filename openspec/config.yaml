@@ -5380,6 +5380,32 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-09 (áreas del soporte remoto)"
+
+  - clave: "decision/excepcion-plazos-hook-citas"
+    fecha: "2026-10-25"
+    pregunta: |
+      ¿Autorizas el arreglo de los plazos (60 s a las pruebas del hook de citas) como excepción a «nada fuera del plan»?
+    respuesta_textual: |
+      «si»
+    nota_de_fuente: |
+      La pregunta y la medida del analista están en la consecuencia (1).
+    consecuencias: |
+      (1) Pregunta del analista y su medida (25/10/2026): arrancar un proceso en esta máquina cuesta 240-350 ms (spawnSync
+      desde node y desde PowerShell); con McAfee en pausa, 238-270 ms, y activo, 261-347 ms: la base es de la máquina, no
+      del antivirus. Las pruebas del hook de citas lanzan cientos de procesos git y rondan su plazo de 30 s; en la pasada
+      del intento 3 de F1F-01 (`normalizar-estados-zoho`) cayeron cuatro por plazo: en
+      `apps/desk/server/citas/hook.bordes.test.ts`, «nombre no ASCII» (32,5 s) y M20 (43,2 s); en
+      `apps/desk/server/citas/hook.test.ts`, M1 (33,6 s) y «rama nueva» (41,0 s). De ahí la pregunta: dar a esas pruebas
+      un plazo propio de 60 s.
+      (2) Excepción única y acotada a «nada fuera del plan antes del 09/11»: sólo plazos por prueba, en un commit
+      `fuera-del-plan` con motivo.
+      (3) NO se toca el plazo global, ni `maxWorkers`, ni el umbral de 60 s por fichero de vitest (resuelto por
+      `cederAlBucle`, `df883868`).
+      (4) Si un día se quiere saber por qué la máquina tarda ~250 ms por proceso, es investigación aparte.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/excepcion-plazos-hook-citas)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (fuera-del-plan)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
