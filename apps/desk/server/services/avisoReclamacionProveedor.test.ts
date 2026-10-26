@@ -23,7 +23,7 @@ let db: Queryable
 let n = 0
 beforeEach(async () => { n = 0; const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
 
-const si: RespuestaReclamacion = { reclama: true, fabricante: 'Acme', piezaReferencia: null, piezaSerial: null, valorReclamado: null }
+const si: RespuestaReclamacion = { reclama: true, fabricante: 'Acme', piezaReferencia: null, piezaSerial: null }
 const no: RespuestaReclamacion = { reclama: false, motivo: 'mal_uso' }
 // La ficha se abre el 2026-03-01 (UTC mediodía, mismo día civil en la zona de negocio): el día 60 es el 2026-04-30.
 const ABIERTA = '2026-03-01T12:00:00Z'

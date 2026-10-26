@@ -2,12 +2,12 @@ import type { Express, RequestHandler } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
   esOVI, puedeGestionarReclamacion, MENSAJE_SIN_CARGO_RECLAMACION, motivoPasoNoPermitido, MENSAJE_SIN_PERMISO_MEDICION,
-  validarRespuesta, validarDatosFicha, validarPaso, medirGarantias, conNumerosDeTicket, puedeVerMedicionGarantias, type EstadoReclamacion,
+  validarRespuesta, validarDatosFicha, validarPaso, medirGarantias, conNumerosDeTicket, puedeVerMedicionGarantias, origenTrasEditar, type EstadoReclamacion,
 } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import {
-  asociacionPorId, respuestaDeAsociacion, registrarRespuesta, reclamacionPorId, editarFicha, avanzarFicha,
+  asociacionPorId, respuestaDeAsociacion, registrarRespuesta, reclamacionPorId, editarFicha, avanzarFicha, fotoDeLaOVI,
   garantiaDelTicket, fichasReclamadas, numerosDeTickets, ReclamacionYaRespondidaError,
 } from '../db/garantiaProveedor'
 
@@ -54,7 +54,7 @@ export function registerGarantiaProveedorRoutes(app: Express, deps: { db: Querya
     const yaRespondida = { error: `La orden de venta ${asociacion.numero} ya tiene respuesta sobre la reclamación al fabricante` }
     if (await respuestaDeAsociacion(db, asociacion.id)) { res.status(409).json(yaRespondida); return }
     try {
-      res.status(201).json(await registrarRespuesta(db, { asociacion, respuesta: respuesta.valor, por: user.name }))
+      res.status(201).json(await registrarRespuesta(db, { asociacion, respuesta: respuesta.valor, por: user.name, foto: respuesta.valor.reclama ? await fotoDeLaOVI(db, asociacion.id) : undefined }))
     } catch (e) {
       if (e instanceof ReclamacionYaRespondidaError) { res.status(409).json(yaRespondida); return }
       throw e
@@ -75,7 +75,7 @@ export function registerGarantiaProveedorRoutes(app: Express, deps: { db: Querya
     // G14 · contenido
     const datos = validarDatosFicha(req.body)
     if (!datos.ok) { res.status(422).json({ error: datos.error }); return }
-    const editada = await editarFicha(db, ficha.id, datos.valor)
+    const editada = await editarFicha(db, ficha.id, datos.valor, origenTrasEditar(ficha, datos.valor.valorReclamado))
     // Carrera: otra persona la resolvió entre la lectura y la escritura
     if (!editada) { res.status(409).json(resuelta); return }
     res.json(editada)

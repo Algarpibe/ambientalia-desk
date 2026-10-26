@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   MOTIVOS_NO_RECLAMA, RESULTADOS_RECLAMACION, ETIQUETA_MOTIVO_NO_RECLAMA, ETIQUETA_ESTADO_RECLAMACION, ETIQUETA_RESULTADO_RECLAMACION,
-  puedeGestionarReclamacion, siguienteEstado, diaEnZona, type GarantiaProveedor,
+  puedeGestionarReclamacion, siguienteEstado, diaEnZona, etiquetaOrigenValor, type GarantiaProveedor,
 } from '@ambientalia/shared'
 import { useAuth } from '../auth/AuthContext'
 import { useAsync } from '../hooks/useAsync'
@@ -23,7 +23,7 @@ import {
  */
 
 const fmtDia = (iso: string | null) => diaEnZona(iso) ?? '—' // mismo día civil que nombra el aviso de 60 días
-const fmtValor = (v: number | null) => (v == null ? '—' : v.toLocaleString('es-CO'))
+const fmtValor = (v: number | null, moneda: string) => (v == null ? '—' : `${v.toLocaleString('es-CO')} ${moneda}`)
 const numeroDelCampo = (t: string): number | string | null => (t.trim() === '' ? null : Number.isFinite(Number(t)) ? Number(t) : t)
 
 const INPUT = 'border border-slate-200 rounded px-2 py-1 text-[12px]'
@@ -44,8 +44,8 @@ function useAccion(onCambio: () => void) {
 
 interface Campos { fabricante: string; piezaReferencia: string; piezaSerial: string; rma: string; valorReclamado: string }
 
-function FormularioFicha({ inicial, conRma, textoBoton, ocupado, onEnviar, onCancelar }: {
-  inicial: Campos; conRma: boolean; textoBoton: string; ocupado: boolean; onEnviar: (c: Campos) => void; onCancelar: () => void
+function FormularioFicha({ inicial, conRma, moneda, textoBoton, ocupado, onEnviar, onCancelar }: {
+  inicial: Campos; conRma: boolean; moneda?: string; textoBoton: string; ocupado: boolean; onEnviar: (c: Campos) => void; onCancelar: () => void
 }) {
   const [c, setC] = useState(inicial)
   const campo = (k: keyof Campos, etiqueta: string) => (
@@ -58,7 +58,7 @@ function FormularioFicha({ inicial, conRma, textoBoton, ocupado, onEnviar, onCan
     <div className="mt-2 flex flex-col gap-2">
       <div className="flex gap-2 flex-wrap">
         {campo('fabricante', 'Fabricante')}{campo('piezaReferencia', 'Referencia de la pieza')}{campo('piezaSerial', 'Serial de la pieza')}
-        {conRma && campo('rma', 'RMA')}{campo('valorReclamado', 'Valor reclamado')}
+        {conRma && campo('rma', 'RMA')}{moneda && campo('valorReclamado', `Valor reclamado (${moneda})`)}
       </div>
       <div className="flex gap-2 items-center">
         <button disabled={ocupado} onClick={() => onEnviar(c)} className={BOTON}>{textoBoton}</button>
@@ -84,7 +84,7 @@ function Pregunta({ o, fabricantePropuesto, onCambio }: { o: OviDelTicket; fabri
           inicial={{ fabricante: fabricantePropuesto ?? '', piezaReferencia: '', piezaSerial: '', rma: '', valorReclamado: '' }}
           conRma={false} textoBoton="Abrir reclamación" ocupado={ocupado} onCancelar={() => setModo(null)}
           onEnviar={(c) => correr(() => responderReclamacion(o.asociacionId, {
-            reclama: true, fabricante: c.fabricante, piezaReferencia: c.piezaReferencia, piezaSerial: c.piezaSerial, valorReclamado: numeroDelCampo(c.valorReclamado) as number | null,
+            reclama: true, fabricante: c.fabricante, piezaReferencia: c.piezaReferencia, piezaSerial: c.piezaSerial,
           }))}
         />
       )}
@@ -115,9 +115,9 @@ function Ficha({ f, puede, onCambio }: { f: GarantiaProveedor; puede: boolean; o
         <span>Fabricante: <b>{f.fabricante}</b></span>
         <span>Pieza: {f.piezaReferencia ?? '—'}{f.piezaSerial ? ` (serial ${f.piezaSerial})` : ''}</span>
         <span>RMA: {f.rma ?? '—'}</span>
-        <span>Valor reclamado: {fmtValor(f.valorReclamado)}</span>
+        <span>Valor reclamado: {fmtValor(f.valorReclamado, f.moneda)}{etiquetaOrigenValor(f.valorReclamado, f.origenValorReclamado) ? ` (${etiquetaOrigenValor(f.valorReclamado, f.origenValorReclamado)})` : ''}</span>
         <span>Abierta el {fmtDia(f.respondidaAt)}{f.enviadaAt ? `, enviada el ${fmtDia(f.enviadaAt)}` : ''}</span>
-        {f.resultado && <span>Resultado: {ETIQUETA_RESULTADO_RECLAMACION[f.resultado]}, recuperado {fmtValor(f.valorRecuperado)} el {fmtDia(f.resueltaAt)}</span>}
+        {f.resultado && <span>Resultado: {ETIQUETA_RESULTADO_RECLAMACION[f.resultado]}, recuperado {fmtValor(f.valorRecuperado, f.moneda)} el {fmtDia(f.resueltaAt)}</span>}
       </div>
       {puede && f.estado !== 'resuelta' && !editando && !resolviendo && (
         <div className="mt-1 flex gap-3 items-center">
@@ -129,7 +129,7 @@ function Ficha({ f, puede, onCambio }: { f: GarantiaProveedor; puede: boolean; o
       {puede && editando && (
         <FormularioFicha
           inicial={{ fabricante: f.fabricante ?? '', piezaReferencia: f.piezaReferencia ?? '', piezaSerial: f.piezaSerial ?? '', rma: f.rma ?? '', valorReclamado: f.valorReclamado == null ? '' : String(f.valorReclamado) }}
-          conRma textoBoton="Guardar" ocupado={ocupado} onCancelar={() => setEditando(false)}
+          conRma moneda={f.moneda} textoBoton="Guardar" ocupado={ocupado} onCancelar={() => setEditando(false)}
           onEnviar={async (c) => {
             const bien = await correr(() => editarReclamacion(f.id, {
               fabricante: c.fabricante, piezaReferencia: c.piezaReferencia, piezaSerial: c.piezaSerial, rma: c.rma, valorReclamado: numeroDelCampo(c.valorReclamado) as number | null,
@@ -143,7 +143,7 @@ function Ficha({ f, puede, onCambio }: { f: GarantiaProveedor; puede: boolean; o
           <select value={resultado} onChange={(e) => setResultado(e.target.value)} className={INPUT}>
             {RESULTADOS_RECLAMACION.map((r) => <option key={r} value={r}>{ETIQUETA_RESULTADO_RECLAMACION[r]}</option>)}
           </select>
-          {resultado !== 'rechazada' && <input value={recuperado} onChange={(e) => setRecuperado(e.target.value)} placeholder="Valor recuperado" className={INPUT} />}
+          {resultado !== 'rechazada' && <input value={recuperado} onChange={(e) => setRecuperado(e.target.value)} placeholder={`Valor recuperado (${f.moneda})`} className={INPUT} />}
           <button disabled={ocupado} onClick={() => correr(() => avanzarReclamacion(f.id, { a: 'resuelta', resultado, valorRecuperado: resultado === 'rechazada' ? undefined : (numeroDelCampo(recuperado) as number | undefined) }))} className={BOTON}>Resolver</button>
           <button disabled={ocupado} onClick={() => setResolviendo(false)} className="text-[11px] text-slate-500 hover:underline">Cancelar</button>
         </div>

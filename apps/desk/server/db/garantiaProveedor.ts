@@ -1,8 +1,8 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { listarAsociaciones } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import {
-  esOVI, ORIGEN_VALOR_MANUAL,
-  type DatosFicha, type EstadoReclamacion, type GarantiaProveedor, type PasoReclamacion, type RespuestaReclamacion,
+  esOVI, MONEDA_GARANTIA_PROVEEDOR, SIN_FOTO, fotoValorReclamado, lineasDeLaOVI,
+  type DatosFicha, type EstadoReclamacion, type GarantiaProveedor, type PasoReclamacion, type RespuestaReclamacion, type ValorReclamadoConOrigen,
 } from '@ambientalia/shared'
 
 /**
@@ -61,7 +61,7 @@ function aGarantia(f: Fila): GarantiaProveedor {
     origenValorReclamado: texto(f.origen_valor_reclamado),
     estado: texto(f.estado) as GarantiaProveedor['estado'],
     resultado: texto(f.resultado) as GarantiaProveedor['resultado'],
-    valorRecuperado: numero(f.valor_recuperado),
+    valorRecuperado: numero(f.valor_recuperado), moneda: MONEDA_GARANTIA_PROVEEDOR,
     enviadaAt: instante(f.enviada_at),
     resueltaAt: instante(f.resuelta_at),
     aviso60At: instante(f.aviso_60_at),
@@ -86,9 +86,9 @@ export async function reclamacionPorId(db: Queryable, id: number): Promise<Garan
 /** Un solo `INSERT`: un «sí» abre la ficha en `abierta` (S-6) y un «no» guarda su motivo. */
 export async function registrarRespuesta(
   db: Queryable,
-  a: { asociacion: AsociacionParaReclamar; respuesta: RespuestaReclamacion; por: string },
+  a: { asociacion: AsociacionParaReclamar; respuesta: RespuestaReclamacion; por: string; foto?: ValorReclamadoConOrigen },
 ): Promise<GarantiaProveedor> {
-  const { asociacion, respuesta } = a
+  const { asociacion, respuesta, foto = SIN_FOTO } = a
   const comunes = [asociacion.id, asociacion.ticketId, asociacion.numero, respuesta.reclama, a.por]
   try {
     const r = respuesta.reclama
@@ -96,7 +96,7 @@ export async function registrarRespuesta(
         `INSERT INTO garantia_proveedor (asociacion_id, ticket_id, ovi_numero, reclama, respondida_por, fabricante, pieza_referencia,
            pieza_serial, valor_reclamado, origen_valor_reclamado, estado)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'abierta') RETURNING ${COLUMNAS}`,
-        [...comunes, respuesta.fabricante, respuesta.piezaReferencia, respuesta.piezaSerial, respuesta.valorReclamado, ORIGEN_VALOR_MANUAL],
+        [...comunes, respuesta.fabricante, respuesta.piezaReferencia, respuesta.piezaSerial, foto.valorReclamado, foto.origenValorReclamado],
       )
       : await db.query(
         `INSERT INTO garantia_proveedor (asociacion_id, ticket_id, ovi_numero, reclama, respondida_por, motivo_no_reclama)
@@ -111,11 +111,11 @@ export async function registrarRespuesta(
 }
 
 /** Reemplaza los cinco datos editables; `null` si no tocó nada (no existe, es un «no» o ya está resuelta). */
-export async function editarFicha(db: Queryable, id: number, d: DatosFicha): Promise<GarantiaProveedor | null> {
+export async function editarFicha(db: Queryable, id: number, d: DatosFicha, origen: string | null): Promise<GarantiaProveedor | null> {
   const r = await db.query(
-    `UPDATE garantia_proveedor SET fabricante = $2, pieza_referencia = $3, pieza_serial = $4, rma = $5, valor_reclamado = $6
+    `UPDATE garantia_proveedor SET fabricante = $2, pieza_referencia = $3, pieza_serial = $4, rma = $5, valor_reclamado = $6, origen_valor_reclamado = $7
      WHERE id = $1 AND reclama = true AND estado <> 'resuelta' RETURNING ${COLUMNAS}`,
-    [id, d.fabricante, d.piezaReferencia, d.piezaSerial, d.rma, d.valorReclamado],
+    [id, d.fabricante, d.piezaReferencia, d.piezaSerial, d.rma, d.valorReclamado, origen],
   )
   return filas(r.rows)[0] ?? null
 }
@@ -176,4 +176,26 @@ export async function numerosDeTickets(db: Queryable, ids: readonly string[]): P
   const marcas = ids.map((_, i) => `$${i + 1}`).join(', ')
   const { rows } = await db.query(`SELECT id, number FROM tickets WHERE id IN (${marcas})`, [...ids])
   return new Map(rows.map((r: { id: string; number: number }) => [String(r.id), Number(r.number)]))
+}
+
+/**
+ * La foto del valor reclamado (F1B-13, `valor-reclamado-usd`, RQ-TC-78): la orden por `ov_asociaciones.salesorder_id`, su
+ * `raw` de `books.sales_orders` y el costo de cada artículo de `books.items`. Sólo LEE y entrega a `shared`, que decide
+ * (regla invariable 13); sin funciones `jsonb` en SQL. `books.sales_orders` va calificada porque la vista
+ * `public.sales_orders` no expone `raw`. Ante cualquier hueco de los datos devuelve `SIN_FOTO` y no rechaza nada (S-9).
+ * `raw` llega como objeto (pg-mem) o como texto, y `purchase_rate` como texto en node-postgres: de ahí `numero()` (D-8).
+ * `IN ($1,…)` y no `= ANY($1)`: pg-mem no tipa los arrays enlazados; los ids van sin repetir.
+ */
+export async function fotoDeLaOVI(db: Queryable, asociacionId: number): Promise<ValorReclamadoConOrigen> {
+  const asociacion = (await db.query('SELECT salesorder_id FROM ov_asociaciones WHERE id = $1', [asociacionId])).rows[0] as Fila | undefined
+  const salesorderId = texto(asociacion?.salesorder_id)
+  if (salesorderId === null) return SIN_FOTO
+  const orden = (await db.query('SELECT raw FROM books.sales_orders WHERE salesorder_id = $1', [salesorderId])).rows[0] as Fila | undefined
+  const lineas = lineasDeLaOVI(orden?.raw)
+  if (lineas === null) return SIN_FOTO
+  const ids = [...new Set(lineas.map((l) => l.itemId))]
+  const marcas = ids.map((_, i) => `$${i + 1}`).join(', ')
+  const { rows } = await db.query(`SELECT item_id, purchase_rate FROM books.items WHERE item_id IN (${marcas})`, ids)
+  const costos = new Map<string, number | null>((rows as Fila[]).map((r) => [String(r.item_id), numero(r.purchase_rate)]))
+  return fotoValorReclamado(lineas, costos)
 }

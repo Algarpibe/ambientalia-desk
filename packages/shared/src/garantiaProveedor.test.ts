@@ -52,19 +52,19 @@ describe('validarRespuesta (RQ-TC-44, RQ-TC-45)', () => {
   it('«sí» con fabricante: recorta y normaliza; valor ausente → null', () => {
     expect(validarRespuesta({ reclama: true, fabricante: '  Acme  ' })).toEqual({
       ok: true,
-      valor: { reclama: true, fabricante: 'Acme', piezaReferencia: null, piezaSerial: null, valorReclamado: null },
+      valor: { reclama: true, fabricante: 'Acme', piezaReferencia: null, piezaSerial: null },
     })
     const r = validarRespuesta({ reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9', valorReclamado: 800000 })
-    expect(r).toEqual({ ok: true, valor: { reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9', valorReclamado: 800000 } })
+    expect(r).toEqual({ ok: true, valor: { reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9' } })
   })
 
   it.each([
     ['sin fabricante', { reclama: true }],
     ['fabricante de sólo espacios', { reclama: true, fabricante: '   ' }],
     ['fabricante no texto', { reclama: true, fabricante: 5 }],
-    ['valor negativo', { reclama: true, fabricante: 'A', valorReclamado: -1 }],
-    ['valor no numérico', { reclama: true, fabricante: 'A', valorReclamado: 'abc' }],
-    ['valor no finito', { reclama: true, fabricante: 'A', valorReclamado: Infinity }],
+    // Valor negativo, no numérico y no finito ya no son error en el «sí»: lo ignora (valor-reclamado-usd, S-2),
+    // y sigue siendo error al EDITAR. Los casos están en el bloque «el «sí» ignora el valor reclamado»
+    // del final de este fichero.
     ['reclama no booleano', { reclama: 'si', fabricante: 'A' }],
     ['cuerpo ausente', undefined],
     ['sin reclama', {}],
@@ -171,8 +171,41 @@ describe('textos y valor que no son del tipo esperado (S-1 del verify, CARACTERI
     }
   })
 
-  it('un valor reclamado como cadena numérica es error: sólo vale un número', () => {
-    expect(validarRespuesta({ reclama: true, fabricante: 'A', valorReclamado: '800' }).ok).toBe(false)
+  it('un valor reclamado como cadena numérica es error al editar: sólo vale un número (el «sí» lo ignora, S-2)', () => {
+    expect(validarRespuesta({ reclama: true, fabricante: 'A', valorReclamado: '800' }).ok).toBe(true)
     expect(validarDatosFicha({ fabricante: 'A', valorReclamado: '800' }).ok).toBe(false)
+  })
+})
+
+// valor-reclamado-usd (F1B-13), lote L2, S-2: el valor reclamado del cuerpo del «sí» se ignora; editar sí lo valida.
+describe('el «sí» ignora el valor reclamado (RQ-TC-78, S-2)', () => {
+  it.each([
+    ['negativo', -1],
+    ['no numérico', 'abc'],
+    ['no finito', Infinity],
+    ['cadena numérica', '800'],
+    ['válido', 800000],
+  ])('valor %s en el cuerpo: el «sí» es válido y el resultado no lleva la clave', (_t, valorReclamado) => {
+    const r = validarRespuesta({ reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9', valorReclamado })
+    expect(r).toEqual({ ok: true, valor: { reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9' } })
+    expect(r.ok && 'valorReclamado' in r.valor).toBe(false)
+  })
+
+  it.each([
+    ['negativo', -1],
+    ['no numérico', 'abc'],
+    ['no finito', Infinity],
+    ['cadena numérica', '800'],
+  ])('valor %s: al editar sigue siendo error', (_t, valorReclamado) => {
+    const r = validarDatosFicha({ fabricante: 'Acme', valorReclamado })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error).toMatch(/valor reclamado/i)
+  })
+
+  it('al editar, 800000 es un valor válido y se conserva', () => {
+    expect(validarDatosFicha({ fabricante: 'Acme', valorReclamado: 800000 })).toEqual({
+      ok: true,
+      valor: { fabricante: 'Acme', piezaReferencia: null, piezaSerial: null, valorReclamado: 800000, rma: null },
+    })
   })
 })

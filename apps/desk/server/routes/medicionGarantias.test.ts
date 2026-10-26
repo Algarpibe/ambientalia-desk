@@ -34,14 +34,14 @@ async function sembrarTickets() {
 }
 
 let k = 0
-async function sembrar(respuesta: RespuestaReclamacion, ticketId = 't1') {
+async function sembrar(respuesta: RespuestaReclamacion & { valor?: number | null }, ticketId = 't1') {
   k += 1
   const a = await asociarOV(db, { ticketId, numero: `OVI-${k}`, salesorderId: null, origen: 'alta', actor: 't', fechaOrdenCompra: null })
   const asociacion = (await asociacionPorId(db, Number(a.id)))!
-  return registrarRespuesta(db, { asociacion, respuesta, por: 'semilla' })
+  return registrarRespuesta(db, { asociacion, respuesta, por: 'semilla', foto: { valorReclamado: respuesta.valor ?? null, origenValorReclamado: 'ovi' } })
 }
-const sub = (fabricante: string, valorReclamado: number | null, piezaReferencia = 'P-1'): RespuestaReclamacion =>
-  ({ reclama: true, fabricante, piezaReferencia, piezaSerial: 'S-1', valorReclamado })
+const sub = (fabricante: string, valor: number | null, piezaReferencia = 'P-1'): RespuestaReclamacion & { valor: number | null } =>
+  ({ reclama: true, fabricante, piezaReferencia, piezaSerial: 'S-1', valor })
 
 async function sembrarVarias() {
   const a = await sembrar(sub('Acme', 1000))
@@ -127,5 +127,20 @@ describe('medición de garantías (RQ-TC-67, RQ-TC-68)', () => {
     const despues = (await db.query('SELECT * FROM garantia_proveedor ORDER BY id')).rows
     expect(despues).toEqual(antes)
     expect((await reclamacionPorId(db, Number((antes[0] as { id: number }).id)))!.estado).toBe('resuelta')
+  })
+})
+
+// valor-reclamado-usd (F1B-13), lote L1: la moneda por grupo llega por la ruta tal como la da `shared` (RQ-TC-80).
+describe('medición de garantías · moneda por grupo (RQ-TC-80)', () => {
+  it('cada grupo trae moneda USD y la ruta devuelve exactamente lo de shared', async () => {
+    await sembrarVarias()
+    await sembrarTickets()
+    const res = await leer(await director())
+    expect(res.status).toBe(200)
+    expect(res.body.porFabricante.length).toBeGreaterThan(1)
+    for (const g of res.body.porFabricante) expect(g.moneda).toBe('USD')
+    const esperado = conNumerosDeTicket(medirGarantias(await fichasReclamadas(db)), new Map([['t1', 996], ['t3', 997]]))
+    expect(esperado.porFabricante.every(g => g.moneda === 'USD')).toBe(true)
+    expect(res.body).toEqual(JSON.parse(JSON.stringify(esperado)))
   })
 })

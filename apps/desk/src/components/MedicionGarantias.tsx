@@ -13,7 +13,7 @@ import { getMedicionGarantias } from '../api/client'
  * Los `.tsx` de `apps/desk/src` están fuera de la red de pruebas por decisión de Gerencia (F0-00): sin rojo previo.
  */
 
-const fmtValor = (v: number) => v.toLocaleString('es-CO')
+const fmtValor = (v: number, moneda: string) => `${v.toLocaleString('es-CO')} ${moneda}`
 /** El cociente llega calculado; `null` (nada reclamado) se enseña «—» sin comparar nada. */
 const fmtCociente = (c: number | null) => (c === null ? '—' : c.toLocaleString('es-CO', { style: 'percent', maximumFractionDigits: 1 }))
 const SIN_MARCA = 'Sin fabricante'
@@ -63,8 +63,8 @@ export function MedicionGarantias({ onClose }: { onClose: () => void }) {
                     <td className={TD}>{g.fichas}</td>
                     <td className={TD}>{g.sinResolver}</td>
                     <td className={TD}>{g.sinValorReclamado}</td>
-                    <td className={TD}>{fmtValor(g.reclamado)}</td>
-                    <td className={TD}>{fmtValor(g.recuperado)}</td>
+                    <td className={TD}>{fmtValor(g.reclamado, g.moneda)}</td>
+                    <td className={TD}>{fmtValor(g.recuperado, g.moneda)}</td>
                     <td className={TD}>{fmtCociente(g.cociente)}</td>
                     {RESULTADOS_RECLAMACION.map((r) => <td key={r} className={TD}>{g.resultados[r]}</td>)}
                   </tr>

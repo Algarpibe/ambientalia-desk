@@ -33,7 +33,7 @@ export const ETIQUETA_RESULTADO_RECLAMACION: Record<ResultadoReclamacion, string
   rechazada: 'Rechazada',
 }
 
-/** Origen del valor reclamado mientras no se calcule solo (S-4): lo escribe una persona. */
+/** Origen del valor que escribe una persona o que queda sin foto de la OVI (valor-reclamado-usd, S-3 y S-5); importe en USD. */
 export const ORIGEN_VALOR_MANUAL = 'manual'
 /** Días naturales tras los que una reclamación sin resolver avisa; el 60 no avisa, el 61 sí (S-7). */
 export const DIAS_AVISO_RECLAMACION = 60
@@ -57,7 +57,7 @@ export interface GarantiaProveedor {
   origenValorReclamado: string | null
   estado: EstadoReclamacion | null
   resultado: ResultadoReclamacion | null
-  valorRecuperado: number | null
+  valorRecuperado: number | null; moneda: MonedaGarantiaProveedor
   enviadaAt: string | null
   resueltaAt: string | null
   aviso60At: string | null
@@ -67,7 +67,7 @@ export type Validado<T> = { ok: true; valor: T } | { ok: false; error: string }
 
 export type RespuestaReclamacion =
   | { reclama: false; motivo: MotivoNoReclama }
-  | { reclama: true; fabricante: string; piezaReferencia: string | null; piezaSerial: string | null; valorReclamado: number | null }
+  | { reclama: true; fabricante: string; piezaReferencia: string | null; piezaSerial: string | null }
 
 export interface DatosFicha {
   fabricante: string
@@ -148,9 +148,9 @@ export function validarRespuesta(cuerpo: unknown): Validado<RespuestaReclamacion
     }
     return { ok: true, valor: { reclama: false, motivo: motivo as MotivoNoReclama } }
   }
-  const d = datosComunes(cuerpo)
+  const d = datosComunes({ ...cuerpo, valorReclamado: null })
   if (!d.ok) return d
-  return { ok: true, valor: { reclama: true, ...d.valor } }
+  return { ok: true, valor: { reclama: true, fabricante: d.valor.fabricante, piezaReferencia: d.valor.piezaReferencia, piezaSerial: d.valor.piezaSerial } }
 }
 
 /** Reemplazo completo de los cinco datos editables de una ficha abierta o enviada. */
@@ -189,3 +189,8 @@ export function validarPaso(a: EstadoReclamacion, cuerpo: unknown): Validado<Pas
 export function reclamacionVencida(abiertaEl: DiaCivil, hoy: DiaCivil): boolean {
   return diasEntre(abiertaEl, hoy) > DIAS_AVISO_RECLAMACION
 }
+
+export const ORIGEN_VALOR_OVI = 'ovi'
+export type OrigenValorReclamado = typeof ORIGEN_VALOR_MANUAL | typeof ORIGEN_VALOR_OVI
+export const MONEDA_GARANTIA_PROVEEDOR = 'USD'
+export type MonedaGarantiaProveedor = typeof MONEDA_GARANTIA_PROVEEDOR

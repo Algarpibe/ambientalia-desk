@@ -1451,7 +1451,7 @@ estén asignados: sin ellos sólo pasa el administrador.
 ## La de F1B-13, ficha de reclamación al fabricante (29)
 
 > **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `ficha-garantia-proveedor`, `cierra: no`, y
-> de `decision/anexo-7-garantia-proveedor` (Gerencia, 2026-09-24).
+> de `decision/anexo-7-garantia-proveedor` (Gerencia, 2026-09-24). Los puntos 2 y 3 se enmiendan el 2026-10-26 por el cambio `valor-reclamado-usd` (`cierra: no`) y `decision/f1b13-valor-reclamado-usd`.
 
 ### 29 · M4.4 y Anexo D nº 7 — la ficha de reclamación al fabricante está construida en parte; el punto 7 NO se cierra *(F1B-13)*
 
@@ -1471,16 +1471,16 @@ a la OVI de garantía (F1B-03), como tanda pequeña; sin empezar a 01/10. Cierra
    crea la OVI (se crea en Zoho Books), así que la pregunta no puede ir «al crear». Se responde por cada OVI asociada, y mientras no se
    responde la OVI figura «Pendiente de respuesta». Responde quien tiene el cargo Director Técnico, o un administrador; basta el cargo,
    sin exigir un área.
-2. En la línea 2664, sustituir «valor reclamado (tomado del costo de la OVI)» por «valor reclamado (se captura a mano por ahora, y
-   la ficha guarda que su origen es manual)». El valor automático queda pendiente de comprobar si las líneas de la OVI traen costo
-   (tarea de persona P-1 del cambio).
-3. En la línea 2668, sustituir «sin empezar a 01/10» por «[CONSTRUIDO EN PARTE] Construidas la ficha, sus tres estados y el aviso de
-   60 días. Quedan fuera: el valor reclamado automático, las mediciones de las líneas 2666 (valor recuperado frente al reclamado por marca
-   y piezas con fallas repetidas) y el envío físico por remisión sin ticket de la línea 2667». Y retirar de esa misma línea la
+2. En la línea 2664, sustituir «valor reclamado (tomado del costo de la OVI)» por «valor reclamado, en USD: foto al abrir la ficha, cantidad × costo
+   de catálogo de cada línea de la OVI, sumado por línea; se puede editar a mano y la ficha guarda su origen; el valor recuperado se anota en USD». Y en
+   `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1232`, donde dice que las líneas de una OVI conservan el costo de referencia, decir que el costo lo conserva el catálogo del artículo, no la línea.
+3. En la línea 2668, sustituir «sin empezar a 01/10» por «[CONSTRUIDO EN PARTE] Construidas la ficha, sus tres estados, el aviso de 60 días, el valor
+   reclamado automático (foto de la OVI, en USD) y las dos mediciones de la línea 2666 (valor recuperado frente al reclamado por marca y piezas con fallas
+   repetidas). Queda fuera el envío físico por remisión sin ticket de la línea 2667». Y retirar de esa misma línea la
    frase «Cierra el punto 7 del Anexo D».
 
-**Lo que esta entrada NO pide.** **No cierra el punto 7 del Anexo D**: lo construido es una parte, y quedan abiertos el valor
-automático, las dos mediciones y el envío por remisión (éste depende de F1B-16). No cambia la línea 2665 (el aviso a los 60
+**Lo que esta entrada NO pide.** **No cierra el punto 7 del Anexo D**: lo construido es una parte, y queda abierto
+el envío por remisión (éste depende de F1B-16). No cambia la línea 2665 (el aviso a los 60
 días): lo construido avisa a quien lleva el cargo Director Técnico, o al área Servicio Técnico si nadie lo lleva, y cuenta días
 naturales con frontera estricta (el día 61 avisa); que sean naturales lo debe confirmar Gerencia (P-2 del cambio). Tampoco afirma que
 esté en producción ni que el cargo esté asignado: sin él sólo un administrador responde la pregunta.

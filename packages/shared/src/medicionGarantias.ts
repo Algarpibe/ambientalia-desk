@@ -1,4 +1,4 @@
-import { RESULTADOS_RECLAMACION, type GarantiaProveedor, type ResultadoReclamacion } from './garantiaProveedor'
+import { RESULTADOS_RECLAMACION, MONEDA_GARANTIA_PROVEEDOR, type GarantiaProveedor, type MonedaGarantiaProveedor, type ResultadoReclamacion } from './garantiaProveedor'
 
 /**
  * Medición de las garantías con el proveedor por marca (F1B-13, `medicion-garantias-por-marca`).
@@ -23,7 +23,7 @@ export interface MedicionFabricante {
   /** Fichas «sí» sin `valorReclamado`: se cuentan aparte y no suman nada a `reclamado`. */
   sinValorReclamado: number
   reclamado: number
-  recuperado: number
+  recuperado: number; moneda: MonedaGarantiaProveedor
   /** `recuperado / reclamado`, o `null` si lo reclamado no es mayor que 0 (S-6). */
   cociente: number | null
   /** Resueltas por resultado; siempre las tres claves. */
@@ -60,7 +60,7 @@ export function medirGarantias(fichas: readonly GarantiaProveedor[]): MedicionGa
     if (!g) {
       g = {
         fabricante: etiqueta(f.fabricante), fichas: 0, sinResolver: 0, sinValorReclamado: 0, reclamado: 0,
-        recuperado: 0, cociente: null,
+        recuperado: 0, moneda: MONEDA_GARANTIA_PROVEEDOR, cociente: null,
         resultados: Object.fromEntries(RESULTADOS_RECLAMACION.map(r => [r, 0])) as Record<ResultadoReclamacion, number>,
       }
       grupos.set(clave, g)
