@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect } from 'vitest'
 import { ejecutar } from './cli'
-import { repoGitTemporal, cita, type RepoGitDePrueba } from '../testing/reposDePrueba'
+import { repoGitTemporal, cita, cederAlBucle, type RepoGitDePrueba } from '../testing/reposDePrueba'
 
 /**
  * Pruebas del CLI para la activación de la cabecera R-1 (capacidad `citas-verificables`, F0-05 R1
@@ -50,3 +50,6 @@ describe('cli · M4, regla de mutación 1 (posición): cita rota y cabecera inv�
     }
   })
 })
+
+// Cede el bucle entre prueba y prueba, como hook.test.ts: git de verdad y síncrono (ver `cederAlBucle`).
+afterEach(cederAlBucle)
