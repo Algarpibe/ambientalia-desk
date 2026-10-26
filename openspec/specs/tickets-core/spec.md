@@ -2125,9 +2125,9 @@ su estado equivalente en la aplicación o el resultado «sin equivalencia». El 
 (`statusTypeDestino === 'Closed'`) cierra el ticket y por tanto toca `closed_time`; la identidad y las dos de
 `Pendiente` **MUST NOT** tocarlo (S-4 de `fecha-cierre-migracion`).
 
-La comparación del estado **SHALL** ser por igualdad exacta con el registro: Zoho copia el estado verbatim
-(`packages/zoho-sync/src/db/mappers.ts:47`) y la normalización de mayúsculas o espacios sería una segunda
-implementación de la misma noción. Un `entregado` en minúsculas o con un espacio final es «sin equivalencia».
+La comparación del estado **SHALL** ser por igualdad exacta con el registro, sobre el valor que el lector ya normalizó con
+la regla única de `zoho-sync` RQ-ZS-24 (`decision/e249-normalizar-al-leer`): el núcleo no normaliza por su cuenta, que sería
+una segunda implementación de la misma noción. Pasados tal cual al núcleo, `entregado` y `Entregado ` (espacio final) son «sin equivalencia».
 
 **Nota — divergencia con el script de F1C-09, declarada y no resuelta en silencio.** Soporte remoto se reconoce con
 `esClasificacionSoporteRemoto` (`packages/shared/src/flujos.ts:116-119`), que es igualdad normalizada, y **MUST NOT**

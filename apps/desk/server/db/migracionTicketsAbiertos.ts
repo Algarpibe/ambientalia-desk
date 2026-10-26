@@ -2,7 +2,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { APP_TICKET_NUMBER_BASE } from '@ambientalia/zoho-sync/db/migrate'
 import {
   ACTOR_MIGRACION, ID_TRANSICION_MIGRACION, NOMBRE_TRANSICION_MIGRACION, esperaRemisionDeEntrada, motivoSinRemisionVigente,
-  planDeTicket, resumenDeMigracion, cierreDeMigracion, cierresDeMigracion, type CierresMigracion, type PlanTicket, type ResumenMigracion,
+  planDeTicket, resumenDeMigracion, cierreDeMigracion, cierresDeMigracion, normalizarEstado, type CierresMigracion, type PlanTicket, type ResumenMigracion,
 } from '@ambientalia/shared'
 import { enTransaccion } from './transaccion'
 import { vigenciaDeRemisiones } from './remisiones'
@@ -33,7 +33,7 @@ async function leerPlanes(q: Queryable, corte: Date): Promise<PlanTicket[]> {
     "SELECT id, number, status, status_type, classification, managed_by_app, created_time, closed_time FROM tickets WHERE (status_type <> 'Closed' OR status_type IS NULL) ORDER BY number",
   )
   return (r.rows as Array<Record<string, unknown>>).map((f) => planDeTicket({
-    id: String(f.id), number: Number(f.number), status: String(f.status), statusType: (f.status_type as string | null) ?? null,
+    id: String(f.id), number: Number(f.number), status: normalizarEstado(String(f.status)), statusType: (f.status_type as string | null) ?? null,
     classification: (f.classification as string | null) ?? null, managedByApp: f.managed_by_app === true, createdTime: iso(f.created_time), closedTime: iso(f.closed_time),
   }, corte))
 }

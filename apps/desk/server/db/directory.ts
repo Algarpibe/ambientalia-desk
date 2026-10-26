@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { resolucionPromedioMs, type ContactLite, type AccountLite, type ContactDetail, type AccountDetail, type TicketLite } from '@ambientalia/shared'; import { cierresPuestosPorMigracion } from './cierresDeMigracion'
+import { resolucionPromedioMs, normalizarEstado, type ContactLite, type AccountLite, type ContactDetail, type AccountDetail, type TicketLite } from '@ambientalia/shared'; import { cierresPuestosPorMigracion } from './cierresDeMigracion'
 
 export async function getContacts(db: Queryable): Promise<ContactLite[]> {
   const r = await db.query(
@@ -23,7 +23,7 @@ async function ticketsLite(db: Queryable, col: 'contact_id' | 'account_id', id: 
     `SELECT id, number, subject, status, status_type, channel, created_time, closed_time, due_date
      FROM tickets WHERE ${col}=$1 ORDER BY created_time DESC NULLS LAST`, [id])
   return (r.rows as any[]).map((x) => ({
-    id: x.id, number: `#${x.number}`, subject: x.subject ?? '', status: x.status ?? '',
+    id: x.id, number: `#${x.number}`, subject: x.subject ?? '', status: normalizarEstado(x.status ?? ''),
     statusType: x.status_type ?? null, channel: x.channel ?? null,
     createdAt: x.created_time ?? null, closedAt: x.closed_time ?? null, dueDate: x.due_date ?? null,
   }))

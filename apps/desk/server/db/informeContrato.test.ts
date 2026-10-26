@@ -172,3 +172,28 @@ describe('trimestres del contrato', () => {
     expect((await informeContrato(db, c, '2027-03-01')).trimestres.map((t) => t.k)).toEqual([1, 2, 3, 4])
   })
 })
+
+// normalizar-estados-zoho (F1F-01, RQ-ZS-24, fila 12): el estado de la subOV se lee normalizado, como su gemelo limpio.
+describe('estado del ticket con espacios de Zoho (RQ-ZS-24, fila 12)', () => {
+  it('`Finalizado ` con un espacio de más cuenta como ejecutada igual que `Finalizado`; los dos se ejecutan', async () => {
+    const c = await contrato()
+    for (const n of ['01', '02']) await subOV(n)
+    await servicio('01', 'Finalizado ', ['2026-02-10T15:00:00Z'])
+    await servicio('02', 'Finalizado', ['2026-02-10T15:00:00Z'])
+    // Precondición: la siembra no pasó por la regla, la columna conserva el espacio.
+    expect(((await db.query("SELECT status FROM tickets WHERE id = 't-01'")).rows[0] as { status: string }).status).toBe('Finalizado ')
+
+    const inf = await informeContrato(db, c, HOY)
+    expect(inf.subOV.map((s) => [s.numero, s.estado])).toEqual([[`${LOTE}-01`, 'ejecutada'], [`${LOTE}-02`, 'ejecutada']])
+    expect(inf).toMatchObject({ creadas: 2, ejecutadas: 2, enCurso: 0, libres: 0, porcentajeEjecutado: 100 })
+  })
+
+  it('un estado con espacios que NO es Finalizado sigue en curso: la regla no lo convierte en ejecutado', async () => {
+    const c = await contrato()
+    await subOV('01')
+    await servicio('01', 'En  Reparación')
+    const inf = await informeContrato(db, c, HOY)
+    expect(inf.subOV.map((s) => s.estado)).toEqual(['en_curso'])
+    expect(inf).toMatchObject({ creadas: 1, ejecutadas: 0, enCurso: 1 })
+  })
+})

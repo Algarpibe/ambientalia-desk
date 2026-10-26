@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { calcularIndicadores, esPasoDeMigracion, diaEnZona, esAnulado, diaDeCierreDelTicket, flujoPorClasificacion, FLUJOS, type Flujo, type DiaCivil, type EtiquetaHito, type Indicador, type PasoDelHistorial, type TicketParaIndicadores } from '@ambientalia/shared'
+import { calcularIndicadores, esPasoDeMigracion, diaEnZona, esAnulado, conEstadoNormalizado, diaDeCierreDelTicket, flujoPorClasificacion, FLUJOS, type Flujo, type DiaCivil, type EtiquetaHito, type Indicador, type PasoDelHistorial, type TicketParaIndicadores } from '@ambientalia/shared'
 import { comoDiaCivil, listarCierres } from './db/calendarioCierres'
 
 // Lectura de los indicadores (F1F-05, RQ-KP-13 y -14): SOLO lectura, cuatro consultas pase lo que pase con el número de tickets.
@@ -63,7 +63,7 @@ export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivi
 
   const rt = await db.query(`SELECT t.id, t.number, t.status, t.classification, t.created_time, t.closed_time, t.codigo_servicio, t.dias_entrega, ${fechas}, t.custom_fields FROM tickets t${donde} ORDER BY t.number`, params)
   const candidatos: TicketParaIndicadores[] = []; const clasificaciones = new Map<string, string | null>(); const cerradoEn = new Map<string, string | null>()
-  for (const r of rt.rows) {
+  for (const r of rt.rows.map(conEstadoNormalizado)) {
     const creadoEn = iso(r.created_time)
     if (esAnulado(String(r.status ?? ''))) continue
     cerradoEn.set(String(r.id), iso(r.closed_time))

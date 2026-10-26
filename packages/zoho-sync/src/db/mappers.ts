@@ -1,5 +1,5 @@
 import { PROMOTED_COLUMNS, type TicketRow, type AccountRow, type ContactRow, type AgentRow, type ConversationRow, type AttachmentRow, type ActivityRow } from './rows'
-import { extractServiceCode } from '@ambientalia/shared'
+import { extractServiceCode, normalizarSiTexto } from '@ambientalia/shared'
 
 function toBool(v: unknown): boolean | null {
   if (v === undefined || v === null || v === '') return null
@@ -44,7 +44,7 @@ export function ticketRowFromZoho(raw: Record<string, unknown>): TicketRow {
   const cf: Record<string, string | null> = { ...(customFields as Record<string, string | null>) }
   const row: Partial<TicketRow> = {
     id: raw.id as string, number: Number(raw.ticketNumber), subject: (raw.subject as string) ?? null,
-    status: raw.status as string, status_type: (raw.statusType as string) ?? null, priority: (raw.priority as string) ?? null,
+    status: normalizarSiTexto(raw.status as string), status_type: (raw.statusType as string) ?? null, priority: (raw.priority as string) ?? null,
     classification: (raw.classification as string) ?? null, channel: (raw.channel as string) ?? null,
     description: (raw.description as string) ?? null,
     contact_id: (raw.contactId as string) ?? null, account_id: (raw.accountId as string) ?? null, assignee_id: (raw.assigneeId as string) ?? null,
