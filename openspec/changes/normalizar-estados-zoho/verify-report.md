@@ -24,7 +24,7 @@ build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e
 
 ### Veredicto
 
-**PASS CON AVISOS** — 0 CRÍTICOS, 3 AVISOS, 3 SUGERENCIAS. Los tres criterios de éxito de la propuesta (`openspec/changes/normalizar-estados-zoho/proposal.md:174-180`) se cumplen en lo medible aquí. Lo que afirma la integración contra PostgreSQL real es **hipótesis** hasta el CI (AVISO 1).
+**PASS CON AVISOS** — 0 CRÍTICOS, 3 AVISOS, 3 SUGERENCIAS. Los tres criterios de éxito de la propuesta (`openspec/changes/normalizar-estados-zoho/proposal.md:174-179`) se cumplen en lo medible aquí. Lo que afirma la integración contra PostgreSQL real es **hipótesis** hasta el CI (AVISO 1).
 
 ### Completeness
 
