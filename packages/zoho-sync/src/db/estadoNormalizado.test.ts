@@ -18,7 +18,7 @@ const UNO = 'Notificación Comercial'
 const crudo = async (id: string) => ((await db.query('SELECT status FROM tickets WHERE id=$1', [id])).rows[0] as { status: string }).status
 
 function zoho(id: string, number: number, status: string, statusType = 'On Hold') {
-  return ticketRowFromZoho({ id, ticketNumber: String(number), status, statusType, customFields: {} } as any)
+  return ticketRowFromZoho({ id, ticketNumber: String(number), status, statusType, customFields: {} })
 }
 
 // Siembra a mano, sin pasar por el mapeador: así la columna conserva los dos espacios.

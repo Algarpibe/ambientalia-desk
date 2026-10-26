@@ -97,7 +97,7 @@ al asentar). Ningún binario.
 | 5 | Apply L3 | 418 | passed |
 | 6 | Apply L4 (mutaciones y barrido; 0 de código) | 104 | passed |
 | 7 | Verify | 191 | passed |
-| 8 | Archive (este) | se mide al asentar | — |
+| 8 · 9 | Archive (la mudanza cuenta doble) · corrección del lint tras el archivo (sección 6; 14 líneas de pruebas y 6 de este informe) | 3.201 · 20 | passed · passed |
 
 El intento 8 se abrió con techo 4.200 (dos veces la carpeta más 800). Su parte revisable, medida antes de aplicar, es la fusión (161) más
 este informe; el resto es la mudanza de la carpeta, que el registro cuenta dos veces por medir sin detección de renombrado.
@@ -110,8 +110,8 @@ este informe; el resto es la mudanza de la carpeta, que el registro cuenta dos v
 - **Avisos:** (1) la integración contra PostgreSQL real no se ha ejecutado (se salta en local); (2) A.2 debía casar RQ-TC-40 por
   identificador, y así se hizo; (3) tras desplegar, un ticket con el nombre crudo puede recibir su primer aviso de espera, como su gemelo.
 - **Cadena del verify:** `npm test` 0 (322 ficheros y 5589 pruebas en verde; 4 ficheros y 26 pruebas saltados; log
-  `npmtest-nez-verify-204147.log`), typecheck 0, lint 0 errores (172 avisos), detector de citas 0.
-- La cadena del commit de archivo la recoge el cierre del intento 8.
+  `npmtest-nez-verify-204147.log`), typecheck 0, lint 0 errores con 172 avisos, **pero la orden del CI, `npm run lint -- --max-warnings 165`, salía 1** (ver la línea siguiente), detector 0.
+- **Corrección del lint, intento 9 (tras el archivo):** los 7 avisos de más eran `@typescript-eslint/no-explicit-any`, seis en `apps/desk/server/normalizarEstadosZoho.test.ts` y uno en `packages/zoho-sync/src/db/estadoNormalizado.test.ts`; se sustituyeron en sitio por tipos reales (dos `as any` sobraban y el resto pasó a `{ id: string; status: string }`), sin `eslint-disable` ni tocar la regla y sin desplazar líneas. `npm run lint -- --max-warnings 165` pasa de 1 (172 avisos) a 0 (**165 contra 165**, como main); con un `as any` repuesto vuelve a 1 (166). Cadena del intento 9: typecheck 0, detector 0 y `npm test` 0 en la segunda pasada (`npmtest-nez-i9b-220205.log`; la primera, `npmtest-nez-i9-215202.log`, salió 1 por un plazo de 5 s en `apps/desk/server/relojSla.test.ts`, fichero sin cambios, que en solitario pasa en 2 s).
 
 ## 7. Pendiente fuera de la rama (la rama no toca `openspec/config.yaml` ni `docs/sdd/`)
 

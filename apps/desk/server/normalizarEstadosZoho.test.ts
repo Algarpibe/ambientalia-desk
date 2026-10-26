@@ -18,7 +18,7 @@ const crudo = async (id: string) => ((await db.query('SELECT status FROM tickets
 
 // Siembra a mano, sin pasar por el mapeador de la sincronización: la columna conserva el valor tal cual (molde de `tickets.test.ts:14`).
 async function sembrar(id: string, number: number, status: string) {
-  await upsertTicket(db, { ...ticketRowFromZoho({ id, ticketNumber: String(number), subject: 'S', status: UNO, statusType: 'On Hold', customFields: {} } as any), status })
+  await upsertTicket(db, { ...ticketRowFromZoho({ id, ticketNumber: String(number), subject: 'S', status: UNO, statusType: 'On Hold', customFields: {} }), status })
 }
 
 async function sembrarPar() {
@@ -35,8 +35,8 @@ describe('L1 · lectura de la lista y del detalle (filas 2 y 3)', () => {
     const { app } = appWith()
     const res = await request(app).get('/api/tickets').set('Cookie', await adminCookie())
     expect(res.status).toBe(200)
-    const dos = res.body.find((t: any) => t.id === 'dos')
-    const uno = res.body.find((t: any) => t.id === 'uno')
+    const dos = res.body.find((t: { id: string; status: string }) => t.id === 'dos')
+    const uno = res.body.find((t: { id: string; status: string }) => t.id === 'uno')
     expect(dos.status).toBe(UNO)
     expect(uno.status).toBe(UNO)
     expect(columnForStatus(dos.status)).toBe('notif_comercial')
@@ -57,7 +57,7 @@ describe('L1 · lectura de la lista y del detalle (filas 2 y 3)', () => {
     const { app } = appWith()
     const cookie = await adminCookie()
     const lista = (await request(app).get('/api/tickets').set('Cookie', cookie)).body
-    const botones = (id: string) => transicionesDelTicket({ classification: null, status: lista.find((t: any) => t.id === id).status }).map((t) => t.id)
+    const botones = (id: string) => transicionesDelTicket({ classification: null, status: lista.find((t: { id: string; status: string }) => t.id === id).status }).map((t) => t.id)
     expect(botones('dos').length).toBeGreaterThan(0)
     expect(botones('dos')).toEqual(botones('uno'))
   })
@@ -84,7 +84,7 @@ describe('L1 · la transición del ticket de dos espacios (filas 3 y 4)', () => 
   it('responde 200 y no 409; la fila nueva lleva from_status normalizado; las previas no cambian; no se llama a Zoho', async () => {
     await sembrar('dos', 1004, DOS)
     // Una fila de historia previa con el valor crudo: la regla no reescribe lo existente.
-    await insertTransition(db, { ticketId: 'dos', transitionId: 'previa', transitionName: 'Previa', fromStatus: DOS, toStatus: DOS, area: 'Comercial', performedBy: 'x', values: {}, commentId: null } as any)
+    await insertTransition(db, { ticketId: 'dos', transitionId: 'previa', transitionName: 'Previa', fromStatus: DOS, toStatus: DOS, area: 'Comercial', performedBy: 'x', values: {}, commentId: null })
     const { app, zohoFetch } = appWith()
     const cookie = await adminCookie()
     const res = await request(app).post('/api/tickets/dos/transition').set('Cookie', cookie).send({ transitionId: ID, values: valoresValidos(transicionPorId(ID)!, 1) })
@@ -130,7 +130,7 @@ describe('L2 · ficha de cliente (fila 8)', () => {
     const { app } = appWith()
     const res = await request(app).get('/api/accounts/c1').set('Cookie', await adminCookie())
     expect(res.status).toBe(200)
-    expect(Object.fromEntries(res.body.tickets.map((t: any) => [t.id, t.status]))).toEqual({ dos: UNO, uno: UNO })
+    expect(Object.fromEntries(res.body.tickets.map((t: { id: string; status: string }) => [t.id, t.status]))).toEqual({ dos: UNO, uno: UNO })
     expect(await crudo('dos')).toBe(DOS)
   })
 })
