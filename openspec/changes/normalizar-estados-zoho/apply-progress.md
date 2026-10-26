@@ -287,7 +287,7 @@ Cada una: edición exacta del diseño con `sed` sobre la línea, prueba(s) que d
 
 **Método.** Script en el directorio temporal (no versionado) que recorre `*.md`, `*.ts`, `*.tsx` y `*.yaml` de TODO el worktree (sin `node_modules`, `.git`, `.codegraph`, `dist`; incluidos `openspec/changes/archive/`, `docs/sdd/ENTRADA.md` y `openspec/config.yaml`), con el patrón `<nombre>.ts:N(-M)?` y la ruta antepuesta cuando existe. Para cada cita calcula si su rango contiene una LÍNEA CUYO CONTENIDO CAMBIÓ (`git diff -U0 f5465799 HEAD`): `index.ts:54` (añadida); `mappers.ts:2`, `:47`; `repo.ts:129`, `:139`, `:209`; `directory.ts:2`, `:26`; `analisis.ts:2`, `:20`; `indicadores.ts:2`, `:66`; `reasignaciones.ts:2`, `:18`; `informeContrato.ts:4`, `:45`; `migracionTicketsAbiertos.ts:5`, `:36`; `estadoPorRemision.ts:11`, `:40`; `relojSla.ts:3`, `:45`, `:58`; `sla.ts:2`, `:45`, `:89`; `alarmasAvisadas.ts:2`, `:21`; `esperasVencidas.ts:2`, `:30`, `:37`, `:42`; `appHarness.ts:2`, `:36`; y los cinco `*.test.ts` de pg-mem (`:2`/`:4` y `:7`, `:17`, `:14`, `:27`, `:19`).
 
-**Ninguna línea se movió.** `git diff --numstat f5465799 HEAD` sobre `apps` y `packages`: inserciones = borrados en todos los ficheros editados en sitio; las únicas diferencias son bloques AÑADIDOS al final (`packages/shared/src/index.ts` +1 en la `:54`; `apps/desk/server/db/informeContrato.test.ts` +25 desde la `:175`; `apps/desk/server/citas/cli.test.ts` +3 desde la `:53` e `instalador.test.ts` +3 desde la `:120`, del cherry-pick de `51e92f29`, fuera de la lista) y ficheros nuevos. Por tanto el barrido no renumera: lee qué AFIRMA cada cita cuyo rango toca una línea de contenido cambiado.
+**Ninguna línea se movió.** `git diff --numstat f5465799 HEAD` sobre `apps` y `packages`: inserciones = borrados en todos los ficheros editados en sitio; las únicas diferencias son bloques AÑADIDOS al final (`packages/shared/src/index.ts` +1 al final; `apps/desk/server/db/informeContrato.test.ts` +25 al final; `apps/desk/server/citas/cli.test.ts` e `instalador.test.ts` +3 cada uno al final, del cherry-pick de `51e92f29`, fuera de la lista) y ficheros nuevos. Por tanto el barrido no renumera: lee qué AFIRMA cada cita cuyo rango toca una línea de contenido cambiado.
 
 **Citas por fichero (ruta resuelta; las bare `repo.ts:N` etc. sin ruta se evaluaron contra los mismos rangos):** `packages/shared/src/index.ts` 44 · `mappers.ts` 63 · `repo.ts` (db) 324 · `directory.ts` 20 · `analisis.ts` (server) 34 · `indicadores.ts` (server) 138 · `reasignaciones.ts` 26 · `informeContrato.ts` 18 · `migracionTicketsAbiertos.ts` 72 · `estadoPorRemision.ts` 36 · `relojSla.ts` (db) 20 · `sla.ts` (db) 132 · `alarmasAvisadas.ts` 28 · `esperasVencidas.ts` 9 · `appHarness.ts` 59 · `sla.test.ts` (db) 18 · `alarmasAvisadas.test.ts` 2 · `esperasVencidas.test.ts` 3 · `alarmasSla.test.ts` 8 · `avisoSalidasEsperas.test.ts` 1 · `informeContrato.test.ts` 10. Aparte, las bare sin ruta resuelta (p. ej. `repo.ts` 352, `sla.ts` 96, `index.ts` 88, `sla.test.ts` 65) y las de otros ficheros con el mismo nombre (`packages/shared/src/sla.ts` 75, `packages/zoho-sync/src/books/repo.ts` 122, `apps/desk/server/index.ts` 127, etc.), que no cuentan.
 
@@ -343,3 +343,15 @@ Ningún fichero de `apps/desk/src` ni `ticketService.ts` cambia; el valor que le
 ### Medida del intento (L4.c la cierra el orquestador)
 
 - `git diff --shortstat --no-renames f914b731` (antes de añadir este apartado): 3 ficheros, **82 inserciones, 4 borrados** (86): `apply-progress.md` +78, `proposal.md` 1/1 (la cita anclada), `tasks.md` 3/3 (las tres casillas). Sin ficheros nuevos sin trackear (`git ls-files --others --exclude-standard` vacío). Ningún binario. Código y pruebas: **0** líneas (`git diff --quiet f914b731 -- apps packages` = 0).
+
+### L4.c Cierre del intento 6 (orquestador)
+
+- Commit de L4 `a003f614` sobre `f914b731`; el código es idéntico al de `f914b731` (`git diff --stat f914b731 -- apps packages` vacío).
+- Informe del ejecutor contrastado: el orquestador reprodujo M3 (3 rojas, entre ellas «expected 409 to be 200») y M4 (2 rojas: la fila 21 y el
+  espía) con las mismas aserciones que la tabla de L4.1, y las restauró con `git checkout --` y `git diff --quiet` en 0. El CSV trackeado está
+  intacto y la copia de M7 ya no existe.
+- La primera pasada del detector sobre `a003f614` dio 16 abreviadas rotas (informativas) frente a 13: las tres nuevas eran de una frase del
+  barrido que nombraba con forma abreviada el principio de los bloques añadidos al final (líneas en blanco, y una atribuida al fichero que no
+  era). Esa frase se reescribe en sitio, sin forma de cita.
+- `npm test` SOLO con log: **0** (`npmtest-nez-i6-203144.log`: 322 ficheros y 5589 pruebas en verde, 4 ficheros y 26 pruebas saltados, 366,0 s).
+- typecheck 0; lint 0 errores (172 avisos); detector sobre el commit de este cierre.
