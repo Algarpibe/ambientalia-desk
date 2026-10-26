@@ -5406,6 +5406,30 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (fuera-del-plan)"
+
+  - clave: "decision/excepcion-ceder-bucle-instalador-cli"
+    fecha: "2026-10-25"
+    pregunta: |
+      ¿Amplías la excepción de los plazos para que instalador.test.ts y cli.test.ts también cedan el bucle de eventos (afterEach(cederAlBucle), molde de df883868)?
+    respuesta_textual: |
+      «si»
+    nota_de_fuente: |
+      La pregunta y la medida del analista están en la consecuencia (1).
+    consecuencias: |
+      (1) Medida del analista (25/10/2026) sobre el log de la pasada del intento 4 de F1F-01 (`normalizar-estados-zoho`,
+      `npmtest-nez-i4-185437.log`: 321 ficheros y 5565 pruebas en verde y un único error no controlado «Timeout calling
+      onTaskUpdate», sin fichero): `apps/desk/server/citas/instalador.test.ts`, con 61,9 s, es el único fichero por encima
+      de 60 s que no cede el bucle; `hook.bordes.test.ts` (141 s) y `hook.test.ts` (165 s) sí lo ceden y no dan el error.
+      `apps/desk/server/citas/cli.test.ts` tardó 40,5 s. Ese error es el mecanismo que documenta `vitest.config.ts`, y lo
+      resuelve `cederAlBucle` (`df883868`).
+      (2) Amplía `decision/excepcion-plazos-hook-citas`, cuya consecuencia (2) la limitaba a plazos por prueba: la excepción
+      a «nada fuera del plan antes del 09/11» cubre también `afterEach(cederAlBucle)` al final de esos dos ficheros, con el
+      import editado en su misma línea, en un commit `fuera-del-plan` con motivo.
+      (3) NO se toca el plazo global, ni `maxWorkers`, ni el umbral de 60 s por fichero de vitest.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/excepcion-ceder-bucle-instalador-cli)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (fuera-del-plan)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
