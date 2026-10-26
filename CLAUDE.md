@@ -687,3 +687,15 @@ que la parte con carga de revisión —la fusión del delta en las specs vivas m
 Se mide **antes de aplicar** (`git diff --shortstat --no-renames` de esa parte); si la supera, **se para y se consulta**.
 Y **se revisa siempre que el commit de archivo contenga sólo el cambio archivado** (`git show --numstat`): el 01/10 un
 agente de archivo metió en el de F1A-03 todos los ficheros sin trackear del repositorio, +6.450 líneas ajenas.
+
+## Regla de dominio — todo importe lleva su moneda
+
+Gerencia, 2026-10-26 (`decision/f1b13-valor-reclamado-usd`). **Un importe en Desk sin moneda no se admite en adelante.**
+Es la última frase de esa decisión, y es regla general, no sólo de la garantía al proveedor: todo importe que Desk guarde
+o devuelva lleva su moneda al lado, y la pantalla la pinta junto al importe. La motivó el «costo de compra» de los
+artículos en Zoho Books, que está en USD —la moneda base de la organización— cuando el supuesto S-4 de
+`ficha-garantia-proveedor` daba el valor reclamado «en pesos».
+
+*Por qué está aquí y no sólo en la decisión:* el aterrizaje de una regla es este fichero, que se carga entero en cada
+sesión. La tanda que la registra (F1B-13, `valor-reclamado-usd`) sólo la aplica a sus propios importes; los demás que hoy
+no llevan moneda quedan inventariados, con ruta y línea, en su `archive-report.md` como entrada para la bandeja (R-3).

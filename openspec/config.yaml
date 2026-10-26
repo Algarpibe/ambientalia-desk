@@ -5430,6 +5430,34 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (fuera-del-plan)"
+
+  - clave: "decision/f1b13-valor-reclamado-usd"
+    fecha: "2026-10-26"
+    pregunta: |
+      P-1 de `ficha-garantia-proveedor` (`openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/proposal.md:279`): comprobar en producción si las líneas de una OVI traen costo, dónde (el `raw` de `books.sales_orders`, o sólo el hub) y en qué moneda.
+    respuesta_textual: |
+      «El «costo de compra» de los artículos en Zoho Books está en dólares: la organización tiene USD como moneda base (verificado en la configuración de la organización y en el artículo 300-P-C, purchase_rate 150,54 USD). Decisión: F1B-13 se mide en USD en los dos lados. El valor reclamado se guarda como foto al abrir la ficha, cantidad × costo de catálogo sumado por línea, origen ovi, editable a mano, en USD. El valor recuperado se anota en USD; si la nota de crédito o el repuesto llegan en otra moneda, se convierte a mano al anotarlo con la tasa de ese día. La ficha debe mostrar la moneda junto a los importes, y S-4 se corrige: «en USD», ya no en pesos. Un importe en Desk sin moneda no se admite en adelante.»
+    nota_de_fuente: |
+      Hechos medidos el 26/10/2026 en que se apoya la decisión:
+      (a) La moneda base de la organización en Zoho Books es USD: la API (`list_organizations`) devuelve `currency_code`
+      "USD" para «Ambientalia S.A.S.»; lo comprobó el analista.
+      (b) SQL de sólo lectura de Gerencia en la base `desk`: las OVI-2026-023 a -027 tienen `total` = 0 y `bcy_total` = 0
+      (COP); sus líneas, en `books.sales_orders.raw->'line_items'`, traen `rate`, `sales_rate`, `bcy_rate`, `item_total`,
+      `quantity` e `item_id`, y NINGUNA clave de costo.
+      (c) En las 15 líneas de las OVI-2026-018 a -027, `books.items.purchase_rate` (por `item_id`) está relleno y es mayor
+      que 0 en las 15.
+    consecuencias: |
+      (1) Cierra la P-1 de `ficha-garantia-proveedor`
+      (`openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/proposal.md:279`) y corrige su S-4
+      (`openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/proposal.md:159`), que suponía «en pesos».
+      (2) El costo no viene en la línea de la OVI sino en el catálogo de artículos (hechos (b) y (c)): el valor reclamado
+      es la suma, línea a línea, de la cantidad por el costo de catálogo del artículo.
+      (3) La conversión desde otra moneda es manual, al anotar el importe: no hay código que convierta.
+      (4) La última frase es regla general y va a `CLAUDE.md` como «Regla de dominio — todo importe lleva su moneda».
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b13-valor-reclamado-usd) · CLAUDE.md → «Regla de dominio — todo importe lleva su moneda»"
+    maestro_pasaje: "Anexo D nº 7"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1B-13 (valor-reclamado-usd, cierra: no)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
