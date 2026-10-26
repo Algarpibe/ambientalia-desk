@@ -845,7 +845,7 @@ export function garantiaDelTicket(ticketId: string): Promise<GarantiaDelTicket> 
   return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/garantia-proveedor`, { credentials: 'include' }).then((r) => json<GarantiaDelTicket>(r))
 }
 
-export function responderReclamacion(asociacionId: number, cuerpo: { reclama: boolean; motivo?: string; fabricante?: string; piezaReferencia?: string | null; piezaSerial?: string | null; valorReclamado?: number | null }): Promise<GarantiaProveedor> {
+export function responderReclamacion(asociacionId: number, cuerpo: { reclama: boolean; motivo?: string; fabricante?: string; piezaReferencia?: string | null; piezaSerial?: string | null }): Promise<GarantiaProveedor> {
   return fetch(`/api/ov-asociaciones/${asociacionId}/garantia-proveedor`, {
     method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
   }).then((r) => json<GarantiaProveedor>(r))

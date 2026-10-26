@@ -29,8 +29,8 @@ catálogo del artículo y no de la OVI; y queda falsa la frase «las líneas de 
 ## 1 · Intención
 
 Hoy el valor reclamado lo teclea una persona al abrir la ficha, siempre con origen `manual`
-(`apps/desk/server/db/garantiaProveedor.ts:95-100`), y ningún importe dice su moneda: la pantalla pinta el número pelado
-(`apps/desk/src/components/PanelGarantiaProveedor.tsx:26`, `apps/desk/src/components/MedicionGarantias.tsx:16`) y la spec
+(`apps/desk/server/db/garantiaProveedor.ts:95-100` en `c6147860`), y ningún importe dice su moneda: la pantalla pinta el número pelado
+(`apps/desk/src/components/PanelGarantiaProveedor.tsx:26` en `c6147860`, `apps/desk/src/components/MedicionGarantias.tsx:16` en `c6147860`) y la spec
 viva supone «pesos» (`openspec/specs/tickets-core/spec.md:2556-2557`), cuando el costo de Books está en USD
 (`openspec/config.yaml:5439`). Al terminar: al responder «sí», el servidor guarda como foto el valor reclamado calculado de
 las líneas de la OVI y del costo de catálogo, en USD y con origen `ovi`; corregirlo a mano lo deja `manual`; y cada importe
@@ -38,10 +38,10 @@ de la ficha y de la medición sale de la API y se pinta con «USD» al lado.
 
 ## 2 · Lo que hay hoy (medido)
 
-- El «sí» lleva `valorReclamado` en el cuerpo (`packages/shared/src/garantiaProveedor.ts:68-70`), validado como número ≥ 0
+- El «sí» lleva `valorReclamado` en el cuerpo (`packages/shared/src/garantiaProveedor.ts:68-70` en `c6147860`), validado como número ≥ 0
   (`packages/shared/src/garantiaProveedor.ts:137-138`); el panel lo captura
-  (`apps/desk/src/components/PanelGarantiaProveedor.tsx:84-87`).
-- `editarFicha` reemplaza el valor sin tocar el origen (`apps/desk/server/db/garantiaProveedor.ts:114-121`), y la spec lo
+  (`apps/desk/src/components/PanelGarantiaProveedor.tsx:84-87` en `c6147860`).
+- `editarFicha` reemplaza el valor sin tocar el origen (`apps/desk/server/db/garantiaProveedor.ts:114-121` en `c6147860`), y la spec lo
   exige (`openspec/specs/tickets-core/spec.md:2679`).
 - Datos: `public.garantia_proveedor` sin columna de moneda (`packages/zoho-sync/src/db/schema.sql:727-751`);
   `books.sales_orders`, PK `salesorder_id`, con `raw` (`packages/zoho-sync/src/db/schema.sql:160-165`); `books.items` con
@@ -62,7 +62,7 @@ de la ficha y de la medición sale de la API y se pinta con «USD» al lado.
 3. Moneda: todo importe de la ficha (reclamado y recuperado) y de la medición (RQ-TC-65 a RQ-TC-68) sale de la API con su
    moneda al lado, USD; el `.tsx` pinta «USD» junto a cada importe y en cada campo de captura. Sin código de conversión
    (consecuencia (3), `openspec/config.yaml:5455`).
-4. S-4 corregido en sitio: el comentario de `packages/shared/src/garantiaProveedor.ts:36-37` deja de decir «mientras no se
+4. S-4 corregido en sitio: el comentario de `packages/shared/src/garantiaProveedor.ts:36-37` en `c6147860` deja de decir «mientras no se
    calcule solo», sin desplazar líneas.
 5. Spec viva `tickets-core`: MODIFIED en sitio con el mismo número de líneas, y ADDED al final (§4).
 6. Entregable del cierre: inventario de los demás importes de Desk sin moneda (§13).
@@ -103,7 +103,7 @@ moneda de todos los importes de la ficha y de la medición; deja fuera el envío
 |---|---|---|---|
 | S-1 | La OVI se busca por `ov_asociaciones.salesorder_id`, PK de `books.sales_orders`; si es NULL, no hay foto | Lo da Books en el alta y la remisión (§2); `salesorder_number` no tiene restricción de unicidad (`packages/zoho-sync/src/db/schema.sql:160-165`) y en el alta el número puede ser el tecleado y no el de Books (`apps/desk/server/services/ticketService.ts:42`) | Caer al `ovi_numero` cuando el id es NULL, exigiendo una sola fila (molde `packages/zoho-sync/src/books/subOV.ts:41-44`) |
 | S-2 | Un `valorReclamado` en el cuerpo del «sí» se ignora, no se rechaza; el formulario deja de pedirlo | Molde RQ-TC-62 (`openspec/specs/tickets-core/spec.md:3759`): un cliente en caché sigue funcionando; y nadie conoce la foto antes de abrir | Usarlo como valor manual cuando no hay foto; o `422` |
-| S-3 | Sin foto: valor NULL y origen `manual` | Es como quedan hoy todas las fichas (`apps/desk/server/db/garantiaProveedor.ts:99`): una sola forma de decir «lo pone una persona» | Origen NULL hasta que alguien escriba |
+| S-3 | Sin foto: valor NULL y origen `manual` | Es como quedan hoy todas las fichas (`apps/desk/server/db/garantiaProveedor.ts:99` en `c6147860`): una sola forma de decir «lo pone una persona» | Origen NULL hasta que alguien escriba |
 | S-4 | Todo o nada: sin fila de la orden, sin `line_items` o vacía, una línea sin `item_id`, sin cantidad finita mayor que 0, o un artículo ausente de `books.items` o con `purchase_rate` NULL o ≤ 0 → sin foto | Una suma parcial es un importe falso con apariencia de dato | Sumar las líneas válidas y marcar la foto como parcial |
 | S-5 | «Cambia» se juzga por número: NULL→NULL y X→X conservan el origen; X→NULL, NULL→X y X→Y pasan a `manual` | Guardar sin tocar el valor no es corregirlo | Toda edición pasa a `manual` |
 | S-6 | La suma se redondea a 2 decimales una sola vez, al final | El centavo de dólar es la unidad; redondear por línea acumula error | Por línea; o sin redondeo |
