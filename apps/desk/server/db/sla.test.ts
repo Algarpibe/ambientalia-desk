@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { newDb } from 'pg-mem'
+import { newDb } from 'pg-mem'; import { conFuncionesDeEstado } from '../testing/pgMemEstado'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { ticketsConSlaVencido, tieneOrdenVenta } from './sla'; import { ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 
 let db: Queryable
-beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
+beforeEach(async () => { const pg = conFuncionesDeEstado(newDb()).adapters.createPg(); db = new pg.Pool(); await migrate(db) })
 
 const AHORA = new Date('2026-09-10T12:00:00.000Z')
 

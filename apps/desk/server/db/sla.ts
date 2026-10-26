@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { ALARMAS_SLA, SLA_HORAS_POR_ESTADO, flujoDelTicket, slaVencido, type AlarmaSla, type Estado } from '@ambientalia/shared'; import { listarCierres } from './calendarioCierres'
+import { ALARMAS_SLA, sqlEstadoNormalizado, SLA_HORAS_POR_ESTADO, flujoDelTicket, slaVencido, type AlarmaSla, type Estado } from '@ambientalia/shared'; import { listarCierres } from './calendarioCierres'
 
 export interface TicketConSlaVencido {
   id: string
@@ -42,7 +42,7 @@ export async function ticketsConSlaVencido(db: Queryable, ahora: Date, corte?: D
   if (conSla.length === 0) return []
 
   const marcadores = conSla.map((_, i) => `$${i + 1}`).join(', ')
-  const r = await db.query(`SELECT id, number, status, classification, orden_venta, salesorder_id FROM tickets WHERE status IN (${marcadores})`, conSla)
+  const r = await db.query(`SELECT id, number, ${sqlEstadoNormalizado('status')} AS status, classification, orden_venta, salesorder_id FROM tickets WHERE ${sqlEstadoNormalizado('status')} IN (${marcadores})`, conSla)
   const cierres = new Set(await listarCierres(db)) // en cada llamada: un cierre dado de alta hoy cuenta en la pasada siguiente
   const vencidos: TicketConSlaVencido[] = []
   const candidatos = (r.rows as FilaTicket[]).filter((fila) =>
@@ -86,7 +86,7 @@ export async function entradasActuales(
   const m = estados.map((_, i) => `$${i + 1}`).join(', ')
   const r = await db.query(
     `SELECT id, ticket_id, to_status, performed_at FROM ticket_transitions
-      WHERE to_status IN (${m}) AND ticket_id IN (SELECT id FROM tickets WHERE status IN (${m}))`,
+      WHERE to_status IN (${m}) AND ticket_id IN (SELECT id FROM tickets WHERE ${sqlEstadoNormalizado('status')} IN (${m}))`,
     estados,
   )
   const mejor = new Map<string, { at: number; id: number }>()

@@ -181,3 +181,71 @@ Sin edición. `packages/zoho-sync/src/sync.test.ts` (fila 7), `packages/zoho-syn
 - typecheck 0; lint 0 errores (172 avisos, los mismos que en la primera pasada del intento: el cherry-pick no añade ninguno); detector sobre el
   commit de este cierre.
 - Regla 13 / mutación 3: `git diff --stat f5465799 -- apps/desk/src` vacío.
+
+## Lote L3
+
+Base del intento: `e15a9d6a`. L3.1-L3.8 hechas; L3.c la cierra el orquestador.
+
+### L3.1 Línea base (antes de editar)
+
+`npx vitest run` sobre `apps/desk/server/db/sla.test.ts`, `alarmasAvisadas.test.ts`, `esperasVencidas.test.ts`, `apps/desk/server/services/alarmasSla.test.ts` y `avisoSalidasEsperas.test.ts`
+→ 5 ficheros, **67 pruebas, todas en verde** (16 + 7 + 6 + 18 + 20). Las líneas citadas por L3.7 y L3.8 se comprobaron contra el árbol antes de editar y dicen lo que el diseño afirma
+(`sla.ts:45` y `:89`, `alarmasAvisadas.ts:21`, `esperasVencidas.ts:30`, `:37`, `:42`; los `newDb()` de los seis ficheros de pg-mem; las importaciones de `:2` y `:4`).
+
+### L3.2-L3.5 Rojos, vistos ANTES del verde
+
+| Tarea | Prueba | Aserción observada | Causa |
+|---|---|---|---|
+| L3.2 | `apps/desk/server/testing/pgMemEstado.test.ts` (todo el fichero) | `Error: Cannot find module './pgMemEstado'` | La imitación no existe: es la causa esperada |
+| L3.3 fila 18 | `normalizarEstadosZoho.test.ts` · «`Notificado ` y `Notificado` con entrada vencen los dos…» | `expected [ [ 'uno', 'Notificado' ] ] to deeply equal [ [ 'dos', 'Notificado' ], …(1) ]` | `sla.ts:45` filtra `status IN ('Notificado', …)` con el crudo: el de un espacio de más ni se selecciona |
+| L3.3 fila 20 | ídem · «`Notificación  cliente` con entrada y marca queda marcado…» | `expected [ 'uno' ] to deeply equal [ 'dos', 'uno' ]` | `alarmasAvisadas.ts:21` filtra el crudo; el gemelo de dos espacios no sale en la marca |
+| L3.3 fila 21 | ídem · «`Solicitado ` y `Solicitado` con historial de la app…» | `expected [ { id: 'uno', number: 1005, …(3) } ] to deeply equal [ …(2) ]` | `esperasVencidas.ts:30` filtra el crudo; sólo el gemelo limpio es una espera |
+| L3.3 espía | ídem · «ninguna de las tres emite un UPDATE…» | `expected [ +0, +0, +0 ] to deeply equal [ 1, 1, 1 ]` | Las tres consultas devuelven vacío para el ticket de espacios de más; el espía sí ve consultas (`calls.length > 0`) y ningún `UPDATE` |
+| L3.4 | `apps/desk/server/db/normalizarEstado.integration.test.ts` | **no puede ponerse rojo aquí**: 15 pruebas saltadas, `TEST_DATABASE_URL` sin definir | Se salta sin la variable (molde de `migracionConcurrente.integration.test.ts`). Su rojo (el caso b, `ticketsEnEspera` con el par de gemelos) sólo existiría en CI. **No se ha ejecutado contra PostgreSQL real en esta máquina: hipótesis hasta que corra el CI de PostgreSQL 17.** |
+
+Verdes a propósito dentro del rojo: las precondiciones de crudo (`expect(await crudo('dos')).toBe(…)`) y el gemelo limpio de cada prueba. Se descartó una prueba «sin entrada no hay alarma» que salía
+verde por vacío y no distinguía nada (colección vacía sin contraste); la subconsulta de `sla.ts:89` la ejerce la prueba de la fila 18 (si se quedara cruda, `dos` no tendría entrada y no vencería).
+
+**Qué dice pg-mem sin la imitación** (medido con una consulta suelta): `ERROR: function btrim(text) does not exist`, con la pista de que pg-mem implementa muy pocas funciones nativas. No hizo falta reordenar pasos:
+el rojo de L3.3 viene de comparar el crudo (la consulta aún no usa la función), no de «función desconocida», porque L3.8 se hace después de L3.6 y L3.7.
+
+### L3.6-L3.8 Verde
+
+- **L3.6** `apps/desk/server/testing/pgMemEstado.ts` (nuevo, 38 líneas): `conFuncionesDeEstado(mem)` registra en `mem.public` `btrim(text)` (recorta sólo U+0020) y `regexp_replace(text, text, text, text)`, que sólo
+  acepta `' {2,}'`, `' '` y `'g'` y lanza «imitación fuera de alcance» con cualquier otra cosa. Los `NULL` no llegan a la función (pg-mem devuelve `NULL` si no se pide `allowNullArguments`; lo fija la prueba de NULL).
+  `pgMemEstado.test.ts`: **20/20** a la primera (14 muestras de la spec contra `normalizarEstado`, `btrim` sólo U+0020, `NULL`, `WHERE … IN`, tres patrones/reemplazos/banderas ajenos).
+- **L3.7** registro en sitio, una línea por una línea (la importación va en la misma línea que `import { newDb } from 'pg-mem'`, separada por `;`): `apps/desk/server/testing/appHarness.ts:2`, `:36`;
+  `apps/desk/server/db/sla.test.ts:2`, `:7`; `alarmasAvisadas.test.ts:2`, `:17`; `esperasVencidas.test.ts:2`, `:14`; `apps/desk/server/services/alarmasSla.test.ts:4`, `:27`; `avisoSalidasEsperas.test.ts:4`, `:19`.
+- **L3.8** `sqlEstadoNormalizado('status')` en sitio, en `SELECT` (`… AS status`) y `WHERE`: `apps/desk/server/db/sla.ts:45` y `:89` (importación en `:2`); `apps/desk/server/db/alarmasAvisadas.ts:21` (importación
+  en `:2`); `apps/desk/server/db/esperasVencidas.ts:30`, `:37`, `:42` (importación en `:2`). pg-mem aceptó el alias `AS status` con la misma columna en el `WHERE`; que PostgreSQL real también lo acepte lo cierra la
+  integración (caso b) en CI.
+
+`wc -l` antes y después, **idéntico** en los nueve ficheros editados en sitio: `appHarness.ts` 141, `sla.test.ts` 273, `alarmasAvisadas.test.ts` 82, `esperasVencidas.test.ts` 87, `alarmasSla.test.ts` 264,
+`avisoSalidasEsperas.test.ts` 224, `sla.ts` 125, `alarmasAvisadas.ts` 35, `esperasVencidas.ts` 60. Sólo `normalizarEstadosZoho.test.ts` crece (bloque L3 al final: 219 → 307 líneas, sin tocar una existente).
+
+Verde: fichero de aceptación **19/19**; los cinco ficheros de la línea base **67/67**.
+
+### TDD Cycle Evidence (L3)
+
+| Tarea | Fichero de prueba | Capa | Línea base | ROJO | VERDE | Triangulación | Refactor |
+|---|---|---|---|---|---|---|---|
+| L3.2 | `apps/desk/server/testing/pgMemEstado.test.ts` | Unitaria sobre pg-mem | N/A (nuevo) | módulo inexistente | 20/20 | 14 muestras, NULL, `IN`, tres entradas ajenas | un escape inútil (`\s`, lint) corregido en la prueba |
+| L3.3 | `apps/desk/server/normalizarEstadosZoho.test.ts` (bloque L3) | Integración pg-mem | 15/15 (L1+L2) y 67/67 | 4 de 4 rojas, por el crudo | 19/19 | gemelo limpio en cada fila; espía de escrituras | se quitó una prueba trivial (vacío sin contraste) |
+| L3.4 | `apps/desk/server/db/normalizarEstado.integration.test.ts` | Integración PostgreSQL real | N/A (nuevo) | no ejecutable en local (se salta) | 15 saltadas | 14 muestras + par de gemelos | — |
+
+### Regla 13 / mutación 3 (L3)
+
+`git diff --stat e15a9d6a -- apps/desk/src apps/desk/server/services/ticketService.ts` → **vacío**. L3 no toca ninguna decisión del cliente: las filas 18-21 son consultas del servidor.
+
+### Vecinos y comprobaciones
+
+- 77 ficheros de prueba (todos los que usan `instalarArnes`, los cinco de pg-mem del lote, `pgMemEstado.test.ts`, la integración, y `migracionMarcadorLectores`, `listaRemisionCreada`, `prioridadTop5`, `propagarTop5`,
+  `routes/reasignacion`, `db/migracionTicketsAbiertos` por llegar a `entradasActuales`, `ticketsEnEspera` o `colaTaller`): **76 en verde, 1 saltado (la integración); 1792 pruebas pasan, 15 saltadas, 0 fallan**.
+- `npm run typecheck` → 0. `npm run lint` → 0 errores, **172 avisos** (los mismos que antes del lote; la primera pasada traía 174 por dos `as any` del bloque L3 y un escape inútil, ya corregidos).
+
+### Medida del intento (L3.c la cierra el orquestador)
+
+- `git diff --shortstat --no-renames e15a9d6a` (antes de añadir este apartado): 10 ficheros, **109 inserciones, 21 borrados** (130). De ellas, 88 son el bloque L3 de `normalizarEstadosZoho.test.ts`, 8 líneas de producción
+  y 12 de prueba editadas una por una, y 8 de `tasks.md`.
+- Sin trackear (`git ls-files --others --exclude-standard`, `wc -l`): `normalizarEstado.integration.test.ts` 82, `pgMemEstado.test.ts` 70, `pgMemEstado.ts` 38 = **190**.
+- **Suma de código y pruebas: 320** (130 + 190), más este apartado de `apply-progress.md` (artefacto): por debajo de la válvula de 720. Ningún binario.

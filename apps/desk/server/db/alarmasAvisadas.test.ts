@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { newDb } from 'pg-mem'
+import { newDb } from 'pg-mem'; import { conFuncionesDeEstado } from '../testing/pgMemEstado'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { ticketsEsperandoAprobacionCliente } from './alarmasAvisadas'
 import { ALARMAS_SLA } from '@ambientalia/shared'
@@ -14,7 +14,7 @@ import { logger } from '../util/logger'
  * escribe nada. Nunca lanza: una marca no puede tumbar el tablero.
  */
 let db: Queryable
-beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
+beforeEach(async () => { const pg = conFuncionesDeEstado(newDb()).adapters.createPg(); db = new pg.Pool(); await migrate(db) })
 afterEach(() => { vi.restoreAllMocks() })
 
 const E1 = '2026-09-09T13:00:00.000Z'

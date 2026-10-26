@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { newDb } from 'pg-mem'
+import { newDb } from 'pg-mem'; import { conFuncionesDeEstado } from '../testing/pgMemEstado'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { ticketsEnEspera } from './esperasVencidas'
 
@@ -11,7 +11,7 @@ import { ticketsEnEspera } from './esperasVencidas'
  */
 let db: Queryable
 let n = 0
-beforeEach(async () => { n = 0; const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
+beforeEach(async () => { n = 0; const pg = conFuncionesDeEstado(newDb()).adapters.createPg(); db = new pg.Pool(); await migrate(db) })
 
 const NACIO = new Date('2026-01-05T15:00:00Z')
 const dia = (d: string) => new Date(`${d}T15:00:00Z`)

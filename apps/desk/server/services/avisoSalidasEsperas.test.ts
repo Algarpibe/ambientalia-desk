@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { newDb } from 'pg-mem'
+import { newDb } from 'pg-mem'; import { conFuncionesDeEstado } from '../testing/pgMemEstado'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Cargo } from '@ambientalia/shared'
 import { avisarSalidasEsperas, pasadaSalidasEsperas } from './avisoSalidasEsperas'
@@ -16,7 +16,7 @@ import { logger } from '../util/logger'
  */
 let db: Queryable
 let n = 0
-beforeEach(async () => { n = 0; const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
+beforeEach(async () => { n = 0; const pg = conFuncionesDeEstado(newDb()).adapters.createPg(); db = new pg.Pool(); await migrate(db) })
 
 const NACIO = new Date('2026-01-05T15:00:00Z')
 const ENTRADA = new Date('2026-09-01T15:00:00Z') // 01/09/2026 en Bogotá

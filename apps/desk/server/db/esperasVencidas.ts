@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { ESTADOS_SIN_SALIDA, etapasDesdeHistoria, flujoDelTicket, type Estado } from '@ambientalia/shared'
+import { ESTADOS_SIN_SALIDA, sqlEstadoNormalizado, etapasDesdeHistoria, flujoDelTicket, type Estado } from '@ambientalia/shared'
 import { secuenciaDelReloj } from './relojSla'
 import { json } from './ticketFuentes'
 
@@ -27,19 +27,19 @@ type Fila = Record<string, unknown>
 export async function ticketsEnEspera(db: Queryable): Promise<EsperaEnCurso[]> {
   const estados: string[] = [...ESTADOS_SIN_SALIDA]
   const m = estados.map((_, i) => `$${i + 1}`).join(', ')
-  const r = await db.query(`SELECT id, number, status, classification, created_time, derivado_a FROM tickets WHERE status IN (${m})`, estados)
+  const r = await db.query(`SELECT id, number, ${sqlEstadoNormalizado('status')} AS status, classification, created_time, derivado_a FROM tickets WHERE ${sqlEstadoNormalizado('status')} IN (${m})`, estados)
   const candidatos = (r.rows as Fila[]).filter((f) => flujoDelTicket({ classification: f.classification as string | null, status: String(f.status) }) === 'servicio')
   if (candidatos.length === 0) return []
 
   const [transiciones, historia] = await Promise.all([
     db.query(
       `SELECT id, ticket_id, from_status, to_status, performed_at FROM ticket_transitions
-        WHERE ticket_id IN (SELECT id FROM tickets WHERE status IN (${m}))`,
+        WHERE ticket_id IN (SELECT id FROM tickets WHERE ${sqlEstadoNormalizado('status')} IN (${m}))`,
       estados,
     ),
     db.query(
       `SELECT ticket_id, raw FROM ticket_history
-        WHERE event_name = 'TicketUpdated' AND ticket_id IN (SELECT id FROM tickets WHERE status IN (${m}))`,
+        WHERE event_name = 'TicketUpdated' AND ticket_id IN (SELECT id FROM tickets WHERE ${sqlEstadoNormalizado('status')} IN (${m}))`,
       estados,
     ),
   ])

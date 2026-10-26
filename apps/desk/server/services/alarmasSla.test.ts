@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { newDb } from 'pg-mem'
+import { newDb } from 'pg-mem'; import { conFuncionesDeEstado } from '../testing/pgMemEstado'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { ALARMAS_SLA } from '@ambientalia/shared'
@@ -24,7 +24,7 @@ import { logger } from '../util/logger'
 let db: Queryable
 let eventos: string[]
 beforeEach(async () => {
-  const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db)
+  const pg = conFuncionesDeEstado(newDb()).adapters.createPg(); db = new pg.Pool(); await migrate(db)
   eventos = []
   // Registro de lo que pasa por los clientes de transacción: la estructura BEGIN → marca → avisos → COMMIT.
   const pool = db as unknown as { connect: () => Promise<{ query: (t: string, p?: unknown[]) => Promise<unknown> }> }

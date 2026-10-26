@@ -217,3 +217,91 @@ describe('L2 · reloj del SLA (fila 15)', () => {
     expect(sucio).toEqual(limpio)
   })
 })
+
+/**
+ * L3: SQL que FILTRA por el estado (filas 18, 20 y 21 de la tabla de `design.md`). Aquí no basta con normalizar al mapear: la
+ * consulta compara el estado crudo con una lista exacta, así que el de dos espacios (o con un espacio al final) ni siquiera se
+ * selecciona. La forma SQL de la regla va DENTRO de la consulta; el gemelo limpio es el testigo.
+ */
+import { ticketsConSlaVencido } from './db/sla'
+import { avisarAlarmasVencidas } from './services/alarmasSla'
+import type { AppConfig } from '@ambientalia/zoho-sync/config'
+import { ticketsEsperandoAprobacionCliente } from './db/alarmasAvisadas'
+import { ticketsEnEspera } from './db/esperasVencidas'
+
+const ENTRADA_SLA = new Date('2026-10-05T13:00:00.000Z') // lunes 08:00 en Bogotá
+const AHORA_SLA = new Date('2026-10-08T15:00:00.000Z')
+const entroEn = (id: string, estado: string, cuando: Date) =>
+  db.query('INSERT INTO ticket_transitions (ticket_id, transition_id, from_status, to_status, performed_at) VALUES ($1,$2,$3,$4,$5)', [id, 'x', 'En Proceso', estado, cuando])
+
+describe('L3 · SLA vencido (fila 18)', () => {
+  it('`Notificado ` y `Notificado` con entrada vencen los dos, con el mismo estado; la alarma se marca con `Notificado`', async () => {
+    await insertarCrudo('dos', 1004, 'Notificado ')
+    await insertarCrudo('uno', 1005, 'Notificado')
+    expect(await crudo('dos')).toBe('Notificado ')
+    await entroEn('dos', 'Notificado', ENTRADA_SLA)
+    await entroEn('uno', 'Notificado', ENTRADA_SLA)
+    const vencidos = await ticketsConSlaVencido(db, AHORA_SLA)
+    expect(vencidos.map((v) => [v.id, v.estado]).sort()).toEqual([['dos', 'Notificado'], ['uno', 'Notificado']])
+    // La pasada marca con el estado normalizado: el corte es la propia pasada, así que se marca sin avisar.
+    const r = await avisarAlarmasVencidas(db, {} as unknown as AppConfig, AHORA_SLA, vi.fn() as unknown as typeof fetch)
+    expect(r.silenciosas).toBe(2)
+    expect((await db.query('SELECT ticket_id, estado FROM public.alarmas_avisadas ORDER BY ticket_id')).rows)
+      .toEqual([{ ticket_id: 'dos', estado: 'Notificado' }, { ticket_id: 'uno', estado: 'Notificado' }])
+    expect(await crudo('dos')).toBe('Notificado ')
+  })
+
+})
+
+describe('L3 · marca «esperando aprobación del cliente» (fila 20)', () => {
+  it('`Notificación  cliente` con entrada y marca queda marcado, como su gemelo (el camino que traga errores)', async () => {
+    const E = new Date('2026-10-05T13:00:00.000Z')
+    await insertarCrudo('dos', 1004, 'Notificación  cliente')
+    await insertarCrudo('uno', 1005, 'Notificación cliente')
+    expect(await crudo('dos')).toBe('Notificación  cliente')
+    for (const id of ['dos', 'uno']) {
+      await entroEn(id, 'Notificación cliente', E)
+      await db.query('INSERT INTO public.alarmas_avisadas (ticket_id, estado, entrada_at, avisos_creados) VALUES ($1,$2,$3,1)', [id, 'Notificación cliente', E])
+    }
+    expect([...await ticketsEsperandoAprobacionCliente(db)].sort()).toEqual(['dos', 'uno'])
+  })
+})
+
+describe('L3 · esperas en curso (fila 21)', () => {
+  it('`Solicitado ` y `Solicitado` con historial de la app: los dos, mismo estado y mismo `desde`', async () => {
+    const D = new Date('2026-10-05T15:00:00.000Z')
+    await insertarCrudo('dos', 1004, 'Solicitado ')
+    await insertarCrudo('uno', 1005, 'Solicitado')
+    expect(await crudo('dos')).toBe('Solicitado ')
+    await entroEn('dos', 'Solicitado', D)
+    await entroEn('uno', 'Solicitado', D)
+    const esperas = (await ticketsEnEspera(db)).sort((a, b) => a.id.localeCompare(b.id))
+    expect(esperas).toEqual([
+      { id: 'dos', number: 1004, estado: 'Solicitado', desde: D, derivadoA: null },
+      { id: 'uno', number: 1005, estado: 'Solicitado', desde: D, derivadoA: null },
+    ])
+  })
+})
+
+describe('L3 · las tres consultas no escriben (RQ-ZS-24: ningún UPDATE normaliza)', () => {
+  it('ninguna de las tres emite un UPDATE sobre tickets.status y la columna sigue cruda', async () => {
+    const E = new Date('2026-10-05T13:00:00.000Z')
+    await insertarCrudo('a', 1, 'Notificado ')
+    await entroEn('a', 'Notificado', E)
+    await insertarCrudo('b', 2, 'Notificación  cliente')
+    await entroEn('b', 'Notificación cliente', E)
+    await db.query('INSERT INTO public.alarmas_avisadas (ticket_id, estado, entrada_at, avisos_creados) VALUES ($1,$2,$3,1)', ['b', 'Notificación cliente', E])
+    await insertarCrudo('c', 3, 'Solicitado ')
+    await entroEn('c', 'Solicitado', E)
+    const espia = vi.spyOn(db, 'query')
+    const sla = await ticketsConSlaVencido(db, AHORA_SLA)
+    const marca = await ticketsEsperandoAprobacionCliente(db)
+    const esperas = await ticketsEnEspera(db)
+    const escrituras = espia.mock.calls.filter(([sql]) => /UPDATE\s+tickets\b[\s\S]*\bstatus\b/i.test(String(sql)))
+    expect(espia.mock.calls.length).toBeGreaterThan(0)
+    expect(escrituras).toEqual([])
+    espia.mockRestore()
+    expect([sla.length, marca.size, esperas.length]).toEqual([1, 1, 1])
+    expect([await crudo('a'), await crudo('b'), await crudo('c')]).toEqual(['Notificado ', 'Notificación  cliente', 'Solicitado '])
+  })
+})

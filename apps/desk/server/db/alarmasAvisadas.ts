@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { ALARMAS_SLA } from '@ambientalia/shared'
+import { ALARMAS_SLA, sqlEstadoNormalizado } from '@ambientalia/shared'
 import { entradasActuales } from './sla'
 import { logger } from '../util/logger'
 
@@ -18,7 +18,7 @@ export async function ticketsEsperandoAprobacionCliente(db: Queryable): Promise<
     const estados = Object.entries(ALARMAS_SLA).filter(([, a]) => a?.marcaTablero).map(([e]) => e)
     if (estados.length === 0) return new Set()
     const m = estados.map((_, i) => `$${i + 1}`).join(', ')
-    const tickets = (await db.query(`SELECT id, status FROM tickets WHERE status IN (${m})`, estados)).rows as Array<{ id: string; status: string }>
+    const tickets = (await db.query(`SELECT id, ${sqlEstadoNormalizado('status')} AS status FROM tickets WHERE ${sqlEstadoNormalizado('status')} IN (${m})`, estados)).rows as Array<{ id: string; status: string }>
     const entradas = await entradasActuales(db, tickets, estados)
     const estadoDe = new Map(tickets.map((t) => [String(t.id), t.status]))
     const r = await db.query(`SELECT ticket_id, estado, entrada_at FROM public.alarmas_avisadas WHERE estado IN (${m})`, estados)

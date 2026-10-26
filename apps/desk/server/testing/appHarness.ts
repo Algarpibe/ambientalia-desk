@@ -1,5 +1,5 @@
 import { beforeEach, vi } from 'vitest'
-import { newDb } from 'pg-mem'
+import { newDb } from 'pg-mem'; import { conFuncionesDeEstado } from './pgMemEstado'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { CLAVE_CERTIFICADO_FABRICA, CLAVE_MOTIVO_FIRMA_ADMIN, type Transition, type Cargo } from '@ambientalia/shared'
@@ -33,7 +33,7 @@ export let db: Queryable
  */
 export function instalarArnes(): void {
   beforeEach(async () => {
-    const pg = newDb().adapters.createPg()
+    const pg = conFuncionesDeEstado(newDb()).adapters.createPg()
     db = new pg.Pool(); emularMezclaJsonb(db as unknown as ConPool)
     await migrate(db)
   })
