@@ -31,7 +31,7 @@ catálogo del artículo y no de la OVI; y queda falsa la frase «las líneas de 
 Hoy el valor reclamado lo teclea una persona al abrir la ficha, siempre con origen `manual`
 (`apps/desk/server/db/garantiaProveedor.ts:95-100` en `c6147860`), y ningún importe dice su moneda: la pantalla pinta el número pelado
 (`apps/desk/src/components/PanelGarantiaProveedor.tsx:26` en `c6147860`, `apps/desk/src/components/MedicionGarantias.tsx:16` en `c6147860`) y la spec
-viva supone «pesos» (`openspec/specs/tickets-core/spec.md:2556-2557`), cuando el costo de Books está en USD
+viva supone «pesos» (`openspec/specs/tickets-core/spec.md:2556-2557` en `c6147860`), cuando el costo de Books está en USD
 (`openspec/config.yaml:5439`). Al terminar: al responder «sí», el servidor guarda como foto el valor reclamado calculado de
 las líneas de la OVI y del costo de catálogo, en USD y con origen `ovi`; corregirlo a mano lo deja `manual`; y cada importe
 de la ficha y de la medición sale de la API y se pinta con «USD» al lado.
@@ -42,7 +42,7 @@ de la ficha y de la medición sale de la API y se pinta con «USD» al lado.
   (`packages/shared/src/garantiaProveedor.ts:137-138`); el panel lo captura
   (`apps/desk/src/components/PanelGarantiaProveedor.tsx:84-87` en `c6147860`).
 - `editarFicha` reemplaza el valor sin tocar el origen (`apps/desk/server/db/garantiaProveedor.ts:114-121` en `c6147860`), y la spec lo
-  exige (`openspec/specs/tickets-core/spec.md:2679`).
+  exige (`openspec/specs/tickets-core/spec.md:2679` en `c6147860`).
 - Datos: `public.garantia_proveedor` sin columna de moneda (`packages/zoho-sync/src/db/schema.sql:727-751`);
   `books.sales_orders`, PK `salesorder_id`, con `raw` (`packages/zoho-sync/src/db/schema.sql:160-165`); `books.items` con
   `purchase_rate` (`packages/zoho-sync/src/db/schema.sql:380-384`). Las líneas de la orden no son tabla en `desk`: sólo
@@ -91,9 +91,9 @@ moneda de todos los importes de la ficha y de la medición; deja fuera el envío
   Fuera de la red de pruebas (F0-00): sin rojo previo; lo respalda la prueba de servidor (§6).
 - **Spec**: un MODIFIED a mitad de una spec de 4.522 líneas conserva su número de líneas o desplaza todas las citas
   posteriores. Se reescriben en sitio sólo las frases que la decisión vuelve falsas: en RQ-TC-45, «en pesos»
-  (`openspec/specs/tickets-core/spec.md:2556-2557`), «se construirán después» (`openspec/specs/tickets-core/spec.md:2567-2568`)
-  y el escenario «no es automático» (`openspec/specs/tickets-core/spec.md:2590-2593`); en RQ-TC-47, «el origen MUST NOT
-  cambiar» (`openspec/specs/tickets-core/spec.md:2679`); en RQ-TC-65, «pesos» (`openspec/specs/tickets-core/spec.md:3948-3949`).
+  (`openspec/specs/tickets-core/spec.md:2556-2557` en `c6147860`), «se construirán después» (`openspec/specs/tickets-core/spec.md:2567-2568` en `c6147860`)
+  y el escenario «no es automático» (`openspec/specs/tickets-core/spec.md:2590-2593` en `c6147860`); en RQ-TC-47, «el origen MUST NOT
+  cambiar» (`openspec/specs/tickets-core/spec.md:2679` en `c6147860`); en RQ-TC-65, «pesos» (`openspec/specs/tickets-core/spec.md:3948-3949` en `c6147860`).
   Lo nuevo va ADDED desde RQ-TC-78, tras RQ-TC-77 (`openspec/specs/tickets-core/spec.md:4498`): foto al abrir, origen al
   editar, y moneda en la API y en pantalla con su casilla de regla 13.
 

@@ -50,7 +50,7 @@
 ## Verify y archive (un intento cada uno)
 
 - [x] V.1 `sdd-verify`: contrastar el diff contra los escenarios de RQ-TC-78, -79, -80 y los MODIFIED de RQ-TC-45, -47, -65; cada hueco de S-4 una prueba. Repetir CC y el barrido de L3.6.
-- [ ] A.1 `sdd-archive` (techo 2 × carpeta + 800): medir ANTES la parte revisable (fusión del delta + `archive-report.md`) ≤ 800; fusionar POR SCRIPT, MODIFIED en sitio a igual longitud (57, 62 y 80 líneas) y ADDED tras RQ-TC-77. `archive-report.md` con UNA línea de qué cubrió de F1B-13 y el inventario de L3.7; commit sólo del cambio archivado (`git show --numstat`).
+- [x] A.1 `sdd-archive` (techo 2 × carpeta + 800): medir ANTES la parte revisable (fusión del delta + `archive-report.md`) ≤ 800; fusionar POR SCRIPT, MODIFIED en sitio a igual longitud (57, 62 y 80 líneas) y ADDED tras RQ-TC-77. `archive-report.md` con UNA línea de qué cubrió de F1B-13 y el inventario de L3.7; commit sólo del cambio archivado (`git show --numstat`).
 
 ## Tareas de persona — fuera del recuento
 

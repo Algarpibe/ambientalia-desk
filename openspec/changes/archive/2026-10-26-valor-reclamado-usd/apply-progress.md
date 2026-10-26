@@ -159,7 +159,7 @@ Ninguna decisión del cliente queda sin línea de servidor salvo la de `PanelGar
 
 | Dónde | Citas | Caso | Qué se hizo |
 |---|---|---|---|
-| Documentos de ESTE cambio (`openspec/changes/valor-reclamado-usd/*`) | 34 | **A**: prescriptivas («edita EN SITIO `:57`», la casilla de `design.md` §8, «`:848` deja de declarar…», «`:36` ya no dice…»), ciertas hoy | Sin tocar |
+| Documentos de ESTE cambio (`openspec/changes/archive/2026-10-26-valor-reclamado-usd/*`) | 34 | **A**: prescriptivas («edita EN SITIO `:57`», la casilla de `design.md` §8, «`:848` deja de declarar…», «`:36` ya no dice…»), ciertas hoy | Sin tocar |
 | ídem | 8: `proposal.md:32`, `:33` (dos), `:41`, `:43`, `:44`, `:65`, `:106`; y `design.md:27` (`apps/desk/server/routes/medicionGarantias.test.ts:43-51`) | **B**: describen el estado ANTERIOR («`registrarRespuesta` escribe…», «el «sí» lleva `valorReclamado`…», «como quedan hoy todas las fichas») | **Ancladas** con `en c6147860`; comprobado que en esa revisión las líneas existen y dicen lo que la frase afirma |
 | ídem | 5: `design.md:89` (abreviada `:62`) y `:140`; `tasks.md:16` (abreviada `:62`), `:17` y `:43` | **A, desfasadas desde L1**: el diseño decía `medicionGarantias.ts:62`; la línea de la moneda es la `:63` (la `:62` es `fabricante:`) | **Corregidas** a `:63` |
 | Archivados de OTROS cambios | 10: `2026-10-06-ficha-garantia-proveedor` (`apply-progress.md:222`, `verify-report.md:159`, `:166` ×2) y `2026-10-17-medicion-garantias-por-marca` (`apply-progress.md:135`, `design.md:85` y `:134`, `proposal.md:30`, `specs/tickets-core/spec.md:14`, `tasks.md:43`) | **B** (registro fechado) o **A** sin cambio de significado (`garantiaProveedor.ts:43-64`: la interfaz sigue ahí) | Sin tocar, por la regla |

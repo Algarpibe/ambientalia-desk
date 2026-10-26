@@ -35,7 +35,7 @@ por plazos vencidos y errores del worker de vitest; su causa probable (la alimen
 | Métrica | Valor |
 |---|---|
 | Tareas L1.1 a L1.10, L2.1 a L2.12, L3.1 a L3.9 | 31 de 31 marcadas `[x]` |
-| `L1.c`, `L2.c`, `L3.c` (cierre del orquestador) | marcadas `[x]` en `openspec/changes/valor-reclamado-usd/tasks.md` en el mismo commit que este informe; la evidencia existe (commits `eaeda6e5`, `552140dd`, `1f3c85cc`) |
+| `L1.c`, `L2.c`, `L3.c` (cierre del orquestador) | marcadas `[x]` en `openspec/changes/archive/2026-10-26-valor-reclamado-usd/tasks.md` en el mismo commit que este informe; la evidencia existe (commits `eaeda6e5`, `552140dd`, `1f3c85cc`) |
 | `V.1` (esta fase) y `A.1` (archivo) | `V.1` marcada con este informe; `A.1` pendiente por diseño |
 
 W-1 (resuelto): las tres casillas de cierre estaban sin marcar aunque sus commits y sus cifras existían; se marcan con este informe.
@@ -134,7 +134,7 @@ Los cinco en `packages/shared/src/valorReclamado.test.ts` > origenTrasEditar (NU
 
 | Comprobación | Resultado |
 |---|---|
-| Evidencia TDD | tablas de rojos por lote en `openspec/changes/valor-reclamado-usd/apply-progress.md` (L1.5, L2.6); equivalen a la tabla del protocolo (S-A) |
+| Evidencia TDD | tablas de rojos por lote en `openspec/changes/archive/2026-10-26-valor-reclamado-usd/apply-progress.md` (L1.5, L2.6); equivalen a la tabla del protocolo (S-A) |
 | Ficheros de prueba existen y pasan | 7 de 7 verdes hoy |
 | Rojos creíbles (contra la partida) | confirmados en 4: `git show c6147860:packages/shared/src/medicionGarantias.ts` no contiene `moneda`; `git show eaeda6e5:apps/desk/server/db/garantiaProveedor.ts` no tiene `fotoDeLaOVI` ni `moneda`; `git show eaeda6e5:apps/desk/server/routes/garantiaProveedor.ts` no calcula foto ni origen; `git show eaeda6e5:packages/shared/src/garantiaProveedor.ts` sigue pasando el cuerpo por `datosComunes(cuerpo)` (el «sí» validaría 999 y -1). `valorReclamado.ts` no existe en `c6147860` |
 | Triangulación | adecuada: cinco casos de origen, diez huecos, tres fixtures de redondeo |
@@ -182,7 +182,7 @@ Reconstruido desde los esquemas (`packages/zoho-sync/src/db/schema.sql`, `packag
   errores sin manejar), sin tocar código, plazos, `maxWorkers` ni `cederAlBucle`.
 
 **WARNING**
-- W-1 (resuelto en este commit). `L1.c`, `L2.c` y `L3.c` estaban sin marcar en `openspec/changes/valor-reclamado-usd/tasks.md` aunque sus commits existían.
+- W-1 (resuelto en este commit). `L1.c`, `L2.c` y `L3.c` estaban sin marcar en `openspec/changes/archive/2026-10-26-valor-reclamado-usd/tasks.md` aunque sus commits existían.
 - W-2. `fotoDeLaOVI` (`apps/desk/server/db/garantiaProveedor.ts:189-201`) no rechaza ante huecos de DATOS, pero un error de la consulta (p. ej. un esquema `books` ausente) se propaga y la ruta (`apps/desk/server/routes/garantiaProveedor.ts:57`) da 500 en vez de «sí» sin foto. En producción `books.items` existe (la usa `apps/desk/server/db/catalogoArticulos.ts`); sólo afectaría a un entorno sin réplica de Books. La spec dice «no rechaza nada» sobre los datos, no sobre la infraestructura.
 - W-3. `npm test` entero salió 1 en cuatro pasadas seguidas sobre el mismo código (sección 2): 7 pruebas del detector de citas con el
   plazo vencido en las dos primeras y, en las cuatro, 2 o 3 «Timeout calling onTaskUpdate» del worker de vitest. Ninguna toca este
