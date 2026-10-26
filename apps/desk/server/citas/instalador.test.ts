@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect } from 'vitest'
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { repoGitTemporal } from '../testing/reposDePrueba'
+import { repoGitTemporal, cederAlBucle } from '../testing/reposDePrueba'
 
 /**
  * Pruebas SINTÉTICAS del instalador (`scripts/instalar-hooks.mjs`, RQ-CV-12, D9): lo invocan como
@@ -117,3 +117,6 @@ describe('instalador · scripts/instalar-hooks.mjs (RQ-CV-12)', () => {
     }
   }, LENTO)
 })
+
+// Sin esto el fichero, que pasa de 60 s, sale con un «Timeout calling onTaskUpdate» (ver `cederAlBucle`).
+afterEach(cederAlBucle)
