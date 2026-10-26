@@ -295,7 +295,7 @@ Cada una: edición exacta del diseño con `sed` sobre la línea, prueba(s) que d
 
 | Cita | Qué afirma | Qué dice la línea hoy | Caso |
 |---|---|---|---|
-| `openspec/specs/tickets-core/spec.md:2129` | «Zoho copia el estado verbatim» (`packages/zoho-sync/src/db/mappers.ts:47`) | `status: normalizarSiTexto(raw.status as string)` (`packages/zoho-sync/src/db/mappers.ts:47`): la sincronización ya NO copia verbatim | **A, y hoy FALSA** (desvío 3). No se toca aquí; la corrige el delta MODIFIED de RQ-TC-40 al archivar (A.2) |
+| `openspec/specs/tickets-core/spec.md:2129` en `a003f614` | «Zoho copia el estado verbatim» (`packages/zoho-sync/src/db/mappers.ts:47`) | `status: normalizarSiTexto(raw.status as string)` (`packages/zoho-sync/src/db/mappers.ts:47`): la sincronización ya NO copia verbatim | **A, y hoy FALSA** (desvío 3). No se toca aquí; la corrige el delta MODIFIED de RQ-TC-40 al archivar (A.2) |
 | `openspec/specs/zoho-sync/spec.md:936` | `entradasActuales` en `apps/desk/server/db/sla.ts:88-95` (el marcador de identidad no la mueve) | rango de la función y su consulta (`:89` ahora con `sqlEstadoNormalizado('status')`) | **A, sigue cierta**: la frase sólo nombra la función |
 | `openspec/specs/zoho-sync/spec.md:226` | la regla de «un ticket de Zoho no entra en las fases propias» vive en `apps/desk/server/db/estadoPorRemision.ts:41` | `:41` es la guarda `if (actual === undefined \|\| …)`; lo que cambió es la `:40` | **A, sigue cierta** (y `:32-34`, el motivo, no cambia) |
 | `openspec/specs/transitions-st/spec.md:102` | destino por recuento de confirmadas, `estadoPorRemision.ts:36-60`; `:43-47` el filtro `ok`/`ok_con_avisos` y `anulada_at` | `:36-60` es la función; `:43-47` es la consulta `COUNT(*)` con ese filtro | **A, sigue cierta** |
@@ -311,9 +311,9 @@ Cada una: edición exacta del diseño con `sed` sobre la línea, prueba(s) que d
 
 **Segundo pase (abreviadas `:NN`).** Dos barridos: (1) cada `:NN` detrás de una cita completa de la MISMA línea física, atribuido a la última completa: **0** en el repositorio vivo (99 en total, todas en `archive/**` o en los artefactos de este cambio); (2) cada `:NN` suelto a ≤3 líneas de una cita completa a uno de los módulos, en ficheros vivos: 26 candidatas, **todas falsos positivos** (leídas una a una: se refieren a `books/repo.ts:94-101`, `migrate.ts:38-50`, `repo.ts:44-54`/`:76-91`/`:64-95` (rangos sin ninguna de las líneas cambiadas), `estadoPorRemision.ts:43-47` o a otros ficheros). El detector de citas (`apps/desk/server/citas/`) sigue sin bloquear la forma abreviada: este pase es de lectura, como pide la regla.
 
-**Citas por reparar en ficheros que NO puedo tocar** (`openspec/specs/**`, `docs/sdd/**`, `openspec/config.yaml`, `CLAUDE.md`): **una**: `openspec/specs/tickets-core/spec.md:2129` (caso A, falsa hoy), que la fusión de A.2 corrige con el delta de RQ-TC-40. `CLAUDE.md` y `openspec/config.yaml` no tienen ninguna cita de línea cambiada que haya dejado de ser cierta (`openspec/config.yaml:5357` es cierta).
+**Citas por reparar en ficheros que NO puedo tocar** (`openspec/specs/**`, `docs/sdd/**`, `openspec/config.yaml`, `CLAUDE.md`): **una**: `openspec/specs/tickets-core/spec.md:2129` en `a003f614` (caso A, falsa hoy), que la fusión de A.2 corrige con el delta de RQ-TC-40. `CLAUDE.md` y `openspec/config.yaml` no tienen ninguna cita de línea cambiada que haya dejado de ser cierta (`openspec/config.yaml:5357` es cierta).
 
-**Reparada en los artefactos de este cambio:** `openspec/changes/normalizar-estados-zoho/proposal.md:17` decía «La sincronización copia el valor tal cual (`packages/zoho-sync/src/db/mappers.ts:47`)» sin revisión: es la CAUSA, cierta de `f5465799` y falsa hoy (caso B). Se ancla en sitio, sin mover líneas: «`mappers.ts:47` en `f5465799`». Las demás citas de `proposal.md` (`:38`, `:64`, `:109`, `:156`, `:68`, `:70`) señalan el lugar de la edición y siguen siendo ciertas. `design.md` queda anclado por su propia cabecera («Árbol medido: … `f5465799`»).
+**Reparada en los artefactos de este cambio:** `openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md:17` decía «La sincronización copia el valor tal cual (`packages/zoho-sync/src/db/mappers.ts:47`)» sin revisión: es la CAUSA, cierta de `f5465799` y falsa hoy (caso B). Se ancla en sitio, sin mover líneas: «`mappers.ts:47` en `f5465799`». Las demás citas de `proposal.md` (`:38`, `:64`, `:109`, `:156`, `:68`, `:70`) señalan el lugar de la edición y siguen siendo ciertas. `design.md` queda anclado por su propia cabecera («Árbol medido: … `f5465799`»).
 
 ### L4.3 Regla 13 / mutación 3 (completa, contra el árbol de hoy)
 
@@ -337,7 +337,7 @@ Ningún fichero de `apps/desk/src` ni `ticketService.ts` cambia; el valor que le
 ### Comprobaciones finales
 
 - `npm run typecheck` → **0**. `npm run lint` → **0 errores, 172 avisos** (los mismos que antes del lote).
-- Árbol de código: `git diff --quiet f914b731 -- apps packages` → 0. Sólo cambian `openspec/changes/normalizar-estados-zoho/apply-progress.md`, `tasks.md` y `proposal.md` (una cita anclada).
+- Árbol de código: `git diff --quiet f914b731 -- apps packages` → 0. Sólo cambian `openspec/changes/archive/2026-10-25-normalizar-estados-zoho/apply-progress.md`, `tasks.md` y `proposal.md` (una cita anclada).
 - Sin commit, push, stash ni `gentle-ai sdd-attempt`.
 
 ### Medida del intento (L4.c la cierra el orquestador)

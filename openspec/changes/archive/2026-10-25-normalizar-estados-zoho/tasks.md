@@ -47,7 +47,7 @@ lo demás son ficheros nuevos o bloques añadidos al final (`packages/shared/src
 
 ## Lote L4 · mutaciones M1-M7 y barrido (sin código nuevo; ~80 brutas)
 
-- [x] L4.1 Para CADA mutación, una a una: editar exactamente lo del diseño → correr SÓLO la prueba que debe caer → anotar la aserción observada → restaurar byte a byte (`git diff` vacío del hunk) → ver verde. M1 `mappers.ts:47`; M2 `repo.ts:139`; M3 `repo.ts:209` (`409` en vez de `200`); M4 `esperasVencidas.ts:30` (el `WHERE` vuelve a `status IN`; M4b opcional en `sla.ts:89`); M5 sin `.replace(/^ +| +$/g, '')` (NO la caza el catálogo, desvío 5); M6 con `.toLowerCase()`; M7 sobre una COPIA del CSV con `Estado ajeno` en el directorio temporal, nunca sobre el trackeado. Registro en `openspec/changes/normalizar-estados-zoho/apply-progress.md`.
+- [x] L4.1 Para CADA mutación, una a una: editar exactamente lo del diseño → correr SÓLO la prueba que debe caer → anotar la aserción observada → restaurar byte a byte (`git diff` vacío del hunk) → ver verde. M1 `mappers.ts:47`; M2 `repo.ts:139`; M3 `repo.ts:209` (`409` en vez de `200`); M4 `esperasVencidas.ts:30` (el `WHERE` vuelve a `status IN`; M4b opcional en `sla.ts:89`); M5 sin `.replace(/^ +| +$/g, '')` (NO la caza el catálogo, desvío 5); M6 con `.toLowerCase()`; M7 sobre una COPIA del CSV con `Estado ajeno` en el directorio temporal, nunca sobre el trackeado. Registro en `openspec/changes/archive/2026-10-25-normalizar-estados-zoho/apply-progress.md`.
 - [x] L4.2 Barrido de la regla de mutación 4: `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` sobre `*.md`, `*.ts` y `*.yaml` para cada fichero de «Disciplina de líneas» (`index.ts`, `mappers.ts`, `repo.ts`, `directory.ts`, `analisis.ts`, `indicadores.ts`, `reasignaciones.ts`, `informeContrato.ts`, `migracionTicketsAbiertos.ts`, `estadoPorRemision.ts`, `relojSla.ts`, `sla.ts`, `alarmasAvisadas.ts`, `esperasVencidas.ts`, `appHarness.ts`, los cinco `*.test.ts`); cada resultado leído contra lo que AFIRMA (A/B/C), más el SEGUNDO PASE de las abreviadas `:NN` en los ficheros que citan el módulo. Revisar las citas de contenido cambiado: `openspec/specs/tickets-core/spec.md:2129`, `openspec/specs/zoho-sync/spec.md:936` y `:226`.
 - [x] L4.3 Confirmar `git diff --stat f5465799 -- apps/desk/src` vacío y rellenar la lista de regla 13 / mutación 3 decisión a decisión (la fila «Botón Crear remisión» queda como hallazgo, P-4).
 - [x] L4.c Cierre: CC; `apply-progress.md` completo; medida ≤ 720.
@@ -59,10 +59,10 @@ lo demás son ficheros nuevos o bloques añadidos al final (`packages/shared/src
 
 ## Archive (un intento; techo 2 × carpeta + 800)
 
-- [ ] A.1 Medir ANTES de aplicar la parte revisable (fusión de los dos deltas + `archive-report.md`): debe ser ≤ 800; si no, parar y consultar.
-- [ ] A.2 Fusionar POR SCRIPT, comparando bloque a bloque: RQ-ZS-24 ADDED al final de `openspec/specs/zoho-sync/spec.md` (tras RQ-ZS-23); RQ-TC-40 MODIFIED en sitio, a igual longitud, en `openspec/specs/tickets-core/spec.md` (sólo cambia el párrafo de igualdad exacta). Mirar los códigos de salida antes de asentar.
-- [ ] A.3 Anclar en revisión las citas históricas de `proposal.md` que describan el estado anterior (caso B), antes de la mudanza.
-- [ ] A.4 `archive-report.md` escrito por el orquestador con cifras medidas y UNA línea de qué cubrió de F1F-01 y qué dejó fuera (`cierra: no`). Mudar la carpeta a `openspec/changes/archive/<fecha>-normalizar-estados-zoho/`; el commit contiene SÓLO el cambio archivado (`git show --numstat`).
+- [x] A.1 Medir ANTES de aplicar la parte revisable (fusión de los dos deltas + `archive-report.md`): debe ser ≤ 800; si no, parar y consultar.
+- [x] A.2 Fusionar POR SCRIPT, comparando bloque a bloque: RQ-ZS-24 ADDED al final de `openspec/specs/zoho-sync/spec.md` (tras RQ-ZS-23); RQ-TC-40 MODIFIED en sitio, a igual longitud, en `openspec/specs/tickets-core/spec.md` (sólo cambia el párrafo de igualdad exacta). Mirar los códigos de salida antes de asentar.
+- [x] A.3 Anclar en revisión las citas históricas de `proposal.md` que describan el estado anterior (caso B), antes de la mudanza.
+- [x] A.4 `archive-report.md` escrito por el orquestador con cifras medidas y UNA línea de qué cubrió de F1F-01 y qué dejó fuera (`cierra: no`). Mudar la carpeta a `openspec/changes/archive/<fecha>-normalizar-estados-zoho/`; el commit contiene SÓLO el cambio archivado (`git show --numstat`).
 
 ## Cobertura
 

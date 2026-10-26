@@ -1,7 +1,7 @@
 # Delta: zoho-sync — el estado de un ticket se normaliza al sincronizar y al leer, sin escribir datos (`normalizar-estados-zoho`)
 
 Delta sobre `openspec/specs/zoho-sync/spec.md`. Tanda F1F-01 (`cierra: no`). Propuesta:
-`openspec/changes/normalizar-estados-zoho/proposal.md`. Decisión que construye: `decision/e249-normalizar-al-leer`
+`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md`. Decisión que construye: `decision/e249-normalizar-al-leer`
 (Gerencia; `openspec/config.yaml` → `decisiones_de_gerencia_adenda`, citada por clave): opción A, normalizar al leer y al
 sincronizar en la misma función de `packages/shared`, sin escribir datos. Caso que lo motiva: el ticket #1004 está en
 «Notificación Comercial» y Zoho lo guarda con dos espacios entre las palabras. Aquí se exige qué regla es, dónde se aplica

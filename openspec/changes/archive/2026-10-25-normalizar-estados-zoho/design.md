@@ -1,6 +1,6 @@
 # Diseño: normalizar los estados de Zoho al sincronizar y al leer (`normalizar-estados-zoho`)
 
-Tanda F1F-01 (`cierra: no`). Propuesta: `openspec/changes/normalizar-estados-zoho/proposal.md`. Deltas: `openspec/changes/normalizar-estados-zoho/specs/zoho-sync/spec.md`
+Tanda F1F-01 (`cierra: no`). Propuesta: `openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md`. Deltas: `openspec/changes/archive/2026-10-25-normalizar-estados-zoho/specs/zoho-sync/spec.md`
 (RQ-ZS-24) y `…/specs/tickets-core/spec.md` (RQ-TC-40, desvío 3). Decisión: `decision/e249-normalizar-al-leer` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`, por clave). Árbol medido: worktree
 `normalizar-estados-zoho` en `f5465799`. Todo `ruta:línea` de este documento se leyó en ese árbol; lo que no, lleva «hipótesis».
 Sin DDL: ninguna sentencia crea ni altera tablas (`rules.design`, `openspec/config.yaml:3126-3128`).
@@ -64,7 +64,7 @@ export function sqlEstadoNormalizado(columna: string): string {
 | # | Opción elegida | Alternativas descartadas | Razón |
 |---|---|---|---|
 | D1 | Un punto de normalización por camino | Normalizar también en `rowToTicket` y en `getTicketRow` | Dos puntos en el mismo camino se tapan entre sí: M2 y M3 no se pondrían rojas («si nadie se queja, el detector no existe», CLAUDE.md, reglas de la mutación) |
-| D2 | Consulta que FILTRA o COMPARA: forma SQL dentro de la consulta, y la misma forma en su `SELECT` del estado | Filtrar en TS tras leer todo | Lo pide la spec (`openspec/changes/normalizar-estados-zoho/specs/zoho-sync/spec.md:30`); con la forma también en el `SELECT`, el TS de esa consulta recibe el valor de la misma expresión |
+| D2 | Consulta que FILTRA o COMPARA: forma SQL dentro de la consulta, y la misma forma en su `SELECT` del estado | Filtrar en TS tras leer todo | Lo pide la spec (`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/specs/zoho-sync/spec.md:30`); con la forma también en el `SELECT`, el TS de esa consulta recibe el valor de la misma expresión |
 | D3 | Consulta que sólo SELECCIONA: función TS en el punto de mapeo, en la misma línea | Forma SQL en el `SELECT` | No necesita imitación de pg-mem, así que no se tocan los ficheros de prueba de esas consultas; misma función que el resto del TS |
 | D4 | `sqlEstadoNormalizado` rechaza lo que no es identificador | Interpolar sin control | La forma se interpola en el texto de la consulta: un uso indebido lanza en vez de abrir una inyección |
 | D5 | Imitación de pg-mem en un ayudante central, registrado a mano en el arnés y en cinco ficheros | `vi.mock('pg-mem')` global en `setupFiles`; copia por fichero | Ver «pg-mem». La global exige editar `vitest.config.ts:98` o insertar líneas en un fichero que CLAUDE.md cita (`vitest.config.ts:16`, `:17-20`, `:57`) y su efecto en `setupFiles` es hipótesis; la copia diverge |
@@ -275,19 +275,19 @@ L1 es el más justo: si al medirlo pasa de 400 brutas, el catálogo se muda a L2
 
 ## Desvíos respecto a la propuesta/spec
 
-1. **`getTicketRow` y `rowToTicket` no se tocan** (`openspec/changes/normalizar-estados-zoho/proposal.md:65`, `:67` los listaba). Filas 5 y 6:
+1. **`getTicketRow` y `rowToTicket` no se tocan** (`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md:65`, `:67` los listaba). Filas 5 y 6:
    sin llamador de producción el primero; ya recibe normalizado el segundo; tocarlos taparía M2 y M3.
-2. **`etapasDesdeHistoria` no se toca** (`openspec/changes/normalizar-estados-zoho/proposal.md:69`); se normaliza donde se compara (D6, fila 15).
+2. **`etapasDesdeHistoria` no se toca** (`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md:69`); se normaliza donde se compara (D6, fila 15).
 3. **RQ-TC-40 de la spec viva `tickets-core`: su párrafo de igualdad exacta deja de ser cierto.** `openspec/specs/tickets-core/spec.md:2128-2130` en `f5465799`
    la justifica con «Zoho copia el estado verbatim»; desde este cambio la sincronización normaliza y el lector de la migración también (fila 13, S-5),
    así que un `Entregado ` de Zoho llega al núcleo como `Entregado` y pasa a `entregado-a-finalizado`. El escenario del núcleo puro
    (`openspec/specs/tickets-core/spec.md:2188-2191` en `f5465799`) sigue cierto: pide el equivalente al núcleo, que no normaliza. Delta escrito en este intento:
-   `openspec/changes/normalizar-estados-zoho/specs/tickets-core/spec.md`, `## MODIFIED` de RQ-TC-40 con sus 107 líneas; sólo cambia ese párrafo.
+   `openspec/changes/archive/2026-10-25-normalizar-estados-zoho/specs/tickets-core/spec.md`, `## MODIFIED` de RQ-TC-40 con sus 107 líneas; sólo cambia ese párrafo.
    No sube a Gerencia: `decision/e249-normalizar-al-leer` dice «toda lectura del estado» (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`).
-4. **El riesgo de la clave de `alarmas_avisadas` con valor crudo previo** (`openspec/changes/normalizar-estados-zoho/proposal.md:146`) **no existe**: los dos únicos escritores
+4. **El riesgo de la clave de `alarmas_avisadas` con valor crudo previo** (`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md:146`) **no existe**: los dos únicos escritores
    (`apps/desk/server/services/alarmasSla.ts:46-47`, `apps/desk/server/services/avisoSalidasEsperas.ts:63`) sólo recibieron estados que
    pasaron un filtro exacto (`apps/desk/server/db/sla.ts:45`, `:53`; `apps/desk/server/db/esperasVencidas.ts:30`, `:57`).
-5. **M5 no la caza el catálogo** (`openspec/changes/normalizar-estados-zoho/proposal.md:98`): ningún valor de `Tickets.csv` trae espacios en los extremos (hipótesis del
+5. **M5 no la caza el catálogo** (`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md:98`): ningún valor de `Tickets.csv` trae espacios en los extremos (hipótesis del
    inventario; la prueba de catálogo lo deja medido). La cazan la unitaria, la aceptación con ` Anulado` y la integración.
 6. **S-5, precisión:** la reversión de una identidad sólo restaura `managed_by_app`
    (`apps/desk/server/db/migracionTicketsF1F01.test.ts:171`, `:184`), así que el estado queda con el nombre del catálogo; para la

@@ -24,7 +24,7 @@ build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e
 
 ### Veredicto
 
-**PASS CON AVISOS** — 0 CRÍTICOS, 3 AVISOS, 3 SUGERENCIAS. Los tres criterios de éxito de la propuesta (`openspec/changes/normalizar-estados-zoho/proposal.md:174-179`) se cumplen en lo medible aquí. Lo que afirma la integración contra PostgreSQL real es **hipótesis** hasta el CI (AVISO 1).
+**PASS CON AVISOS** — 0 CRÍTICOS, 3 AVISOS, 3 SUGERENCIAS. Los tres criterios de éxito de la propuesta (`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md:174-179`) se cumplen en lo medible aquí. Lo que afirma la integración contra PostgreSQL real es **hipótesis** hasta el CI (AVISO 1).
 
 ### Completeness
 
@@ -114,7 +114,7 @@ RQ-TC-40 (12 escenarios): un `diff` línea a línea entre el bloque vivo `opensp
 
 ### Párrafo «verbatim» (RQ-TC-40)
 
-`openspec/specs/tickets-core/spec.md:2129` (cita viva) dice hoy que Zoho copia el estado verbatim, y eso es falso desde este cambio. El delta lo corrige: `grep -n verbatim openspec/changes/normalizar-estados-zoho/specs/tickets-core/spec.md` da **0**; el párrafo nuevo (`openspec/changes/normalizar-estados-zoho/specs/tickets-core/spec.md:49-51`) habla de «el valor que el lector ya normalizó con la regla única de `zoho-sync` RQ-ZS-24». La fusión (A.2) la deja a igual longitud (107 = 107).
+`openspec/specs/tickets-core/spec.md:2129` en `06a6dff3` (cita viva) dice hoy que Zoho copia el estado verbatim, y eso es falso desde este cambio. El delta lo corrige: `grep -n verbatim openspec/changes/archive/2026-10-25-normalizar-estados-zoho/specs/tickets-core/spec.md` da **0**; el párrafo nuevo (`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/specs/tickets-core/spec.md:49-51`) habla de «el valor que el lector ya normalizó con la regla única de `zoho-sync` RQ-ZS-24». La fusión (A.2) la deja a igual longitud (107 = 107).
 
 ### Mutaciones repetidas por este verificador (M1, M2, M5; M3 y M4 las repitió el orquestador)
 
@@ -135,12 +135,12 @@ Los detectores discriminan: M1 cae sólo en sincronización; M2 cae en lista, co
 
 ### V.2 · Barrido de L4.2 (muestreo)
 
-- `openspec/specs/tickets-core/spec.md:2129`: ver arriba; el delta la corrige.
+- `openspec/specs/tickets-core/spec.md:2129` en `06a6dff3`: ver arriba; el delta la corrige.
 - `openspec/specs/zoho-sync/spec.md:936` (nombra `entradasActuales`, rango `apps/desk/server/db/sla.ts:88-95`): sigue cierta, la consulta está en esas líneas.
 - `openspec/specs/zoho-sync/spec.md:226` (cita `apps/desk/server/db/estadoPorRemision.ts:41`): la `:41` es la guarda `if (actual === undefined || …)`; lo que cambió es la `:40`. Cierta.
 - `openspec/config.yaml:5357` cita `packages/zoho-sync/src/db/mappers.ts:47` para «la sincronización usa la función»: cierta desde este cambio.
-- Barrido propio de las citas al mapeador y a los lectores de `repo.ts` fuera de `openspec/changes/archive` y de este cambio: sólo aparecen tres citas vivas (`openspec/config.yaml:5357`, `openspec/specs/tickets-core/spec.md:2129`, `openspec/specs/zoho-sync/spec.md:1374`), exactamente las que analiza apply-progress. «Ninguna línea se movió» se confirma: el diff de producción es una línea por una línea salvo `packages/shared/src/index.ts:54`.
-- `openspec/changes/normalizar-estados-zoho/proposal.md:17` quedó anclada en `f5465799` (caso B).
+- Barrido propio de las citas al mapeador y a los lectores de `repo.ts` fuera de `openspec/changes/archive` y de este cambio: sólo aparecen tres citas vivas (`openspec/config.yaml:5357`, `openspec/specs/tickets-core/spec.md:2129` en `06a6dff3`, `openspec/specs/zoho-sync/spec.md:1374`), exactamente las que analiza apply-progress. «Ninguna línea se movió» se confirma: el diff de producción es una línea por una línea salvo `packages/shared/src/index.ts:54`.
+- `openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md:17` quedó anclada en `f5465799` (caso B).
 
 ### Coherence (Design)
 

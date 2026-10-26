@@ -1,7 +1,7 @@
 # Delta: tickets-core — RQ-TC-40 compara por igualdad exacta sobre el estado ya normalizado (`normalizar-estados-zoho`)
 
 Delta sobre `openspec/specs/tickets-core/spec.md`. Tanda F1F-01 (`cierra: no`). Propuesta:
-`openspec/changes/normalizar-estados-zoho/proposal.md`. Decisión que se construye: `decision/e249-normalizar-al-leer` (Gerencia;
+`openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md`. Decisión que se construye: `decision/e249-normalizar-al-leer` (Gerencia;
 `openspec/config.yaml` → `decisiones_de_gerencia_adenda`, citada por clave): normalizar al leer y al sincronizar con la misma
 función de `packages/shared`. Desde este cambio la sincronización ya no copia el estado tal cual y el lector de la migración
 normaliza antes de llamar al núcleo, así que el párrafo de la igualdad exacta (`openspec/specs/tickets-core/spec.md:2128-2130` en `f5465799`) deja de ser cierto.
