@@ -54,8 +54,8 @@ lo demás son ficheros nuevos o bloques añadidos al final (`packages/shared/src
 
 ## Verify (un intento)
 
-- [ ] V.1 `sdd-verify`: contrastar el diff contra los 19 escenarios de RQ-ZS-24 y el delta de RQ-TC-40, y la tabla 1-29 fila a fila. Escribir `verify-report.md` (el informe generado cuenta como sumando del intento).
-- [ ] V.2 Repetir `npm test` (log), typecheck, lint, detector de citas y el barrido de L4.2. Confirmar que ningún `UPDATE tickets … status` normaliza (grep) y que `superficieSaliente.test.ts:44-67` sigue verde sin cambios.
+- [x] V.1 `sdd-verify`: contrastar el diff contra los 19 escenarios de RQ-ZS-24 y el delta de RQ-TC-40, y la tabla 1-29 fila a fila. Escribir `verify-report.md` (el informe generado cuenta como sumando del intento).
+- [x] V.2 Repetir `npm test` (log), typecheck, lint, detector de citas y el barrido de L4.2. Confirmar que ningún `UPDATE tickets … status` normaliza (grep) y que `superficieSaliente.test.ts:44-67` sigue verde sin cambios.
 
 ## Archive (un intento; techo 2 × carpeta + 800)
 
