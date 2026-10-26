@@ -29,7 +29,7 @@ const sinCargo = () => usuario(['Comercial'])
 // Sólo el área Comercial a propósito: el cargo basta para gestionar, y esa área deja liberar una orden.
 const directorTecnico = () => usuario(['Comercial'], 'Director Técnico')
 
-const si: RespuestaReclamacion = { reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9', valorReclamado: 800000 }
+const si: RespuestaReclamacion = { reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9' }
 const no: RespuestaReclamacion = { reclama: false, motivo: 'mal_uso' }
 
 async function asociar(numero: string, ticketId = 't1'): Promise<number> {
@@ -64,7 +64,7 @@ describe('responder (RQ-TC-44, RQ-PM-26)', () => {
     const id = await asociar('OVI-1')
     const res = await responder(await directorTecnico(), id, si)
     expect(res.status).toBe(201)
-    expect(res.body).toMatchObject({ reclama: true, estado: 'abierta', fabricante: 'Acme', valorReclamado: 800000, origenValorReclamado: 'manual', ticketId: 't1', oviNumero: 'OVI-1' })
+    expect(res.body).toMatchObject({ reclama: true, estado: 'abierta', fabricante: 'Acme', valorReclamado: null, origenValorReclamado: 'manual', moneda: 'USD', ticketId: 't1', oviNumero: 'OVI-1' })
   })
 
   it('un «no» con motivo da 201 y no abre ficha', async () => {
@@ -438,5 +438,146 @@ describe('cierre · quién respondió y las carreras de editar y avanzar', () =>
     expect((await responder(c, await asociar('OV-2026-5'), si)).status).toBe(422)
     expect((await responder(c, 9999, si)).status).toBe(404)
     expect(await filasEscritas()).toBe(0)
+  })
+})
+
+// ── valor-reclamado-usd (F1B-13), lote L2: la foto al abrir (RQ-TC-78), el origen al editar (RQ-TC-79) y la moneda (RQ-TC-80) ──
+let nOv = 0
+const LINEAS_FOTO = [{ item_id: 'a1', quantity: 2 }, { item_id: 'a2', quantity: 1 }]
+/** Catálogo de Books: 2 × 150,54 + 1 × 10 = 311,08 con `LINEAS_FOTO`. */
+async function sembrarCatalogo(): Promise<void> {
+  await db.query("INSERT INTO books.items (item_id, name, purchase_rate) VALUES ('a1', 'Art a1', 150.54), ('a2', 'Art a2', 10)")
+}
+/** Una asociación que apunta a una orden de Books con esas líneas (cada llamada, su propia orden); devuelve el id. */
+async function asociarConOrden(numero: string, lineas: unknown = LINEAS_FOTO): Promise<number> {
+  nOv += 1
+  await db.query('INSERT INTO books.sales_orders (salesorder_id, salesorder_number, raw) VALUES ($1, $2, $3)', [`so-f${nOv}`, `OV-F${nOv}`, JSON.stringify({ line_items: lineas })])
+  const a = await asociarOV(db, { ticketId: 't1', numero, salesorderId: `so-f${nOv}`, origen: 'alta', actor: 't', fechaOrdenCompra: null })
+  return Number(a.id)
+}
+
+describe('el «sí» guarda la foto del valor reclamado (RQ-TC-78)', () => {
+  it('con la orden y el catálogo completos: 201, valor 311,08, origen ovi y moneda USD', async () => {
+    await sembrarCatalogo()
+    const res = await responder(await directorTecnico(), await asociarConOrden('OVI-1'), si)
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ valorReclamado: 311.08, origenValorReclamado: 'ovi', moneda: 'USD' })
+    expect(await reclamacionPorId(db, res.body.id)).toMatchObject({ valorReclamado: 311.08, origenValorReclamado: 'ovi' })
+  })
+
+  it('sin foto (la asociación no tiene orden): 201, valor null y origen manual', async () => {
+    await sembrarCatalogo()
+    const res = await responder(await directorTecnico(), await asociar('OVI-1'), si)
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ valorReclamado: null, origenValorReclamado: 'manual' })
+  })
+
+  it('un hueco de la orden (un artículo que el catálogo no tiene) deja la ficha sin foto, nunca parcial', async () => {
+    await sembrarCatalogo()
+    const id = await asociarConOrden('OVI-1', [{ item_id: 'a1', quantity: 1 }, { item_id: 'zz', quantity: 1 }])
+    const res = await responder(await directorTecnico(), id, si)
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ valorReclamado: null, origenValorReclamado: 'manual' })
+  })
+
+  // Infinity viaja como `null` en JSON: llega como «sin valor» y el resultado es el mismo.
+  it.each([999, -1, 'abc', Infinity])('el valor %s del cuerpo se ignora: 201 y el valor guardado es el de la foto (S-2)', async (valorReclamado) => {
+    await sembrarCatalogo()
+    const res = await responder(await directorTecnico(), await asociarConOrden('OVI-1'), { ...si, valorReclamado })
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ valorReclamado: 311.08, origenValorReclamado: 'ovi' })
+  })
+
+  it('el valor 999 del cuerpo sin foto tampoco se guarda: queda null', async () => {
+    const res = await responder(await directorTecnico(), await asociar('OVI-1'), { ...si, valorReclamado: 999 })
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ valorReclamado: null, origenValorReclamado: 'manual' })
+  })
+
+  it('la foto no es guarda: con una orden completa, los rechazos de G1 a G6 siguen dando lo mismo y no escriben', async () => {
+    await sembrarCatalogo()
+    const c = await directorTecnico()
+    const ordinaria = await asociarConOrden('OV-2026-5')
+    const liberada = await asociarConOrden('OVI-2')
+    await liberarAsociacion(db, liberada, 'c', 'error')
+    const respondida = await asociarConOrden('OVI-3')
+    expect((await responder(c, respondida, no)).status).toBe(201)
+    const antes = await filasEscritas()
+    expect((await responder(c, 9999, si)).status).toBe(404)
+    expect((await responder(await sinCargo(), await asociarConOrden('OVI-4'), si)).status).toBe(403)
+    expect((await responder(c, liberada, si)).status).toBe(409)
+    expect((await responder(c, ordinaria, si)).status).toBe(422)
+    expect((await responder(c, await asociarConOrden('OVI-5'), { reclama: true })).status).toBe(422)
+    expect((await responder(c, respondida, si)).status).toBe(409)
+    expect(await filasEscritas()).toBe(antes)
+  })
+})
+
+describe('editar guarda el origen que decide shared (RQ-TC-79)', () => {
+  /** Responde «sí» con foto de 311,08 y devuelve la ficha. */
+  async function fichaConFoto(c: string, numero = 'OVI-1') {
+    const res = await responder(c, await asociarConOrden(numero), si)
+    expect(res.body).toMatchObject({ valorReclamado: 311.08, origenValorReclamado: 'ovi' })
+    return res.body as { id: number }
+  }
+
+  it('X→X: guardar el mismo valor 311,08 conserva el origen ovi', async () => {
+    await sembrarCatalogo()
+    const c = await directorTecnico()
+    const f = await fichaConFoto(c)
+    const res = await editar(c, f.id, { ...datos, rma: 'RMA-9', valorReclamado: 311.08 })
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ rma: 'RMA-9', valorReclamado: 311.08, origenValorReclamado: 'ovi', moneda: 'USD' })
+  })
+
+  it('X→Y: corregir el valor a 300 pasa el origen a manual, en la respuesta y en la base', async () => {
+    await sembrarCatalogo()
+    const c = await directorTecnico()
+    const f = await fichaConFoto(c)
+    const res = await editar(c, f.id, { ...datos, valorReclamado: 300 })
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ valorReclamado: 300, origenValorReclamado: 'manual' })
+    expect(await reclamacionPorId(db, f.id)).toMatchObject({ valorReclamado: 300, origenValorReclamado: 'manual' })
+  })
+
+  it('X→NULL: borrar el valor pasa el origen a manual', async () => {
+    await sembrarCatalogo()
+    const c = await directorTecnico()
+    const f = await fichaConFoto(c)
+    const res = await editar(c, f.id, { ...datos, valorReclamado: null })
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ valorReclamado: null, origenValorReclamado: 'manual' })
+  })
+
+  it('NULL→X: escribir un valor donde no había (ficha sin foto) da manual; NULL→NULL conserva manual', async () => {
+    const c = await directorTecnico()
+    const f = (await responder(c, await asociar('OVI-1'), si)).body as { id: number }
+    expect((await editar(c, f.id, { ...datos, valorReclamado: null })).body).toMatchObject({ valorReclamado: null, origenValorReclamado: 'manual' })
+    const res = await editar(c, f.id, { ...datos, valorReclamado: 50 })
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ valorReclamado: 50, origenValorReclamado: 'manual' })
+  })
+
+  it('un valor -1 al editar sigue dando 422 (G14) y la ficha no cambia', async () => {
+    await sembrarCatalogo()
+    const c = await directorTecnico()
+    const f = await fichaConFoto(c)
+    const res = await editar(c, f.id, { ...datos, valorReclamado: -1 })
+    expect(res.status).toBe(422)
+    expect(await reclamacionPorId(db, f.id)).toMatchObject({ valorReclamado: 311.08, origenValorReclamado: 'ovi' })
+  })
+})
+
+describe('toda ficha devuelta lleva su moneda (RQ-TC-80)', () => {
+  it('lectura por ticket, «sí», «no», editar y avanzar traen moneda USD', async () => {
+    const c = await directorTecnico()
+    const si1 = await responder(c, await asociar('OVI-1'), si)
+    const no1 = await responder(c, await asociar('OVI-2'), no)
+    expect(si1.body.moneda).toBe('USD')
+    expect(no1.body.moneda).toBe('USD')
+    const lectura = await leer(c)
+    expect((lectura.body.ovis as Array<{ respuesta: { moneda: string } }>).map((o) => o.respuesta.moneda)).toEqual(['USD', 'USD'])
+    expect((await editar(c, si1.body.id, { ...datos, rma: 'R-1' })).body.moneda).toBe('USD')
+    expect((await avanzar(c, si1.body.id, { a: 'enviada' })).body.moneda).toBe('USD')
   })
 })

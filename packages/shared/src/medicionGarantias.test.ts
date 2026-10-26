@@ -12,7 +12,7 @@ function ficha(p: Partial<GarantiaProveedor> = {}): GarantiaProveedor {
     id, asociacionId: id, ticketId: `T-${id}`, oviNumero: `OVI-${id}`, reclama: true, motivoNoReclama: null,
     respondidaPor: 'u', respondidaAt: '2026-10-01T00:00:00Z', fabricante: 'Acme', piezaReferencia: null,
     piezaSerial: null, rma: null, valorReclamado: null, origenValorReclamado: null, estado: 'abierta',
-    resultado: null, valorRecuperado: null, enviadaAt: null, resueltaAt: null, aviso60At: null, ...p,
+    resultado: null, valorRecuperado: null, enviadaAt: null, resueltaAt: null, aviso60At: null, moneda: 'USD', ...p,
   }
 }
 const resuelta = (p: Partial<GarantiaProveedor>) =>

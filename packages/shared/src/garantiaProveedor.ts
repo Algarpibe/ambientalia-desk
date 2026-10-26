@@ -57,7 +57,7 @@ export interface GarantiaProveedor {
   origenValorReclamado: string | null
   estado: EstadoReclamacion | null
   resultado: ResultadoReclamacion | null
-  valorRecuperado: number | null
+  valorRecuperado: number | null; moneda: MonedaGarantiaProveedor
   enviadaAt: string | null
   resueltaAt: string | null
   aviso60At: string | null
@@ -67,7 +67,7 @@ export type Validado<T> = { ok: true; valor: T } | { ok: false; error: string }
 
 export type RespuestaReclamacion =
   | { reclama: false; motivo: MotivoNoReclama }
-  | { reclama: true; fabricante: string; piezaReferencia: string | null; piezaSerial: string | null; valorReclamado: number | null }
+  | { reclama: true; fabricante: string; piezaReferencia: string | null; piezaSerial: string | null }
 
 export interface DatosFicha {
   fabricante: string
@@ -148,9 +148,9 @@ export function validarRespuesta(cuerpo: unknown): Validado<RespuestaReclamacion
     }
     return { ok: true, valor: { reclama: false, motivo: motivo as MotivoNoReclama } }
   }
-  const d = datosComunes(cuerpo)
+  const d = datosComunes({ ...cuerpo, valorReclamado: null })
   if (!d.ok) return d
-  return { ok: true, valor: { reclama: true, ...d.valor } }
+  return { ok: true, valor: { reclama: true, fabricante: d.valor.fabricante, piezaReferencia: d.valor.piezaReferencia, piezaSerial: d.valor.piezaSerial } }
 }
 
 /** Reemplazo completo de los cinco datos editables de una ficha abierta o enviada. */

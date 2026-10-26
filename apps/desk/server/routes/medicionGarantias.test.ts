@@ -34,14 +34,14 @@ async function sembrarTickets() {
 }
 
 let k = 0
-async function sembrar(respuesta: RespuestaReclamacion, ticketId = 't1') {
+async function sembrar(respuesta: RespuestaReclamacion & { valor?: number | null }, ticketId = 't1') {
   k += 1
   const a = await asociarOV(db, { ticketId, numero: `OVI-${k}`, salesorderId: null, origen: 'alta', actor: 't', fechaOrdenCompra: null })
   const asociacion = (await asociacionPorId(db, Number(a.id)))!
-  return registrarRespuesta(db, { asociacion, respuesta, por: 'semilla' })
+  return registrarRespuesta(db, { asociacion, respuesta, por: 'semilla', foto: { valorReclamado: respuesta.valor ?? null, origenValorReclamado: 'ovi' } })
 }
-const sub = (fabricante: string, valorReclamado: number | null, piezaReferencia = 'P-1'): RespuestaReclamacion =>
-  ({ reclama: true, fabricante, piezaReferencia, piezaSerial: 'S-1', valorReclamado })
+const sub = (fabricante: string, valor: number | null, piezaReferencia = 'P-1'): RespuestaReclamacion & { valor: number | null } =>
+  ({ reclama: true, fabricante, piezaReferencia, piezaSerial: 'S-1', valor })
 
 async function sembrarVarias() {
   const a = await sembrar(sub('Acme', 1000))

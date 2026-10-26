@@ -7,13 +7,13 @@ import { asociarOV, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsocia
 import type { RespuestaReclamacion } from '@ambientalia/shared'
 import {
   ReclamacionYaRespondidaError, asociacionPorId, respuestaDeAsociacion, registrarRespuesta, reclamacionPorId,
-  editarFicha, avanzarFicha, garantiaDelTicket, fichasSinResolverNiAvisar,
+  editarFicha, avanzarFicha, garantiaDelTicket, fichasSinResolverNiAvisar, fotoDeLaOVI,
 } from './garantiaProveedor'
 
 let db: Queryable
 beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
 
-const si: RespuestaReclamacion = { reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9', valorReclamado: 800000 }
+const si: RespuestaReclamacion = { reclama: true, fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9' }
 const no: RespuestaReclamacion = { reclama: false, motivo: 'mal_uso' }
 
 async function ticket(id = 't1', marca: string | null = 'Acme'): Promise<void> {
@@ -30,13 +30,13 @@ describe('registrarRespuesta y sus lecturas (RQ-TC-44, RQ-TC-45)', () => {
     const f = await registrarRespuesta(db, { asociacion: await asociar('OVI-1'), respuesta: si, por: 'dt@x' })
     expect(f).toMatchObject({
       reclama: true, motivoNoReclama: null, ticketId: 't1', oviNumero: 'OVI-1', respondidaPor: 'dt@x',
-      fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9', rma: null, valorReclamado: 800000,
+      fabricante: 'Acme', piezaReferencia: 'P-1', piezaSerial: 'S-9', rma: null, valorReclamado: null,
       origenValorReclamado: 'manual', estado: 'abierta', resultado: null, valorRecuperado: null,
       enviadaAt: null, resueltaAt: null, aviso60At: null,
     })
     expect(typeof f.id).toBe('number')
     expect(typeof f.asociacionId).toBe('number')
-    expect(typeof f.valorReclamado).toBe('number')
+    expect(f.moneda).toBe('USD')
     expect(f.respondidaAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
     expect(await reclamacionPorId(db, f.id)).toEqual(f)
     expect(await respuestaDeAsociacion(db, f.asociacionId)).toEqual(f)
@@ -48,9 +48,9 @@ describe('registrarRespuesta y sus lecturas (RQ-TC-44, RQ-TC-45)', () => {
     expect(f).toMatchObject({ reclama: false, motivoNoReclama: 'mal_uso', estado: null, fabricante: null, valorReclamado: null, origenValorReclamado: null })
   })
 
-  it('valor reclamado vacío no se calcula: queda null y el origen sigue siendo manual (CARACTERIZACIÓN)', async () => {
+  it('sin foto el valor reclamado queda null y el origen es manual (CARACTERIZACIÓN)', async () => {
     await ticket()
-    const f = await registrarRespuesta(db, { asociacion: await asociar('OVI-1'), respuesta: { ...si, valorReclamado: null }, por: 'dt@x' })
+    const f = await registrarRespuesta(db, { asociacion: await asociar('OVI-1'), respuesta: si, por: 'dt@x' })
     expect(f).toMatchObject({ valorReclamado: null, origenValorReclamado: 'manual' })
     expect(await reclamacionPorId(db, 999)).toBeNull()
   })
@@ -105,15 +105,15 @@ describe('editarFicha, condicionada (RQ-TC-45)', () => {
   it('reemplaza los cinco datos de una ficha abierta; null si resuelta o si es un «no»', async () => {
     await ticket()
     const f = await registrarRespuesta(db, { asociacion: await asociar('OVI-1'), respuesta: si, por: 'x' })
-    const e = await editarFicha(db, f.id, { fabricante: 'Otro', piezaReferencia: null, piezaSerial: 'S-2', rma: 'RMA-7', valorReclamado: 5 })
+    const e = await editarFicha(db, f.id, { fabricante: 'Otro', piezaReferencia: null, piezaSerial: 'S-2', rma: 'RMA-7', valorReclamado: 5 }, 'manual')
     expect(e).toMatchObject({ fabricante: 'Otro', piezaReferencia: null, piezaSerial: 'S-2', rma: 'RMA-7', valorReclamado: 5, estado: 'abierta' })
     await avanzarFicha(db, f.id, 'abierta', { a: 'enviada' })
     await avanzarFicha(db, f.id, 'enviada', { a: 'resuelta', resultado: 'reposicion', valorRecuperado: 1 })
-    expect(await editarFicha(db, f.id, { fabricante: 'X', piezaReferencia: null, piezaSerial: null, rma: null, valorReclamado: null })).toBeNull()
+    expect(await editarFicha(db, f.id, { fabricante: 'X', piezaReferencia: null, piezaSerial: null, rma: null, valorReclamado: null }, 'manual')).toBeNull()
 
     const n = await registrarRespuesta(db, { asociacion: await asociar('OVI-2'), respuesta: no, por: 'x' })
-    expect(await editarFicha(db, n.id, { fabricante: 'X', piezaReferencia: null, piezaSerial: null, rma: null, valorReclamado: null })).toBeNull()
-    expect(await editarFicha(db, 999, { fabricante: 'X', piezaReferencia: null, piezaSerial: null, rma: null, valorReclamado: null })).toBeNull()
+    expect(await editarFicha(db, n.id, { fabricante: 'X', piezaReferencia: null, piezaSerial: null, rma: null, valorReclamado: null }, 'manual')).toBeNull()
+    expect(await editarFicha(db, 999, { fabricante: 'X', piezaReferencia: null, piezaSerial: null, rma: null, valorReclamado: null }, 'manual')).toBeNull()
   })
 })
 
@@ -192,5 +192,127 @@ describe('fichasSinResolverNiAvisar (lote 2)', () => {
     const d = await registrarRespuesta(db, { asociacion: await asociar('OVI-5'), respuesta: si, por: 'x' })
     await db.query('UPDATE public.garantia_proveedor SET aviso_60_at = now() WHERE id = $1', [d.id])
     expect((await fichasSinResolverNiAvisar(db)).map((f) => f.id)).toEqual([a.id, b.id])
+  })
+})
+
+// valor-reclamado-usd (F1B-13), lote L2: la foto del valor reclamado (RQ-TC-78), el origen al editar (RQ-TC-79) y la
+// moneda (RQ-TC-80). Fixtures de Books con pg-mem: `raw` serializado como en `packages/zoho-sync/src/books/subOV.test.ts:31-32`.
+const LINEAS_BASE = [{ item_id: 'a1', quantity: 2 }, { item_id: 'a2', quantity: 1 }]
+const COSTOS_BASE: Array<[string, number | null]> = [['a1', 150.54], ['a2', 10]]
+const SIN_FOTO_ESPERADA = { valorReclamado: null, origenValorReclamado: 'manual' }
+
+/** Una OVI asociada a una orden de Books (si `orden`) con su catálogo de costos; devuelve el id de la asociación. */
+async function oviConOrden(o: { numero?: string; raw?: unknown; costos?: Array<[string, number | null]>; salesorderId?: string | null; orden?: boolean } = {}): Promise<number> {
+  const { numero = 'OVI-1', raw = { line_items: LINEAS_BASE }, costos = COSTOS_BASE, salesorderId = 'so-1', orden = true } = o
+  await ticket()
+  if (orden) await db.query('INSERT INTO books.sales_orders (salesorder_id, salesorder_number, raw) VALUES ($1, $2, $3)', ['so-1', 'OV-1', JSON.stringify(raw)])
+  for (const [id, costo] of costos) await db.query('INSERT INTO books.items (item_id, name, purchase_rate) VALUES ($1, $2, $3)', [id, `Art ${id}`, costo])
+  const a = await asociarOV(db, { ticketId: 't1', numero, salesorderId, origen: 'alta', actor: 't', fechaOrdenCompra: null })
+  return Number(a.id)
+}
+
+describe('fotoDeLaOVI: la foto del valor reclamado (RQ-TC-78)', () => {
+  it('2 × 150,54 + 1 × 10 = 311,08 con origen ovi, y se guarda y se lee con ese valor', async () => {
+    const id = await oviConOrden()
+    const foto = await fotoDeLaOVI(db, id)
+    expect(foto).toEqual({ valorReclamado: 311.08, origenValorReclamado: 'ovi' })
+    const f = await registrarRespuesta(db, { asociacion: (await asociacionPorId(db, id))!, respuesta: si, por: 'x', foto })
+    expect(f).toMatchObject({ valorReclamado: 311.08, origenValorReclamado: 'ovi', moneda: 'USD' })
+    expect(typeof f.valorReclamado).toBe('number')
+    expect(await reclamacionPorId(db, f.id)).toEqual(f)
+  })
+
+  it('un artículo repetido en dos líneas cuenta dos veces: 2 × 1 × 20 = 40', async () => {
+    const id = await oviConOrden({ raw: { line_items: [{ item_id: 'a1', quantity: 1 }, { item_id: 'a1', quantity: 1 }] }, costos: [['a1', 20]] })
+    expect(await fotoDeLaOVI(db, id)).toEqual({ valorReclamado: 40, origenValorReclamado: 'ovi' })
+  })
+
+  it('una asociación que no existe da SIN_FOTO aunque haya una orden y un catálogo completos', async () => {
+    await oviConOrden()
+    expect(await fotoDeLaOVI(db, 9999)).toEqual(SIN_FOTO_ESPERADA)
+  })
+
+  const HUECOS: Array<[string, Parameters<typeof oviConOrden>[0]]> = [
+    ['asociación sin salesorder_id', { salesorderId: null }],
+    ['sin fila de la orden en books.sales_orders', { orden: false }],
+    ['orden sin line_items', { raw: { order_status: 'open' } }],
+    ['line_items vacía', { raw: { line_items: [] } }],
+    ['una línea sin item_id', { raw: { line_items: [{ item_id: 'a1', quantity: 2 }, { quantity: 1 }] } }],
+    ['cantidad 0', { raw: { line_items: [{ item_id: 'a1', quantity: 0 }, { item_id: 'a2', quantity: 1 }] } }],
+    ['cantidad en texto', { raw: { line_items: [{ item_id: 'a1', quantity: '2' }, { item_id: 'a2', quantity: 1 }] } }],
+    ['artículo ausente de books.items', { costos: [['a1', 150.54]] }],
+    ['costo NULL', { costos: [['a1', 150.54], ['a2', null]] }],
+    ['costo 0', { costos: [['a1', 150.54], ['a2', 0]] }],
+  ]
+  it.each(HUECOS)('hueco · %s: SIN_FOTO (null y manual)', async (_t, o) => {
+    const id = await oviConOrden(o)
+    expect(await fotoDeLaOVI(db, id)).toEqual(SIN_FOTO_ESPERADA)
+  })
+
+  it('nunca parcial: una línea de costo 100 y otra con artículo ausente dan null, no 100', async () => {
+    const id = await oviConOrden({ raw: { line_items: [{ item_id: 'a1', quantity: 1 }, { item_id: 'a2', quantity: 1 }] }, costos: [['a1', 100]] })
+    expect(await fotoDeLaOVI(db, id)).toEqual(SIN_FOTO_ESPERADA)
+  })
+
+  it('la foto no se recalcula: si el costo del catálogo cambia después, la ficha conserva 311,08 (S-11)', async () => {
+    const id = await oviConOrden()
+    const f = await registrarRespuesta(db, { asociacion: (await asociacionPorId(db, id))!, respuesta: si, por: 'x', foto: await fotoDeLaOVI(db, id) })
+    await db.query('UPDATE books.items SET purchase_rate = 999 WHERE item_id = $1', ['a1'])
+    expect((await reclamacionPorId(db, f.id))!.valorReclamado).toBe(311.08)
+    expect((await fotoDeLaOVI(db, id)).valorReclamado).toBe(2 * 999 + 10)
+  })
+
+  it('con node-postgres el costo llega como TEXTO y el raw como TEXTO: cuenta igual, con ids sin repetir y sin jsonb en SQL (H-2, D-8)', async () => {
+    const consultas: Array<{ sql: string; params: unknown[] }> = []
+    const falsa = {
+      query: async (sql: string, params: unknown[] = []) => {
+        consultas.push({ sql, params })
+        if (/FROM ov_asociaciones/.test(sql)) return { rows: [{ salesorder_id: 'so-9' }] }
+        if (/FROM books\.sales_orders/.test(sql)) {
+          return { rows: [{ raw: JSON.stringify({ line_items: [{ item_id: 'i1', quantity: 1 }, { item_id: 'i1', quantity: 1 }] }) }] }
+        }
+        if (/FROM books\.items/.test(sql)) return { rows: [{ item_id: 'i1', purchase_rate: '150.54' }] }
+        return { rows: [] }
+      },
+    } as unknown as Queryable
+    expect(await fotoDeLaOVI(falsa, 7)).toEqual({ valorReclamado: 301.08, origenValorReclamado: 'ovi' })
+    const items = consultas.find((c) => /books\.items/.test(c.sql))!
+    expect(items.params).toEqual(['i1'])
+    expect(consultas.map((c) => c.sql).join(' ')).not.toMatch(/jsonb|->/i)
+  })
+})
+
+describe('origen y moneda de la ficha (RQ-TC-79, RQ-TC-80)', () => {
+  const datos = { fabricante: 'Acme', piezaReferencia: null, piezaSerial: null, rma: null, valorReclamado: 311.08 }
+
+  it('editarFicha escribe el origen que recibe: ovi se conserva, manual lo cambia', async () => {
+    const id = await oviConOrden()
+    const f = await registrarRespuesta(db, { asociacion: (await asociacionPorId(db, id))!, respuesta: si, por: 'x', foto: await fotoDeLaOVI(db, id) })
+    expect(await editarFicha(db, f.id, { ...datos, rma: 'R-1' }, 'ovi')).toMatchObject({ valorReclamado: 311.08, origenValorReclamado: 'ovi', rma: 'R-1' })
+    expect(await editarFicha(db, f.id, { ...datos, valorReclamado: 300 }, 'manual')).toMatchObject({ valorReclamado: 300, origenValorReclamado: 'manual' })
+    expect(await reclamacionPorId(db, f.id)).toMatchObject({ valorReclamado: 300, origenValorReclamado: 'manual' })
+  })
+
+  it('aGarantia pone moneda USD en toda ficha leída: «sí», «no», por id, por asociación y por ticket', async () => {
+    await ticket()
+    const a = await registrarRespuesta(db, { asociacion: await asociar('OVI-1'), respuesta: si, por: 'x' })
+    const b = await registrarRespuesta(db, { asociacion: await asociar('OVI-2'), respuesta: no, por: 'x' })
+    expect(a.moneda).toBe('USD')
+    expect(b.moneda).toBe('USD')
+    expect((await reclamacionPorId(db, a.id))!.moneda).toBe('USD')
+    expect((await respuestaDeAsociacion(db, b.asociacionId))!.moneda).toBe('USD')
+    expect((await garantiaDelTicket(db, 't1')).ovis.map((o) => o.respuesta!.moneda)).toEqual(['USD', 'USD'])
+  })
+
+  it('una ficha previa (valor 1500, origen manual, sin columna de moneda) sale en USD sin reescribir ningún dato', async () => {
+    await ticket()
+    await db.query(
+      `INSERT INTO public.garantia_proveedor (asociacion_id, ticket_id, ovi_numero, reclama, respondida_por, fabricante, valor_reclamado, origen_valor_reclamado, estado)
+       VALUES (1, 't1', 'OVI-1', true, 'x', 'Acme', 1500, 'manual', 'abierta')`,
+    )
+    const antes = (await db.query('SELECT * FROM public.garantia_proveedor')).rows
+    const f = (await respuestaDeAsociacion(db, 1))!
+    expect(f).toMatchObject({ moneda: 'USD', valorReclamado: 1500, origenValorReclamado: 'manual' })
+    expect((await db.query('SELECT * FROM public.garantia_proveedor')).rows).toEqual(antes)
   })
 })
