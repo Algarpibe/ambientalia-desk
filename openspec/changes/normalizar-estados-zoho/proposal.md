@@ -14,7 +14,7 @@ origen_cabecera: declarada
 
 - **Problema.** El ticket #1004 está en «Notificación Comercial», pero el tablero lo pone en «Otros» y no tiene botones. Zoho guarda
   el estado como `Notificación  Comercial` (dos espacios) y la aplicación compara el texto exacto.
-- **Causa en el código.** La sincronización copia el valor tal cual (`packages/zoho-sync/src/db/mappers.ts:47`). El tablero busca la
+- **Causa en el código.** La sincronización copia el valor tal cual (`packages/zoho-sync/src/db/mappers.ts:47` en `f5465799`). El tablero busca la
   columna por clave exacta y cae en `'otros'` (`packages/shared/src/columns.ts:45-47`). Los botones salen de `t.from.includes(ticket.status)`,
   que da una lista vacía (`packages/shared/src/flujos.ts:69-71`). El servidor responde `409` (`apps/desk/server/services/ticketService.ts:126-127`).
 - **Por qué ahora.** La migración de abiertos del 12/12 compara por igualdad (`packages/shared/src/migracionTickets.ts:37`). Un solo
