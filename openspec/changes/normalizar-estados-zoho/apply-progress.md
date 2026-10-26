@@ -158,3 +158,26 @@ Sin edición. `packages/zoho-sync/src/sync.test.ts` (fila 7), `packages/zoho-syn
 ### Medida del intento (L2.c la cierra el orquestador)
 
 - `git diff --shortstat --no-renames 51e1e9a7` → 12 ficheros, **230 inserciones, 23 borrados** (253). De ellas, código y pruebas: 155 inserciones y 17 borrados (172); el resto son `apply-progress.md` (+69) y `tasks.md` (6/6). Sin ficheros nuevos sin trackear (todo es edición de ficheros ya versionados). Ningún binario.
+
+### Apoyo fuera del contenido de F1F-01: cherry-pick de `51e92f29` (main)
+
+- **Por qué:** la primera pasada de `npm test` del intento 4 (`npmtest-nez-i4-185437.log`, 484,7 s) salió 1 con 321 ficheros y 5565 pruebas en
+  verde y un único error no controlado, «[vitest-worker]: Timeout calling "onTaskUpdate"», sin fichero. En ese log,
+  `apps/desk/server/citas/instalador.test.ts` (61,9 s) es el único fichero por encima de 60 s que no cede el bucle; `hook.bordes.test.ts` (141 s) y
+  `hook.test.ts` (165 s) sí lo ceden.
+- **Qué:** `git cherry-pick 51e92f29` (commit de `main`, fuera-del-plan, `decision/excepcion-ceder-bucle-instalador-cli` en `openspec/config.yaml` →
+  `decisiones_de_gerencia_adenda`, por clave; su registro es `4b86482a`, que NO se trae). En esta rama es `db3fe0a6`.
+- **Contenido:** sólo ficheros de prueba, molde de `df883868`: `afterEach(cederAlBucle)` al final de `apps/desk/server/citas/instalador.test.ts` y
+  `apps/desk/server/citas/cli.test.ts`, con el import editado en su misma línea, sin desplazar ninguna. +10/−4.
+- **No es contenido de F1F-01:** no realiza nada de RQ-ZS-24 ni de RQ-TC-40. **La medida del intento 4 incluye sus 14 líneas** (10 insertadas y 4
+  borradas).
+
+### L2.c Cierre del intento 4 (orquestador)
+
+- Commit del apply `6b3b5fcc` sobre `51e1e9a7`; cherry-pick `db3fe0a6` (apartado anterior).
+- `npm test` SOLO con log: primera pasada en 1 por el único error no controlado del apartado anterior (`npmtest-nez-i4-185437.log`); tras el
+  cherry-pick, **0** (`npmtest-nez-i4b-192651.log`: 321 ficheros y 5565 pruebas en verde, 3 ficheros y 11 pruebas saltados, 333,6 s;
+  `instalador.test.ts` 42,2 s, `cli.test.ts` 29,9 s, `hook.bordes.test.ts` 91,2 s, `hook.test.ts` 103,3 s), sin errores no controlados.
+- typecheck 0; lint 0 errores (172 avisos, los mismos que en la primera pasada del intento: el cherry-pick no añade ninguno); detector sobre el
+  commit de este cierre.
+- Regla 13 / mutación 3: `git diff --stat f5465799 -- apps/desk/src` vacío.

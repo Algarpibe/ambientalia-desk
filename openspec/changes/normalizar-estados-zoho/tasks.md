@@ -21,7 +21,7 @@ lo demás son ficheros nuevos o bloques añadidos al final (`packages/shared/src
 - [x] L1.8 VERDE en sitio: `packages/zoho-sync/src/db/mappers.ts:47` → `status: normalizarSiTexto(raw.status as string)` e importación añadida a la línea de `mappers.ts:2`; `packages/zoho-sync/src/db/repo.ts:139` y `:209` → `row: conEstadoNormalizado(row) as TicketRow`, importación añadida a la línea `repo.ts:129`. NO tocar `getTicketRow`, `rowToTicket` ni `rowToTicketDetail` (filas 5, 6; D1).
 - [x] L1.9 Regla 13 / mutación 3 (L1): `git diff --stat f5465799 -- apps/desk/src apps/desk/server/services/ticketService.ts` vacío; anotar la tabla de decisiones del cliente del diseño.
 - [x] L1.10 Regla de división: medir. Si L1 pasa de ~400 brutas, MUDAR L1.5 (catálogo) al principio de L2 y anotarlo en `apply-progress.md`.
-- [ ] L1.c Cierre: CC; `apply-progress.md` con rojos, medida y salida de L1.9.
+- [x] L1.c Cierre: CC; `apply-progress.md` con rojos, medida y salida de L1.9.
 
 ## Lote L2 · SELECT-only del servidor y reloj (filas 8-15; ~190 brutas)
 
@@ -31,7 +31,7 @@ lo demás son ficheros nuevos o bloques añadidos al final (`packages/shared/src
 - [x] L2.4 Anotar los rojos en `apply-progress.md`.
 - [x] L2.5 VERDE en sitio (importación en la línea indicada de cada fichero, sin líneas nuevas): `apps/desk/server/db/directory.ts:26`; `apps/desk/server/analisis.ts:20`; `apps/desk/server/indicadores.ts:66`; `apps/desk/server/db/reasignaciones.ts:18`; `apps/desk/server/db/informeContrato.ts:45`; `apps/desk/server/db/migracionTicketsAbiertos.ts:36`; `apps/desk/server/db/estadoPorRemision.ts:40`; `apps/desk/server/db/relojSla.ts:45` y `:58`. Filas 8-15 (la 17 llega normalizada de la 9).
 - [x] L2.6 Filas «no le afecta» (7, 16, 22-27): confirmar por la prueba o prueba citada en el diseño que sigue verde; sin edición.
-- [ ] L2.c Cierre: CC; regla 13 (`git diff --stat` sobre `apps/desk/src` vacío); `apply-progress.md`.
+- [x] L2.c Cierre: CC; regla 13 (`git diff --stat` sobre `apps/desk/src` vacío); `apply-progress.md`.
 
 ## Lote L3 · SQL que filtra, imitación de pg-mem e integración (filas 18-21; ~280 brutas)
 
