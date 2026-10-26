@@ -43,7 +43,7 @@ lo demás son ficheros nuevos o bloques añadidos al final (`packages/shared/src
 - [x] L3.6 VERDE ayudante: `apps/desk/server/testing/pgMemEstado.ts` (nuevo) con `conFuncionesDeEstado`, `btrim(text)` y `regexp_replace(text, text, text, text)` limitada a `' {2,}'`, `' '`, `'g'`.
 - [x] L3.7 VERDE registro en sitio (`newDb()` → `conFuncionesDeEstado(newDb())` e importación añadida a la línea de `import { newDb }`): `apps/desk/server/testing/appHarness.ts:2`, `:36`; `apps/desk/server/db/sla.test.ts:2`, `:7`; `alarmasAvisadas.test.ts:2`, `:17`; `esperasVencidas.test.ts:2`, `:14`; `apps/desk/server/services/alarmasSla.test.ts:4`, `:27`; `avisoSalidasEsperas.test.ts:4`, `:19`.
 - [x] L3.8 VERDE SQL en sitio, `sqlEstadoNormalizado` en `SELECT` y `WHERE`: `apps/desk/server/db/sla.ts:45` y `:89` (filas 18, 19); `apps/desk/server/db/alarmasAvisadas.ts:21` (20); `apps/desk/server/db/esperasVencidas.ts:30`, `:37`, `:42` (21). Importación a la línea `sla.ts:2`, `alarmasAvisadas.ts:2`, `esperasVencidas.ts:2`.
-- [ ] L3.c Cierre: CC (en CI la integración corre contra PostgreSQL 17; en local se salta, anotarlo); regla 13; `apply-progress.md`.
+- [x] L3.c Cierre: CC (en CI la integración corre contra PostgreSQL 17; en local se salta, anotarlo); regla 13; `apply-progress.md`.
 
 ## Lote L4 · mutaciones M1-M7 y barrido (sin código nuevo; ~80 brutas)
 

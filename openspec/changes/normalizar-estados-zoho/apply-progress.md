@@ -249,3 +249,15 @@ Verde: fichero de aceptación **19/19**; los cinco ficheros de la línea base **
   y 12 de prueba editadas una por una, y 8 de `tasks.md`.
 - Sin trackear (`git ls-files --others --exclude-standard`, `wc -l`): `normalizarEstado.integration.test.ts` 82, `pgMemEstado.test.ts` 70, `pgMemEstado.ts` 38 = **190**.
 - **Suma de código y pruebas: 320** (130 + 190), más este apartado de `apply-progress.md` (artefacto): por debajo de la válvula de 720. Ningún binario.
+
+### L3.c Cierre del intento 5 (orquestador)
+
+- Commit del apply `8c81a6d6` sobre `e15a9d6a`. Informe del ejecutor contrastado contra el árbol: `git diff --numstat` (10 ficheros de código y
+  pruebas, 8 de producción y 12 de prueba editadas una por una, bloque de 88 al final de la aceptación), los tres nuevos (82 + 70 + 38) y la
+  forma SQL en `SELECT` y `WHERE` de las seis líneas de L3.8 coinciden con lo que dice.
+- `npm test` SOLO con log: **0** (`npmtest-nez-i5-200005.log`: 322 ficheros y 5589 pruebas en verde, 4 ficheros y 26 pruebas saltados —entre
+  ellos la integración nueva, sin `TEST_DATABASE_URL`—, 321,2 s), sin errores no controlados.
+- typecheck 0; lint 0 errores (172 avisos, los mismos que antes del lote); detector 0 (13 abreviadas, informativas).
+- **En CI la integración corre contra PostgreSQL 17 (`.github/workflows/ci.yml`); en local se salta.** Que PostgreSQL real acepte la forma de las
+  consultas sigue siendo hipótesis hasta esa pasada.
+- Regla 13 / mutación 3: `git diff --stat f5465799 -- apps/desk/src` vacío.
