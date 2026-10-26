@@ -16,7 +16,7 @@
 - [x] L1.8 VERDE en sitio, `packages/shared/src/medicionGarantias.ts`: `:1` (importación añadida a la línea), `:26` (`moneda: MonedaGarantiaProveedor`), `:63` (`moneda: MONEDA_GARANTIA_PROVEEDOR`). `conNumerosDeTicket` (`:117-122`) no se toca.
 - [x] L1.9 Mutaciones, una a una, **M0 primero** (suite entera verde sin mutar): (a) quitar `cantidad` de la suma → cae 311,08 de L1.2; (d2) quitar `moneda` del grupo (`medicionGarantias.ts:63`) → caen L1.3 y L1.4; (f) saltar la línea sin costo (suma parcial) → cae «artículo ausente / costo 0 da `SIN_FOTO`»; (i) redondear por línea → cae «tres de 0,004 dan 0,01». Cada una: editar → correr SÓLO la prueba que debe caer → anotar la aserción → restaurar byte a byte (`git diff` vacío del hunk) → verde. Registro en `apply-progress.md`.
 - [x] L1.10 Regla de división: medir. Si L1 pasa de ~400 ingenuas, avisar en `apply-progress.md` antes de cerrar.
-- [ ] L1.c Cierre: CC; `apply-progress.md` con rojos, M0 y mutaciones, medida.
+- [x] L1.c Cierre: CC; `apply-progress.md` con rojos, M0 y mutaciones, medida.
 
 ## Lote L2 · la ficha en el servidor (~266 ingenua; ~480 con informes)
 
@@ -32,7 +32,7 @@
 - [x] L2.10 Siembras e importaciones restantes en verde sin cambiar su sentido; `npm run typecheck` = 0 en el lote (el cambio de tipos arrastra todo).
 - [x] L2.11 Mutaciones (tras **M0** de la suite entera): (b) `origenTrasEditar` devuelve siempre el anterior, y aparte `editarFicha` sin `$7` → caen X→Y y NULL→X de shared y el PUT X→Y de la ruta; (c) regla de mutación 2: ensuciar el fixture de `books.sales_orders` con una línea sin `item_id` → la prueba POSITIVA de la foto (db y ruta) deja de dar `ovi`; (d1) quitar `moneda` de `aGarantia` (`:64`) → caen las cuatro respuestas de la ruta; (g) `validarRespuesta` vuelve a leer el valor → cae S-2 de shared y la ruta (999 no cambia la ficha; `-1` no da `422`); (h) quitar `numero()` del costo → cae la `Queryable` falsa con `'150.54'`. Cada una restaurada byte a byte y registrada.
 - [x] L2.12 Regla de mutación 1: mover `fotoDeLaOVI` antes/después de G6 no cambia ninguna respuesta (la foto no es guarda); las pruebas de posición de G1-G14, sin tocar y verdes. Anotarlo.
-- [ ] L2.c Cierre: CC; `apps/desk/src` sin cambios (`git diff --stat <partida> -- apps/desk/src` vacío); `apply-progress.md`.
+- [x] L2.c Cierre: CC; `apps/desk/src` sin cambios (`git diff --stat <partida> -- apps/desk/src` vacío); `apply-progress.md`.
 
 ## Lote L3 · cliente y cierre (~98 ingenua; ~175 con informes)
 
@@ -45,11 +45,11 @@
 - [x] L3.7 **Inventario de importes de Desk sin moneda** (ruta y línea de cada uno, en `apps/` y `packages/`; no se corrige ninguno) escrito en `apply-progress.md` para que el archivo lo lleve al `archive-report.md` (R-3, `CLAUDE.md:691-701`).
 - [x] L3.8 **Enmienda de la corrección 29** en `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: punto 2 (`:1474-1476`) a «valor reclamado en USD, foto al abrir la ficha: cantidad × costo de catálogo, sumado por línea; editable a mano, con su origen», recuperado en USD, y suma la línea 1232 del maestro (el costo lo conserva el catálogo, no la línea); punto 3 (`:1477-1480`) al día (construidos el valor automático y las dos mediciones; falta el envío físico). En sitio dentro de sus líneas; si no cabe, barrido de las citas a ese fichero.
 - [x] L3.9 Registro final de mutaciones (a)-(d2), (f)-(i) con M0 en `apply-progress.md`; criterios de §14 de la propuesta marcados con su prueba.
-- [ ] L3.c Cierre: CC completa; `apply-progress.md` completo; medida ≤ 720.
+- [x] L3.c Cierre: CC completa; `apply-progress.md` completo; medida ≤ 720.
 
 ## Verify y archive (un intento cada uno)
 
-- [ ] V.1 `sdd-verify`: contrastar el diff contra los escenarios de RQ-TC-78, -79, -80 y los MODIFIED de RQ-TC-45, -47, -65; cada hueco de S-4 una prueba. Repetir CC y el barrido de L3.6.
+- [x] V.1 `sdd-verify`: contrastar el diff contra los escenarios de RQ-TC-78, -79, -80 y los MODIFIED de RQ-TC-45, -47, -65; cada hueco de S-4 una prueba. Repetir CC y el barrido de L3.6.
 - [ ] A.1 `sdd-archive` (techo 2 × carpeta + 800): medir ANTES la parte revisable (fusión del delta + `archive-report.md`) ≤ 800; fusionar POR SCRIPT, MODIFIED en sitio a igual longitud (57, 62 y 80 líneas) y ADDED tras RQ-TC-77. `archive-report.md` con UNA línea de qué cubrió de F1B-13 y el inventario de L3.7; commit sólo del cambio archivado (`git show --numstat`).
 
 ## Tareas de persona — fuera del recuento
