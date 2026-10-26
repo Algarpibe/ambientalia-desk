@@ -243,3 +243,31 @@ describe('conNumerosDeTicket', () => {
     expect(JSON.stringify(r)).not.toContain('z-1')
   })
 })
+
+// valor-reclamado-usd (F1B-13), lote L1: cada grupo lleva su moneda (RQ-TC-80, RQ-TC-65). Lo demás no cambia.
+describe('medirGarantias · moneda por grupo (RQ-TC-80)', () => {
+  it('cada grupo trae moneda USD y el cociente no lleva moneda', () => {
+    const m = medirGarantias([
+      ficha({ fabricante: 'Acme', valorReclamado: 100 }),
+      resuelta({ fabricante: 'Beta', valorReclamado: 100, valorRecuperado: 50 }),
+    ])
+    expect(m.porFabricante).toHaveLength(2)
+    for (const g of m.porFabricante) expect(g.moneda).toBe('USD')
+    const beta = m.porFabricante.find(g => g.fabricante === 'Beta')!
+    expect(beta.cociente).toBe(0.5)
+    expect(typeof beta.cociente).toBe('number')
+  })
+  it('CARACTERIZACIÓN: sumas, recuentos y orden idénticos; sólo se añade moneda', () => {
+    const m = medirGarantias([
+      ficha({ fabricante: 'Beta', valorReclamado: 100 }),
+      ficha({ fabricante: 'Alfa', valorReclamado: 100 }),
+      resuelta({ fabricante: 'Gama', valorReclamado: 900, valorRecuperado: 450, resultado: 'reposicion' }),
+    ])
+    expect(m.porFabricante).toEqual([
+      { fabricante: 'Gama', moneda: 'USD', fichas: 1, sinResolver: 0, sinValorReclamado: 0, reclamado: 900, recuperado: 450, cociente: 0.5, resultados: { reposicion: 1, nota_credito: 0, rechazada: 0 } },
+      { fabricante: 'Alfa', moneda: 'USD', fichas: 1, sinResolver: 1, sinValorReclamado: 0, reclamado: 100, recuperado: 0, cociente: 0, resultados: { reposicion: 0, nota_credito: 0, rechazada: 0 } },
+      { fabricante: 'Beta', moneda: 'USD', fichas: 1, sinResolver: 1, sinValorReclamado: 0, reclamado: 100, recuperado: 0, cociente: 0, resultados: { reposicion: 0, nota_credito: 0, rechazada: 0 } },
+    ])
+    expect(m.porFabricante.every(g => g.moneda === 'USD')).toBe(true)
+  })
+})
