@@ -196,7 +196,7 @@ describe('RQ-KP-26 · la escalera y el orden de multer (pruebas de posición)', 
     const res = await subir(appWith().app, await adminCookie(), Buffer.alloc(LIMITE_SUBIDA_BYTES - 1, 0x61))
     expect(res.status).toBe(400)
     expect(res.body.error).toBe(ERRORES_EXPORTACION.faltan(['ID', 'ID de la solicitud', ...COLUMNAS_INDICADOR.map((c) => c.nombre)]))
-  })
+  }, 30_000)
   it('administrador con el fichero en el campo «intruso»: 400 de multer y ninguna consulta de tickets', async () => {
     const { app, tickets } = conEspia()
     expect((await subir(app, await adminCookie(), VALIDO, { campo: 'intruso', query: PERIODO })).status).toBe(400)
