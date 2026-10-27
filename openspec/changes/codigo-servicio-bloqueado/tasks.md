@@ -21,16 +21,16 @@ Conjunto: `npx vitest run packages/shared/src/codigoServicio.test.ts apps/desk/s
 
 ### Rojo primero (D9)
 
-- [ ] L1.1 **M0 previo:** suite entera en verde sin tocar nada; anotar el recuento de ficheros y pruebas en `apply-progress.md`.
-- [ ] L1.2 Crear `packages/shared/src/codigoServicio.test.ts` (rojo: el módulo no existe). Tabla del predicado: sin campo; previo `null`/`''`/espacios
+- [x] L1.1 **M0 previo:** suite entera en verde sin tocar nada; anotar el recuento de ficheros y pruebas en `apply-progress.md`.
+- [x] L1.2 Crear `packages/shared/src/codigoServicio.test.ts` (rojo: el módulo no existe). Tabla del predicado: sin campo; previo `null`/`''`/espacios
   (escenario «código guardado sólo de espacios cuenta como no lo tiene»); pedido `undefined`/`null`/`''` (caracterización «código vacío no
   dispara la guarda»); mismo valor con espacios («mismo valor pasa»); distinto sin y con admin; sólo espacios con previo → `true` («sólo
   espacios es un cambio»); cargo de dirección no exime. Transiciones con el campo = exactamente `['ingreso_a_servicio','calibracion_directa']`
   (S-7); ninguna lleva `priority` y el código a la vez, ni `Código Servicio` junto a un campo de orden de venta (D5).
-- [ ] L1.3 En el mismo fichero, propuesta («el prefijo sale de clasificación y tipo», «serie y modelo en orden», «partes ausentes se omiten»,
+- [x] L1.3 En el mismo fichero, propuesta («el prefijo sale de clasificación y tipo», «serie y modelo en orden», «partes ausentes se omiten»,
   «día civil de Bogotá: ISO `…T03:00:00Z` → día anterior; `YYYY-MM-DD` directa», «sin `created_time` válido se omite») y `valoresConCodigoPrevio`
   («admin cambia: previo y nuevo», «primer código sin previo», «mismo valor sin previo», «clave inyectada se borra»).
-- [ ] L1.4 Crear `apps/desk/server/codigoServicioBloqueado.test.ts` con el arnés de `apps/desk/server/testing/appHarness.ts` (`instalarArnes`,
+- [x] L1.4 Crear `apps/desk/server/codigoServicioBloqueado.test.ts` con el arnés de `apps/desk/server/testing/appHarness.ts` (`instalarArnes`,
   `appWith({ controlCalidadLiberacion: true })`, `adminCookie`, `userCookie`; molde `apps/desk/server/calibracionDirecta.test.ts:25-38`).
   Rojo previo: hoy un técnico con código distinto recibe `200`.
   - **CB-1** técnico, código distinto, las dos transiciones → `403` con el mensaje, estado y columna intactos, 0 trazas.
@@ -39,7 +39,7 @@ Conjunto: `npx vitest run packages/shared/src/codigoServicio.test.ts apps/desk/s
   - **CB-6** `''` con código → `422` «Falta el campo obligatorio: Código Servicio». **CB-6b** sólo espacios con código → `403`.
   - **CB-7** `CLAVE_CODIGO_SERVICIO` es la `label` de `codigo_servicio` en `PROMOTED_COLUMNS` (`packages/zoho-sync/src/db/rows.ts:86`) y
     `etiquetaCampo(CLAVE_CODIGO_SERVICIO_ANTERIOR)` la deja igual. Cargo de dirección no exime; transición sin el campo no interviene; reenvío del prellenado pasa.
-- [ ] L1.5 En el mismo fichero, **posición** con dos guardas activas a la vez: **PCS-1** Comercial con código distinto → `403` de área; **PCS-2**
+- [x] L1.5 En el mismo fichero, **posición** con dos guardas activas a la vez: **PCS-1** Comercial con código distinto → `403` de área; **PCS-2**
   técnico con código distinto y sin `Fecha Remisión Entrada` → `403` nuevo, no `422`; **PCS-3** `calibracion_directa` con tipo `Mantenimiento`
   y código distinto → `409` de la condición (1); **PCS-4** transición lanzada desde un estado que no es `Ingresado`, con código distinto →
   `409` de estado (NO está en el diseño: se añade aquí); **PCS-5** el atajo con el interruptor apagado y código distinto → `409` de interruptor.
@@ -47,42 +47,42 @@ Conjunto: `npx vitest run packages/shared/src/codigoServicio.test.ts apps/desk/s
 
 ### Implementación (verde)
 
-- [ ] L1.6 (D1) Crear `packages/shared/src/codigoServicio.ts` (~50 líneas): `CLAVE_CODIGO_SERVICIO`, `CLAVE_CODIGO_SERVICIO_ANTERIOR`,
+- [x] L1.6 (D1) Crear `packages/shared/src/codigoServicio.ts` (~50 líneas): `CLAVE_CODIGO_SERVICIO`, `CLAVE_CODIGO_SERVICIO_ANTERIOR`,
   `MENSAJE_CODIGO_BLOQUEADO` («El código de servicio de este ticket ya está fijado: sólo un administrador puede cambiarlo»),
   `puedeCambiarCodigoServicio`, `cambiaCodigoSinPermiso` (D2, con la definición de vacío de `transitionExec.ts:44`), `propuestaCodigoServicio`
   (D3), `valoresConCodigoPrevio` (D6, molde `packages/shared/src/gasPatron.ts:96-99`). Verde la prueba de L1.2-L1.3.
-- [ ] L1.7 (D1) `packages/shared/src/index.ts`: añadir `export * from './codigoServicio'` como **línea 56 nueva al final** (hoy acaba en `:55`).
-- [ ] L1.8 (D3) `packages/shared/src/ticketCreate.ts`, en sitio: `:7` `yymmdd(d: Date)` → `yymmdd(d: unknown)`; `:12` `fecha: Date` →
+- [x] L1.7 (D1) `packages/shared/src/index.ts`: añadir `export * from './codigoServicio'` como **línea 56 nueva al final** (hoy acaba en `:55`).
+- [x] L1.8 (D3) `packages/shared/src/ticketCreate.ts`, en sitio: `:7` `yymmdd(d: Date)` → `yymmdd(d: unknown)`; `:12` `fecha: Date` →
   `fecha: Date | string | null`. El alta sigue pasando `new Date()` (`ticketService.ts:101`); la suite de `ticketCreate` sigue verde.
-- [ ] L1.9 (D4) `apps/desk/server/services/ticketService.ts:131`, en sitio, tras el `throw` de prioridad y antes de `const entran`:
+- [x] L1.9 (D4) `apps/desk/server/services/ticketService.ts:131`, en sitio, tras el `throw` de prioridad y antes de `const entran`:
   `if (cambiaCodigoSinPermiso(t, b.values, current.row.codigo_servicio ?? null, user)) throw new HttpError(403, { error: MENSAJE_CODIGO_BLOQUEADO })`
   con comentario corto sin `;`. Y `:6`: añadir los tres nombres al final de la lista de importación.
-- [ ] L1.10 (D6) `ticketService.ts:155`, en sitio: `valoresConMotivo(values, gas)` → `valoresConCodigoPrevio(valoresConMotivo(values, gas), t, current.row.codigo_servicio ?? null)`.
+- [x] L1.10 (D6) `ticketService.ts:155`, en sitio: `valoresConMotivo(values, gas)` → `valoresConCodigoPrevio(valoresConMotivo(values, gas), t, current.row.codigo_servicio ?? null)`.
   Verde CB-1…CB-7 y PCS-1…PCS-5.
-- [ ] L1.11 (D7) `apps/desk/src/components/TransitionPanel.tsx`, tres ediciones en sitio (fuera de la red de pruebas, F0-00): `:8` importar
+- [x] L1.11 (D7) `apps/desk/src/components/TransitionPanel.tsx`, tres ediciones en sitio (fuera de la red de pruebas, F0-00): `:8` importar
   `CLAVE_CODIGO_SERVICIO, propuestaCodigoServicio, puedeCambiarCodigoServicio`; `:80` tras `previos[f.key] = delTicket[f.key]` el
   `else if (f.key === CLAVE_CODIGO_SERVICIO) previos[f.key] = propuestaCodigoServicio({ … })`; `:174` el bloqueo de `yaLoTraeElTicket` se
   suspende para el administrador. Cubre los escenarios «VERIFICACIÓN MANUAL» (no se prueban; quedan para las pruebas en la app).
-- [ ] L1.12 `npm run typecheck` = 0 y la suite entera en verde (M0 posterior); `git diff --numstat` cumple la colocación; medir contra 720.
+- [x] L1.12 `npm run typecheck` = 0 y la suite entera en verde (M0 posterior); `git diff --numstat` cumple la colocación; medir contra 720.
 
 ### Mutaciones y barrido (D10)
 
-- [ ] L1.13 **M1 posición**, en `ticketService.ts`: (a) quitar la guarda de `:131` y añadirla al final de `:134` → roja PCS-2 (da `422`);
+- [x] L1.13 **M1 posición**, en `ticketService.ts`: (a) quitar la guarda de `:131` y añadirla al final de `:134` → roja PCS-2 (da `422`);
   (b) llevarla al final de `:128` → roja PCS-1; (c) llevarla tras el `}` inicial de `:128` → rojas PCS-3, PCS-4 y PCS-5. Si alguna colocación
   no pone en rojo la prueba prevista, la prueba no discrimina: se corrige antes de seguir. Restaurar de la copia, `sha256` y `file` (CRLF).
-- [ ] L1.14 **M2 condición**, en `codigoServicio.ts`: quitar `!puedeCambiarCodigoServicio(s)` → rojas la fila de admin y CB-4; quitar los
+- [x] L1.14 **M2 condición**, en `codigoServicio.ts`: quitar `!puedeCambiarCodigoServicio(s)` → rojas la fila de admin y CB-4; quitar los
   `trim()` → rojas «mismo valor con espacios» y CB-2; quitar la salida del previo vacío → rojas su fila y CB-3; tratar `' '` como vacío
   → rojas «sólo espacios es un cambio» y CB-6b. Restaurar y comprobar.
-- [ ] L1.15 **M2b fichero vigilado:** `packages/shared/src/transitions.ts:262`, `cfText('Código Servicio')` → `cfText('Codigo Servicio')` →
+- [x] L1.15 **M2b fichero vigilado:** `packages/shared/src/transitions.ts:262`, `cfText('Código Servicio')` → `cfText('Codigo Servicio')` →
   rojas la lista de transiciones con el campo y CB-1 del atajo. Restaurar; `git diff -- packages/shared/src/transitions.ts` vacío.
-- [ ] L1.16 **M3 casilla de la regla 13** (D8): escribir en `apply-progress.md` la tabla decisión a decisión (bloquear → `ticketService.ts:131`,
+- [x] L1.16 **M3 casilla de la regla 13** (D8): escribir en `apply-progress.md` la tabla decisión a decisión (bloquear → `ticketService.ts:131`,
   leída al cerrar; desbloquear al admin → `puedeCambiarCodigoServicio`; prellenar → comodidad sin contrapartida; asterisco →
   `transitionExec.ts:77`), con las líneas releídas, no las del diseño.
-- [ ] L1.17 **M4 barrido de citas:** `git grep -noE "ticketService\.ts:[0-9]+(-[0-9]+)?"`, `"ticketCreate\.ts:[0-9]+(-[0-9]+)?"`,
+- [x] L1.17 **M4 barrido de citas:** `git grep -noE "ticketService\.ts:[0-9]+(-[0-9]+)?"`, `"ticketCreate\.ts:[0-9]+(-[0-9]+)?"`,
   `"TransitionPanel\.tsx:[0-9]+(-[0-9]+)?"`; de cada resultado cuyo rango toque `ticketService.ts` 6, 131 o 155, `ticketCreate.ts` 7 o 12,
   o `TransitionPanel.tsx` 8, 80 o 174, leer qué AFIRMA la frase y clasificar A/B/C. Segundo pase de abreviadas en los ficheros del primero:
   `git grep -nE "(^|[^0-9A-Za-z_./])(:6|:7|:8|:12|:80|:131|:155|:174)([^0-9]|$)" -- <ficheros>`. Reparar sólo los casos A.
-- [ ] L1.18 Escribir `apply-progress.md` (~120 líneas): M0, rojas por mutación, tabla M3, barrido, medida, exclusiones (binarios aparte).
+- [x] L1.18 Escribir `apply-progress.md` (~120 líneas): M0, rojas por mutación, tabla M3, barrido, medida, exclusiones (binarios aparte).
 - [ ] L1.c (orquestador) Cierre del lote: los cinco códigos en 0 en una cadena, bundle nuevo anotado, medida ≤ 720 y `settle`.
 
 ## Verify y archive (un intento cada uno)
