@@ -37,7 +37,7 @@ Conjunto de ejecución (`design.md` D5): `npx vitest run packages/shared/src/tra
 
 - [x] V.1 `sdd-verify`: contrastar el diff de la rama contra la delta (RQ-SR-02 y las dos ediciones fuera de bloques), el diseño y estas
   tareas; reproducir M1 y M2 con su control M0; repetir los cinco códigos y el barrido; `verify-report.md`.
-- [ ] A.1 `sdd-archive` (techo 2 × carpeta + 800): medir ANTES la parte revisable (fusión + `archive-report.md`) ≤ 800; fusionar con el script
+- [x] A.1 `sdd-archive` (techo 2 × carpeta + 800): medir ANTES la parte revisable (fusión + `archive-report.md`) ≤ 800; fusionar con el script
   de `design.md` D2 tras su ensayo; bloques vivos idénticos a la delta; `git show --numstat` del commit de archivo con sólo este cambio;
   barrido de citas y los cinco códigos en 0.
 

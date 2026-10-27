@@ -18,8 +18,8 @@ maestro, «hipótesis» para lo demás. Todas las citas del maestro son de la `R
   DESCRIPCION_EVENTO`) tiene **exactamente cuatro filas**: Solicitud soporte —Asignación→ En proceso;
   Pendiente —Continuación soporte→ En proceso; En proceso —Soporte pendiente→ Pendiente; En proceso
   —Ejecutar→ Finalizado. Coinciden con M1.5 (`R08.2.md:1552`).
-- **La columna `ÁREA_RESPONSABLE` está VACÍA en las cuatro filas.** Por eso el área es un supuesto (S-1,
-  RQ-SR-02) y no un dato: la fuente de diseño demostrablemente no la da, y M1.5 tampoco.
+- **La columna `ÁREA_RESPONSABLE` está VACÍA en las cuatro filas.** Por eso el área fue un supuesto (S-1)
+  hasta que la decidió Gerencia el 2026-10-25 (`decision/e090-areas-soporte-remoto`, RQ-SR-02): la hoja no la da, y M1.5 tampoco.
 - La hoja escribe los estados en minúscula («En proceso», «Solicitud soporte»). Los nombres canónicos son
   los del maestro y del código: `En Proceso`, `Solicitud Soporte`.
 - **M1.5 no dice** qué campos lleva cada transición, cómo nace el ticket, si hay anulación ni qué clase de
@@ -73,15 +73,15 @@ de `TRANSITIONS_EQUIPO_NUEVO`, con la misma forma de `Transition` (`id`, `name`,
 - WHEN se añade una entrada cuyo `from` incluye `Solicitud Soporte` y cuyo `to` no es `En Proceso`
 - THEN la prueba que fija las salidas de `Solicitud Soporte` en exactamente `Asignación` falla
 
-## 2 · Área de las cuatro — supuesto S-1
+## 2 · Área de las cuatro — decisión de Gerencia (S-1 cerrado)
 
-### Requirement: RQ-SR-02 · Área por equivalencia con Servicio Técnico
+### Requirement: RQ-SR-02 · Área Servicio Técnico por decisión de Gerencia
 
-Ninguna fuente accesible da el área de las cuatro transiciones (`ÁREA_RESPONSABLE` vacía en las cuatro
+La fuente de diseño no da el área de las cuatro transiciones (`ÁREA_RESPONSABLE` vacía en las cuatro
 filas de la hoja, §0; M1.5 tampoco). El sistema **SHALL** declarar las cuatro de trabajo como área `Servicio Técnico`,
-por equivalencia con el grafo de servicio y con `transitions-equipo-nuevo` RQ-EN-02 — supuesto reversible
-S-1, un dato por transición. *Hipótesis*, no cerrada: `Asignación` podría ser de Comercial, que es quien
-recibe la solicitud. Se confirma en P.3 (`docs/sdd/ENTRADA.md`). `Anulación` es de área `Comercial` por decisión (`decision/f1c01-area-anulado`), no por equivalencia (RQ-SR-13). (Previously, hasta F1C-01: el catálogo eran sólo las cuatro.)
+**por decisión de Gerencia** (`decision/e090-areas-soporte-remoto`, 2026-10-25), ya no por equivalencia: un dato
+por transición. **S-1 queda cerrado**: la duda de si `Asignación` era de Comercial la resolvió esa decisión.
+`Anulación` es de área `Comercial` por decisión (`decision/f1c01-area-anulado`), no por equivalencia (RQ-SR-13). (Previously, hasta F1C-01: el catálogo eran sólo las cuatro. Hasta F1B-09, `areas-soporte-remoto`: área por equivalencia con el grafo de servicio y con `transitions-equipo-nuevo` RQ-EN-02, supuesto reversible S-1.)
 
 #### Scenario: Las cuatro exigen el área Servicio Técnico
 - GIVEN un usuario cuya única área es `Comercial` y un ticket `Soporte remoto` en `Solicitud Soporte`
