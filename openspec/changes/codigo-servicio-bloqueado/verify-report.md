@@ -170,7 +170,7 @@ Confirmo la tabla de `apply-progress.md:63-69` con las líneas de hoy; cada deci
 | C-2 desbloquear al administrador | `puedeCambiarCodigoServicio`, `codigoServicio.ts:20-22`; el cliente lo consume en `TransitionPanel.tsx:174` | misma línea `:131` deja pasar al admin; CB-4 | espejo legítimo |
 | C-3 prellenar la propuesta | `propuestaCodigoServicio`, `codigoServicio.ts:45-47`; consumida en `TransitionPanel.tsx:80` | **ninguna**: comodidad pura (CB-3: el servidor acepta cualquier primer valor no vacío) | declarada |
 | C-4 asterisco de obligatorio | `transitions.ts:191` y `:262` (`cfText('Código Servicio')`, `required` por defecto) | `transitionExec.ts:77` («Falta el campo obligatorio») con la definición de vacío de `:44`; CB-6 | espejo legítimo |
-| Traza del previo | `valoresConCodigoPrevio`, `codigoServicio.ts:53-59` | `ticketService.ts:155` (el cliente no la calcula) | sólo servidor |
+| Traza del previo | `valoresConCodigoPrevio`, `codigoServicio.ts:53-58` | `ticketService.ts:155` (el cliente no la calcula) | sólo servidor |
 
 El cliente no contiene una segunda copia de la regla: importa `CLAVE_CODIGO_SERVICIO`, `propuestaCodigoServicio` y `puedeCambiarCodigoServicio` de `@ambientalia/shared`
 (`TransitionPanel.tsx:8`). El `!!user &&` de `:174` pide el sujeto; no es una regla.
