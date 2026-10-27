@@ -254,7 +254,7 @@ describe('invariantes del catálogo soporte-remoto (F1B-06)', () => {
   it('corrección (b) · las cuatro de trabajo declaran comentario y derivación y son de Servicio Técnico; la quinta, de Comercial, el motivo (F1C-01)', () => {
     expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(5)
     for (const t of TRANSITIONS_SOPORTE_REMOTO) {
-      expect(t.area, `${t.id} no es de Servicio Técnico (S-1)`).toBe(t.id === 'anulacion_soporte' ? 'Comercial' : 'Servicio Técnico')
+      expect(t.area, `${t.id} no es de Servicio Técnico (RQ-SR-02, decision/e090-areas-soporte-remoto)`).toBe(t.id === 'anulacion_soporte' ? 'Comercial' : 'Servicio Técnico')
       expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(t.id === 'anulacion_soporte' ? ['comment', 'Motivo de anulación', 'Detalle del motivo de anulación'] : ['comment', 'derivado_a'])
     }
   })

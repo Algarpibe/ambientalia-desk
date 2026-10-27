@@ -4192,7 +4192,7 @@ decisiones_de_gerencia_adenda:
       su última entrada (`packages/shared/src/columns.ts:34`); el reparto se deriva de la lista. Son dos entradas, dos
       pruebas que hoy afirman lo contrario (`packages/shared/src/flujos.test.ts:125-126` y
       `packages/shared/src/flujos.test.ts:204-205`) y dos requisitos que hoy lo prohíben
-      (`openspec/specs/transitions-equipo-nuevo/spec.md:264-267`, `openspec/specs/transitions-soporte-remoto/spec.md:108-109`).
+      (`openspec/specs/transitions-equipo-nuevo/spec.md:264-267` en `3ec3703e`, `openspec/specs/transitions-soporte-remoto/spec.md:108-109` en `3ec3703e`).
       Es estimación, no medida.
       (2) VA DENTRO DE F1B-08, como dice la respuesta, y no de F1B-09, que es la fila a la que remitían esas dos specs.
       (3) ES UN CAMBIO PROPIO, con `tanda: F1B-08` y `cierra: no`, y con ficha porque toca specs (R-5). No se mete en el
@@ -5372,7 +5372,7 @@ decisiones_de_gerencia_adenda:
       «E-090: las cuatro transiciones del soporte remoto («Asignación», «Ejecutar», «Soporte pendiente» y «Continuación soporte») son de Servicio Técnico; cerrar S-1 como decisión de Gerencia en config.yaml.»
     consecuencias: |
       (1) Cierra el supuesto S-1 de `blueprint-soporte-remoto`, que la spec viva llama «*Hipótesis*, no cerrada»
-      (`openspec/specs/transitions-soporte-remoto/spec.md:83`, §2, RQ-SR-02).
+      (`openspec/specs/transitions-soporte-remoto/spec.md:83` en `094196b9`, §2, RQ-SR-02).
       (2) El catálogo ya lo cumple (`packages/shared/src/transitions.ts:388` y siguientes: las cuatro llevan
       `area: 'Servicio Técnico'`): sin cambio de código.
       (3) La spec se corrige en un cambio con ficha de F1B-09 (`cierra: no`).

@@ -14,22 +14,22 @@ se inserta, se borra ni se mueve. Se comprueba con `git diff --numstat <partida>
 
 Conjunto de ejecución (`design.md` D5): `npx vitest run packages/shared/src/transitionsSoporteRemoto.test.ts packages/shared/src/invariantesGrafo.test.ts apps/desk/server/permisos.test.ts apps/desk/server/flujoSoporteRemoto.test.ts apps/desk/server/services/avisoArea.test.ts`.
 
-- [ ] L1.1 **M0:** el conjunto, en verde sin mutar nada; anotar ficheros y pruebas que pasan.
-- [ ] L1.2 **M1** (antes de editar): `area` de `asignacion_soporte` (`packages/shared/src/transitions.ts:389`) → `'Comercial'`; correr el
+- [x] L1.1 **M0:** el conjunto, en verde sin mutar nada; anotar ficheros y pruebas que pasan.
+- [x] L1.2 **M1** (antes de editar): `area` de `asignacion_soporte` (`packages/shared/src/transitions.ts:389`) → `'Comercial'`; correr el
   conjunto y anotar las rojas; restaurar; sha256 de `git diff -- packages/shared/src/transitions.ts` igual que antes de mutar (vacío).
-- [ ] L1.3 **M2:** lo mismo con `ejecutar_soporte` (`packages/shared/src/transitions.ts:391`); anotar, restaurar y comprobar el sha256.
-- [ ] L1.4 Ediciones (a)–(e) de `design.md` D3, cada una como sustitución de subcadena en su línea: `packages/shared/src/transitions.ts`,
+- [x] L1.3 **M2:** lo mismo con `ejecutar_soporte` (`packages/shared/src/transitions.ts:391`); anotar, restaurar y comprobar el sha256.
+- [x] L1.4 Ediciones (a)–(e) de `design.md` D3, cada una como sustitución de subcadena en su línea: `packages/shared/src/transitions.ts`,
   `packages/shared/src/transitionsSoporteRemoto.test.ts`, `packages/shared/src/invariantesGrafo.test.ts` (1/1 cada uno) y
   `apps/desk/server/permisos.test.ts` (2/2). Ningún `area` cambia.
-- [ ] L1.5 **M1 otra vez**, tras las ediciones: las rojas enseñan el título nuevo de (b) y el mensaje nuevo de (c); restaurar (el sha256 del
+- [x] L1.5 **M1 otra vez**, tras las ediciones: las rojas enseñan el título nuevo de (b) y el mensaje nuevo de (c); restaurar (el sha256 del
   diff de `transitions.ts` vuelve a ser el del hunk de (a)); el conjunto, en verde.
-- [ ] L1.6 (orquestador) Ediciones (f) y (g) de `design.md` D3 en `openspec/config.yaml` de la rama: 2/2, mismo `wc -l`.
-- [ ] L1.7 (orquestador) La misma edición en el fichero de trabajo de `main` (`design.md` D4): `git status --porcelain` y `git diff --cached`
+- [x] L1.6 (orquestador) Ediciones (f) y (g) de `design.md` D3 en `openspec/config.yaml` de la rama: 2/2, mismo `wc -l`.
+- [x] L1.7 (orquestador) La misma edición en el fichero de trabajo de `main` (`design.md` D4): `git status --porcelain` y `git diff --cached`
   iguales antes y después; `git diff --no-index --numstat <copia previa> openspec/config.yaml` = `2 2`; sha256 del `git diff` de antes, del de
   después y de los dos hunks, en `apply-progress.md`. El índice de `main` no se toca.
-- [ ] L1.8 **Barrido de citas** (`design.md` D8), archivo incluido, clasificando A/B/C cada cita que toque una línea reescrita; más el segundo
+- [x] L1.8 **Barrido de citas** (`design.md` D8), archivo incluido, clasificando A/B/C cada cita que toque una línea reescrita; más el segundo
   pase de abreviadas. Resultado en `apply-progress.md`.
-- [ ] L1.9 **Casilla de la regla 13** (`design.md` D7) en `apply-progress.md`: `git diff --stat <partida> -- apps/desk/src` vacío y la línea del
+- [x] L1.9 **Casilla de la regla 13** (`design.md` D7) en `apply-progress.md`: `git diff --stat <partida> -- apps/desk/src` vacío y la línea del
   servidor que impone el área, leída al cerrar.
 - [ ] L1.c Cierre del lote: los cinco códigos en 0, bundle comparado con `index-BFrlA0VZ.js`, medida y `apply-progress.md` completo.
 

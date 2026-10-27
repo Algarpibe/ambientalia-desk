@@ -86,6 +86,7 @@ sin ronda de preguntas; ninguno cambia el alcance, cuesta dinero, toca producci�
 | S-E | El título de RQ-SR-02 cambia y el script casa el bloque por el ID `RQ-SR-02` | «Por equivalencia» deja de ser cierto | Conservar el título |
 | S-F | El §0 conserva la frase de la hoja vacía y añade la fecha de la decisión | Sigue siendo cierta del `.xlsx` y explica por qué hubo supuesto | Sustituirla |
 | S-G | En la misma línea `openspec/config.yaml:4195` en `094196b9` se ancla también en `3ec3703e` la cita hermana a `transitions-equipo-nuevo` | Es el mismo caso B: `openspec/specs/transitions-equipo-nuevo/spec.md:264-267` en `3ec3703e` decía «**MUST NOT** ganar columna propia para `Verificación`» y hoy exige la columna; misma línea física, ningún hunk de más en `main` | Dejarla sin ancla y anotarla |
+| S-H | (Añadido en el apply.) Las citas de dos paquetes de despliegue fechados al comentario del catálogo se anclan en su revisión de escritura (`c2b28880` y `f5255d2b`), en sitio | Afirman «por equivalencia, no por decisión» y la edición (a) vuelve falsa la línea citada: caso B de la regla de mutación 4, que se repara nombrando la revisión | Dejarlas sin ancla y anotarlas |
 
 ## 6 · Barrido de citas (regla de mutación 4)
 
