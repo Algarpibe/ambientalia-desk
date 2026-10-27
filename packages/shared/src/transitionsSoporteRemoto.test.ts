@@ -31,7 +31,7 @@ describe('TRANSITIONS_SOPORTE_REMOTO — catálogo (RQ-SR-01)', () => {
     }
   })
 
-  it('(d) las cuatro de trabajo son del área Servicio Técnico por equivalencia (S-1, RQ-SR-02); la anulación es de Comercial (F1C-01)', () => {
+  it('(d) las cuatro de trabajo son del área Servicio Técnico por decisión de Gerencia (decision/e090-areas-soporte-remoto, RQ-SR-02); la anulación es de Comercial (F1C-01)', () => {
     expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(5)
     for (const t of TRANSITIONS_SOPORTE_REMOTO.filter((x) => x.id !== 'anulacion_soporte')) {
       expect(t.area, `${t.id} no es de Servicio Técnico`).toBe('Servicio Técnico')

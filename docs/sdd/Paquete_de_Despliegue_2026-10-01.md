@@ -1005,7 +1005,7 @@ propuesta lo registra con probabilidad **Media** y mitigación «P.1 antes de de
 (`openspec/changes/archive/2026-09-29-blueprint-soporte-remoto/proposal.md:150`). P.1 sin resultado (§6.1.2).
 
 **R15 · El área de las cuatro transiciones de soporte remoto es un supuesto (S-1).** Las cuatro son de
-`Servicio Técnico` por equivalencia, no por decisión (`packages/shared/src/transitions.ts:384-385`, `:389`):
+`Servicio Técnico` por equivalencia, no por decisión (`packages/shared/src/transitions.ts:384-385` en `f5255d2b`, `:389`):
 un usuario sólo de Comercial recibe 403 en las cuatro (matriz de `apps/desk/server/permisos.test.ts:300-306`).
 La pregunta está en la bandeja como **E-090** (`docs/sdd/ENTRADA.md:1253`, `NUEVA`); con la respuesta
 pendiente, el sistema funciona con Servicio Técnico (`docs/sdd/ENTRADA.md:1259`). Es la P.3 de

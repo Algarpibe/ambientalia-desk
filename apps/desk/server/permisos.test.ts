@@ -298,7 +298,7 @@ function arnesMiddleware(req: { cookies?: Record<string, string>; user?: UserPub
 
 /**
  * F1B-06 (cambio 2, `blueprint-soporte-remoto`) — LA MATRIZ 4×3 DE `TRANSITIONS_SOPORTE_REMOTO`, CONTRA EL SERVIDOR.
- * A mano: por S-1 las cuatro son `Servicio Técnico`, así que sólo ese usuario pasa (4 permitidos, 8 prohibidos). Cada
+ * A mano: por `decision/e090-areas-soporte-remoto` (antes, S-1) las cuatro son `Servicio Técnico`, así que sólo ese usuario pasa (4 permitidos, 8 prohibidos). Cada
  * ticket es `Soporte remoto` y está en `t.from[0]`: lo observado es el 403/200 de PERMISO, no un 409 de flujo o de estado.
  */
 describe('matriz 4×3 · área × transición de Soporte remoto, contra el servidor (F1B-06, cambio 2)', () => {
@@ -320,7 +320,7 @@ describe('matriz 4×3 · área × transición de Soporte remoto, contra el servi
       const esperado: Record<string, number> = {}
       for (const t of TRANSITIONS_SOPORTE_REMOTO) esperado[t.id] = canExecuteTransition([area], false, t.area) ? 200 : 403
       expect(observado).toEqual(esperado)
-      // A mano, independiente de `canExecuteTransition`: sólo Servicio Técnico pasa (S-1), salvo la anulación, que es de Comercial (F1C-01).
+      // A mano, independiente de `canExecuteTransition`: sólo Servicio Técnico pasa (`decision/e090-areas-soporte-remoto`), salvo la anulación, que es de Comercial (F1C-01).
       expect(Object.entries(observado).every(([id, s]) => s === ((id === 'anulacion_soporte' ? area === 'Comercial' : area === 'Servicio Técnico') ? 200 : 403))).toBe(true)
     }, 60_000)
   }

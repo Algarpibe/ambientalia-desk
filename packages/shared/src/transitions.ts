@@ -381,7 +381,7 @@ function cfOvAdicional(campoFecha?: string, required = false): TransitionField {
  * servicio y fundirlos mezclaría los grafos en `transitionsForStatus` y `areasSiguientes` (`design.md` D1). Va
  * tras `cfOvAdicional` y no junto al de equipo nuevo para no desplazar las citas de `:365-376` (regla de mutación 4).
  *
- * Área: las cuatro de trabajo son `Servicio Técnico` por equivalencia (S-1): la columna `ÁREA_RESPONSABLE` de la hoja de
+ * Área: las cuatro de trabajo son `Servicio Técnico` por decisión de Gerencia (`decision/e090-areas-soporte-remoto`, RQ-SR-02), que cerró el supuesto S-1: la columna `ÁREA_RESPONSABLE` de la hoja de
  * mapeo está vacía. Campos: sólo `comment()` y `derivacion()` (S-3); ninguno lleva `modalidad` (RQ-SR-10) ni fecha. La quinta, `anulacion_soporte` (F1C-01), es `Comercial` y añade el motivo y su detalle.
  * El id de `soporte_pendiente` NO reutiliza `marcar_pendiente` (`:206`, retirada por F1C-09): buscar por id da un único catálogo (S-8).
  */
