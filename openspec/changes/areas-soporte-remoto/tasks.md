@@ -31,11 +31,11 @@ Conjunto de ejecución (`design.md` D5): `npx vitest run packages/shared/src/tra
   pase de abreviadas. Resultado en `apply-progress.md`.
 - [x] L1.9 **Casilla de la regla 13** (`design.md` D7) en `apply-progress.md`: `git diff --stat <partida> -- apps/desk/src` vacío y la línea del
   servidor que impone el área, leída al cerrar.
-- [ ] L1.c Cierre del lote: los cinco códigos en 0, bundle comparado con `index-BFrlA0VZ.js`, medida y `apply-progress.md` completo.
+- [x] L1.c Cierre del lote: los cinco códigos en 0, bundle comparado con `index-BFrlA0VZ.js`, medida y `apply-progress.md` completo.
 
 ## Verify y archive (un intento cada uno)
 
-- [ ] V.1 `sdd-verify`: contrastar el diff de la rama contra la delta (RQ-SR-02 y las dos ediciones fuera de bloques), el diseño y estas
+- [x] V.1 `sdd-verify`: contrastar el diff de la rama contra la delta (RQ-SR-02 y las dos ediciones fuera de bloques), el diseño y estas
   tareas; reproducir M1 y M2 con su control M0; repetir los cinco códigos y el barrido; `verify-report.md`.
 - [ ] A.1 `sdd-archive` (techo 2 × carpeta + 800): medir ANTES la parte revisable (fusión + `archive-report.md`) ≤ 800; fusionar con el script
   de `design.md` D2 tras su ensayo; bloques vivos idénticos a la delta; `git show --numstat` del commit de archivo con sólo este cambio;
