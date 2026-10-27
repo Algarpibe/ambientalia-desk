@@ -83,16 +83,16 @@ Conjunto: `npx vitest run packages/shared/src/codigoServicio.test.ts apps/desk/s
   o `TransitionPanel.tsx` 8, 80 o 174, leer qué AFIRMA la frase y clasificar A/B/C. Segundo pase de abreviadas en los ficheros del primero:
   `git grep -nE "(^|[^0-9A-Za-z_./])(:6|:7|:8|:12|:80|:131|:155|:174)([^0-9]|$)" -- <ficheros>`. Reparar sólo los casos A.
 - [x] L1.18 Escribir `apply-progress.md` (~120 líneas): M0, rojas por mutación, tabla M3, barrido, medida, exclusiones (binarios aparte).
-- [ ] L1.c (orquestador) Cierre del lote: los cinco códigos en 0 en una cadena, bundle nuevo anotado, medida ≤ 720 y `settle`.
+- [x] L1.c (orquestador) Cierre del lote: los cinco códigos en 0 en una cadena, bundle nuevo anotado, medida ≤ 720 y `settle`.
 
 ## Verify y archive (un intento cada uno)
 
-- [ ] V.1 `sdd-verify` (i3), por un actor independiente: reproducir M1 y M2 con su control M0, escenario por escenario de las dos deltas
+- [x] V.1 `sdd-verify` (i3), por un actor independiente: reproducir M1 y M2 con su control M0, escenario por escenario de las dos deltas
   (los «VERIFICACIÓN MANUAL» se marcan como tales, no como pasados); repetir los cinco códigos y el barrido; `verify-report.md`.
-- [ ] A.1 `sdd-archive` (i4, techo 2 × carpeta + 800): medir ANTES la parte revisable (fusión + `archive-report.md`) ≤ 800; si la supera, parar
+- [x] A.1 `sdd-archive` (i4, techo 2 × carpeta + 800): medir ANTES la parte revisable (fusión + `archive-report.md`) ≤ 800; si la supera, parar
   y consultar. Fusionar las dos deltas ADDED-only al final de `openspec/specs/tickets-core/spec.md` y `openspec/specs/transitions-st/spec.md`
   por script, y comparar cada bloque vivo contra su delta (idénticos). `archive-report.md` lo escribe el orquestador con cifras medidas.
-- [ ] A.2 Mover la carpeta a `openspec/changes/archive/2026-10-27-codigo-servicio-bloqueado` (o la fecha del archivo); `git show --numstat`
+- [x] A.2 Mover la carpeta a `openspec/changes/archive/2026-10-27-codigo-servicio-bloqueado` (o la fecha del archivo); `git show --numstat`
   del commit de archivo contiene SÓLO este cambio; barrido de citas y los cinco códigos en 0. **PARAR antes de fusionar a `main`** (fusiona el analista).
 
 ## Tareas de persona — fuera del recuento

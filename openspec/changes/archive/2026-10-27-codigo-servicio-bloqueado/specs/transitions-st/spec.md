@@ -93,8 +93,8 @@ no por el id de la transición: una transición futura que declare `Código Serv
 Cuando un administrador cambia un código **ya fijado** a uno **distinto** (comparados recortados), la fila de
 `ticket_transitions` de esa transición —que ya guarda quién, cuándo y el valor nuevo
 (`packages/zoho-sync/src/db/repo.ts:317`)— **SHALL** guardar además el **valor previo** en sus `values` (SUPUESTO S-5). El
-valor previo **SHALL** ser el guardado en el ticket antes de escribir, leído dentro de la misma transacción de la escritura
-(RQ-TS-10), de modo que la traza y el cambio no se separen. **MUST NOT** añadirse tabla ni columna (SUPUESTO S-5; la tabla
+valor previo **SHALL** ser el del ticket leído en el servidor —nunca el que envía el cliente—, en la misma lectura que usan
+las guardas de la transición; la traza **SHALL** escribirse en la misma transacción que el cambio (RQ-TS-10). **MUST NOT** añadirse tabla ni columna (SUPUESTO S-5; la tabla
 propia y la ruta propia son P-3). La clave concreta de `values` la fija el diseño.
 
 La traza **SHALL NOT** registrar valor previo cuando no hubo cambio: el primer código de un ticket sin él, el reenvío del mismo
@@ -123,7 +123,7 @@ valor previo, lo ejecute quien lo ejecute.
 - WHEN el servidor responde `403`
 - THEN no hay fila en `ticket_transitions` ni valor previo guardado en ningún sitio
 
-#### Scenario: el valor previo es el de la transacción, no el que mandó el cliente — ROJO
+#### Scenario: el valor previo es el del ticket leído en el servidor, no el que mandó el cliente — ROJO
 - GIVEN un administrador cuyo cuerpo incluye un campo extra que simula un «valor previo»
 - WHEN ejecuta `ingreso_a_servicio` con un código distinto
 - THEN el valor previo guardado es el del ticket y no el del cuerpo
