@@ -5458,6 +5458,31 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "Anexo D nº 7"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1B-13 (valor-reclamado-usd, cierra: no)"
+
+  - clave: "decision/excepcion-plazo-rq-kp-26"
+    fecha: "2026-10-27"
+    pregunta: |
+      Cierre de las tres tareas del 25/10 y excepción a «nada fuera del plan antes del 09/11» para dar plazo propio a
+      RQ-KP-26 (`apps/desk/server/routes/indicadoresComparacion.test.ts:194`), que cayó por plazo en el CI de la fusión
+      de `areas-soporte-remoto`.
+    respuesta_textual: |
+      «Las tres tareas del 25/10 quedan cerradas; gracias por la comprobación del merge. Excepción concedida para RQ-KP-26: plazo propio en esa prueba, sin tocar el plazo por defecto de vitest; fuera del plan, con esta excepción como motivo. No se abre ninguna tanda nueva del plan antes del 09/11; el adelanto de las F1C (E-248) se decide ese día. Siguiente tanda, corta y sin dependencias de personas: (1) plazo propio de RQ-KP-26; (2) E-247, alinear el registro de esperas con el código (12); (3) la corrección del código de servicio bloqueado, ya registrada; (4) un Paquete_de_Despliegue que documente lo que hay hoy en producción (hash de main, bundle y fecha), porque supervisión sigue sin constancia de publicaciones desde el 13/10 y el 16/11 la comparación semanal se juzga en producción. F1B-04 y el repaso de 1B siguen en espera hasta que Gerencia entregue el recuento de modelos sin accesorios.»
+    consecuencias: |
+      (1) Medida del CI 40527338941, intento 1 (27/10/2026, sobre `c69a71d9`): RQ-KP-26, «el límite es el común de
+      10 MB…», tardó 6.264 ms contra el plazo de 5.000 ms de vitest, con el runner a 586 s de pasada frente a unos 325 s
+      de las dos ejecuciones verdes anteriores (40421103156 sobre `094196b9`, 323,68 s; 40350412747 sobre `7cf5faf0`,
+      326,77 s). El intento 2, sin cambiar nada, salió verde (5681 de 5681 pruebas, 445 s).
+      (2) Excepción única y acotada a «nada fuera del plan antes del 09/11»: plazo propio sólo en esa prueba, en un commit
+      `fuera-del-plan` con esta clave como motivo. NO se toca el plazo por defecto de vitest ni `vitest.config.ts`.
+      (3) No se abre ninguna tanda nueva del plan antes del 09/11; el adelanto de las F1C (E-248) se decide ese día.
+      (4) Siguiente tanda, corta y sin dependencias de personas: plazo propio de RQ-KP-26; E-247 (registro de esperas
+      alineado con el código); la corrección del código de servicio bloqueado; y un Paquete_de_Despliegue con lo que hay
+      hoy en producción.
+      (5) F1B-04 y el repaso de 1B siguen en espera hasta que Gerencia entregue el recuento de modelos sin accesorios.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/excepcion-plazo-rq-kp-26)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (fuera-del-plan)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
