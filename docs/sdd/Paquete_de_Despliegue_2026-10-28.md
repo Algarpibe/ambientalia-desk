@@ -68,7 +68,7 @@ La publicación del 11/10 (`4f30c12`, `index-FJaDfP7i.js`) es **anterior al 13/1
 | Fecha | Commit de `main` | Bundle | Qué llevó |
 |---|---|---|---|
 | 17/10 | `50eef3e` | `index-BcnKpGtZ.js` | F1F-05 comparación; F1B-03 prefijo deducido; F1F-01 cierre de migrados; F1B-13 vista Garantías |
-| 18/10 | `ac2d4ef` | `index-8KPDmeiY.js` | Búsqueda por cliente y código (E-226) |
+| 18/10 | `ac2d4ef` | `index-8KPDmeiY.js` | Búsqueda por cliente y código de servicio (E-198, 6c7e6713, F1F-03); esperas y áreas de equipo nuevo (E-226, 8d132564, F1B-09) |
 | 18/10 | `b0b1353` | `index-BqihsiwC.js` | `tiempos-ficha-cliente` |
 | 18/10 | `37817ef` | `index-JtLEpPmB.js` | F1C-01 Anulado |
 | 21/10 | `ca373dca` | `index-C4Y09m4Y.js` | Bloque 1C: F1C-02, 04, 05, 06, 07 y 08. Migraciones aditivas `tickets.facturacion_avisada_para` y `ticket_transitions.performed_by_id` |
