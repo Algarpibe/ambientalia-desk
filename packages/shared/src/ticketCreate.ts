@@ -4,12 +4,12 @@ export const PREFIJOS = ['MT', 'CG', 'HV', 'SR', 'PRO'] as const
 export const TIPOS_SERVICIO = ['Calibración', 'Diagnóstico', 'Garantía', 'Mantenimiento', 'Reparación', 'Protocolo', 'No aplica', 'Otro'] as const
 export const CLASIFICACIONES = ['Equipo para servicio de mantenimiento', 'Equipo nuevo', 'Soporte remoto'] as const
 import { diaEnZona } from './fechasDerivadas'; import { esClasificacionEquipoNuevo, esClasificacionSoporteRemoto } from './flujos'
-function yymmdd(d: Date): string {
+function yymmdd(d: unknown): string {
   const dia = diaEnZona(d) ?? ''
   return dia.slice(2).replace(/-/g, '')
 }
 
-export function buildCodigoServicio(input: { prefijo: string; serie: string; modelo: string; fecha: Date }): string {
+export function buildCodigoServicio(input: { prefijo: string; serie: string; modelo: string; fecha: Date | string | null }): string {
   return [input.prefijo, input.serie, input.modelo, yymmdd(input.fecha)].filter((p) => p != null && p !== '').join('_')
 }
 

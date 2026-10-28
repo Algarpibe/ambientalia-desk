@@ -5,7 +5,7 @@ import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/p
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarConSalidasEsperas, DECISIONALES_APAGADO, SALIDAS_ESPERAS_APAGADO, type ContextoSalidasEsperas, visibleConSalidasEsperas, type ContextoDecisionales, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, seRegistraEnCadaFactura, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION, visibleConControlCalidad, visibleCalibracionDirecta } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
+import { puedeEjecutarConSalidasEsperas, DECISIONALES_APAGADO, SALIDAS_ESPERAS_APAGADO, type ContextoSalidasEsperas, visibleConSalidasEsperas, type ContextoDecisionales, puedeAjustarPrioridadTicket, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion, seRegistraEnCadaFactura, motivosAnulacionOrdenados, CLAVE_MOTIVO_ANULACION, visibleConControlCalidad, visibleCalibracionDirecta, CLAVE_CODIGO_SERVICIO, propuestaCodigoServicio, puedeCambiarCodigoServicio } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -77,7 +77,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
     // exige los obligatorios, y omitirlos por estar bloqueados los daría por faltantes.
     const previos: Record<string, unknown> = {}
     for (const f of t.fields) {
-      if (yaLoTraeElTicket(f, delTicket)) previos[f.key] = delTicket[f.key]
+      if (yaLoTraeElTicket(f, delTicket)) previos[f.key] = delTicket[f.key]; else if (f.key === CLAVE_CODIGO_SERVICIO) previos[f.key] = propuestaCodigoServicio({ clasificacion, tipoServicio: delTicket['Tipo de Servicio'], serie: delTicket['Serial'], modelo: delTicket['Modelo de equipo'], creadoEn: delTicket['Fecha creación ticket'] })
       // La derivación es el primer campo que llega PRELLENADO pero NO bloqueado, y hasta ahora las dos
       // cosas eran la misma. Sin esta segunda vía, la casilla abriría vacía en cada etapa y el técnico
       // se encontraría con que confirmar la etapa le borra el responsable que ya tenía.
@@ -171,7 +171,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
                 // no se pinta el buscador que arrastra la fecha, así que bloquearla también la dejaba
                 // imposible de rellenar para siempre. Pasa con los tickets creados antes de que el
                 // alta guardara la fecha, y con las órdenes de Books que no traen ninguna.
-                bloqueado={yaLoTraeElTicket(f, delTicket) || (fechasDeOV(active).has(f.key) && !!values[f.key])}
+                bloqueado={(yaLoTraeElTicket(f, delTicket) && !(f.key === CLAVE_CODIGO_SERVICIO && !!user && puedeCambiarCodigoServicio(user))) || (fechasDeOV(active).has(f.key) && !!values[f.key])}
                 clientId={clientId}
                 opciones={opciones}
                 onElegirOrdenVenta={(n, fecha) => elegirOrdenVenta(f, n, fecha)}
