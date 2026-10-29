@@ -9,21 +9,21 @@ y `npm run build`. Mutaciones con `perl -i -pe '… if $. == N'`, restauradas y 
 
 ## Lote L1 — paginación, reflejo de lo ausente y el hilo (intento i2)
 
-- [ ] L1.1 M0: `npm test` entero en el árbol de partida del lote, con su log; anotar ficheros, pruebas y duración.
-- [ ] L1.2 ROJO `packages/zoho-sync/src/conversaciones.test.ts`: `esperadoDeZoho` (números, texto numérico, `jsonb` como texto, falta uno, `null`, no numérico, negativo).
-- [ ] L1.3 ROJO mismo fichero: `leerConversaciones` — 250 en tres páginas con `from=0/100/200` y `limit=100`; 200 exactos con la tercera `204`; `500` en la segunda (devuelve las 100 y el error con el texto de `sync.ts:185`); tope de 20 páginas; `429` una vez con `reintentos429: 3` y `pausa429Ms: 0` (repite la MISMA página); `429` sin reintentos (error, `por429`).
-- [ ] L1.4 ROJO mismo fichero: `guardarYReflejar` — el #958 (5 comentarios + el hilo `495552000057899091`; recibidos los 5; esperado 5 → marca el hilo y sólo él; ninguna fila borrada, ni de `conversations` ni de `attachments`); recuento distinto con la línea de log; recuento ausente; lista con `error`; `marcar: false`; reaparece y se desmarca (con `marcar` encendido y apagado); fila `source='app'`; fila con `created_at` posterior a `inicio`; id repetido; caso de 151 guardadas y 150 recibidas en dos páginas que marca exactamente 1.
-- [ ] L1.5 ROJO `packages/zoho-sync/src/sync.conversaciones.test.ts`: `syncConversations` por `createSync` — 250 en tres páginas; `500` guarda las 100 y rechaza nombrando ticket y estado; #958 con `raw` (`commentCount` 5, `threadCount` 0) y `conversaciones: { marcarAusentes: true }` marca el hilo; sin la opción no marca; P1: una fila guardada por otra vía DURANTE la petición (efecto de la `zohoFetch` falsa) no se marca.
-- [ ] L1.6 ROJO `apps/desk/server/db/conversacionAusentes.test.ts`: RQ-TZ-25 — marcada con adjunto no sale ni su adjunto, las filas siguen en la base; desmarcada vuelve con su adjunto; CARACTERIZACIÓN: transición con comentario y remisión siguen saliendo.
-- [ ] L1.7 Anotar el rojo medido de L1.2-L1.6 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
-- [ ] L1.8 `schema.sql`, al final: comentario sin punto y coma y `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS ausente_en_zoho_at timestamptz;` sin calificar (D5).
-- [ ] L1.9 `packages/zoho-sync/src/conversaciones.ts` (nuevo): constantes, `ConversacionesDeps`, `esperadoDeZoho`, `leerConversaciones`, `instanteBase`, `guardarYReflejar` (D2). `crearPasadaConversaciones` queda para L2.
-- [ ] L1.10 `repo.ts:103` y `repo.ts:219` en sitio (D4). Releer las dos líneas antes de editar.
-- [ ] L1.11 `sync.ts:7`, `:9`, `:62` y `:183-191` en sitio (D3), sin añadir ni quitar líneas: `git diff --numstat` de `sync.ts` con inserciones = borrados.
-- [ ] L1.12 Verde: los tres ficheros nuevos y la suite entera (M0 posterior) con su log; anotar la diferencia de pruebas.
-- [ ] L1.13 Mutaciones de L1 con su rojo (D7): M1, M2, M3 (las dos variantes), M4 en `syncConversations`, M7, M9, M10 (las dos variantes) y P1. Tabla en `apply-progress.md`: colocación, rojas (fichero › prueba › aserción), restauración comprobada.
-- [ ] L1.14 Casilla de la regla 13 (D8): `git diff --name-only` sin nada bajo `apps/desk/src`.
-- [ ] L1.15 Las cinco comprobaciones en serie en 0 sobre el commit del lote; medida del intento; `apply-progress.md` con todo lo anterior.
+- [x] L1.1 M0: `npm test` entero en el árbol de partida del lote, con su log; anotar ficheros, pruebas y duración.
+- [x] L1.2 ROJO `packages/zoho-sync/src/conversaciones.test.ts`: `esperadoDeZoho` (números, texto numérico, `jsonb` como texto, falta uno, `null`, no numérico, negativo).
+- [x] L1.3 ROJO mismo fichero: `leerConversaciones` — 250 en tres páginas con `from=0/100/200` y `limit=100`; 200 exactos con la tercera `204`; `500` en la segunda (devuelve las 100 y el error con el texto de `sync.ts:185`); tope de 20 páginas; `429` una vez con `reintentos429: 3` y `pausa429Ms: 0` (repite la MISMA página); `429` sin reintentos (error, `por429`).
+- [x] L1.4 ROJO mismo fichero: `guardarYReflejar` — el #958 (5 comentarios + el hilo `495552000057899091`; recibidos los 5; esperado 5 → marca el hilo y sólo él; ninguna fila borrada, ni de `conversations` ni de `attachments`); recuento distinto con la línea de log; recuento ausente; lista con `error`; `marcar: false`; reaparece y se desmarca (con `marcar` encendido y apagado); fila `source='app'`; fila con `created_at` posterior a `inicio`; id repetido; caso de 151 guardadas y 150 recibidas en dos páginas que marca exactamente 1.
+- [x] L1.5 ROJO `packages/zoho-sync/src/sync.conversaciones.test.ts`: `syncConversations` por `createSync` — 250 en tres páginas; `500` guarda las 100 y rechaza nombrando ticket y estado; #958 con `raw` (`commentCount` 5, `threadCount` 0) y `conversaciones: { marcarAusentes: true }` marca el hilo; sin la opción no marca; P1: una fila guardada por otra vía DURANTE la petición (efecto de la `zohoFetch` falsa) no se marca.
+- [x] L1.6 ROJO `apps/desk/server/db/conversacionAusentes.test.ts`: RQ-TZ-25 — marcada con adjunto no sale ni su adjunto, las filas siguen en la base; desmarcada vuelve con su adjunto; CARACTERIZACIÓN: transición con comentario y remisión siguen saliendo.
+- [x] L1.7 Anotar el rojo medido de L1.2-L1.6 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
+- [x] L1.8 `schema.sql`, al final: comentario sin punto y coma y `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS ausente_en_zoho_at timestamptz;` sin calificar (D5).
+- [x] L1.9 `packages/zoho-sync/src/conversaciones.ts` (nuevo): constantes, `ConversacionesDeps`, `esperadoDeZoho`, `leerConversaciones`, `instanteBase`, `guardarYReflejar` (D2). `crearPasadaConversaciones` queda para L2.
+- [x] L1.10 `repo.ts:103` y `repo.ts:219` en sitio (D4). Releer las dos líneas antes de editar.
+- [x] L1.11 `sync.ts:7`, `:9`, `:62` y `:183-191` en sitio (D3), sin añadir ni quitar líneas: `git diff --numstat` de `sync.ts` con inserciones = borrados.
+- [x] L1.12 Verde: los tres ficheros nuevos y la suite entera (M0 posterior) con su log; anotar la diferencia de pruebas.
+- [x] L1.13 Mutaciones de L1 con su rojo (D7): M1, M2, M3 (las dos variantes), M4 en `syncConversations`, M7, M9, M10 (las dos variantes) y P1. Tabla en `apply-progress.md`: colocación, rojas (fichero › prueba › aserción), restauración comprobada.
+- [x] L1.14 Casilla de la regla 13 (D8): `git diff --name-only` sin nada bajo `apps/desk/src`.
+- [x] L1.15 Las cinco comprobaciones en serie en 0 sobre el commit del lote; medida del intento; `apply-progress.md` con todo lo anterior.
 
 ## Lote L2 — pasada periódica, interruptores, worker y despliegue (intento i3)
 
