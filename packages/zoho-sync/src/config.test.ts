@@ -113,3 +113,27 @@ describe('CONTROL_CALIDAD_LIBERACION (F1C-07, RQ-PM-32)', () => {
     expect(loadConfig({ ...base, CONTROL_CALIDAD_LIBERACION: 'true' }).controlCalidadLiberacion).toBe(true)
   })
 })
+
+describe('SYNC_CONVERSACIONES_PERIODICA y MARCAR_CONVERSACIONES_AUSENTES (1G-01, RQ-ZS-27)', () => {
+  it('nacen cerrados: ausentes del entorno, los dos campos valen false', () => {
+    const c = loadConfig(base)
+    expect(c.syncConversacionesPeriodica).toBe(false)
+    expect(c.marcarConversacionesAusentes).toBe(false)
+  })
+
+  it('sólo el literal "true" enciende cada uno', () => {
+    for (const v of ['', 'false', 'TRUE', 'True', '1', 'yes', ' true']) {
+      expect(loadConfig({ ...base, SYNC_CONVERSACIONES_PERIODICA: v }).syncConversacionesPeriodica, v).toBe(false)
+      expect(loadConfig({ ...base, MARCAR_CONVERSACIONES_AUSENTES: v }).marcarConversacionesAusentes, v).toBe(false)
+    }
+    expect(loadConfig({ ...base, SYNC_CONVERSACIONES_PERIODICA: 'true' }).syncConversacionesPeriodica).toBe(true)
+    expect(loadConfig({ ...base, MARCAR_CONVERSACIONES_AUSENTES: 'true' }).marcarConversacionesAusentes).toBe(true)
+  })
+
+  it('son independientes: encender uno no enciende el otro', () => {
+    const a = loadConfig({ ...base, SYNC_CONVERSACIONES_PERIODICA: 'true' })
+    expect([a.syncConversacionesPeriodica, a.marcarConversacionesAusentes]).toEqual([true, false])
+    const b = loadConfig({ ...base, MARCAR_CONVERSACIONES_AUSENTES: 'true' })
+    expect([b.syncConversacionesPeriodica, b.marcarConversacionesAusentes]).toEqual([false, true])
+  })
+})

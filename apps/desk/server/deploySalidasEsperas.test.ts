@@ -14,10 +14,10 @@ const RAIZ = path.resolve(__dirname, '../../..')
 const deploy = readFileSync(path.join(RAIZ, 'DEPLOY.md'), 'utf8')
 const entorno = readFileSync(path.join(RAIZ, '.env.example'), 'utf8')
 const inicio = deploy.indexOf('## 17. `SALIDAS_ESPERAS`')
-const seccion = inicio === -1 ? '' : deploy.slice(inicio)
+const seccion = inicio === -1 ? '' : deploy.slice(inicio, deploy.indexOf('## 18. ') >= 0 ? deploy.indexOf('## 18. ') : undefined) // 1G-01 añadió la §18: la §17 se acota hasta ella; en una línea para no desplazar citas
 
 describe('DEPLOY.md §17 · SALIDAS_ESPERAS', () => {
-  it('la sección existe, tras la §16, y es la última', () => {
+  it('la sección existe, tras la §16, y es la última hasta la §18', () => {
     expect(inicio).toBeGreaterThan(-1)
     expect(inicio).toBeGreaterThan(deploy.indexOf('## 16. `CONTROL_CALIDAD_LIBERACION`'))
     expect(seccion.match(/^## \d+\./gm)).toHaveLength(1)

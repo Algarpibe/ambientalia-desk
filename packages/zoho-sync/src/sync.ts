@@ -4,7 +4,7 @@ import { upsertTicket, upsertAccount, upsertContact, upsertAgent, type Discrepan
 import { upsertActivity } from './db/activities'
 import { upsertHistoryEvent } from './db/history'
 import { PREFIJO_TICKET_APP } from '@ambientalia/shared'
-import { ticketRowFromZoho, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, activityRowFromZoho } from './db/mappers'; import { leerConversaciones, guardarYReflejar, esperadoDeZoho, instanteBase, type ConversacionesDeps } from './conversaciones'
+import { ticketRowFromZoho, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, activityRowFromZoho } from './db/mappers'; import { leerConversaciones, guardarYReflejar, esperadoDeZoho, instanteBase, crearPasadaConversaciones, type ConversacionesDeps } from './conversaciones'
 
 interface Deps extends AvisoOVDeps, ConversacionesDeps {
   zohoFetch: (path: string, init?: RequestInit) => Promise<Response>
@@ -63,7 +63,7 @@ export function createSync({ zohoFetch, db, config, alDiscrepanciaOV, conversaci
   // Cachés por proceso para no re-pedir la misma cuenta/contacto en el backfill (menos riesgo de 429).
   const accountSeen = new Set<string>()
   // contactId → accountId del contacto (el endpoint de LISTA de tickets no trae accountId).
-  const contactAccount = new Map<string, string | null>()
+  const contactAccount = new Map<string, string | null>(); const pasadaConversaciones = conversaciones?.periodica === true ? crearPasadaConversaciones({ zohoFetch, db, marcar: conversaciones.marcarAusentes === true, pausaMs: conversaciones.pausaMs, pausa429Ms: conversaciones.pausa429Ms }) : undefined
 
   /**
    * La historia de UN ticket, paginada. Es función suelta y no solo un método porque la llaman dos: la
@@ -173,7 +173,7 @@ export function createSync({ zohoFetch, db, config, alDiscrepanciaOV, conversaci
     async syncRecent(): Promise<number> {
       const paginaReciente = async () => { const p = await fetchTicketPage(1, '-recentThread'); await persistEach(p); return p.length }
       // Por fecha de modificación; el cuerpo vive al final del fichero (RQ-ZS-22). Sin marca o si la búsqueda cae, la página 1 de hoy.
-      return sincronizarModificados({ zohoFetch, db, config, persistTicket, paginaReciente })
+      return sincronizarModificados({ zohoFetch, db, config, persistTicket, paginaReciente, trasLeer: pasadaConversaciones })
     },
     async syncTicket(id: string): Promise<void> {
       const res = await zohoFetch(`/tickets/${id}?include=contacts,assignee`)
@@ -372,7 +372,7 @@ interface ModificadosDeps {
   config: AppConfig
   persistTicket: (t: ZohoRecord) => Promise<void>
   /** El camino de siempre: página 1 por `-recentThread`, persistida. Devuelve cuántos trajo. */
-  paginaReciente: () => Promise<number>
+  paginaReciente: () => Promise<number>; trasLeer?: (leidos: ZohoRecord[]) => Promise<void>   // 1G-01: la pasada de conversaciones; sólo la ruta por búsqueda la ejecuta (S-8)
 }
 async function sincronizarModificados(d: ModificadosDeps): Promise<number> {
   const { zohoFetch, db, config, persistTicket, paginaReciente } = d
@@ -408,7 +408,7 @@ async function sincronizarModificados(d: ModificadosDeps): Promise<number> {
 
   // Ascendente y estable por `modifiedTime`: si un corte deja lo persistido a medias, es un prefijo.
   const ids = [...hallados.entries()].sort((a, b) => (Number.isNaN(a[1]) || Number.isNaN(b[1]) ? 0 : a[1] - b[1])).map(([id]) => id)
-  let leidos = 0
+  let leidos = 0; const vistos: ZohoRecord[] = []
   for (const id of ids) {
     let t: ZohoRecord
     try {
@@ -423,12 +423,12 @@ async function sincronizarModificados(d: ModificadosDeps): Promise<number> {
       console.error(`Zoho /tickets/${id} falló:`, e instanceof Error ? e.message : String(e))
       break
     }
-    leidos++
+    leidos++; vistos.push(t)
     try { await persistTicket(t) }
     catch (e) {
       const err = e as { detail?: unknown; message?: unknown }
       console.error(`persistTicket(${id}) falló:`, String(err?.detail ?? err?.message ?? e))
     }
   }
-  return leidos
+  if (d.trasLeer) await d.trasLeer(vistos).catch((e) => console.error('pasada de conversaciones falló:', e instanceof Error ? e.message : String(e))); return leidos
 }

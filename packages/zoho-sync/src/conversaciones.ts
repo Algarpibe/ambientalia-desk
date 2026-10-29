@@ -138,3 +138,38 @@ export async function guardarYReflejar(
   }
   return { marcadas, completa }
 }
+
+/**
+ * La pasada periódica (RQ-ZS-27, D2): la que `syncRecent` ejecuta tras leer los tickets modificados. Cada llamada a esta
+ * función crea SU memoria `id → modifiedTime` (S-7), así que vive lo que vive el `createSync` que la creó. Un ticket cuyo
+ * `modifiedTime` ya se pidió completo en este proceso no se vuelve a pedir; el que falló no se recuerda, para reintentarlo.
+ * NUNCA rechaza: cada ticket va en su `try`, y un 429 que agota los reintentos corta la pasada ENTERA (S-5) nombrando los
+ * ids que se quedan sin pedir. Los recuentos son los del detalle que se acaba de leer (`t`), no los de `tickets.raw` (S-4).
+ */
+export function crearPasadaConversaciones({ zohoFetch, db, marcar, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS }: {
+  zohoFetch: ZohoFetch; db: Queryable; marcar: boolean; pausaMs?: number; pausa429Ms?: number
+}): (tickets: ZohoRecord[]) => Promise<void> {
+  const pedidos = new Map<string, string>()
+  return async (tickets) => {
+    let pedidoAlguno = false
+    for (const [i, t] of tickets.entries()) {
+      const id = String(t.id)
+      if (pedidos.has(id) && pedidos.get(id) === String(t.modifiedTime)) continue
+      try {
+        if (pedidoAlguno) await dormir(pausaMs)
+        pedidoAlguno = true
+        const inicio = await instanteBase(db)
+        const lista = await leerConversaciones(zohoFetch, id, { reintentos429: REINTENTOS_429, pausa429Ms })
+        await guardarYReflejar(db, id, lista, { esperado: esperadoDeZoho(t), marcar, inicio })
+        if (lista.por429) {
+          console.error(`conversaciones: pasada cortada por 429 en el ticket ${id}; sin pedir: ${tickets.slice(i).map((x) => String(x.id)).join(', ')}`)
+          return
+        }
+        if (lista.error) console.error(`conversaciones: ticket ${id} con error: ${lista.error}`)
+        else if (typeof t.modifiedTime === 'string' && t.modifiedTime !== '') pedidos.set(id, t.modifiedTime)
+      } catch (e) {
+        console.error(`conversaciones: ticket ${id} falló al guardar:`, e instanceof Error ? e.message : String(e))
+      }
+    }
+  }
+}

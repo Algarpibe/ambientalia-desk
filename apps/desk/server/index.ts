@@ -20,7 +20,7 @@ const tokenManager = createTokenManager({ config })
 const { zohoFetch } = createZohoClient({ config, tokenManager })
 // parche-iv11-orden-venta (D5, RQ-AV-13): sólo este proceso cablea el aviso de discrepancia de orden
 // de venta; el worker `apps/hub-sync` no lo pasa y por tanto nunca lo crea.
-const sync = createSync({ zohoFetch, db: pool, config, alDiscrepanciaOV: (d) => avisarDiscrepanciaOV(pool, d) })
+const sync = createSync({ zohoFetch, db: pool, config, alDiscrepanciaOV: (d) => avisarDiscrepanciaOV(pool, d), conversaciones: { periodica: config.syncConversacionesPeriodica, marcarAusentes: config.marcarConversacionesAusentes } })
 
 async function main() {
   if (config.dbSchema === 'desk') await reorgToDesk(pool)
