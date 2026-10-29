@@ -27,21 +27,21 @@ y `npm run build`. Mutaciones con `perl -i -pe '… if $. == N'`, restauradas y 
 
 ## Lote L2 — pasada periódica, interruptores, worker y despliegue (intento i3)
 
-- [ ] L2.1 M0 del lote: `npm test` en el commit de L1.
-- [ ] L2.2 ROJO `packages/zoho-sync/src/config.test.ts`, al final: sin las variables, los dos campos `false`; con `'1'`, `'TRUE'` y `'yes'`, `false`; con `'true'`, `true`; cada uno independiente del otro.
-- [ ] L2.3 ROJO `packages/zoho-sync/src/sync.conversacionesPeriodicas.test.ts`: con `conversaciones: { periodica: true, pausaMs: 0, pausa429Ms: 0 }` se piden las de los dos modificados y no la del tercero; apagado y sin opción, cero `/conversations`; gestionado por la App con `raw` viejo y detalle nuevo (marca con el detalle); `429` una vez y luego `200` (repite); cuatro `429` seguidos (corta, no pide el segundo, log con los pendientes); memoria (mismo `modifiedTime` no se repide; otro sí); caída por búsqueda `500` sin pasada; lista `500` y `syncRecent` resuelve con el número de leídos.
-- [ ] L2.4 CARACTERIZACIÓN `apps/hub-sync/src/hubSyncSinConversaciones.test.ts`: `createSync` como `apps/hub-sync/src/hub-sync.ts:21` con `loadConfig` y las dos variables a `'true'` → cero `/conversations` tras `syncRecent` con modificados; la llamada a `createSync` de `hub-sync.ts` no contiene `conversaciones`.
-- [ ] L2.5 Anotar el rojo medido de L2.2-L2.4.
-- [ ] L2.6 `conversaciones.ts`: `crearPasadaConversaciones` (D2), al final del fichero.
-- [ ] L2.7 `sync.ts:66`, `:176`, `:375`, `:411`, `:426`, `:433` en sitio (D3); `git diff --numstat` de `sync.ts` con inserciones = borrados.
-- [ ] L2.8 `config.ts:66` y `:125` en sitio (D5); literales completos de `AppConfig` que pida `typecheck`, en sitio.
-- [ ] L2.9 `apps/desk/server/index.ts:23` en sitio (D5).
-- [ ] L2.10 `DEPLOY.md`, al final: §18, §19 y §20 (D5), con las dos frases de la regla de secretos y la línea de entorno de cada interruptor.
-- [ ] L2.11 Verde: los ficheros nuevos y la suite entera (M0 posterior) con su log.
-- [ ] L2.12 Mutaciones de L2 con su rojo (D7): M4 en la pasada, M5, M6 (las dos variables), M8a, M8b (en `hub-sync.ts`, el fichero vigilado), M11, P2 y P3. Tabla en `apply-progress.md`.
-- [ ] L2.13 Casilla de la regla 13 (D8) otra vez.
-- [ ] L2.14 Barrido de la regla de mutación 4 sobre `sync.ts`, `repo.ts`, `schema.sql`, `config.ts`, `index.ts` y `DEPLOY.md`: cada cita `<fichero>:N` del repositorio a una línea editada en sitio se lee contra lo que afirma; resultado en `apply-progress.md`.
-- [ ] L2.15 Las cinco comprobaciones en serie en 0 sobre el commit del lote; medida del intento; `apply-progress.md`.
+- [x] L2.1 M0 del lote: `npm test` en el commit de L1.
+- [x] L2.2 ROJO `packages/zoho-sync/src/config.test.ts`, al final: sin las variables, los dos campos `false`; con `'1'`, `'TRUE'` y `'yes'`, `false`; con `'true'`, `true`; cada uno independiente del otro.
+- [x] L2.3 ROJO `packages/zoho-sync/src/sync.conversacionesPeriodicas.test.ts`: con `conversaciones: { periodica: true, pausaMs: 0, pausa429Ms: 0 }` se piden las de los dos modificados y no la del tercero; apagado y sin opción, cero `/conversations`; gestionado por la App con `raw` viejo y detalle nuevo (marca con el detalle); `429` una vez y luego `200` (repite); cuatro `429` seguidos (corta, no pide el segundo, log con los pendientes); memoria (mismo `modifiedTime` no se repide; otro sí); caída por búsqueda `500` sin pasada; lista `500` y `syncRecent` resuelve con el número de leídos.
+- [x] L2.4 CARACTERIZACIÓN `apps/hub-sync/src/hubSyncSinConversaciones.test.ts`: `createSync` como `apps/hub-sync/src/hub-sync.ts:21` con `loadConfig` y las dos variables a `'true'` → cero `/conversations` tras `syncRecent` con modificados; la llamada a `createSync` de `hub-sync.ts` no contiene `conversaciones`.
+- [x] L2.5 Anotar el rojo medido de L2.2-L2.4.
+- [x] L2.6 `conversaciones.ts`: `crearPasadaConversaciones` (D2), al final del fichero.
+- [x] L2.7 `sync.ts:66`, `:176`, `:375`, `:411`, `:426`, `:433` en sitio (D3); `git diff --numstat` de `sync.ts` con inserciones = borrados.
+- [x] L2.8 `config.ts:66` y `:125` en sitio (D5); literales completos de `AppConfig` que pida `typecheck`, en sitio.
+- [x] L2.9 `apps/desk/server/index.ts:23` en sitio (D5).
+- [x] L2.10 `DEPLOY.md`, al final: §18, §19 y §20 (D5), con las dos frases de la regla de secretos y la línea de entorno de cada interruptor.
+- [x] L2.11 Verde: los ficheros nuevos y la suite entera (M0 posterior) con su log.
+- [x] L2.12 Mutaciones de L2 con su rojo (D7): M4 en la pasada, M5, M6 (las dos variables), M8a, M8b (en `hub-sync.ts`, el fichero vigilado), M11, P2 y P3. Tabla en `apply-progress.md`.
+- [x] L2.13 Casilla de la regla 13 (D8) otra vez.
+- [x] L2.14 Barrido de la regla de mutación 4 sobre `sync.ts`, `repo.ts`, `schema.sql`, `config.ts`, `index.ts` y `DEPLOY.md`: cada cita `<fichero>:N` del repositorio a una línea editada en sitio se lee contra lo que afirma; resultado en `apply-progress.md`.
+- [x] L2.15 Las cinco comprobaciones en serie en 0 sobre el commit del lote; medida del intento; `apply-progress.md`.
 
 ## Tareas de persona — fuera del recuento; archivar NO las da por hechas
 

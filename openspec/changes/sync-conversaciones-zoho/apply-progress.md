@@ -77,3 +77,91 @@ decide el servidor en `repo.ts:219`.
 ### Riesgos que quedan
 
 - `created_at < $2` con un `Date` enlazado está probado en pg-mem, no contra Postgres real: **hipótesis** que se comporta igual.
+
+## Lote L2 — intento i3 (commit `25350a28`, partida `9500f076`) y este registro (intento i3b)
+
+### M0
+
+| | Ficheros de prueba | Pruebas | Resultado |
+|---|---|---|---|
+| M0 previo, `9500f076` | 332 (328 pasan, 4 saltados) | 5.778 (5.752 pasan) | exit 0, 266 s, `npmtest-scz-i2b-175223.log` |
+| Pasada del agente, antes de acotar la §17 | 334 (329 pasan, 1 falla) | 5.794 (5.767 pasan, 1 falla) | exit 1, 378 s, `npmtest-scz-L2-181900.log`: `deploySalidasEsperas.test.ts` › «es la última» (desvío 1) |
+| M0 posterior, `25350a28` | 335 (331 pasan, 4 saltados) | 5.798 (5.772 pasan, 26 saltadas) | exit 0, 282 s, `npmtest-scz-i3-183424.log`, 14.298 MB libres |
+
++20 pruebas: 3 de `config.test.ts` (añadidas al final), 11 de `sync.conversacionesPeriodicas.test.ts`, 2 de
+`hubSyncSinConversaciones.test.ts` y 4 de `deployConversaciones.test.ts`. Cadena: `typecheck=0 lint=0 detector=0 test=0 build=0`; lint
+165 contra 165; el bundle sigue siendo `index-F1jDYjEU.js` (el cliente no cambia).
+
+### Rojo primero (L2.2-L2.5)
+
+- `config.test.ts`: las tres rojas porque los campos no existían (`undefined` frente a `false`).
+- `sync.conversacionesPeriodicas.test.ts`: 8 de 11 rojas por la razón correcta (lista de peticiones vacía, nada marcado, log vacío:
+  p. ej. `expected '' to contain '/tickets/101/conversations 500'`). Nacen verdes, de CARACTERIZACIÓN: «apagada, sin la opción o con
+  periodica false» y «búsqueda cae → sin pasada»; su valor está en M5 y P3.
+- `hubSyncSinConversaciones.test.ts`: la conductual, roja sólo en la aserción de `loadConfig` (`[undefined, undefined]` frente a
+  `[true, true]`); la estática nace verde, su valor está en M8b. `deployConversaciones.test.ts` nace verde: su valor está en G1-G3.
+
+### Implementación (L2.6-L2.10)
+
+| Fichero | numstat | Qué |
+|---|---|---|
+| `packages/zoho-sync/src/conversaciones.ts` | 35 0 | `crearPasadaConversaciones` al final (`:149`): memoria `:157`, pausa `:159`, `inicio` antes de leer `:161`, corte por 429 `:164` |
+| `packages/zoho-sync/src/sync.ts` | 7 7 | `:7`, `:66`, `:176`, `:375`, `:411`, `:426`, `:433`; `:383` y `:406` intactas (S-8) |
+| `packages/zoho-sync/src/config.ts` | 2 2 | `:66` tipo, `:125` las dos lecturas `=== 'true'` |
+| `apps/desk/server/index.ts` | 1 1 | `:23` la opción `conversaciones`: única lectura de los dos campos en el código |
+| `DEPLOY.md` | 49 0 | §18, §19 y §20 al final |
+| `apps/desk/server/deploySalidasEsperas.test.ts` | 2 2 | desvío 1 |
+| pruebas nuevas y añadidas | 24 + 169 + 49 + 46 | |
+
+Total del intento i3: **+383 −12 = 395** con `--no-renames`, nada sin trackear.
+
+### Desvíos
+
+1. **`deploySalidasEsperas.test.ts:23` exigía que la §17 fuera la última sección de `DEPLOY.md`.** Se acota en sitio la §17 hasta la §18
+   (`:17`) y el título pasa a «la última hasta la §18» (`:20`), con el molde de `deployControlCalidad.test.ts:14`, que hizo lo mismo cuando
+   F1C-03 añadió la §17. Lo hizo el orquestador.
+2. **Guardián nuevo `apps/desk/server/deployConversaciones.test.ts`** (no estaba en `tasks.md`): sin él, nada vigila que los dos
+   interruptores sigan documentados con sus dos frases (regla de secretos). Molde de `deploySalidasEsperas.test.ts`.
+3. Texto del corte por 429: `conversaciones: pasada cortada por 429 en el ticket N; sin pedir: N, M, …` (el actual y los que faltan).
+
+### Mutaciones (L2.12), restauradas con sha256 del diff, `git status` y CRLF
+
+| Id | Colocación | Rojas |
+|---|---|---|
+| M4 | `sync.ts:66` con `marcar: true` | periódicas › «con la pasada encendida y `marcarAusentes` apagado no marca nada» |
+| M5 | `sync.ts:66`, `periodica === true` → `true` | periódicas › «apagada, sin la opción o con periodica false»; el worker conductual (por `TypeError` al construir; la forma limpia es M8a') |
+| M6a, M6b | `config.ts:125`, cada `=== 'true'` → `!== 'false'` | las tres de `config.test.ts` |
+| M8a' | `sync.ts:66` con `(conversaciones?.periodica ?? config.syncConversacionesPeriodica)` | worker conductual › `expected [ Array(1) ] to have a length of +0 but got 1`: pide una conversación (repetida por el orquestador) |
+| M8b | `, conversaciones: { periodica: true }` en `apps/hub-sync/src/hub-sync.ts:21`, el **fichero vigilado** | worker estática › «hub-sync.ts no pasa `conversaciones`»; restaurado, `git status` limpio |
+| M11 | `conversaciones.ts:157` sin la memoria | periódicas › «el mismo `modifiedTime` en el segundo ciclo no se vuelve a pedir» |
+| P2 | `conversaciones.ts:78-82`, `!res.ok` antes del 429 | dos 429 de la pasada y tres de `leerConversaciones` |
+| P3 | la pasada llamada en `sync.ts:411` con la lista vacía y quitada de `:433` | 9 periódicas, entre ellas «pide la lista de los dos modificados y sólo de ésos» |
+| G1 | `DEPLOY.md:863` sin `**Nace cerrado**` (fichero vigilado) | `deployConversaciones` › «MARCAR_CONVERSACIONES_AUSENTES: … nace cerrado» |
+| G2 | `DEPLOY.md:867` con `=true` | la misma, por la línea de entorno |
+| G3 | `config.ts:125` con `SYNC_CONVERSACIONES_PERIODICA !== 'false'` | `deployConversaciones` › «SYNC_CONVERSACIONES_PERIODICA: …» |
+
+Ninguna mutación quedó verde.
+
+### Regla invariable 13 (L2.13)
+
+`git diff --name-only b4255928 25350a28` no tiene nada bajo `apps/desk/src`.
+
+### Barrido de la regla de mutación 4 (L2.14)
+
+Ninguna línea se movió: todas las ediciones de `sync.ts`, `repo.ts`, `config.ts`, `index.ts`, `migrate.test.ts`, `registro.test.ts` y
+`deploySalidasEsperas.test.ts` son sustituciones en sitio, y `schema.sql` y `DEPLOY.md` sólo crecen al final. Se barrieron las citas
+completas y abreviadas por nombre de todo el repositorio cuyo rango toca una línea **editada**: **248**.
+
+- **Documentos vivos fuera de esta carpeta, 20** (tres de ellas, las de `DEPLOY.md` §18-§19, son de esta tanda). Siguen ciertas: `DEPLOY.md:784`, `:794`, `:819`, `:826`
+  (`config.ts:125` sigue leyendo `CONTROL_CALIDAD_LIBERACION` y `SALIDAS_ESPERAS`); `openspec/specs/derivacion-avisos/spec.md:384-385`
+  (`createSync` en `sync.ts:62` y el cableado de `index.ts:21-23` siguen ahí); `openspec/specs/trazas/spec.md:509` (la sentencia de
+  `repo.ts:97-103` sigue siendo el `INSERT` de `upsertConversation`); los cinco paquetes de despliegue que citan `index.ts:23` como
+  cableado del aviso de discrepancia (sigue en esa línea). Ancladas: `docs/sdd/ENTRADA.md:2048` (`9822bd7`) y
+  `docs/sdd/Paquete_de_Despliegue_2026-09-27.md:77` (`dcb5c99`). Históricas por fecha del documento, caso B sin ancla:
+  `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:292` («contaba DIEZ», en pasado) y `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:474`
+  («26 sin calificar», hoy 30). No se tocan: son registros fechados.
+- **Archivadas, 195.** Las 29 a `sync.ts`, `config.ts` e `index.ts` siguen ciertas o están ancladas (`17ddfec`, `9822bd7`). Las 166 a
+  `registro.test.ts:218-220` y `migrate.test.ts` (10 ancladas, 156 sin ancla) están en carpetas fechadas de 33 tandas anteriores, cada
+  una de las cuales editó esas mismas líneas en sitio: caso B por la fecha de su carpeta, sin reanclar, como hizo cada tanda previa.
+- **Este cambio, 33.** Los apartados «Lo que hay hoy» de `proposal.md` y la columna «Hoy» de `design.md` D3 están medidos en `b4255928`,
+  como dicen sus cabeceras.
