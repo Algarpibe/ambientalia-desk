@@ -110,6 +110,7 @@ ausente (RQ-ZS-25 a RQ-ZS-27); `trazas` — el relato de conversaciones no ense�
 | S-13 | El filtro va en `getConversations` (`repo.ts:219`, en sitio). Los adjuntos de una marcada desaparecen solos: sólo se cuelgan de filas devueltas (`:221-226`) | Un solo consumidor; un filtro, un sitio |
 | S-14 | El relleno de la decisión es el `backfill-details` que ya existe: hereda paginación y marcado por `syncConversations`, sin código nuevo | `backfill.ts:46-47` llama `syncTicket` (refresca `raw`) y luego `syncConversations` |
 | S-15 | Sólo se marcan filas guardadas **antes** de empezar a leer la lista (`created_at` contra el `now()` de la base al empezar) | Una conversación que otra vía guarde mientras se lee no se marca por error |
+| S-16 | Con esta propuesta fuera de `archive/`, 1G-01 pasa a «en curso»; la prueba que fija esa lista sobre el árbol real se corrige en sitio a DIEZ con 1G-01 (`apps/desk/server/reconciliacion/registro.test.ts:218`, `:220`), y como `cierra: no` sigue así tras archivar | Precedente `bef8ae35` (F1C-06), que la tocó en su lote al abrir la tanda |
 
 ## 6 · Tareas de persona (no son tareas de esta tanda; archivar no las da por hechas)
 
