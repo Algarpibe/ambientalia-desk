@@ -1,12 +1,12 @@
 import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
-import { upsertTicket, upsertConversation, upsertAttachment, upsertAccount, upsertContact, upsertAgent, type DiscrepanciaOV } from './db/repo'
+import { upsertTicket, upsertAccount, upsertContact, upsertAgent, type DiscrepanciaOV } from './db/repo'
 import { upsertActivity } from './db/activities'
 import { upsertHistoryEvent } from './db/history'
 import { PREFIJO_TICKET_APP } from '@ambientalia/shared'
-import { ticketRowFromZoho, conversationRowFromZoho, attachmentRowsFrom, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, activityRowFromZoho } from './db/mappers'
+import { ticketRowFromZoho, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, activityRowFromZoho } from './db/mappers'; import { leerConversaciones, guardarYReflejar, esperadoDeZoho, instanteBase, type ConversacionesDeps } from './conversaciones'
 
-interface Deps extends AvisoOVDeps {
+interface Deps extends AvisoOVDeps, ConversacionesDeps {
   zohoFetch: (path: string, init?: RequestInit) => Promise<Response>
   db: Queryable
   config: AppConfig
@@ -59,7 +59,7 @@ function dataArray(payload: ZohoRecord): ZohoRecord[] {
   return Array.isArray(payload.data) ? (payload.data as ZohoRecord[]) : []
 }
 
-export function createSync({ zohoFetch, db, config, alDiscrepanciaOV }: Deps): Sync {
+export function createSync({ zohoFetch, db, config, alDiscrepanciaOV, conversaciones }: Deps): Sync {
   // Cachés por proceso para no re-pedir la misma cuenta/contacto en el backfill (menos riesgo de 429).
   const accountSeen = new Set<string>()
   // contactId → accountId del contacto (el endpoint de LISTA de tickets no trae accountId).
@@ -181,13 +181,13 @@ export function createSync({ zohoFetch, db, config, alDiscrepanciaOV }: Deps): S
       await persistTicket(await readData(res))
     },
     async syncConversations(id: string): Promise<void> {
-      const res = await zohoFetch(`/tickets/${id}/conversations`)
-      if (!res.ok) throw new Error(`Zoho /tickets/${id}/conversations ${res.status}`)
-      const items = dataArray(await readData(res))
-      for (const c of items) {
-        await upsertConversation(db, conversationRowFromZoho(c, id))
-        for (const a of attachmentRowsFrom(c, id)) await upsertAttachment(db, a)
-      }
+      // 1G-01 (RQ-ZS-25, RQ-ZS-26): la lista entera, por páginas; con `marcarAusentes`, lo que ya no viene se marca si la
+      // lista está completa contra `commentCount` + `threadCount` de `tickets.raw` (S-4). Lo recibido se guarda aunque falle.
+      const inicio = await instanteBase(db)
+      const lista = await leerConversaciones(zohoFetch, id)
+      const raw = (await db.query('SELECT raw FROM tickets WHERE id=$1', [id])).rows[0]?.raw
+      await guardarYReflejar(db, id, lista, { esperado: esperadoDeZoho(raw), marcar: conversaciones?.marcarAusentes === true, inicio })
+      if (lista.error) throw new Error(lista.error)
     },
     syncTicketHistory: traerHistoria,
     /**
