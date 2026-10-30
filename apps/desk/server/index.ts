@@ -12,7 +12,7 @@ import { logger } from './util/logger'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
-import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'; import { cargarConfigDrive, tocaHoy } from './respaldo/configDrive'; import { crearCopiadorDrive, dependenciasRealesDrive } from './respaldo/copiaDrive'; import { pasadaReclamaciones } from './services/avisoReclamacionProveedor'; import { pasadaFacturacionVencida } from './services/avisoFacturacionVencida'; import { pasadaProvisionalesEnBooks } from './services/avisoProvisionalEnBooks'; import { pasadaSalidasEsperas } from './services/avisoSalidasEsperas'
+import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'; import { cargarConfigDrive, tocaHoy } from './respaldo/configDrive'; import { crearCopiadorDrive, dependenciasRealesDrive } from './respaldo/copiaDrive'; import { pasadaReclamaciones } from './services/avisoReclamacionProveedor'; import { pasadaFacturacionVencida } from './services/avisoFacturacionVencida'; import { pasadaProvisionalesEnBooks } from './services/avisoProvisionalEnBooks'; import { pasadaSalidasEsperas } from './services/avisoSalidasEsperas'; import { opcionesConversaciones } from './opcionesConversaciones'
 
 const config = loadConfig()
 const pool = createPool(config)
@@ -20,7 +20,7 @@ const tokenManager = createTokenManager({ config })
 const { zohoFetch } = createZohoClient({ config, tokenManager })
 // parche-iv11-orden-venta (D5, RQ-AV-13): sólo este proceso cablea el aviso de discrepancia de orden
 // de venta; el worker `apps/hub-sync` no lo pasa y por tanto nunca lo crea.
-const sync = createSync({ zohoFetch, db: pool, config, alDiscrepanciaOV: (d) => avisarDiscrepanciaOV(pool, d) })
+const sync = createSync({ zohoFetch, db: pool, config, alDiscrepanciaOV: (d) => avisarDiscrepanciaOV(pool, d), conversaciones: opcionesConversaciones(config) })
 
 async function main() {
   if (config.dbSchema === 'desk') await reorgToDesk(pool)

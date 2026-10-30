@@ -100,7 +100,7 @@ export async function upsertConversation(db: Queryable, r: ConversationRow): Pro
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
      ON CONFLICT (id) DO UPDATE SET ticket_id=EXCLUDED.ticket_id,kind=EXCLUDED.kind,author_name=EXCLUDED.author_name,
        author_type=EXCLUDED.author_type,is_public=EXCLUDED.is_public,content=EXCLUDED.content,content_type=EXCLUDED.content_type,
-       commented_time=EXCLUDED.commented_time,raw=EXCLUDED.raw`,
+       commented_time=EXCLUDED.commented_time,raw=EXCLUDED.raw,ausente_en_zoho_at=NULL`,
     [r.id, r.ticket_id, r.kind, r.author_name, r.author_type, r.is_public, r.content, r.content_type, r.commented_time, r.source, J(r.raw)],
   )
 }
@@ -216,7 +216,7 @@ export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ ro
 }
 
 export async function getConversations(db: Queryable, ticketId: string): Promise<{ row: ConversationRow; attachments: AttachmentRow[] }[]> {
-  const conv = await db.query('SELECT * FROM conversations WHERE ticket_id=$1 ORDER BY commented_time DESC NULLS LAST', [ticketId])
+  const conv = await db.query('SELECT * FROM conversations WHERE ticket_id=$1 AND ausente_en_zoho_at IS NULL ORDER BY commented_time DESC NULLS LAST', [ticketId])
   const att = await db.query('SELECT * FROM attachments WHERE ticket_id=$1', [ticketId])
   const byConv = new Map<string, AttachmentRow[]>()
   for (const a of att.rows as AttachmentRow[]) {

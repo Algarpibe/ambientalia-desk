@@ -829,3 +829,52 @@ Gerencia.** Cada cambio de la variable pide un redespliegue; la vuelta atrás es
 > ```
 > SALIDAS_ESPERAS=
 > ```
+
+## 18. `SYNC_CONVERSACIONES_PERIODICA`: la pasada periódica de conversaciones (1G-01, `decision/adelanto-1g01-sincronizacion-conversaciones`)
+
+**Qué enciende:** con `SYNC_CONVERSACIONES_PERIODICA=true` en el servicio App, en cada ciclo de sincronización (`SYNC_INTERVAL_MS`, 180 s por
+defecto, `packages/zoho-sync/src/config.ts:88`), después de leer los tickets que Zoho reportó como modificados, la App pide la lista ENTERA de
+conversaciones de cada uno (paginada) y la guarda. Deja 150 ms entre un ticket y el siguiente; ante un `429` espera 2 s y repite la misma
+página hasta 3 veces, y si sigue fallando corta la pasada de ese ciclo y deja en el log los tickets que quedaron sin pedir. Un ticket cuyo
+`modifiedTime` ya se pidió completo en el mismo proceso no se vuelve a pedir. Sólo la App la lee (`apps/desk/server/index.ts:23`): en el
+worker `hub-sync` no hace nada, aunque la variable esté puesta en su entorno.
+**Qué se rompe si se pone mal:** encendida, hay más peticiones a Zoho por ciclo (al menos una por ticket modificado; la cuota diaria de esta
+cuenta no está medida: es hipótesis que alcance con holgura). Apagada, el hilo sólo se refresca cuando alguien abre el ticket o responde,
+como hasta hoy.
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). Cada cambio de la variable pide un redespliegue; la vuelta atrás es
+quitarla. La línea de entorno que corresponde, tal cual:
+
+> ```
+> SYNC_CONVERSACIONES_PERIODICA=
+> ```
+
+## 19. `MARCAR_CONVERSACIONES_AUSENTES`: marcar lo que Zoho ya no devuelve (1G-01, `decision/adelanto-1g01-sincronizacion-conversaciones`)
+
+**Qué enciende:** con `MARCAR_CONVERSACIONES_AUSENTES=true` en el servicio App, cuando la App lee la lista COMPLETA de un ticket (la pasada
+periódica, al abrir el ticket o el relleno) y el número de ids únicos recibidos es igual a `commentCount` + `threadCount`, las filas de Zoho de
+ese ticket que no vinieron se marcan (`conversations.ausente_en_zoho_at`) y el hilo deja de mostrarlas, y a sus adjuntos. No borra nada. Si
+las cuentas no coinciden no marca nada y deja una línea «sin marcar ausentes» en el log. Una fila que Zoho vuelve a devolver se desmarca sola,
+con el interruptor puesto o no. Es independiente de §18.
+**Qué se rompe si se pone mal:** encendida, si Zoho devolviera una lista con aspecto de completa que omitiera una conversación existente, ésta
+se ocultaría hasta la siguiente lectura que la traiga (se corrige sola). Apagarla NO devuelve lo ya marcado: para eso hace falta
+`UPDATE conversations SET ausente_en_zoho_at = NULL` en `desk-db`, con copia previa, y es decisión de una persona.
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). Cada cambio de la variable pide un redespliegue; la vuelta atrás es
+quitarla. La línea de entorno que corresponde, tal cual:
+
+> ```
+> MARCAR_CONVERSACIONES_AUSENTES=
+> ```
+
+## 20. Relleno de conversaciones tras encender §18 y §19 (paso de persona)
+
+1. Copia previa de `desk-db` (base `desk`) con el botón de EasyPanel.
+2. Con las dos variables encendidas y redesplegado, como superadministrador, `GET /api/admin/backfill-details`
+   (`apps/desk/server/routes/admin.ts:53-58`): tras un redespliegue arranca solo; si ya corrió en ese proceso, añade `?restart=1`.
+3. Repite el `GET` para seguir `ticketsProcessed`, `errors` y `done`.
+4. No necesita código nuevo: recorre los tickets (`apps/desk/server/backfill.ts:36-56`) llamando a `syncTicket` (refresca `raw` y sus
+   recuentos) y a `syncConversations` (paginada y, con §19, marca lo ausente). Límites: los tickets `managed_by_app` no refrescan `raw`
+   (`packages/zoho-sync/src/db/repo.ts:71`), así que el relleno no marca en ellos (la pasada periódica sí); si los tickets archivados vienen
+   en `/tickets` es hipótesis.
+5. Comprobar el ticket #958: el hilo `495552000057899091` oculto y los cinco comentarios visibles.

@@ -846,3 +846,7 @@ ALTER TABLE ticket_transitions ADD COLUMN IF NOT EXISTS performed_by_id text;
 -- Fuera de TICKET_COLS para que el sincronizador no la pise. En desk-db queda sin usar. AL FINAL para no desplazar citas.
 -- SIN calificar: tickets es de DESK_TABLES. Y sin el caracter de punto y coma en este comentario, que migrate parte el fichero por el
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS history_synced_status text;
+-- sync-conversaciones-zoho (1G-01): marca de las conversaciones que Zoho ya no devuelve. La pone la sincronizacion cuando la lista de un
+-- ticket llega completa contra su recuento, y la quita al volver a guardarse la fila. Ocultar no es borrar. Nace nula. AL FINAL para no desplazar citas.
+-- SIN calificar: conversations es de DESK_TABLES. Y sin el caracter de punto y coma en este comentario, que migrate parte el fichero por el
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS ausente_en_zoho_at timestamptz;
