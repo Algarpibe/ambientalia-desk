@@ -165,3 +165,26 @@ completas y abreviadas por nombre de todo el repositorio cuyo rango toca una lí
   una de las cuales editó esas mismas líneas en sitio: caso B por la fecha de su carpeta, sin reanclar, como hizo cada tanda previa.
 - **Este cambio, 33.** Los apartados «Lo que hay hoy» de `proposal.md` y la columna «Hoy» de `design.md` D3 están medidos en `b4255928`,
   como dicen sus cabeceras.
+
+## Corrección de W-1 y W-2 del verify-report — intento i4b (partida `ba17f5d3`)
+
+- **W-1, las esperas sin prueba de conducta.** `packages/zoho-sync/src/conversacionesPausas.test.ts` (nuevo) las prueba con sus valores
+  por omisión, los que recibe la App, con `setTimeout` falso: el 429 repide la MISMA página a los 2.000 ms y no antes, y entre un ticket
+  y el siguiente la pasada espera 150 ms y antes del primero no. CARACTERIZACIÓN: nacen verdes. La de los 150 ms necesitó asentar el
+  trabajo de pg-mem con `setImmediate` entre avances del reloj (sin eso, roja por el arnés: la espera se programaba más tarde de lo que
+  se contaba); con el asentado, una espera ausente o más corta también la pone roja.
+- **W-2, el cableado de `index.ts:23` sin prueba.** La lectura de los dos interruptores pasa a `apps/desk/server/opcionesConversaciones.ts`
+  (nuevo), probada en `opcionesConversaciones.test.ts` (nacida roja: `Cannot find module './opcionesConversaciones'`). `index.ts` sólo la
+  llama: `:15` gana la importación al final de su línea y `:23` pasa a `conversaciones: opcionesConversaciones(config)`, 2/2 en sitio. La
+  segunda prueba vigila esa llamada leyendo `index.ts` y que `index.ts` ya no lea `config.syncConversacionesPeriodica` ni
+  `config.marcarConversacionesAusentes`. Desde aquí la «única lectura» de `design.md` D5 es esa función, llamada sólo desde `index.ts:23`.
+
+| Id | Mutación | Roja |
+|---|---|---|
+| X1 | `conversaciones.ts:159` sin `await dormir(pausaMs)` | «entre un ticket y el siguiente la pasada espera 150 ms» (`expected ['/tickets/A/…', …(1)] to deeply equal ['/tickets/A/…']`) |
+| X2 | `conversaciones.ts:79` sin `await dormir(pausa429Ms)` | «ante un 429 la misma página se repide a los 2000 ms» (`expected "spy" to be called 1 times, but got 2 times`) |
+| W2a | `opcionesConversaciones.ts` con los dos campos cruzados | «cada interruptor llega a su campo» (`expected { periodica: true, …} to deeply equal { periodica: false, …}`) |
+| W2b | `index.ts:23` sin la opción (fichero vigilado) | «index.ts pasa esas opciones a createSync» (`expected 'const sync = createSync({ …' to contain 'conversaciones: opcionesConversacione…'`) |
+
+Restauradas con el sha256 de los tres ficheros igual al previo y `index.ts` en CRLF. W-3 (formato de la evidencia TDD) y W-4
+(«onTaskUpdate» de la máquina) no piden cambio de código; S-1 a S-3 quedan para el informe de archivo.
