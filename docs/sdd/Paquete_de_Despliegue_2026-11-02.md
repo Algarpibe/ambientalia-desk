@@ -93,11 +93,11 @@ fila (`DEFAULT now()`, `packages/zoho-sync/src/db/schema.sql:48`).
 ## 3 · Las comprobaciones
 
 Las tres que el paquete del 30/10 añadió a la lista acumulada de pruebas en la app
-(`docs/sdd/Paquete_de_Despliegue_2026-10-30.md:110-121`) quedan **HECHAS**:
+(`docs/sdd/Paquete_de_Despliegue_2026-10-30.md:110-121`): de las tres, dos quedan **HECHAS** y una **NO PROBADA**:
 
 | Comprobación | Fecha y fuente |
 |---|---|
-| Abrir un ticket con actividad reciente en Zoho y ver el hilo refrescado (`docs/sdd/Paquete_de_Despliegue_2026-10-30.md:114-116`) | 30/10, captura de Alfonso: al abrir el #958, Desk 2.0 enseña el mismo hilo que Zoho. **Lo que no separa:** el estado de ese hilo lo fijó el relleno a las 15:00:35, así que la captura prueba lo que enseña la apertura, no que la apertura lo refrescara |
+| Abrir un ticket con actividad reciente en Zoho y ver el hilo refrescado (`docs/sdd/Paquete_de_Despliegue_2026-10-30.md:114-116`) | **NO PROBADA, y no se pide.** 30/10, captura de Alfonso: al abrir el #958, Desk 2.0 enseña el mismo hilo que Zoho. **Lo que no separa:** el estado de ese hilo lo fijó el relleno a las 15:00:35, así que la captura prueba lo que enseña la apertura, no que la apertura lo refrescara. No se pide porque, con §18 encendido, un comentario llega en un ciclo se abra o no el ticket (tercera fila de esta tabla): separar la apertura exigiría apagar §18 |
 | El #958 sin el hilo `495552000057899091` y con sus cinco comentarios (`docs/sdd/Paquete_de_Despliegue_2026-10-30.md:117-119`; tarea P-4) | 30/10: SQL de Alfonso y captura de Desk 2.0 con «5 CONVERSACIONES» (§2); coincide con el conector (`:90-91`) |
 | Con §18 encendido, un comentario nuevo en Zoho aparece en Desk en un ciclo como mucho, sin abrir el ticket (`docs/sdd/Paquete_de_Despliegue_2026-10-30.md:120-121`) | 02/11: comentario privado en el #1003, en Desk a los 2 min 17 s, sin abrir el ticket (§2) |
 
@@ -107,7 +107,7 @@ ella, las tareas P-2 y P-3 del informe de archivo
 (`openspec/changes/archive/2026-10-29-sync-conversaciones-zoho/archive-report.md:97-98`). La P-4 (`:99`) es la segunda
 comprobación de la tabla.
 
-**Lo no hecho** pasa a §4: la prueba del borrado y la revisión de `429` en los logs.
+**Lo no hecho** pasa a §4: la prueba del borrado y la revisión de `429` en los logs. La primera comprobación de la tabla tampoco está probada, pero no pasa a §4: no es una tarea pendiente.
 
 ## 4 · Pendientes
 
