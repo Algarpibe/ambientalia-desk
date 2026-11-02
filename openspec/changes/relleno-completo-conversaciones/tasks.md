@@ -36,16 +36,16 @@ Chain strategy: pending
 Escenarios: RQ-ZS-28 orden y `app-`, `desde`/`limite`, cuadra, descuadrado, sin recuento, lectura fallida, no está en Zoho; RQ-ZS-29 otro fallo no corta y `limite=0` (módulo).
 Mutaciones de D11 en este lote: M3, M8, M9 (las dos variantes).
 
-- [ ] L1.1 M0: `npm test` entero en el árbol de partida con su log; anotar ficheros, pruebas y duración.
-- [ ] L1.2 ROJO `packages/zoho-sync/src/sync.syncTicketDetalle.test.ts` (nuevo): con `detalle` cero peticiones de detalle y fila persistida; sin él, lo de hoy; `managed_by_app` conserva su fila.
-- [ ] L1.3 ROJO `apps/desk/server/rellenoConversaciones.test.ts` (nuevo, pg-mem + `createSync` real): orden y salto de `app-` con archivados (D4), `desde`, `limite`, una petición de detalle por ticket, `recuento({ desde })` sin Zoho.
-- [ ] L1.4 ROJO mismo fichero: 404 e `isDeleted`/`isTrashed` sin escribir ni leer; `500` que cuenta y sigue; archivado tipo #300 (7 + 1) completo; descuadrado; sin recuento; lectura fallida «con error».
-- [ ] L1.5 Anotar el rojo medido de L1.2-L1.4 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
-- [ ] L1.6 `packages/zoho-sync/src/sync.ts:18`, `:178`, `:179` en sitio (D2), mismo número de líneas: `git diff --numstat` con inserciones = borrados; `:180` sigue siendo el `throw`.
-- [ ] L1.7 `apps/desk/server/rellenoConversaciones.ts` (nuevo): tipos de D6, recorrido (D4), detalle (D5), persistencia por `syncTicket(id, detalle)`, lectura con `inicio` antes (D3) y clases.
-- [ ] L1.8 Verde: los dos ficheros nuevos y `npm run typecheck` (confirma la hipótesis de tipos de D2); suite entera con su log.
-- [ ] L1.9 Mutaciones L1 con su rojo: M3 (sin filtro `app-`), M8 (`sync.ts:179` sin la rama de `detalle`), M9 (404 sin rama propia; aparte, ignorar `isDeleted`/`isTrashed`). Tabla en `apply-progress.md`: colocación, rojas, restauración comprobada.
-- [ ] L1.10 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
+- [x] L1.1 M0: `npm test` entero en el árbol de partida con su log; anotar ficheros, pruebas y duración.
+- [x] L1.2 ROJO `packages/zoho-sync/src/sync.syncTicketDetalle.test.ts` (nuevo): con `detalle` cero peticiones de detalle y fila persistida; sin él, lo de hoy; `managed_by_app` conserva su fila.
+- [x] L1.3 ROJO `apps/desk/server/rellenoConversaciones.test.ts` (nuevo, pg-mem + `createSync` real): orden y salto de `app-` con archivados (D4), `desde`, `limite`, una petición de detalle por ticket, `recuento({ desde })` sin Zoho.
+- [x] L1.4 ROJO mismo fichero: 404 e `isDeleted`/`isTrashed` sin escribir ni leer; `500` que cuenta y sigue; archivado tipo #300 (7 + 1) completo; descuadrado; sin recuento; lectura fallida «con error».
+- [x] L1.5 Anotar el rojo medido de L1.2-L1.4 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
+- [x] L1.6 `packages/zoho-sync/src/sync.ts:18`, `:178`, `:179` en sitio (D2), mismo número de líneas: `git diff --numstat` con inserciones = borrados; `:180` sigue siendo el `throw`.
+- [x] L1.7 `apps/desk/server/rellenoConversaciones.ts` (nuevo): tipos de D6, recorrido (D4), detalle (D5), persistencia por `syncTicket(id, detalle)`, lectura con `inicio` antes (D3) y clases.
+- [x] L1.8 Verde: los dos ficheros nuevos y `npm run typecheck` (confirma la hipótesis de tipos de D2); suite entera con su log.
+- [x] L1.9 Mutaciones L1 con su rojo: M3 (sin filtro `app-`), M8 (`sync.ts:179` sin la rama de `detalle`), M9 (404 sin rama propia; aparte, ignorar `isDeleted`/`isTrashed`). Tabla en `apply-progress.md`: colocación, rojas, restauración comprobada.
+- [x] L1.10 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
 - [ ] L1.11 Cierre del lote: las cinco comprobaciones en 0 y la medida; barrido de la regla de mutación 4 (sección Barrido); `apply-progress.md`.
 
 ## Lote L2 — corte por 429, resumen y concurrencia (intento i3)
@@ -88,7 +88,7 @@ Mutaciones y posiciones: M3 (`limite=0`), M4, M5, M7 (en `app.ts:50`), M10 (las 
 
 ## Barrido de la regla de mutación 4 (tarea de cierre de cada lote)
 
-- [ ] B.1 `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` sobre TODO el repositorio, incluidos `openspec/changes/archive/` y `docs/`, y leer cada hallazgo contra lo que AFIRMA: `sync.ts:18`, `:178`, `:179`; `config.ts:66`, `:125`; `app.ts:9`, `:22`, `:50`, `:57`; `deployConversaciones.test.ts:20`, `:23`; `debt.md:602`, `:614`, `:616-617`. Segundo pase para las abreviadas; resultado en `apply-progress.md`.
+- [x] B.1 `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` sobre TODO el repositorio, incluidos `openspec/changes/archive/` y `docs/`, y leer cada hallazgo contra lo que AFIRMA: `sync.ts:18`, `:178`, `:179`; `config.ts:66`, `:125`; `app.ts:9`, `:22`, `:50`, `:57`; `deployConversaciones.test.ts:20`, `:23`; `debt.md:602`, `:614`, `:616-617`. Segundo pase para las abreviadas; resultado en `apply-progress.md`.
 
 ## Verificación (intento i5)
 
