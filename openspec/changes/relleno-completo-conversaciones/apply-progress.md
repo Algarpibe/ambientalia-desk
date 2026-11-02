@@ -68,10 +68,10 @@ usó `sed -i`. `sync.ts` no se restauró con `git checkout` porque lleva la edic
 |---|---|---|---|---|
 | M3 | `apps/desk/server/rellenoConversaciones.ts:57` | `zoho: filas.filter((f) => !nacidoEnLaApp(f.id))` → `zoho: filas` | 3: «orden ascendente…», «el límite cuenta sólo los de Zoho», «recuento({ desde }) cuenta sin llamar a Zoho» | sha256 `352e03e7…5a78` igual |
 | M8 | `packages/zoho-sync/src/sync.ts:179` | quita `if (detalle) return persistTicket(detalle); ` | 6: las 2 de `sync.syncTicketDetalle.test.ts` («con detalle no pide el detalle…», «una fila managed_by_app…») y 4 del módulo («orden…», «una sola petición de detalle por ticket», «desde=3 y limite=2», «el límite cuenta sólo los de Zoho») | sha256 `793c412a…1c44` igual; `git diff --numstat` = `3	3` |
-| M9a | `…/rellenoConversaciones.ts:68` | `if (res.status === 404) return aNoEsta(numero)` → `if (false) …` (el 404 cae en `!res.ok`) | 1: «un 404 y un isTrashed/isDeleted… salen no está en Zoho» | sha256 igual |
-| M9b | `…/rellenoConversaciones.ts:71` | `if (verdadero(isDeleted) \|\| verdadero(isTrashed)) …` → `if (false) …` | 1: la misma prueba | sha256 igual |
-| M9b' | `…/rellenoConversaciones.ts:71` | solo se quita la rama de `isTrashed` (queda `isDeleted`) | 1: la misma prueba (`Z2` y `Z4` llevan `isTrashed`) | sha256 igual |
-| Mx | `…/rellenoConversaciones.ts:93` | `limite === null ?` → `!limite ?` (`limite=0` tratado como «sin límite») | 1: «limite=0 en el módulo no pide nada…» (la que nació verde) | sha256 igual |
+| M9a | `apps/desk/server/rellenoConversaciones.ts:68` | `if (res.status === 404) return aNoEsta(numero)` → `if (false) …` (el 404 cae en `!res.ok`) | 1: «un 404 y un isTrashed/isDeleted… salen no está en Zoho» | sha256 igual |
+| M9b | `apps/desk/server/rellenoConversaciones.ts:71` | `if (verdadero(isDeleted) \|\| verdadero(isTrashed)) …` → `if (false) …` | 1: la misma prueba | sha256 igual |
+| M9b' | `apps/desk/server/rellenoConversaciones.ts:71` | solo se quita la rama de `isTrashed` (queda `isDeleted`) | 1: la misma prueba (`Z2` y `Z4` llevan `isTrashed`) | sha256 igual |
+| Mx | `apps/desk/server/rellenoConversaciones.ts:93` | `limite === null ?` → `!limite ?` (`limite=0` tratado como «sin límite») | 1: «limite=0 en el módulo no pide nada…» (la que nació verde) | sha256 igual |
 
 Ninguna mutación salió verde: no hizo falta añadir pruebas.
 
@@ -88,9 +88,9 @@ Detector: `grep -rnoE "[A-Za-z./_-]*sync\.ts:[0-9]+(-[0-9]+)?"` sobre todo el re
 
 | Cita | Afirma | Veredicto |
 |---|---|---|
-| `openspec/specs/zoho-sync/spec.md:367` y `:754`, `…/archive/2026-10-06-sync-tickets-por-modificacion/design.md:10` → `sync.ts:14-24` | la interfaz `Sync` (inventario de entidades) | Cierta: `:14-24` sigue siendo `interface Sync` (`:18` cambió en sitio) |
-| `…/archive/2026-10-06-sync-tickets-por-modificacion/proposal.md:45` → `sync.ts:178-182` | el cuerpo de `syncTicket`, que relee por detalle | Cierta: `:178-182` sigue siendo `syncTicket` y, sin `detalle`, hace lo mismo |
-| `…/archive/2026-10-06-sync-tickets-por-modificacion/design.md:16` → `sync.ts:179` | el detalle es la misma petición que usa `syncTicket` | Cierta: `:179` conserva la petición de detalle tras `if (detalle) return persistTicket(detalle);` |
+| `openspec/specs/zoho-sync/spec.md:367` y `:754`, `openspec/changes/archive/2026-10-06-sync-tickets-por-modificacion/design.md:10` → `sync.ts:14-24` | la interfaz `Sync` (inventario de entidades) | Cierta: `:14-24` sigue siendo `interface Sync` (`:18` cambió en sitio) |
+| `openspec/changes/archive/2026-10-06-sync-tickets-por-modificacion/proposal.md:45` → `sync.ts:178-182` | el cuerpo de `syncTicket`, que relee por detalle | Cierta: `:178-182` sigue siendo `syncTicket` y, sin `detalle`, hace lo mismo |
+| `openspec/changes/archive/2026-10-06-sync-tickets-por-modificacion/design.md:16` → `sync.ts:179` | el detalle es la misma petición que usa `syncTicket` | Cierta: `:179` conserva la petición de detalle tras `if (detalle) return persistTicket(detalle);` |
 | `openspec/changes/relleno-completo-conversaciones/{proposal.md:52,:112; design.md:20,:30,:35,:154,:169; tasks.md}` → `:179`, `:180`, `:18`, `:178` | el diseño y las tareas de este cambio | Ciertas: `:179` sigue siendo la petición de detalle y `:180` el `throw` |
 | `proposal.md:52` → `:187` (abreviada) y `conversaciones.ts:70` | `syncConversations` lee sin reintentos | Cierta: `sync.ts:187` es `leerConversaciones(zohoFetch, id)` y no se movió (mismo número de líneas) |
 | `apps/desk/server/rellenoConversaciones.ts:12` → `sync.ts:178-179` | `syncTicket(id, detalle)` | Cierta |
