@@ -46,7 +46,7 @@ Mutaciones de D11 en este lote: M3, M8, M9 (las dos variantes).
 - [x] L1.8 Verde: los dos ficheros nuevos y `npm run typecheck` (confirma la hipótesis de tipos de D2); suite entera con su log.
 - [x] L1.9 Mutaciones L1 con su rojo: M3 (sin filtro `app-`), M8 (`sync.ts:179` sin la rama de `detalle`), M9 (404 sin rama propia; aparte, ignorar `isDeleted`/`isTrashed`). Tabla en `apply-progress.md`: colocación, rojas, restauración comprobada.
 - [x] L1.10 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
-- [ ] L1.11 Cierre del lote: las cinco comprobaciones en 0 y la medida; barrido de la regla de mutación 4 (sección Barrido); `apply-progress.md`.
+- [x] L1.11 Cierre del lote: las cinco comprobaciones en 0 y la medida; barrido de la regla de mutación 4 (sección Barrido); `apply-progress.md`.
 
 ## Lote L2 — corte por 429, resumen y concurrencia (intento i3)
 

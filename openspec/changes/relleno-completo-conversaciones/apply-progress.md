@@ -17,7 +17,7 @@ Modo: `strict_tdd`, artifact store `hybrid`. Árbol de partida del lote L1: `5ce
 | L1.8 Verde | [x] los dos ficheros nuevos 18/18; `npm run typecheck` salida 0 (la hipótesis de tipos de D2 se confirma). La suite entera la corre el orquestador en L1.11 |
 | L1.9 Mutaciones | [x] (tabla abajo) |
 | L1.10 Casilla de la regla 13 | [x] (abajo) |
-| L1.11 Cierre del lote | NO es de este ejecutor: lo hace el orquestador |
+| L1.11 Cierre del lote | [x] Orquestador, sección «Cierre de L1» al final |
 | B.1 Barrido | [x] (abajo) |
 
 ## Rojo medido (L1.5)
@@ -122,3 +122,19 @@ no bloquea la forma abreviada.
 
 Ninguno. Dos matices: (a) `tramo()` castea `number` con `Number()` por si pg-mem lo devolviera como texto (D4 no lo decía); (b) el módulo
 copia `dormir` y `readData` de `conversaciones.ts:59` y `:13` porque ninguno se exporta (no se tocó `conversaciones.ts`, D12).
+
+## Cierre de L1 (L1.11, orquestador)
+
+Sobre `b70c2a76` (código en `6bd57424`; `b70c2a76` sólo repara siete citas de este fichero, escritas con `…/` y que el detector daba
+por «fichero inexistente»), en serie:
+
+| Comprobación | Salida | Dato |
+|---|---|---|
+| `npm run typecheck` | 0 | — |
+| `npm run lint -- --max-warnings 165` | 0 | 165 avisos contra 165: ninguno nuevo |
+| detector `--sha HEAD` | 0 | 7.875 citas comprobadas; 14 abreviadas rotas informativas, las mismas 14 ficheros que en `5ce2f54b` |
+| `npm run build` | 0 | `index-F1jDYjEU.js` 427,51 kB, el mismo bundle: L1 no toca el cliente |
+| `npm test` | 0 | 335 ficheros pasados + 4 omitidos (339), 5.794 pruebas pasadas + 26 omitidas (5.820), 407 s; memoria antes, 14.282 MB |
+
+Contraste del orquestador: M8 reproducida (`perl` en `packages/zoho-sync/src/sync.ts:179`), 6 rojas, las mismas que la tabla de arriba;
+restaurada con `git checkout`, `git diff` vacío y el fichero sigue CRLF.
