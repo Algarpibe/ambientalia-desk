@@ -131,7 +131,7 @@ conocida» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:211`).
 
 - Este `proposal.md`, `tasks.md`, `verify-report.md` y `archive-report.md`.
 - Al archivar, la carpeta pasa a `openspec/changes/archive/`. La prueba
-  `apps/desk/server/reconciliacion/registro.test.ts:218-220` fija la lista «en curso» del árbol real con F1B-04, y se pone en
+  `apps/desk/server/reconciliacion/registro.test.ts:218-220` en `9134c04c` fija la lista «en curso» del árbol real con F1B-04, y se pone en
   rojo. Se ve el rojo y se corrige en sitio, sin mover líneas (autorizado por el usuario el 2026-11-03, como en `80a8dcbf`).
 
 ### Fuera
@@ -155,7 +155,7 @@ conocida» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:211`).
 
 ## Riesgos
 
-- **Cita en prosa que caduca:** la lista «en curso» de `apps/desk/server/reconciliacion/registro.test.ts:220` se toca en
+- **Cita en prosa que caduca:** la lista «en curso» de `apps/desk/server/reconciliacion/registro.test.ts:220` en `9134c04c` se toca en
   sitio; al cerrar se barre la regla 4 sobre ese fichero.
 - **Registro de intentos:** el archivo mide la mudanza dos veces (regla del ciclo 2, desvío 3); se abre con un techo de dos
   veces la carpeta más 800 (regla del archivo).

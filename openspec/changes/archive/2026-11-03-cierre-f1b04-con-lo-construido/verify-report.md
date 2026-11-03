@@ -39,7 +39,7 @@ agente de lectura sobre `9134c04c`, y el orquestador leyó una a una las líneas
 
 ## Lo que el archivo tiene que ver en rojo
 
-Con la carpeta fuera de `archive/`, F1B-04 sigue «en curso» y `apps/desk/server/reconciliacion/registro.test.ts:218-220` está
+Con la carpeta fuera de `archive/`, F1B-04 sigue «en curso» y `apps/desk/server/reconciliacion/registro.test.ts:218-220` en `9134c04c` está
 en verde. Al moverla a `openspec/changes/archive/` con `cierra: si`, el barrido la cuenta «por archivo» y esa prueba tiene que
 ponerse roja. Si no se pone roja, la prueba no distingue y hay que parar.
 
