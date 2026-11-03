@@ -15,7 +15,7 @@ export interface Sync extends HistoriaPendiente {
   backfillTickets(): Promise<number>
   backfillArchivedTickets(): Promise<number>
   syncRecent(): Promise<number>
-  syncTicket(id: string): Promise<void>
+  syncTicket(id: string, detalle?: Record<string, unknown>): Promise<void>
   syncConversations(id: string): Promise<void>
   syncTicketHistory(id: string): Promise<void>
   backfillTicketHistory(opts?: BackfillHistoriaOpts): Promise<ResultadoBackfillHistoria>
@@ -175,8 +175,8 @@ export function createSync({ zohoFetch, db, config, alDiscrepanciaOV, conversaci
       // Por fecha de modificación; el cuerpo vive al final del fichero (RQ-ZS-22). Sin marca o si la búsqueda cae, la página 1 de hoy.
       return sincronizarModificados({ zohoFetch, db, config, persistTicket, paginaReciente, trasLeer: pasadaConversaciones })
     },
-    async syncTicket(id: string): Promise<void> {
-      const res = await zohoFetch(`/tickets/${id}?include=contacts,assignee`)
+    async syncTicket(id: string, detalle?: ZohoRecord): Promise<void> {
+      if (detalle) return persistTicket(detalle); const res = await zohoFetch(`/tickets/${id}?include=contacts,assignee`)
       if (!res.ok) throw new Error(`Zoho /tickets/${id} ${res.status}`)
       await persistTicket(await readData(res))
     },

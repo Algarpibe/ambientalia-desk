@@ -26,3 +26,24 @@ describe('opcionesConversaciones · la única lectura de los dos interruptores (
     expect(indice).not.toMatch(/config\.(syncConversacionesPeriodica|marcarConversacionesAusentes)/)
   })
 })
+
+/**
+ * relleno-completo-conversaciones (1G-01, D7): `app.ts` construye el relleno con la ÚNICA lectura de los interruptores de conversaciones,
+ * `opcionesConversaciones(config).marcarAusentes`, y no lee ningún interruptor por su cuenta (S-8: el relleno no marca solo). Se vigila el
+ * fichero, no el módulo (regla de mutación 2).
+ */
+const appTs = readFileSync(path.resolve(__dirname, 'app.ts'), 'utf8')
+
+describe('app.ts · el relleno recibe `marcar` de opcionesConversaciones (S-8)', () => {
+  it('crearRellenoConversaciones pasa opcionesConversaciones(config).marcarAusentes, y app.ts no lee los interruptores por su cuenta', () => {
+    const llamada = appTs.split(/\r?\n/).find((l) => l.includes('crearRellenoConversaciones({')) ?? ''
+    expect(llamada).toContain('marcar: opcionesConversaciones(config).marcarAusentes === true')
+    expect(appTs).toContain("import { opcionesConversaciones } from './opcionesConversaciones'")
+    expect(appTs).not.toMatch(/config\.(syncConversacionesPeriodica|marcarConversacionesAusentes)/)
+  })
+
+  it('el interruptor del relleno llega a la ruta como booleano estricto', () => {
+    const registro = appTs.split(/\r?\n/).find((l) => l.includes('registerRellenoConversacionesRoutes(app')) ?? ''
+    expect(registro).toContain('habilitado: config.rellenoConversacionesHabilitado === true')
+  })
+})

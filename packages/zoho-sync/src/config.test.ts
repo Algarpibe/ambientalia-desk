@@ -137,3 +137,24 @@ describe('SYNC_CONVERSACIONES_PERIODICA y MARCAR_CONVERSACIONES_AUSENTES (1G-01,
     expect([b.syncConversacionesPeriodica, b.marcarConversacionesAusentes]).toEqual([false, true])
   })
 })
+
+describe('loadConfig · RELLENO_CONVERSACIONES_HABILITADO (1G-01, RQ-ZS-29)', () => {
+  it('nace cerrado: sin la variable, o vacía', () => {
+    expect(loadConfig(base).rellenoConversacionesHabilitado).toBe(false)
+    expect(loadConfig({ ...base, RELLENO_CONVERSACIONES_HABILITADO: '' }).rellenoConversacionesHabilitado).toBe(false)
+  })
+
+  it('sólo el literal "true" lo enciende', () => {
+    for (const v of ['false', 'TRUE', 'True', '1', 'yes', ' true', 'true ']) {
+      expect(loadConfig({ ...base, RELLENO_CONVERSACIONES_HABILITADO: v }).rellenoConversacionesHabilitado, v).toBe(false)
+    }
+    expect(loadConfig({ ...base, RELLENO_CONVERSACIONES_HABILITADO: 'true' }).rellenoConversacionesHabilitado).toBe(true)
+  })
+
+  it('es independiente de los dos interruptores de conversaciones: encender uno no enciende el otro', () => {
+    const solo = loadConfig({ ...base, RELLENO_CONVERSACIONES_HABILITADO: 'true' })
+    expect([solo.rellenoConversacionesHabilitado, solo.syncConversacionesPeriodica, solo.marcarConversacionesAusentes]).toEqual([true, false, false])
+    const marcan = loadConfig({ ...base, SYNC_CONVERSACIONES_PERIODICA: 'true', MARCAR_CONVERSACIONES_AUSENTES: 'true' })
+    expect([marcan.rellenoConversacionesHabilitado, marcan.syncConversacionesPeriodica, marcan.marcarConversacionesAusentes]).toEqual([false, true, true])
+  })
+})
