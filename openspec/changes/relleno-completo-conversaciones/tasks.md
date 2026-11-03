@@ -92,9 +92,9 @@ Mutaciones y posiciones: M3 (`limite=0`), M4, M5, M7 (en `app.ts:50`), M10 (las 
 
 ## Verificación (intento i5)
 
-- [ ] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-28 y RQ-ZS-29 contra su prueba.
-- [ ] V.2 Reproducir las mutaciones M1-M10 y P1-P4 del `apply-progress.md`, con `perl` y restauración comprobada.
-- [ ] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
+- [x] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-28 y RQ-ZS-29 contra su prueba.
+- [x] V.2 Reproducir las mutaciones M1-M10 y P1-P4 del `apply-progress.md`, con `perl` y restauración comprobada.
+- [x] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
 
 ## Archivo (intento i6)
 
