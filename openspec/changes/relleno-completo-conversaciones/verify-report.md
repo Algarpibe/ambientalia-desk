@@ -155,7 +155,7 @@ Ninguno.
 - **S-2 · El escenario 15 no aserta «no se llama a Zoho» con `limite=abc`.** Sólo `apps/desk/server/rellenoConversacionesRutas.test.ts:53` lo comprueba (sin parámetros). Añadir `expect(zohoFetch).not.toHaveBeenCalled()` en `:64` y `:71`.
 - **S-3 · P2 y P3 se reprodujeron en variante, no en la forma literal** de `design.md` D11 (P2: guarda del `429` después de `!res.ok`; P3: `inicio` movido tras la lectura). Las variantes ponen rojas las pruebas que D11 nombra (4 y 1); la reordenación literal de P2 exige mover un bloque de varias líneas y no se hizo.
 - **S-4 · Reloj real en `apps/desk/server/rellenoConversaciones.test.ts:297`:** `await new Promise((r) => setTimeout(r, 25))` separa `created_at` de `inicio`. Pasó en todas las tandas, pero es sensible a un reloj lento; un `created_at` explícito lo haría determinista.
-- **S-5 · `motivoPrimerFallo` puede traer texto de un error de Postgres** (`apps/desk/server/rellenoConversaciones.ts:72`, `:113`). `design.md` D6 lo declara hipótesis; ninguna prueba la fija más allá de los errores de Zoho de `:347`.
+- **S-5 · `motivoPrimerFallo` puede traer texto de un error de Postgres** (`apps/desk/server/rellenoConversaciones.ts:72`, `:113`). `design.md` D6 lo declara hipótesis; ninguna prueba la fija más allá de los errores de Zoho de `apps/desk/server/rellenoConversaciones.test.ts:347`.
 - **S-6 · Pendientes de archivo, no de este cambio:** `apps/desk/server/reconciliacion/registro.test.ts:218` y `:220` cambian en el archive (S-15, tarea A.4); fusión de RQ-ZS-28 y RQ-ZS-29 al final de `openspec/specs/zoho-sync/spec.md` (A.2).
 
 ## Resumen
