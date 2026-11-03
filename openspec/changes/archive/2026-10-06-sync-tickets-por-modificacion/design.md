@@ -54,12 +54,12 @@ Tras la línea 358 se añaden `SOLAPE_MODIFICADOS_MS`, `ModificadosDeps` y `asyn
 
 **Frases que dejan de ser ciertas (barrido de cierre):**
 
-- `docs/sdd/ENTRADA.md:2048` — «sólo trae los cien más recientes (`sync.ts:173-177` en `9822bd7`)»: caso **C**; se ancla a la
+- `docs/sdd/ENTRADA.md:2048` en `a729a371` — «sólo trae los cien más recientes (`sync.ts:173-177` en `9822bd7`)»: caso **C**; se ancla a la
   revisión de partida y se añade qué lo cerró.
 - `proposal.md:15` y `:65` de este cambio: describen el «antes»; se anclan a la revisión de partida.
 - `docs/sdd/F0-00_Baseline_as-built.md:121` ya está anclada a `17ddfec`: caso **B**, no se toca.
 - Segundo pase obligado: rangos que **contienen** 173-177 con otros extremos, formas abreviadas, y las dos líneas
-  largas que nombran `syncRecent` sin cita (`openspec/specs/zoho-sync/spec.md:743`, `docs/sdd/ENTRADA.md:1270`).
+  largas que nombran `syncRecent` sin cita (`openspec/specs/zoho-sync/spec.md:743`, `docs/sdd/ENTRADA.md:1270` en `a729a371`).
 - Siguen ciertas: `openspec/specs/zoho-sync/spec.md:264-265` y el comentario de `apps/hub-sync/src/hubSync.test.ts:154`.
 
 ## Interfaces

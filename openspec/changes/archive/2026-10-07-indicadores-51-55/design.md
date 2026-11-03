@@ -419,7 +419,7 @@ midiendo `git diff --shortstat --no-renames` contra el commit de partida más la
 
 | Fichero | Dónde | Citas vivas que se desplazan |
 |---|---|---|
-| `packages/shared/src/indicadores.ts` | en sitio y al final | ninguna: `apps/desk/server/migracionMarcadorLectores.test.ts:58` y `docs/sdd/ENTRADA.md:2078` citan la línea 134, que no se mueve ni cambia |
+| `packages/shared/src/indicadores.ts` | en sitio y al final | ninguna: `apps/desk/server/migracionMarcadorLectores.test.ts:58` y `docs/sdd/ENTRADA.md:2078` en `a729a371` citan la línea 134, que no se mueve ni cambia |
 | `apps/desk/server/indicadores.ts` | en sitio; inserción tras la línea 84 | ninguna: la única cita viva es a la línea 76 |
 | `packages/zoho-sync/src/db/schema.sql` | al final | ninguna |
 | `packages/zoho-sync/src/db/migrate.ts` | línea 73 en sitio | ninguna |

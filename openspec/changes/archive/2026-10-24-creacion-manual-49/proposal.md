@@ -13,7 +13,7 @@ origen_cabecera: declarada
 ## Intención
 
 Gerencia decidió el 24/10 qué es «creación» en el 49: `decision/f1f05-creacion-del-49-campo-manual`
-(`openspec/config.yaml:5321-5344`). Respuesta literal (`openspec/config.yaml:5330`):
+(`openspec/config.yaml:5321-5344` en `a729a371`). Respuesta literal (`openspec/config.yaml:5330` en `a729a371`):
 
 > ««Creación» en el 49 es el campo «Fecha creación ticket», el que se rellena a mano, no la fecha de creación del ticket
 > en Zoho. […] La aplicación está bien; el error estaba en mi referencia, que regenero con ese campo y vuelvo a pasar. No
@@ -21,7 +21,7 @@ Gerencia decidió el 24/10 qué es «creación» en el 49: `decision/f1f05-creac
 > se arrastra igual a la comparación; queda anotado como revisión futura de la definición del 49, fuera del alcance de
 > F1F-05. […]»
 
-Este cambio cumple la consecuencia (3) (`openspec/config.yaml:5335-5337`): el fixture
+Este cambio cumple la consecuencia (3) (`openspec/config.yaml:5335-5337` en `a729a371`): el fixture
 `apps/desk/server/testing/septiembre2026.ts` usa una sola fecha, `creado`, para la creación del ticket y para el campo
 manual (`apps/desk/server/testing/septiembre2026.ts:60` en `186c2fe4`, `t.creado` en `created_time` y en `fecha_creacion_ticket`), y sus
 49 de 940, 941 y 972 son de la definición descartada. La aplicación ya lee el campo manual: columna

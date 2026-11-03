@@ -42,7 +42,7 @@ y vitest dirigido a los ficheros del lote; `npm test` completo lo corre el orque
 - [x] L2.8 Mutación M9 (frase redefinida en el cliente): cae el esperado importado de shared y la prueba de fuente sin literal.
 - [x] L2.9 Mutación 6 en el lado cliente (`tickets` ↔ `ticketsVariante` al armar `tablas`): cae «los tickets salen de su clave». Palabras prohibidas (`:130-135`) sigue verde.
 - [x] L2.10 Anclas caso B del `proposal.md` (D10): anclar «en `e1a92b59`», sin renumerar, las líneas 24, 25, 27, 28, 29, 90 y 107 (shared 106, 126, 10 y 2; lib 68-72 y 48; `.tsx` 50-59 y 57). Las de la spec delta (74, 78, 143, 144, 195) son caso A y no se tocan.
-- [x] L2.11 Barrido de la regla de mutación 4 (D10): (1) `git diff -U0 <base de L1> -- <lib, shared>` sólo en sitio o al final; (2) Grep de `indicadoresComparacion\.ts:[0-9]+`, `comparacionExportacion\.ts:[0-9]+`, `ComparacionExportacion\.tsx:[0-9]+` y las rutas de las pruebas, SIN excluir `openspec/changes/archive/`, `docs/`, `DEPLOY.md`, cada resultado leído contra lo que afirma (A/B/C); conocidas: `openspec/specs/kpis/spec.md:1160` y `:1440`, `:1636-1637` siguen ciertas; (3) pase de abreviadas `:NN` en cada fichero que ya cita el módulo; (4) detector. NO se toca `openspec/config.yaml` (cita `:5290`).
+- [x] L2.11 Barrido de la regla de mutación 4 (D10): (1) `git diff -U0 <base de L1> -- <lib, shared>` sólo en sitio o al final; (2) Grep de `indicadoresComparacion\.ts:[0-9]+`, `comparacionExportacion\.ts:[0-9]+`, `ComparacionExportacion\.tsx:[0-9]+` y las rutas de las pruebas, SIN excluir `openspec/changes/archive/`, `docs/`, `DEPLOY.md`, cada resultado leído contra lo que afirma (A/B/C); conocidas: `openspec/specs/kpis/spec.md:1160` y `:1440`, `:1636-1637` siguen ciertas; (3) pase de abreviadas `:NN` en cada fichero que ya cita el módulo; (4) detector. NO se toca `openspec/config.yaml` (cita `:5290` en `a729a371`).
 - [x] L2.12 Tabla de la regla invariable 13 (mutación 3) escrita en `apply-progress.md`, decisión a decisión con la línea del servidor (D8): números de variante y letra, `null` en vez de 0/100, frase `MENSAJE_SIN_PARES`, orden y rótulos (sin guarda, presentación), «Difieren»/«Sin comparar» vacíos, sin semáforo ni veredicto. `git diff --stat` del `.tsx` como prueba de que no calcula.
 - [x] L2.c Cierre de lote L2: X.c; medida ≤ 720 (estimación ~330); `apply-progress.md` con rojos, mutaciones, barrido y tabla de la regla 13.
 
@@ -53,7 +53,7 @@ Regla del ciclo 1: no son unidades de trabajo del repositorio. **Archivar NO las
 | # | Qué | Dueño | Dónde queda escrito |
 |---|---|---|---|
 | P-1 | Corregir, si procede, S-1 a S-7 | Gerencia | Lista semanal de supuestos (regla E-237) |
-| P-2 | Repetir la comparación de septiembre (01/09 a 30/09) y pasar el «Sólo en Desk» | Gerencia | `openspec/config.yaml:5309` |
+| P-2 | Repetir la comparación de septiembre (01/09 a 30/09) y pasar el «Sólo en Desk» | Gerencia | `openspec/config.yaml:5309` en `a729a371` |
 | P-3 | Probar en la aplicación la tabla de la variante | Gerencia / analista | Lista acumulada de pruebas en la app |
 
 ## Review Workload Forecast

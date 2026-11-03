@@ -110,7 +110,7 @@ Hoy, encendido, sólo los tres rechazos Decisionales entran en `Por Facturar` si
 (`invariantesGrafo.test.ts:384-387`). `cobro_diagnostico_espera` entra también: el recorrido desde `En Proceso` alcanza
 `Servicio externo` por `cal_sensores_proceso` (`transitions.ts:224`) y `En Espera de Repuestos` por `solicitud_repuestos`
 (`:200`) más D2, sin cruzar `Control de calidad`. Es otra salida Decisional sin reparación, como los rechazos.
-`decision/f1c07-firma-control-calidad` y `decision/f1c07-supuestos-corregidos` (`openspec/config.yaml:5099-5136`)
+`decision/f1c07-firma-control-calidad` y `decision/f1c07-supuestos-corregidos` (`openspec/config.yaml:5099-5136` en `a729a371`)
 regulan quién firma y qué es «intervino», no qué entra en `Por Facturar`: no hay contradicción. Lo que sí roza es
 `decision/c6-qa-liberacion` («No se entrega el equipo sin … checklist firmado», `openspec/config.yaml:1892`), y lo roza
 igual que los tres rechazos ya aceptados por F1C-08. Supuesto S-11.
@@ -138,7 +138,7 @@ El cliente consume la misma regla pura de D4. Corregida por `decision/f1c03-quie
 - **S-2** **RETIRADO por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21).** `derivado_a` nulo, inactivo o de otra área = «no disponible»: sólo ejecuta el respaldo con motivo. Muchos
   tickets de Zoho llegan sin derivado. En `Solicitado` el derivado es el encargado de inventario (`R08.4.md:2027`, cuya
   figura sigue `[ABIERTO]`): si no es de Servicio Técnico, la salida la ejecuta el respaldo.
-- **S-3** El administrador cuenta como respaldo y aporta motivo (molde de F1C-07, `openspec/config.yaml:5125`). **RETIRADO por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21)**: el administrador ejecuta sin motivo propio.
+- **S-3** El administrador cuenta como respaldo y aporta motivo (molde de F1C-07, `openspec/config.yaml:5125` en `a729a371`). **RETIRADO por `decision/f1c03-quien-ejecuta-salidas` (2026-10-21)**: el administrador ejecuta sin motivo propio.
 - **S-4** Días naturales; vence cuando lo transcurrido es ≥ plazo, nunca antes.
 - **S-5** Plazos provisionales (`openspec/config.yaml:5323-5326` en `24b86092`): se recalculan con una medición nueva con clave propia.
 - **S-6** Destinatarios de §3.

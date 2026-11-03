@@ -5,7 +5,7 @@
 | Cambio | `busqueda-ticket-serial` (`tanda: F1B-08`, `cierra: no`) |
 | Capacidad | `vistas-tablero` (existente; este delta **sólo añade**: no hay bloques MODIFIED) |
 | Requisitos nuevos | `RQ-VT-11`, `RQ-VT-12`, `RQ-VT-13`. Libres: el último vivo es `RQ-VT-09` (`openspec/specs/vistas-tablero/spec.md:299`) y ningún otro cambio de `openspec/changes/` los nombra |
-| Letra de Gerencia que manda | `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (`openspec/config.yaml:3469`, `respuesta_textual`): «(1) la búsqueda por número de ticket y serial entra en F1B-08, antes del corte». E-133 (`docs/sdd/ENTRADA.md:1579`): «El serial se filtra con búsqueda parcial (por ejemplo, los últimos dígitos), con la misma lógica que el autocompletado por serial de la recepción. En el listado de tickets, la búsqueda por número de ticket y por serial es paridad con Zoho Desk y debe estar antes del corte del 14/12» |
+| Letra de Gerencia que manda | `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (`openspec/config.yaml:3469`, `respuesta_textual`): «(1) la búsqueda por número de ticket y serial entra en F1B-08, antes del corte». E-133 (`docs/sdd/ENTRADA.md:1579` en `a729a371`): «El serial se filtra con búsqueda parcial (por ejemplo, los últimos dígitos), con la misma lógica que el autocompletado por serial de la recepción. En el listado de tickets, la búsqueda por número de ticket y por serial es paridad con Zoho Desk y debe estar antes del corte del 14/12» |
 | Maestro | M7.5, `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3061-3062` y `:1152` |
 
 ## Qué es letra y qué es supuesto

@@ -168,7 +168,7 @@ filtra ni da formato: sólo muestra el enlace y compone la dirección con `URLSe
 Leí 14 citas que solapan líneas editadas y **todas siguen ciertas**:
 
 1. `docs/sdd/F0-00_Baseline_as-built.md:137` cita `Analisis.tsx:70 en d25ecda`: en esa revisión es `export function Analisis`.
-2. `docs/sdd/ENTRADA.md:1284` cita `Analisis.tsx:95 en e27f9da`: es la tarjeta «Cumplimiento promesa».
+2. `docs/sdd/ENTRADA.md:1284` en `a729a371` cita `Analisis.tsx:95 en e27f9da`: es la tarjeta «Cumplimiento promesa».
 3. `docs/sdd/Paquete_de_Despliegue_2026-09-29.md:459` cita `apps/desk/server/app.ts:61`: sigue siendo el bloque de registros.
 4. `docs/sdd/Paquete_de_Despliegue_2026-10-01.md:744`: ídem, sin desplazamiento (`app.ts` conserva 96 líneas).
 5. `openspec/changes/archive/2026-10-01-tres-transiciones-cifra-anclada/apply-progress.md:45`: el localizador de la lista de «en curso» sigue acertando.

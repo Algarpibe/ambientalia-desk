@@ -45,7 +45,7 @@ que el agente de exploración no pudo escribir en fichero. **Cada cita se ha vue
 
 `openspec/config.yaml:2373-2388`, clave `decision/anexo-33-checkbox`; el texto literal está en la línea 2378
 de ese fichero y se copia entero en la propuesta. La partición antes/después del corte es E-102
-(`docs/sdd/ENTRADA.md:1378-1382`) y la fila del plan es
+(`docs/sdd/ENTRADA.md:1378-1382` en `a729a371`) y la fila del plan es
 `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:103`.
 
 ## 3 · Enfoques

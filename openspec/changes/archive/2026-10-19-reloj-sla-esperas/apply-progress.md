@@ -138,7 +138,7 @@ que no discriminaba). No se mutaron la cláusula `event_name = 'TicketUpdated'` 
 | `TRASPASO_2026-10-08.md:1108` → `apps/desk/server/analisis.ts:13` | el `SELECT` | `:13` sigue siendo el `SELECT`. Acierta |
 | `TRASPASO_2026-10-08.md:1151` → `:26` en `73bd52f` | anclada | caso B, no se toca |
 | `proposal.md:60` (`:11-32`), `:136` (`:34-42`), `design.md:97-98`, `:147` (`:22`, `:30`) | `getAnalisisRows`, la caché, el `Promise.all` | `:11` abre, `:32` cierra, `:34-42` es la caché; `:22` y `:30` son las líneas editadas. Aciertan |
-| `Analisis.tsx:95` (`ENTRADA.md:1284`) | anclada a `e27f9da` | caso B |
+| `Analisis.tsx:95` (`ENTRADA.md:1284` en `a729a371`) | anclada a `e27f9da` | caso B |
 | `Analisis.tsx:83` (cuatro, paquetes del 04/10) y `:70` (baseline) | antes del punto de inserción / histórica | `:83` idéntica a la de `bef8ae3`. Acierta; `:70` es del baseline fechado |
 | `Analisis.tsx:19` (`proposal.md:106`, `design.md:150`) | el `Kpi` pinta «—» ante `null` | `:19` es esa línea. Acierta |
 | `Analisis.tsx:98` (`proposal.md:58`, `:85`, `spec.md:153`) | el `Kpi` de «Tiempo prom. servicio» | `:98` sigue siéndolo; las nuevas son `:99` y `:100`. Aciertan |

@@ -12,7 +12,7 @@ que es hoy la última línea del fichero: no se mueve ninguna línea citada (`an
   los dos nombres escritos. NO se usa la clase `externa` de `estados.ts`: la llevan también `Notificación cliente`
   (`packages/shared/src/estados.ts:65`), que es origen de anulación, y otros estados; las dos esperas están en `:61-62`.
 - Constante `MOTIVOS_PRIMERO_EN_ESPERA = ['Repuesto no disponible', 'Sin solución técnica']` (SA-2, en el orden en que
-  los nombra Gerencia, `openspec/config.yaml:5036`).
+  los nombra Gerencia, `openspec/config.yaml:5036` en `a729a371`).
 - Fuera de las esperas: `[...MOTIVOS_ANULACION]`, una COPIA, para que quien la reciba no pueda mutar la lista base.
 - Dentro: `[...MOTIVOS_PRIMERO_EN_ESPERA, ...MOTIVOS_ANULACION.filter((m) => !MOTIVOS_PRIMERO_EN_ESPERA.includes(m))]`.
   Resultado: «Repuesto no disponible», «Sin solución técnica», «El cliente no aprueba…», «Caducidad de espera…», «Otro».
@@ -73,8 +73,8 @@ El `.tsx` queda fuera de la red de pruebas (F0-00, `vitest.config.ts:16-20`): su
 
 | Decisión del cliente | Línea del servidor |
 |---|---|
-| El orden del desplegable del motivo | **ninguna, presentación** (`openspec/config.yaml:5041`) |
-| En qué estados se reordena | **ninguna, presentación**: no hay restricción por origen (`openspec/config.yaml:5040`) |
+| El orden del desplegable del motivo | **ninguna, presentación** (`openspec/config.yaml:5041` en `a729a371`) |
+| En qué estados se reordena | **ninguna, presentación**: no hay restricción por origen (`openspec/config.yaml:5040` en `a729a371`) |
 | Ofrecer sólo los cinco motivos | `anulacion.ts:50` vía `ticketService.ts:134`; probado desde `Servicio externo` en `apps/desk/server/anulacion.test.ts:80-86` |
 
 **Barrido (regla de mutación 4), al cierre:** sólo ganan líneas `anulacion.ts` y `anulacion.test.ts` de `shared`, y

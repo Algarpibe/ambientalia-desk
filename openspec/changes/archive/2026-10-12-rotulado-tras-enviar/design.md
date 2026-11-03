@@ -27,13 +27,13 @@ Medido sobre `a947b48`. Tres piezas: (1) se **retiran** las dos guardas del rotu
 
 | Cita | Qué afirma | Caso | ¿La toca esta rama? |
 |---|---|---|---|
-| `docs/sdd/ENTRADA.md:1828` → línea 101 | El formulario pide confirmar antes de crear (es E-167) | C: lo cierra este cambio | No (fichero vedado): al informe |
+| `docs/sdd/ENTRADA.md:1828` en `a729a371` → línea 101 | El formulario pide confirmar antes de crear (es E-167) | C: lo cierra este cambio | No (fichero vedado): al informe |
 | `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:255` y `docs/sdd/Paquete_de_Despliegue_2026-10-04.md:210` → línea 101 | El rotulado se exige en el alta | B: paquete fechado | Puede; no se renumera, se deja como registro |
 | `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:863` y `docs/sdd/Paquete_de_Despliegue_2026-10-04.md:585` → rangos 97-101 y 151-162 | Alta y envío con rotulado | B | Ídem |
 | `openspec/changes/archive/2026-10-03-recepcion-rotulacion-foto-entrada/verify-report.md:148` (línea 101) y `openspec/changes/archive/2026-10-03-recepcion-rotulacion-foto-entrada/verify-report.md:147` (línea 151) | La guarda existe y está verificada | B: archivo | No se toca el archivo |
 | `openspec/changes/rotulado-tras-enviar/proposal.md` (líneas 65, 70-72, 101, 147-149, 151-162, 155) | Medición previa | B: declara `a947b48` en su encabezado | No se edita |
 
-Siguen **ciertas** (caso A, nada que hacer): toda cita a la línea 102 (paso 7), a la 154 (legado), a la 63, a la 139-142, y `docs/sdd/ENTRADA.md:1808` (rango 151-162: foto por novedad). Las de `openspec/specs/remisiones/spec.md` las sustituye el delta al archivar.
+Siguen **ciertas** (caso A, nada que hacer): toda cita a la línea 102 (paso 7), a la 154 (legado), a la 63, a la 139-142, y `docs/sdd/ENTRADA.md:1808` en `a729a371` (rango 151-162: foto por novedad). Las de `openspec/specs/remisiones/spec.md` las sustituye el delta al archivar.
 
 ### D2 · El alta deja de escribir el rotulado; la traza de las casillas es la del alta (G2)
 - `apps/desk/server/routes/remision.ts:250`, en sitio: en el objeto `recepcion`, `rotuladoPor: req.user?.name ?? null` pasa a `por: req.user?.name ?? null`. El valor es el mismo usuario de la sesión; cambia el nombre porque ya no es «quien rotuló».

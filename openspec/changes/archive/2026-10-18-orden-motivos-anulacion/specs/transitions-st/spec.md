@@ -3,7 +3,7 @@
 ### RQ-TS-41 · Orden de presentación de los motivos de anulación
 
 Fuente: `decision/f1c01-motivos-esperas` (consecuencias 1 y 2), que aclara `decision/c3-salida-esperas`
-(`openspec/config.yaml:5030-5047`, `:1834`). Es presentación: la lista y su pertenencia son de RQ-TS-40.
+(`openspec/config.yaml:5030-5047` en `a729a371`, `:1834`). Es presentación: la lista y su pertenencia son de RQ-TS-40.
 
 **La función.** `motivosAnulacionOrdenados(estado)` en `packages/shared/src/anulacion.ts` **SHALL** ser una función pura
 que devuelve los motivos en el orden en que se muestran, y **SHALL** añadirse al final del fichero. En `En Espera de

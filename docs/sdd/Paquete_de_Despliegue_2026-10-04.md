@@ -118,7 +118,7 @@ App: publicar `24a14eb` es publicarla (§10).
 
 **Antes de desplegar hacen falta dos cosas, las dos de personas:**
 
-1. **La respuesta de Gerencia a E-158** (`docs/sdd/ENTRADA.md:1782`): si la guarda alcanza a los tickets de
+1. **La respuesta de Gerencia a E-158** (`docs/sdd/ENTRADA.md:1782` en `a729a371`): si la guarda alcanza a los tickets de
    «Equipo nuevo». Lo construido aplica el supuesto «sí, sin excepciones», **no decidido**. Si la respuesta es
    «no alcanza», hace falta un cambio de código nuevo (una excepción por clasificación) y **`24a14eb` deja de ser
    el commit a publicar**. El 2026-10-04 no hay respuesta registrada (`grep -n "E-158" openspec/config.yaml` → 0).
@@ -175,18 +175,18 @@ reversión de código no recupera filas borradas.** Nada de esto cambia desde `5
 ### (d) F1F-05 — CONDICIÓN CON FECHA: en producción antes del viernes 13/11/2026
 
 F1F-05 tiene que estar desplegada **antes del viernes 13/11/2026** para medir las cuatro semanas desde el 16/11
-(`DEPLOY.md:270-271`; E-181, `docs/sdd/ENTRADA.md:1899`). Como va en el mismo código que la guarda de F1B-03 (§10),
+(`DEPLOY.md:270-271`; E-181, `docs/sdd/ENTRADA.md:1899` en `a729a371`). Como va en el mismo código que la guarda de F1B-03 (§10),
 **esa fecha queda atada a la respuesta de E-158**: si E-158 no está respondida a tiempo, F1F-05 tampoco llega.
 
 Con ella va la **consulta de sólo lectura P-1** (`DEPLOY.md:272-298`): dice si los valores de Zoho de las columnas
 47 a 59 y la calificación de satisfacción llegan sincronizados en `desk.tickets`. Lee `custom_fields` y `raw`, que
 ya existen en el esquema de `ae5aaf4`, así que **se puede ejecutar hoy**. No se ha probado contra el PostgreSQL de
 producción (`DEPLOY.md:300-302`). Si ninguna consulta trae los nombres de los indicadores, la comparación no tiene
-con qué comparar y se abre E-173 (`docs/sdd/ENTRADA.md:1859`); no es un fallo del despliegue.
+con qué comparar y se abre E-173 (`docs/sdd/ENTRADA.md:1859` en `a729a371`); no es un fallo del despliegue.
 
 ### (e) E-162 y E-170 — condiciones de publicación de F1C-11 y de F1B-04
 
-**E-162 (F1C-11)** (`docs/sdd/ENTRADA.md:1802`). Dos tareas en producción, de Gerencia o de un administrador:
+**E-162 (F1C-11)** (`docs/sdd/ENTRADA.md:1802` en `a729a371`). Dos tareas en producción, de Gerencia o de un administrador:
 
 - **(b) Confirmar que el cargo de quien es Director Técnico está escrito «Director Técnico».** Condiciona que la
   derivación haga efecto: la propuesta busca a la persona por el texto de su cargo de firma
@@ -198,7 +198,7 @@ con qué comparar y se abre E-173 (`docs/sdd/ENTRADA.md:1859`); no es un fallo d
   Director Técnico (`packages/shared/src/transitions.ts:276`); el respaldo al Especialista técnico no está
   construido (`openspec/changes/archive/2026-10-03-derivacion-repuestos-director-tecnico/archive-report.md:8-10`).
 
-**E-170 (F1B-04)** (`docs/sdd/ENTRADA.md:1842`). Tres comprobaciones; las dos primeras son **antes de publicar**:
+**E-170 (F1B-04)** (`docs/sdd/ENTRADA.md:1842` en `a729a371`). Tres comprobaciones; las dos primeras son **antes de publicar**:
 
 1. **Servicio Técnico confirma la lista de diez novedades** (`packages/zoho-sync/src/db/schema.sql:690-699`).
    Condiciona lo que el técnico ve en el formulario desde el primer minuto. La lista es dato: se corrige por SQL
@@ -208,7 +208,7 @@ con qué comparar y se abre E-173 (`docs/sdd/ENTRADA.md:1859`); no es un fallo d
 2. **Quien administra n8n comprueba que la etiqueta que imprime lleva el código del ticket.** Condiciona que la
    casilla «Rotulado y guardado» signifique algo: el formulario la exige antes de crear la remisión
    (`packages/shared/src/recepcion.ts:101`) y la etiqueta sale —hipótesis, no verificada contra el flujo de n8n—
-   al enviar (E-167, `docs/sdd/ENTRADA.md:1827`).
+   al enviar (E-167, `docs/sdd/ENTRADA.md:1827` en `a729a371`).
 3. Servicio Técnico comprueba el formulario en la aplicación, **tras publicar** (§6.7).
 
 Y, de quien despliega, la **comprobación de lectura** de `DEPLOY.md:234-261`: diez filas en el catálogo y las seis
@@ -603,7 +603,7 @@ Producción no tiene ninguno de los de esta sección.
 | No dejar enviar sin las fotos exigidas | `apps/desk/server/routes/remision.ts:289-293`: 422 |
 | Subir cada foto con su categoría (`apps/desk/src/components/CrearRemision.tsx:82`) | `apps/desk/server/routes/remision.ts:384`: 422 |
 | Enseñar el enlace de indicadores sólo al administrador (`apps/desk/src/lib/indicadoresUrl.ts:16-18`) | `apps/desk/server/routes/indicadores.ts:41`: 403 |
-| Proponer al Director Técnico en la casilla «Derivado a» (`apps/desk/src/lib/personas.ts:74-79`) | **Ninguna, declarado:** el servidor no impone el destinatario (`apps/desk/server/services/ticketService.ts:138-142`); es la pregunta E-160 (`docs/sdd/ENTRADA.md:1792`) |
+| Proponer al Director Técnico en la casilla «Derivado a» (`apps/desk/src/lib/personas.ts:74-79`) | **Ninguna, declarado:** el servidor no impone el destinatario (`apps/desk/server/services/ticketService.ts:138-142`); es la pregunta E-160 (`docs/sdd/ENTRADA.md:1792` en `a729a371`) |
 
 ### 5.2 · Lo que arrastra del 2026-10-03, sin cambios de contenido
 
@@ -625,12 +625,12 @@ ejecutado. Alcanza a «Equipo nuevo» por un supuesto no decidido (E-158). Y un 
 remisión vigente en la base de la App no tiene botón para crearla (§0 b): leído en el código, no reproducido.
 
 **R40 · La decisión que sostiene la guarda no está registrada como clave** en `openspec/config.yaml` (E-159,
-`docs/sdd/ENTRADA.md:1787`). No bloquea el despliegue. Además, mover el par de guardas de «Habilitar Servicio»
+`docs/sdd/ENTRADA.md:1787` en `a729a371`). No bloquea el despliegue. Además, mover el par de guardas de «Habilitar Servicio»
 delante de cargo, prioridad o verificación no lo caza ninguna prueba
 (`openspec/changes/archive/2026-10-03-tipo-servicio-ticket-sin-ov/archive-report.md:122-125`).
 
-**R41 · F1B-04 se publica con cinco preguntas abiertas** (E-163 a E-167, `docs/sdd/ENTRADA.md:1807`,
-`docs/sdd/ENTRADA.md:1812`, `docs/sdd/ENTRADA.md:1817`, `docs/sdd/ENTRADA.md:1822`, `docs/sdd/ENTRADA.md:1827`):
+**R41 · F1B-04 se publica con cinco preguntas abiertas** (E-163 a E-167, `docs/sdd/ENTRADA.md:1807` en `a729a371`,
+`docs/sdd/ENTRADA.md:1812` en `a729a371`, `docs/sdd/ENTRADA.md:1817` en `a729a371`, `docs/sdd/ENTRADA.md:1822` en `a729a371`, `docs/sdd/ENTRADA.md:1827` en `a729a371`):
 una foto por cada novedad o basta una; quién edita la lista y dónde; «Falta un accesorio» exige una foto de algo
 que no está; un equipo sin accesorios o sin embalaje tiene que subir otra foto para poder enviar; y el rotulado se
 confirma antes de que exista la etiqueta. Mientras no haya respuesta rige lo construido, que es lo más estricto.
@@ -645,14 +645,14 @@ así, no hay propuesta ni aviso (E-162 b). Y la derivación es propuesta, no imp
 **hipótesis sin medir**. Cómo entrega la base real una columna de fecha sólo se probó con filas simuladas
 (`openspec/changes/archive/2026-10-03-continuidad-indicadores/archive-report.md:125-127`).
 
-**R44 · F1F-05 se publica con diez preguntas abiertas** (E-171 a E-180, de `docs/sdd/ENTRADA.md:1847` a
-`docs/sdd/ENTRADA.md:1894`) y un hallazgo medido: Zoho no descuenta festivos, así que la medición a la letra
-quedará bajo el 95 % en esos tickets (E-182, `docs/sdd/ENTRADA.md:1904`). Ninguna bloquea el despliegue; deciden
+**R44 · F1F-05 se publica con diez preguntas abiertas** (E-171 a E-180, de `docs/sdd/ENTRADA.md:1847` en `a729a371` a
+`docs/sdd/ENTRADA.md:1894` en `a729a371`) y un hallazgo medido: Zoho no descuenta festivos, así que la medición a la letra
+quedará bajo el 95 % en esos tickets (E-182, `docs/sdd/ENTRADA.md:1904` en `a729a371`). Ninguna bloquea el despliegue; deciden
 cómo se lee la comparación.
 
 **R45 · IV-12 gana un tercer punto**: la guarda nueva de recepción del alta corre antes de «Orden de venta no
 encontrada» (`apps/desk/server/routes/remision.ts:158`, `apps/desk/server/routes/remision.ts:220`; E-169,
-`docs/sdd/ENTRADA.md:1837`). Un alta con novedades inválidas y una orden inexistente da el error de las novedades.
+`docs/sdd/ENTRADA.md:1837` en `a729a371`). Un alta con novedades inválidas y una orden inexistente da el error de las novedades.
 
 **Del paquete del 2026-10-03, con su estado de hoy:** R32 a R38 siguen como están escritos
 (`docs/sdd/Paquete_de_Despliegue_2026-10-03.md:564-600`), y la tabla de los riesgos del 2026-10-01, también
@@ -705,13 +705,13 @@ indicadores y de la calificación de satisfacción.
 
 | Cuándo | Decisión | Qué desbloquea | Dónde está |
 |---|---|---|---|
-| **Antes — PARADA** | **E-158** — ¿la guarda de remisión alcanza a los tickets de «Equipo nuevo»? (con Servicio Técnico) | **Publicar `24a14eb`.** Si es «no», hace falta código nuevo y este paquete no vale | `docs/sdd/ENTRADA.md:1782` |
+| **Antes — PARADA** | **E-158** — ¿la guarda de remisión alcanza a los tickets de «Equipo nuevo»? (con Servicio Técnico) | **Publicar `24a14eb`.** Si es «no», hace falta código nuevo y este paquete no vale | `docs/sdd/ENTRADA.md:1782` en `a729a371` |
 | **Antes** | P.3 de `alarmas-horas-habiles` (la ráfaga); la precondición de P.1 de `permisos-por-cargo`; y cuál de las dos lecturas de la siembra vale | Lo que dice cada una | `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:724-726` |
-| Sin orden | **E-160** — ¿la derivación al Director Técnico se propone o se impone? | Si hay cambio nuevo con la guarda. **No bloquea** | `docs/sdd/ENTRADA.md:1792` |
+| Sin orden | **E-160** — ¿la derivación al Director Técnico se propone o se impone? | Si hay cambio nuevo con la guarda. **No bloquea** | `docs/sdd/ENTRADA.md:1792` en `a729a371` |
 | Sin orden | **E-163 a E-167** (con Servicio Técnico) — las cinco de la recepción | Alcance de F1B-04. **No bloquean** | R41 |
 | Sin orden | **E-171 a E-180** — las diez de los indicadores | El 51, el 55 y cómo se lee la comparación. **No bloquean** | R44 |
-| Sin orden | **E-157** — qué es «crear la OVI de garantía» en Desk | La parte de OVI de F1B-03, no construida | `docs/sdd/ENTRADA.md:1777` |
-| **Desde el 16/11** | **P-3 de `continuidad-indicadores`** (con Servicio Técnico y Comercial) — comprobar las cuatro semanas y explicar por escrito cada diferencia mayor de un día | Dar los nueve indicadores por buenos | `docs/sdd/ENTRADA.md:1899` |
+| Sin orden | **E-157** — qué es «crear la OVI de garantía» en Desk | La parte de OVI de F1B-03, no construida | `docs/sdd/ENTRADA.md:1777` en `a729a371` |
+| **Desde el 16/11** | **P-3 de `continuidad-indicadores`** (con Servicio Técnico y Comercial) — comprobar las cuatro semanas y explicar por escrito cada diferencia mayor de un día | Dar los nueve indicadores por buenos | `docs/sdd/ENTRADA.md:1899` en `a729a371` |
 | Sin orden | Las del paquete anterior que siguen abiertas | Lo que cada una dice allí | `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:727-731` |
 
 ### 6.3 · Administrador de la aplicación
@@ -788,7 +788,7 @@ abolladura en la carcasa · Rayón o daño estético · Pantalla o display daña
 accesorio · Embalaje inadecuado o dañado · Humedad, suciedad o contaminación visible · Sello o precinto roto ·
 Otro. Si hay que cambiarla, se cambia por SQL, antes o después de publicar.
 
-**E-170 (3), los nueve pasos** (`docs/sdd/ENTRADA.md:1843`):
+**E-170 (3), los nueve pasos** (`docs/sdd/ENTRADA.md:1843` en `a729a371`):
 
 | # | Paso | Resultado esperado |
 |---|---|---|

@@ -110,7 +110,7 @@ prueba de pg-mem conserva 187. Ninguna cita existente se desplaza. Abreviadas ro
 | Tarea | Dueño | Dónde queda escrito |
 |---|---|---|
 | Nombrar al suplente | Gerencia | `DEPLOY.md:665` |
-| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` |
+| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` en `a729a371` |
 | Decidir si la ejecución rechazada debe recibir un `409` con mensaje claro | Gerencia | este informe, «Hallazgo» |
 | Ejecución del 12/12 en producción | Gerencia o su suplente | `DEPLOY.md:663-693` |
 

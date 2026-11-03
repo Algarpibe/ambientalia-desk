@@ -13,11 +13,11 @@ origen_cabecera: declarada
 ## Intención
 
 Gerencia cerró F1B-08 «con lo construido» el 2026-10-17 (`decision/f1b08-cierre-sin-capturas`,
-`openspec/config.yaml:4807`): no llegó ninguna captura de las vistas de Zoho en el plazo del 16/10, y
+`openspec/config.yaml:4807` en `a729a371`): no llegó ninguna captura de las vistas de Zoho en el plazo del 16/10, y
 la propia regla de `decision/p4-vistas-equivalentes-zoho` (`openspec/config.yaml:3944`) cierra en ese caso
 la mitad de paridad sin construir nada más. Lo que falte de Zoho Desk pasa a F1F-03.
 
-Esa misma decisión dejó el cierre **sin registrar** en el avance (`openspec/config.yaml:4817-4825`):
+Esa misma decisión dejó el cierre **sin registrar** en el avance (`openspec/config.yaml:4817-4825` en `a729a371`):
 `cierres_declarados_por_commit` no admite el caso, y nombró dos vías. Este cambio toma la primera, la que
 eligió Gerencia en el encargo del 2026-10-17: **un cambio archivado con `tanda: F1B-08` y `cierra: si`**,
 que es lo que el barrido cuenta «por archivo». No amplía RQ-RC-10.
@@ -63,14 +63,14 @@ efecto medible es que, archivado, F1B-08 pasa de «en curso» a «cerradas por a
 
 **Conclusión de la medida:** no queda contenido de la fila sin construir que no cubra
 `decision/f1b08-cierre-sin-capturas`. La paridad de vistas se cierra con lo construido y lo que falte
-pasa a F1F-03 (`openspec/config.yaml:4815-4816`).
+pasa a F1F-03 (`openspec/config.yaml:4815-4816` en `a729a371`).
 
 ## Lo que sigue abierto y NO es contenido de la fila
 
-Seis entradas de la bandeja nacidas de la búsqueda siguen abiertas (`docs/sdd/ENTRADA.md:1971-1999`,
+Seis entradas de la bandeja nacidas de la búsqueda siguen abiertas (`docs/sdd/ENTRADA.md:1971-1999` en `a729a371`,
 E-195 a E-200). Son preguntas sobre supuestos reversibles ya construidos o sobre ampliaciones no
 decididas, con dueño propio; no son contenido pendiente de la fila. **Pero E-198 dice que su respuesta
-desbloquea «un cambio posterior dentro de F1B-08»** (`docs/sdd/ENTRADA.md:1988`): con F1B-08 cerrada,
+desbloquea «un cambio posterior dentro de F1B-08»** (`docs/sdd/ENTRADA.md:1988` en `a729a371`): con F1B-08 cerrada,
 ese destino deja de existir. Por la regla de `CLAUDE.md` («un destino es una promesa, y hay que barrerla
 al cerrar la épica») se declara aquí; `docs/sdd/ENTRADA.md` es de Supervisión y no se edita en la rama.
 

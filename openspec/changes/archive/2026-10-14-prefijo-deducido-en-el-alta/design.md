@@ -2,7 +2,7 @@
 
 Propuesta: `openspec/changes/prefijo-deducido-en-el-alta/proposal.md`. Delta de spec (manda; no editada):
 `openspec/changes/prefijo-deducido-en-el-alta/specs/tickets-core/spec.md`. Decisión que construye:
-`decision/prefijo-de-que-se-deduce` (`openspec/config.yaml:4707-4736`). Toda cita es a un fichero leído en este worktree
+`decision/prefijo-de-que-se-deduce` (`openspec/config.yaml:4707-4736` en `a729a371`). Toda cita es a un fichero leído en este worktree
 sobre `968bb53`. Una línea **en blanco** o **prevista** se nombra en prosa, nunca con forma de cita (regla de mutación 4,
 quinto guion). Lo no comprobado lleva la palabra «hipótesis». Supera a propósito el tope de 800 palabras de la skill: el
 encargo pide ocho apartados cerrados.

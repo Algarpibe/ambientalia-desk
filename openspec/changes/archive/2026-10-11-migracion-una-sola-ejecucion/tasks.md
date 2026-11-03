@@ -83,6 +83,6 @@ Archivar este cambio **no las da por hechas** (regla del ciclo 1). No son casill
 | Tarea | Dueño | Dónde queda escrito |
 |---|---|---|
 | Nombrar al suplente | Gerencia | `DEPLOY.md`, sección nueva, como «suplente por nombrar» |
-| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` |
+| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` en `a729a371` |
 | Decidir si la perdedora debe recibir un `409` con mensaje claro | Gerencia | `proposal.md`, «Hallazgo»; el orquestador la sube a la bandeja |
 | Ejecución del 12/12 en producción | Gerencia o su suplente | `DEPLOY.md`, sección nueva |

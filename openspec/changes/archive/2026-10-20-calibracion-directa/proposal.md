@@ -14,7 +14,7 @@ origen_cabecera: declarada
 
 F1C-08 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:106`): «Rutas abreviadas», talla S–M. Respaldo:
 `decision/p15-p59-rutas` (`openspec/config.yaml:2023-2039`), precisada por `decision/f1c08-ov-calibracion`
-(`openspec/config.yaml:5138-5161`). Maestro R08.4: M2.1 «Rutas abreviadas» (`R08.4.md:2285-2288`); Anexo D nº 15
+(`openspec/config.yaml:5138-5161` en `a729a371`). Maestro R08.4: M2.1 «Rutas abreviadas» (`R08.4.md:2285-2288`); Anexo D nº 15
 (`R08.4.md:5726-5730`) y nº 59 (`R08.4.md:5841-5845`).
 
 `cierra: si` — la fila tiene dos rutas y las dos quedan resueltas: **equipo sin novedad** no se construye por decisión
@@ -65,7 +65,7 @@ un ticket» (`orden_venta`, `salesorder_id`, `public.ov_asociaciones`). Lo decid
 | Ruta abreviada de equipo sin novedad | Decidido que no existe (`R08.4.md:2286`, nº 59) | nada que construir |
 | Marcar OK por macro con el checklist dinámico | No existe el checklist dinámico | épica F1D |
 | Formulario de falla nueva (qué, dónde, gravedad, foto) y aviso al Director Técnico | `decision/falla-nueva-bloqueante` (`openspec/config.yaml:2041-2057`) | F1D-07 |
-| Comprobar el contenido de la OV (líneas, centro de costos) | Opción (b) descartada (`openspec/config.yaml:5146-5148`) | no se hace |
+| Comprobar el contenido de la OV (líneas, centro de costos) | Opción (b) descartada (`openspec/config.yaml:5146-5148` en `a729a371`) | no se hace |
 | Interruptor propio del atajo | S-1: depende del de Control de calidad | reversible |
 
 ## 5. Grafo antes y después

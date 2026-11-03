@@ -216,7 +216,7 @@ No se toca `apps/desk/src`: el cliente no toma ninguna decisión nueva (regla de
 ## Barrido de citas (cierre de L3)
 
 `:70` de `apps/desk/server/indicadores.ts` deja de ser el corte: `openspec/specs/kpis/spec.md:1447` lo cita (caso A, se reapunta
-a `:60` en el archivo). `openspec/config.yaml:4096` cita `MOTIVO_H1` en `:88`, y `:5199-5200` citan `:59` y `:67` (caso B: se
+a `:60` en el archivo). `openspec/config.yaml:4096` cita `MOTIVO_H1` en `:88`, y `:5199-5200` en `a729a371` citan `:59` y `:67` (caso B: se
 nombra la revisión `7e01ffc2`). Quién edita `config.yaml` lo decide la fase de tareas. `DEPLOY.md:615` (`:85`) y
 `migracionMarcadorLectores.test.ts:54`, `:58` (`:76`, `:81`, shared `:134`) siguen ciertas.
 

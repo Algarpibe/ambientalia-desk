@@ -42,7 +42,7 @@ preguntas de abajo las cambian, va por el expediente.
 1. **Núcleo puro en `packages/shared`** (fichero nuevo): tabla estado de Zoho → estado de la aplicación y plan
    por ticket. Consume `ESTADOS`; no lo duplica (regla invariable 13). Reglas: identidad para los 23;
    «Entregado» → «Finalizado» y «Pendiente» de servicio técnico → «En Proceso»
-   (`docs/sdd/ENTRADA.md:1349`, `docs/sdd/ENTRADA.md:1385`); «Pendiente» de soporte remoto se conserva; cualquier
+   (`docs/sdd/ENTRADA.md:1349` en `a729a371`, `docs/sdd/ENTRADA.md:1385` en `a729a371`); «Pendiente» de soporte remoto se conserva; cualquier
    otro estado es **sin equivalencia**.
 2. **Ejecutor idempotente** en un fichero nuevo bajo `apps/desk/server/db/`. Por ticket: fila marcador en
    `ticket_transitions` (`packages/zoho-sync/src/db/schema.sql:57-61`) **antes** del `UPDATE`, en la misma

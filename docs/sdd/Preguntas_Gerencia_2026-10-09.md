@@ -368,7 +368,7 @@ dos:** se quita uno de los dos filtros.
 
 - **Qué se pide.** No es una decisión, es una comprobación que Gerencia se reservó
   (`openspec/config.yaml:4114-4116`): «[Comprobación mía: etiquetas en n8n y copia de informes a Drive.]»
-  (`openspec/config.yaml:4121`). La entrada es `docs/sdd/ENTRADA.md:1330`.
+  (`openspec/config.yaml:4121`). La entrada es `docs/sdd/ENTRADA.md:1330` en `a729a371`.
 - **«Nada depende».** Se construye la supresión de los cinco prefijos en los tickets nuevos, que es lo que le falta a
   la fila F1B-03.
 - **«Depende esto».** Se dice qué, y se decide antes cómo se adapta.
@@ -418,7 +418,7 @@ dos:** se quita uno de los dos filtros.
 
 - **No es la bandeja entera.** Recoge lo que sujeta el despliegue, los supuestos de las nueve tandas y los pendientes
   nombrados. Siguen abiertas, sin analizar aquí, las preguntas de la recepción E-163 a E-167
-  (`docs/sdd/ENTRADA.md:1807`), que el cambio de accesorios deja fuera, y las que condicionan la migración de tickets
+  (`docs/sdd/ENTRADA.md:1807` en `a729a371`), que el cambio de accesorios deja fuera, y las que condicionan la migración de tickets
   abiertos (E-207 a E-212 y E-218), que no son de este despliegue.
 - **Los supuestos de formato del mapa del blueprint** (nombres de fichero, leyenda, orden de estados) y **los de la
   copia semanal de Drive** (día y hora, sin reintentos, sin lanzamiento manual) no se suben: no cambian lo que ve

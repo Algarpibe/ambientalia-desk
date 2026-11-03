@@ -4731,6 +4731,15 @@ decisiones_de_gerencia_adenda:
       (6) DESBLOQUEA EL SEGUNDO CAMBIO DE F1B-03 (prefijos), con `tanda: F1B-03`, ciclo SDD completo en su worktree,
       parando antes de fusionar.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/prefijo-de-que-se-deduce)"
+    respuesta_panel_textual: |
+      «Opción 2. Las letras se deducen de la clasificación y del tipo de servicio, según el significado que fija el maestro (R08.4, tabla de prefijos): Equipo nuevo → HV; Soporte remoto → SR; Mantenimiento con tipo Calibración → CG; Mantenimiento con cualquier otro tipo → MT. PRO: [se añade el tipo de servicio «Protocolo», que da PRO] / [deja de usarse en tickets nuevos; los existentes lo conservan]. La comprobación de los nombres de informes en Drive la hago antes del 14/10.»
+    respuesta_panel_fecha: "13/10/2026 · panel, apartado 06, qid prefijo-de-que-se-deduce (respuesta escrita con dos corchetes en PRO; los saltos de línea del original se dan como espacios)"
+    nota_supervision_2026_10_17: |
+      Registrado por el corte de supervisión del 17/10/2026, que marca la respuesta del panel como aterrizada. El texto del panel dejó
+      PRO con dos corchetes sin elegir («se añade el tipo de servicio Protocolo» / «deja de usarse en tickets nuevos»); la
+      respuesta_textual de esta entrada, del 14/10 en la conversación, elige la primera y confirma que Drive depende del prefijo
+      (MT_, CG_, HV_, PRO_), lo que cierra también la confirmación de Drive que E-241 (a) tenía pendiente para el 14/10. Construido
+      y fusionado en 0be7c3c (prefijo-deducido-en-el-alta, tanda F1B-03, cierra: si), SIN PUBLICAR a 17/10. Engram: decision/prefijo-de-que-se-deduce.
     maestro_pasaje: "docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1170 (procedencia de E-094, citada en la fila F1B-03 del plan R01.4)"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1B-03 (segundo cambio: prefijo deducido e impuesto por el servidor; «Protocolo» en los tipos de servicio)"
@@ -5483,6 +5492,136 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (fuera-del-plan)"
+  - clave: "decision/codigo-servicio-fuera-del-plan"
+    fecha: "2026-10-28"
+    pregunta: |
+      Supuesto S-1 de `codigo-servicio-bloqueado` (`openspec/changes/archive/2026-10-27-codigo-servicio-bloqueado/proposal.md:78`,
+      P-1 de su archive-report, `:125`): la tanda va `fuera-del-plan` y no cuenta en F1B-03, que está cerrada por archivo
+      (`docs/sdd/RECONCILIACION.md:19`).
+    respuesta_textual: |
+      «Aceptación de Gerencia, 28/10: la tanda de 949d394f va fuera-del-plan y no cuenta en F1B-03; el motivo registrado es la corrección ordenada por Gerencia, sin excepción nueva. H-1, H-2 y P-1 a P-5, a la bandeja. Producción sirve ya el cliente de 949d394f, documentado en Paquete_de_Despliegue_2026-10-28 (15733e1f).»
+    consecuencias: |
+      (1) S-1 deja de ser supuesto: `codigo-servicio-bloqueado` (merge `949d394f`) queda fuera del denominador de avance;
+      F1B-03 sigue cerrada por archivo, sin reabrirse.
+      (2) El motivo es la orden de `decision/excepcion-plazo-rq-kp-26`, punto (3); no se abre excepción nueva.
+      (3) A la bandeja (R-3): H-1 (el motor de transiciones lee la fila antes del BEGIN y sin bloqueo; sin destino),
+      H-2 (ordinal «undécima» desfasado, `openspec/specs/transitions-st/spec.md:1926`) y P-1 a P-5
+      (`openspec/changes/archive/2026-10-27-codigo-servicio-bloqueado/archive-report.md:125-129`).
+      (4) Producción: cliente de `949d394f` (`index-F1jDYjEU.js`, 427.510 B), medido por el analista el 28/10;
+      `docs/sdd/Paquete_de_Despliegue_2026-10-28.md` (`15733e1f`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/codigo-servicio-fuera-del-plan)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (fuera-del-plan)"
+  - clave: "decision/adelanto-1g01-sincronizacion-conversaciones"
+    fecha: "2026-10-29"
+    pregunta: |
+      Hallazgo del 29/10 sobre el ticket #958: la pasada periódica no trae conversaciones
+      (`packages/zoho-sync/src/sync.ts:112-122`); sólo llegan al abrir el ticket y en segundo plano
+      (`apps/desk/server/routes/tickets.ts:161-162`). Y la sincronización nunca refleja lo que se borra en Zoho: no hay
+      ningún `DELETE FROM conversations` en el código y la fila no guarda cuándo la vio Zoho por última vez. ¿Se corrige
+      antes del 09/11?
+    respuesta_textual: |
+      «Necesito que revises este problema de sincronización y este ultimo hallazgo para que no suceda en el resto de tickets. Me parece prioritario resolverlo en este momento, así que necesito que me des los prompts de terminal (si crees que vía terminal es lo mas eficiente) o lo ejecutes tu directamente en esta ventana de contexto, para una tanda nueva para que entre antes del 09/11.»
+    consecuencias: |
+      (1) Excepción acotada a este trabajo a «no se abre ninguna tanda nueva del plan antes del 09/11»
+      (`decision/excepcion-plazo-rq-kp-26`, punto 3).
+      (2) Es contenido de la fila 1G-01, «Backfill completo de conversaciones … con verificación contra `commentCount` y
+      `threadCount`» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:23`;
+      `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:130`), así que lleva `tanda: 1G-01` con `cierra: no`
+      (R-1, R-4): adelanta esa parte y el resto de 1G-01 sigue en su fecha.
+      (3) Lo que escriba en producción —la pasada periódica de conversaciones, el marcado de lo borrado en Zoho y el relleno
+      de todos los tickets— va tras interruptores que nacen cerrados y los abre Alfonso.
+      (4) Evidencia: en el #958, los cuatro comentarios del 01/10 al 06/10 se guardaron en `desk.conversations` el
+      2026-10-29 a las 20:19 UTC, al recargar el ticket (23 a 28 días tarde); el hilo `495552000057899091` (canal WEB,
+      entrada, 11/06) se guardó el 12/06 y Zoho cuenta hoy 5 conversaciones, todas comentarios.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/adelanto-1g01-sincronizacion-conversaciones)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "1G-01 (adelanto parcial, cierra: no)"
+  - clave: "decision/e260-sweep-dry-run-false"
+    fecha: "2026-11-02"
+    origen: "conversación de supervisión, 02/11/2026, respuesta a la consecuencia señalada en docs/sdd/ENTRADA.md → E-260"
+    pregunta: |
+      El worker `zoho-hub-sync` corre `63604b9b` desde el 22/10/2026 con `SWEEP_ENABLED=true` y `SWEEP_DRY_RUN=false`
+      (E-259, E-260; dato de Alfonso, EasyPanel). La tarea pendiente decía redesplegar con `SWEEP_DRY_RUN=true`
+      (`docs/sdd/Paquete_de_Despliegue_2026-10-10c.md:48-62`; `docs/sdd/Paquete_de_Despliegue_2026-11-02.md:119`). Con
+      `false` el barrido borra de verdad y una reversión de código no recupera lo borrado
+      (`docs/sdd/Paquete_de_Despliegue_2026-10-09.md:236-237`). ¿Se queda en `false`?
+    respuesta_textual: |
+      «SWEEP_DRY_RUN se queda en false. La tarea de redesplegar el worker se da por hecha con ese valor. Seguimiento: revisar una vez por semana la línea «sweep books customer_payments» del log del worker (hasta hoy, 0 borrados).»
+    consecuencias: |
+      (1) La tarea de persona «Redesplegar el worker con las condiciones (h) e (i) y `SWEEP_DRY_RUN=true`»
+      (`docs/sdd/Paquete_de_Despliegue_2026-11-02.md:119`) queda HECHA con `SWEEP_DRY_RUN=false`; la de averiguar el
+      commit del worker (`:118`) la responde E-259. El próximo paquete de despliegue lo recoge, sin editar los anteriores.
+      (2) El barrido de Books borra en producción, con sus salvaguardas: re-verificación por id y tope de huérfanos
+      (`packages/zoho-sync/src/sweep/sweep.ts:62-75`). Hasta el 02/11, «borrados 0» en todas las pasadas de
+      `books.customer_payments` (1460 a 1464 pagos).
+      (3) SEGUIMIENTO SEMANAL, tarea de persona: leer la línea «sweep books customer_payments» del log del worker una
+      vez por semana. No tiene dueño nombrado en la respuesta; SUPUESTO de esta supervisión: Alfonso, que es quien lee
+      hoy esos logs. El parte puede recoger la cifra si se la dan; esta supervisión no lee logs de producción.
+      (4) No es gate: §4.5 sin tocar. No toca el maestro.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e260-sweep-dry-run-false) · docs/sdd/ENTRADA.md → E-260 (cerrada en sitio)"
+    engram: "decision/e260-sweep-dry-run-false — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+  - clave: "decision/adelanto-09-11-empezar-1g"
+    fecha: "2026-11-02"
+    origen: "conversación del analista, 02/11/2026; escrita por el analista en el árbol de trabajo; traza de supervisión el 02/11/2026 (docs/sdd/ENTRADA.md → E-264)"
+    pregunta: |
+      El 27/10 se decidió no abrir tandas del plan antes del 09/11 (`decision/excepcion-plazo-rq-kp-26`, consecuencia
+      (3)), y la terminal ya no tiene encargos. ¿Se adelanta hoy la decisión del 09/11 para que la terminal siga
+      trabajando? Opciones: adelantar y empezar 1G (lo que queda de 1G-01, el relleno de los tickets archivados), o
+      esperar al 09/11.
+    respuesta_textual: |
+      «Adelantar y empezar 1G (Recomendado)» — opción elegida por Gerencia el 02/11/2026 en la conversación del analista.
+    consecuencias: |
+      (1) Levanta desde el 02/11, sólo para la épica 1G, la consecuencia (3) de `decision/excepcion-plazo-rq-kp-26`: sus
+      tandas se abren en orden, cada una con su ciclo SDD en su propio worktree (CLAUDE.md, «Regla del ciclo 3»).
+      (2) Primera tanda: lo que queda de 1G-01, «Backfill completo de conversaciones sobre los 986 tickets, con
+      verificación contra `commentCount` y `threadCount`» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:23`).
+      Medido el 02/11: el relleno del 30/10 recorrió 258 de los 784 tickets de `desk.tickets`; de los no recorridos, 523
+      están archivados en Zoho (`docs/sdd/ENTRADA.md`, E-257).
+      (3) Orden posterior, por las puertas del plan (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:24-26`):
+      1G-02 (puerta M1), 1G-03 (espera a 1G-01 y 1G-02) y 1G-04 (espera a 1G-03). La opción presentada nombraba 1G-03
+      como segunda; el plan pone antes 1G-02, y manda el plan.
+      (4) Lo demás previsto para el 09/11 —E-248, el margen del corte y la reordenación de filas— sigue para ese día, con la
+      propuesta del analista en el documento «Decisión del 09/11 — E-248, margen del corte y siguiente tanda».
+      (5) Lo que escriba en producción va tras un interruptor que nace cerrado y lo abre Alfonso, como en
+      `decision/adelanto-1g01-sincronizacion-conversaciones`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/adelanto-09-11-empezar-1g) · docs/sdd/ENTRADA.md → E-264, y traza en E-248 y E-257"
+    engram: "decision/adelanto-09-11-empezar-1g — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "1G-01 (resto); después 1G-02, 1G-03 y 1G-04"
+  - clave: "decision/f1b04-recuento-no-retiene"
+    fecha: "2026-11-02"
+    origen: "conversación del analista, 02/11/2026; escrita por el analista en el árbol de trabajo; traza de supervisión el 02/11/2026 (docs/sdd/ENTRADA.md → E-265)"
+    pregunta: |
+      El recuento de modelos sin accesorios está hecho (consulta de
+      `docs/sdd/Consulta_Modelos_Sin_Accesorios_2026-10-07.sql` en producción, 02/11): ¿retiene la fila F1B-04, o F1B-04
+      cierra con lo ya construido (`openspec/changes/archive/2026-10-12-rotulado-tras-enviar/archive-report.md:10-13`)?
+    respuesta_textual: |
+      «que el recuento no impida cerrar F1B-04» — Gerencia, 02/11/2026, en la conversación del analista.
+    consecuencias: |
+      (1) El recuento ya no retiene F1B-04: la fila queda para cerrar con lo construido. Para esta fila deja sin efecto la
+      parte del recuento de `decision/aplica-opcion-a-esta-semana-12-10`, consecuencia (3), que mantenía el cierre en «no»
+      mientras el recuento siguiera abierto.
+      (2) Resultado del recuento (dato de Alfonso, SQL en desk, 02/11): 1 de los 29 modelos activos no tiene ningún
+      accesorio activo, Kunak AIR Pro (sensor de calidad del aire, 3 equipos). Accesorios escritos a mano sin artículo en
+      Books: 106, en 34 modelos; siguen funcionando sin SKU.
+      (3) Tarea de persona: el Director Técnico completa la lista de Kunak AIR Pro en Configuración → «Accesorios por
+      modelo». No retiene la fila.
+      (4) Supuesto del analista, reversible: el cierre se asienta con un cambio de cierre propio (`tanda: F1B-04`,
+      `cierra: si`, sin código), como `cierre-f1b08-con-lo-construido` y `cierre-f0-04-por-dictamen`, cuando la terminal
+      termine lo que queda de 1G-01. Hasta archivarlo, F1B-04 no cuenta en el avance («Regla de avance» de CLAUDE.md).
+      (5) F1B-09 sigue esperando: su repaso es al cerrar la épica 1B, y en 1B siguen abiertas F1B-13 y las filas de 2027.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b04-recuento-no-retiene) · docs/sdd/ENTRADA.md → E-265"
+    engram: "decision/f1b04-recuento-no-retiene — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (el cierre de F1B-04 va en un cambio de cierre, sin código)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
@@ -5592,6 +5731,391 @@ cierres_declarados_por_commit:
     asunto: "feat(tickets): F1B-01 — el serial es la llave: obligatorio en la remision y abre las OV"
     prueba: "apps/desk/server/remisiones.test.ts:913 · docs/sdd/F1B-01_Serial_llave_de_entrada.md:1"
     declarado_por: "decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4"
+
+decisiones_de_gerencia_panel:
+  # Respuestas que Gerencia escribe en el panel (apartado 06) y que aterriza la sesión de supervisión.
+  # Van al FINAL del fichero, bajo una clave propia, para no desplazar ninguna línea citada de
+  # `decisiones_de_gerencia_adenda`, `trabajo_sin_ficha_declarado` ni `cierres_declarados_por_commit`.
+  # Mismo formato que `decisiones_de_gerencia`; se remiten SIEMPRE por su clave, nunca por número de línea.
+  # Cuando la construcción ya registró la misma decisión desde la conversación con otra clave, `precisa:`
+  # la nombra: la `respuesta_textual` de AQUÍ es la del panel, LITERAL, y donde diga más que la versión
+  # abreviada de la otra clave, manda ésta.
+  # CLAVES ENGRAM QUE LA PRÓXIMA SESIÓN DE CONSTRUCCIÓN DEBE CARGAR (la supervisión no carga Engram),
+  # corte del 09/10/2026: decision/reserva-con-el-margen-nuevo · decision/ovi-garantia-que-es-en-desk ·
+  # decision/accesorios-desde-el-catalogo · decision/ampliacion-contrato-que-ano ·
+  # decision/que-estados-ve-cada-area · decision/prioridad-clientes-sin-contrato ·
+  # decision/vistas-equivalentes-a-zoho · decision/quien-ejecuta-la-migracion ·
+  # decision/preguntas-de-detalle-sin-llegar
+  - clave: "decision/reserva-con-el-margen-nuevo"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `reserva-con-el-margen-nuevo`; escrita el 06/10/2026 a las 08:58 (−05); aterrizada en el corte del 09/10/2026"
+    pregunta: |
+      El 01/10 quedaron fuera del corte el aviso «En garantía» (F1B-18) y el registro del número de pieza por
+      Comercial con aviso al técnico (F1C-12), porque el margen no llegaba a una semana. Rehecha la cuenta el 05/10
+      (R01.4 §F.4), el margen sale de +4,9 a +5,3 semanas. ¿Entran ya, o se espera al 09/11? Opciones: (1) entran
+      las dos; (2) se espera al 09/11; (3) entra sólo «En garantía».
+    respuesta_textual: |
+      «Opción 3: entra ya «En garantía» (F1B-18), un día, porque la construcción tiene tiempo libre mientras espera otras respuestas. El número de pieza (F1C-12) espera al 09/11. La cuenta oficial no cambia hasta el 09/11, y para ese día quiero contrastadas las tallas estimadas con los días reales de cada tanda cerrada.»
+    consecuencias: |
+      (1) F1B-18 «Aviso "En garantía" y "Garantía sin dato"» ENTRA ANTES DEL CORTE, talla S. Supera el «fuera hasta
+      que el margen real lo permita» de la R01.4 (§C fila F1B-18, §I y §K.2) y el «F1B-18 fuera» de
+      `decision/escenario-a-festivos-plan-a-01-10`, consecuencia (2). No borra ninguno: los supera desde el 06/10.
+      (2) F1C-12 (SKU) SIGUE EN RESERVA y se decide el 09/11, con el plan A.
+      (3) LA CUENTA OFICIAL NO SE MUEVE: R01.4 §K.2, +0,8 a +1,1 semanas, hasta el 09/11.
+      (4) TAREA PARA EL 09/11, encargada por Gerencia: contrastar la talla estimada de cada tanda cerrada con sus días
+      reales. Es medible desde git (primer commit de planificación → commit de archivo de cada cambio con `tanda:`).
+      (5) DESVÍO DETECTADO EN EL CORTE DEL 09/10: la respuesta llevaba tres días en el panel sin aterrizar. La
+      construcción registró las respuestas del 06/10 a las 10:15 (`3ec3703`) desde la conversación y ésta no
+      estaba: `decision/orden-ocho-tandas-06-10` no la incluye y F1B-18 no tiene cambio abierto
+      (`ls openspec/changes`). Escribir la fila del §C como «antes del corte» y la población antes del corte
+      (39 → 40) es de la construcción, que es dueña del plan (R01.4).
+      (6) PUESTO EN LA CADENA: Gerencia no lo dijo. SUPUESTO de la supervisión, reversible: detrás de la cadena
+      vigente del 06/10 (tras F1B-19), por la razón que dio Gerencia —llenar el tiempo de espera—.
+      (7) MAESTRO: el expediente de la R08.4, §10, pedía a la R08.5 que «En garantía» fuera a la reserva; esta
+      respuesta lo devuelve antes del corte. Anotado en `docs/sdd/R08.4_Expediente_de_cambios.md` §12.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/reserva-con-el-margen-nuevo) · docs/sdd/ENTRADA.md → E-236 · docs/sdd/R08.4_Expediente_de_cambios.md §12 · docs/sdd/Parte_2026-10-09.md"
+    maestro_pasaje: "docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1628"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-18 (antes del corte, talla S)"
+  - clave: "decision/ovi-garantia-que-es-en-desk"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `ovi-garantia-que-es-en-desk`; escrita el 06/10/2026 a las 09:00 (−05); aterrizada en el corte del 09/10/2026"
+    precisa: "decision/e157-ovi-garantia-por-cargo (misma decisión, registrada por la construcción desde la conversación en versión abreviada)"
+    pregunta: |
+      La orden interna (OVI) de un servicio en garantía la crea el Director Técnico, pero esas órdenes se crean en
+      contabilidad y la aplicación no escribe en Zoho. ¿Qué tiene que hacer el Director Técnico dentro de la
+      aplicación para que cuente como «crearla»? (E-157)
+    respuesta_textual: |
+      «Opción 1: sólo el Director Técnico o un administrador puede vincular una orden interna (OVI) a un ticket. La orden se sigue creando a mano en contabilidad.
+      (1) Basta el cargo, sin exigir el área.
+      (2) Vale también para la orden adicional de las aprobaciones: toda OVI, entre por donde entre.
+      (3) Un ticket venido de Zoho con su OVI ya puesta no se toca.
+      (4) Asignar el cargo de Director Técnico en producción es condición para publicar.
+      (5) Un ticket de garantía debe llevar OVI. Que una OVI sólo pueda ir en tickets de garantía lo confirma el Director Técnico, por si se usan para otras cosas.»
+    consecuencias: |
+      (1) COINCIDE EN SUSTANCIA con `decision/e157-ovi-garantia-por-cargo`; no abre trabajo nuevo. Lo construido:
+      F1B-03 (`ovi-garantia-por-cargo`, archivo `3bc3709`) y, detrás, F1B-13 (`ficha-garantia-proveedor`,
+      archivo `5d0dfa8`).
+      (2) PUNTO (4) ES CONDICIÓN DE PUBLICACIÓN: tarea de persona, asignar el cargo Director Técnico en producción.
+      (3) PUNTO (5), segunda mitad, SIGUE ABIERTA con dueño el Director Técnico: no se construye la restricción
+      «OVI sólo en garantía».
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/ovi-garantia-que-es-en-desk) · docs/sdd/ENTRADA.md → E-157"
+    maestro_pasaje: "el de decision/e157-ovi-garantia-por-cargo"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna nueva (F1B-03 y F1B-13 ya construidas en esa parte)"
+  - clave: "decision/accesorios-desde-el-catalogo"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `accesorios-desde-el-catalogo`; escrita el 06/10/2026 a las 09:01 (−05); aterrizada en el corte del 09/10/2026"
+    precisa: "decision/e232-accesorios-lista-por-modelo (versión abreviada, sin el párrafo «Detalles»)"
+    pregunta: |
+      En la recepción, ¿los accesorios salen del catálogo de artículos de contabilidad y no de una lista propia, con
+      su nombre oficial y su número de parte, sólo los de ese modelo, y con la foto en los documentos del modelo?
+      Van con ella los detalles menores de la misma recepción (E-163 a E-167). (E-232, E-100)
+    respuesta_textual: |
+      «Sí a los cinco. Los accesorios salen del catálogo de artículos de contabilidad mediante la lista por modelo que ya existe en el catálogo de modelos. Se muestran con su nombre oficial y su número de parte cuando lo tenga, sólo los de ese modelo, y la foto va con los documentos del modelo. Antes del corte, contar los modelos sin categoría de accesorios asignada para cargarlos. Un accesorio que no esté en la lista se anota como novedad y lo añade el Director Técnico; nada de texto libre.
+      Detalles: una foto por novedad, salvo «Falta un accesorio», que queda exenta. Una casilla «llegó sin accesorios / sin embalaje» sustituye esa foto, con traza. El rotulado se confirma después de enviar si la etiqueta sale en el envío: comprobarlo en n8n. Confirmar si lista-novedades-mantenible cierra E-164.»
+    consecuencias: |
+      (1) LA PARTE PRINCIPAL coincide con `decision/e232-accesorios-lista-por-modelo` y está construida:
+      `accesorios-lista-por-modelo` (F1B-04, archivo `91c88b9`). El recuento de modelos sin accesorios es de persona
+      contra producción (`docs/sdd/Consulta_Modelos_Sin_Accesorios_2026-10-07.sql`).
+      (2) EL PÁRRAFO «DETALLES» NO ESTÁ en la versión abreviada y decide cuatro entradas de la bandeja:
+      E-163 → UNA FOTO POR CADA NOVEDAD; E-165 → «Falta un accesorio» EXENTA de foto; E-166 → una casilla «llegó sin
+      accesorios / sin embalaje» SUSTITUYE esa foto, con traza; E-167 → el rotulado se confirma DESPUÉS de enviar si
+      la etiqueta sale en el envío, CONDICIONADO a una comprobación de persona en n8n (sin hacer).
+      (3) NO MEDIDO si lo construido cumple (2): `grep -rni "sin embalaje" apps packages` da 6 líneas, sin comprobar
+      que sean esa casilla. Lo contrasta la construcción contra RQ-RE-* de `openspec/specs/remisiones/spec.md`; si
+      falta algo, es contenido de F1B-04 (`cierra: no` hoy).
+      (4) E-164 — MEDIDO: SÍ la cierra. `lista-novedades-mantenible` construyó la pantalla en Configuración con la
+      que el Director Técnico mantiene la lista, y el servidor lo impone
+      (`openspec/changes/archive/2026-10-05-lista-novedades-mantenible/archive-report.md:5`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/accesorios-desde-el-catalogo) · docs/sdd/ENTRADA.md → E-232, E-163, E-164, E-165, E-166, E-167"
+    maestro_pasaje: "M1.2 (corrección 31 de docs/sdd/F0-01_Correcciones_para_el_maestro.md)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "contenido de F1B-04 si (3) encuentra diferencias"
+  - clave: "decision/ampliacion-contrato-que-ano"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `ampliacion-contrato-que-ano`; escrita el 06/10/2026 a las 09:02 (−05); aterrizada en el corte del 09/10/2026"
+    precisa: "decision/e086-ampliacion-contrato (versión abreviada)"
+    pregunta: |
+      Un contrato vencido puede ampliarse «dentro del mismo año» para gastar lo que le quede. ¿Qué año es —el del
+      calendario, el del inicio o el del fin— y hasta qué fecha se puede alargar? (E-086)
+    respuesta_textual: |
+      «Año del calendario en que vence el contrato. La ampliación puede alargarlo, como máximo, hasta el 31 de diciembre de ese año, porque el 1 de enero cambia la lista de precios. Pasado ese día, las órdenes del lote que queden libres no se pueden usar. La ampliación la registra Comercial, con traza, y la fecha nueva no puede pasar de ese 31 de diciembre.»
+    consecuencias: |
+      (1) COINCIDE con `decision/e086-ampliacion-contrato` y está construida: `ampliacion-contrato` (F1B-11,
+      archivo `189ddf9`, `cierra: si`). F1B-11 CERRADA.
+      (2) LO QUE AÑADE el texto literal: «pasado ese día, las órdenes del lote que queden libres no se pueden usar».
+      Según el asunto de `1b7c2a4` («vuelven a bloquear al pasarla») está cubierto; no leído el código en este corte.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/ampliacion-contrato-que-ano) · docs/sdd/ENTRADA.md → E-086"
+    maestro_pasaje: "M4.4 (corrección 32 de docs/sdd/F0-01_Correcciones_para_el_maestro.md)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna (F1B-11 cerrada)"
+  - clave: "decision/que-estados-ve-cada-area"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `que-estados-ve-cada-area`; escrita el 06/10/2026 a las 09:02 (−05); aterrizada en el corte del 09/10/2026"
+    precisa: "decision/e089-e220-visibilidad-y-traspaso (mitad de visibilidad, versión abreviada)"
+    pregunta: |
+      Hoy todo el personal ve todos los tickets y por área sólo cambian los botones; el maestro dice que cada persona
+      vería sólo los estados de su área. ¿Cuál se queda? Opciones: (1) como hoy; (2) vista por área sin restricción;
+      (3) restricción impuesta por el servidor. (E-089)
+    respuesta_textual: |
+      «Opción 1. Todos ven todos los tickets y por área sólo se filtran los botones que se pueden pulsar, como hoy. Se corrige el maestro en M1.9.1. El enfoque por persona lo da «Mis tickets». Si después del corte el equipo pide una vista filtrada por área, se estudia como la opción 2, sólo como filtro de vista y nunca como restricción.»
+    consecuencias: |
+      (1) COINCIDE con `decision/e089-e220-visibilidad-y-traspaso`: se queda lo construido; la corrección del
+      maestro es la 27 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`.
+      (2) LO QUE AÑADE: una vista filtrada por área, si el equipo la pide después del corte, sólo como filtro de
+      vista y nunca como restricción. Sin fila y sin fecha: no es trabajo hasta que alguien la pida.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/que-estados-ve-cada-area) · docs/sdd/ENTRADA.md → E-089"
+    maestro_pasaje: "M1.9.1 (corrección 27)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna"
+  - clave: "decision/prioridad-clientes-sin-contrato"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `prioridad-clientes-sin-contrato`; escrita el 06/10/2026 a las 09:03 (−05); aterrizada en el corte del 09/10/2026"
+    precisa: "decision/p3b-prioridad-tres-niveles — y CIERRA su punto (2), que allí quedó entre corchetes como pendiente"
+    pregunta: |
+      Para los clientes sin contrato ni Top 5, ¿de dónde sale la prioridad? ¿Hay una calificación de clientes que la
+      aplicación pueda leer, y en cuántos niveles? ¿Quién cambia a mano la prioridad fuera de los Top 5?
+      (pregunta 3.b de docs/sdd/Preguntas_Gerencia_2026-09-29.md)
+    respuesta_textual: |
+      «No hay calificación de clientes que la aplicación pueda leer: «Calificación» en Zoho CRM es el estado comercial, no una valoración. Tres niveles: alta para clientes con contrato, la que yo ponga para los Top 5, y media para todos los demás. Sin nivel «baja» hasta que exista una valoración real, que en su caso se apuntará en la ficha del cliente después del corte. La prioridad de un cliente la cambia a mano el Director Comercial. El ajuste puntual de la prioridad de un ticket puede hacerlo también el Director Técnico, con traza.»
+    consecuencias: |
+      (1) EL PUNTO (2) DE `decision/p3b-prioridad-tres-niveles` DEJA DE SER PENDIENTE: no existe valoración legible;
+      «Calificación» de Zoho CRM es el estado comercial y NO se usa para la prioridad. La versión abreviada lo dejó
+      entre corchetes («[Lo que sea la valoración del portal…]»); el texto del panel lo responde.
+      (2) SIN «BAJA» hasta que exista una valoración real; si llega a existir, se apunta en la ficha del cliente
+      DESPUÉS del corte (idea sin fila ni fecha).
+      (3) LO DEMÁS COINCIDE y está construido: `prioridad-tres-niveles` (F1B-07, archivo `83fb541`, `cierra: no`);
+      el permiso del Director Comercial en `apps/desk/server/routes/prioridad.ts:40` y el ajuste por ticket con el
+      Director Técnico en `apps/desk/server/routes/prioridad.ts:71`.
+      (4) F1B-07 PODRÍA CERRAR: su `cierra: no` se apoyaba, entre otras cosas, en la valoración sin decidir. Que
+      cierre o no depende también de E-188 a E-193; lo dictamina la construcción, no esta supervisión.
+      (5) MAESTRO: la corrección 34 conserva la marca [ABIERTO] sobre la calificación; con esta respuesta se puede
+      cerrar. Anotado en `docs/sdd/R08.4_Expediente_de_cambios.md` §12.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/prioridad-clientes-sin-contrato) · docs/sdd/ENTRADA.md → E-238 · docs/sdd/R08.4_Expediente_de_cambios.md §12"
+    maestro_pasaje: "docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1986-1989"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "posible cierre de F1B-07 (dictamen de la construcción)"
+  - clave: "decision/vistas-equivalentes-a-zoho"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `vistas-equivalentes-a-zoho`; escrita el 06/10/2026 a las 09:04 (−05); aterrizada en el corte del 09/10/2026"
+    precisa: "decision/p4-vistas-equivalentes-zoho (versión abreviada)"
+    pregunta: |
+      El plan promete que antes del corte las vistas serán «equivalentes a las de Zoho Desk», pero nadie ha dicho
+      cuáles. ¿Cómo lo decidimos? (pregunta 4 de docs/sdd/Preguntas_Gerencia_2026-09-29.md)
+    respuesta_textual: |
+      «Opción 1, por escrito. Cada persona que usa hoy Zoho Desk envía capturas de las vistas que abre cada semana y dice qué columnas o filtros echa en falta en la aplicación. Plazo: 16/10. Con lo recibido se hace una lista cerrada y sólo se construye lo que falte. Si el 16/10 no hay respuestas, F1B-08 se cierra con lo construido y se deja escrito.»
+    consecuencias: |
+      (1) COINCIDE con `decision/p4-vistas-equivalentes-zoho`. Tarea de personas con plazo 16/10/2026; ninguna
+      sesión la hace.
+      (2) LO QUE AÑADE el literal: con lo recibido se hace una LISTA CERRADA y sólo se construye lo que falte.
+      (3) VENCE EN UNA SEMANA desde este corte. El parte del martes 13/10 pregunta si han llegado capturas.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/vistas-equivalentes-a-zoho) · docs/sdd/ENTRADA.md → E-239"
+    maestro_pasaje: "ninguno (paridad con Zoho, R01.4 F1B-08)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-08 (lista cerrada tras el 16/10, o cierre con lo construido)"
+  - clave: "decision/quien-ejecuta-la-migracion"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `quien-ejecuta-la-migracion`; escrita el 06/10/2026 a las 09:05 (−05); aterrizada en el corte del 09/10/2026"
+    pregunta: |
+      La herramienta que muda los tickets abiertos de Zoho el fin de semana del corte se describió como «sólo para
+      el superadministrador», pero ese nivel no existe: la puede lanzar cualquier administrador. ¿Basta con eso, o
+      se reserva a una persona concreta? (E-231)
+    respuesta_textual: |
+      «Opción 1: cualquier administrador puede lanzarla, porque el control real es el interruptor MIGRACION_TICKETS_HABILITADA, que sólo puede abrir quien tiene acceso al servidor. En DEPLOY.md queda escrito quién lo abre y pulsa el 12/12 (yo, con un suplente que nombraré). El orden es copia previa, abrir el interruptor, una sola ejecución, comprobar y volver a cerrarlo. La construcción confirma que una segunda ejecución simultánea se rechaza; si no, se construye ese bloqueo.»
+    consecuencias: |
+      (1) NO SE CONSTRUYE PERMISO NUEVO: basta `isAdmin`; el control es el interruptor
+      (`apps/desk/server/routes/admin.ts:246-252`), que nace cerrado.
+      (2) DEPLOY.md TIENE QUE DECIR quién abre el interruptor y pulsa el 12/12 —Gerencia, con un suplente por
+      nombrar— y el orden: copia previa → abrir → UNA ejecución → comprobar → cerrar. MEDIDO: hoy no lo dice
+      (`grep -ni "suplente" DEPLOY.md` = 0). Es de la construcción; la supervisión no toca DEPLOY.md.
+      (3) EL SUPLENTE ESTÁ POR NOMBRAR: dato que debe Gerencia antes del 12/12.
+      (4) CONCURRENCIA, encargada a la construcción. OBSERVADO, NO MEDIDO: la escritura va en una transacción con
+      `UPDATE … WHERE managed_by_app = false RETURNING id` (`apps/desk/server/db/migracionTicketsAbiertos.ts:14-15`,
+      `:68`), y no hay bloqueo explícito (`grep -rniE "advisory|pg_try_advisory" apps/desk/server` = 0). Si una
+      segunda ejecución simultánea duplica el marcador de `ticket_transitions` no está comprobado: hace falta una
+      prueba con dos conexiones a la vez. Si no se rechaza, se construye el bloqueo, con `tanda: F1F-01`.
+      (5) E-231 se cierra; E-208 (quién lanza la última sincronización completa) NO queda respondida.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/quien-ejecuta-la-migracion) · docs/sdd/ENTRADA.md → E-231"
+    maestro_pasaje: "ninguno (operación del corte, F1F-01)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "contenido de F1F-01: runbook en DEPLOY.md y, si hace falta, bloqueo de ejecución simultánea"
+  - clave: "decision/preguntas-de-detalle-sin-llegar"
+    fecha: "2026-10-06"
+    origen: "panel, apartado 06, qid `preguntas-de-detalle-sin-llegar`; escrita el 06/10/2026 a las 09:05 (−05); aterrizada en el corte del 09/10/2026"
+    pregunta: |
+      Desde el 02/10 la construcción abrió 62 preguntas de detalle con dueño Gerencia, escritas en un fichero que
+      Gerencia no lee. ¿Cómo quiere recibirlas? Opciones: (1) todas en el panel; (2) la construcción aplica su
+      criterio por defecto y Gerencia corrige sobre una lista; (3) sólo llegan las que impiden cerrar o tocan al
+      cliente.
+    respuesta_textual: |
+      «Opciones 3 y 2 combinadas. Llegan como pregunta al apartado 06 sólo las que impiden cerrar una fila, tocan al cliente, tocan dinero, permisos o datos de producción, o no se pueden deshacer sin coste. El resto lo decide la construcción con su criterio por defecto, lo escribe como supuesto reversible y lo publica cada semana en una lista agrupada por tanda. Tengo una semana para corregir; lo que no corrija queda aceptado, con fecha. Las 62 abiertas pasan ya por este filtro.»
+    consecuencias: |
+      (1) REGLA DE TRABAJO, escrita en `CLAUDE.md` («Regla de las preguntas a Gerencia»). Complementa la «Regla de
+      ejecución — modo producción» del mismo fichero: aquélla dice cuándo parar; ésta, qué llega a Gerencia y cómo.
+      (2) FILTRO DEL APARTADO 06: impide cerrar una fila · toca al cliente · toca dinero, permisos o datos de
+      producción · no se deshace sin coste. Lo demás NO sube al panel.
+      (3) LO DEMÁS lo decide la construcción con su criterio por defecto, lo escribe como SUPUESTO REVERSIBLE y lo
+      publica CADA SEMANA en una lista agrupada por tanda. Gerencia tiene una semana para corregir; lo no
+      corregido queda ACEPTADO con fecha.
+      (4) DÓNDE SE PUBLICA LA LISTA: no lo dice. SUPUESTO de la supervisión, reversible: la escribe la construcción
+      en `docs/sdd/` y la supervisión la lleva al panel en el parte siguiente, porque el panel es lo que Gerencia
+      lee. La fecha de aceptación es la de publicación en el panel + 7 días.
+      (5) LAS 62 ABIERTAS (E-154 a E-232) pasan ya por el filtro: lo aplica la construcción, que tiene el criterio por
+      defecto de cada una. A 09/10 no se ha aplicado: `grep "^## E-" docs/sdd/ENTRADA.md | grep -cE "\*\*(NUEVA|ABIERTA)"`
+      daba 93 antes de este corte.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/preguntas-de-detalle-sin-llegar) · CLAUDE.md («Regla de las preguntas a Gerencia») · docs/sdd/ENTRADA.md → E-237"
+    maestro_pasaje: "M11 (mecanismo de supervisión), si la R08.5 lo recoge"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna (método)"
+  # CLAVES ENGRAM, corte del 13/10/2026: decision/equipo-nuevo-lleva-remision · decision/comprobaciones-n8n-y-drive
+  - clave: "decision/equipo-nuevo-lleva-remision"
+    fecha: "2026-10-09"
+    origen: "panel, apartado 06, qid `equipo-nuevo-lleva-remision`; escrita el 09/10/2026 a las 11:21 (−05); aterrizada en el corte del 13/10/2026"
+    precisa: "decision/e158-equipo-nuevo-lleva-remision (registrada por la construcción el 10/10, `9fa5dff`, con el texto abreviado)"
+    pregunta: |
+      Desde que se publique, nadie podrá empezar a trabajar un equipo sin su remisión de entrada, sin excepciones. Un
+      equipo nuevo, de los que vendemos y preparamos antes de entregar, pasa por ese mismo paso. ¿Llega en la práctica
+      con remisión de entrada, o hay que exceptuarlo?
+    respuesta_textual: |
+      «Sí, el equipo nuevo llega con remisión de entrada; confirmado con Servicio Técnico. Se publica tal cual, sin excepción: nadie puede habilitar un servicio sin remisión de entrada, tampoco en «Equipo nuevo».»
+    consecuencias: |
+      (1) Coincide con `decision/e158-equipo-nuevo-lleva-remision`; lo que añade el texto literal: la confirmación es
+      de Servicio Técnico, y la regla se enuncia para todos («nadie puede habilitar un servicio sin remisión de
+      entrada»), no sólo para «Equipo nuevo».
+      (2) Nada que construir: la guarda no distingue clasificación (`apps/desk/server/services/ticketService.ts`,
+      según `decision/e158-equipo-nuevo-lleva-remision`, consecuencia 2; esta supervisión no la ha releído).
+      (3) Cierra E-158 en `docs/sdd/ENTRADA.md`, que la construcción dejó abierta a propósito por no tocar ese fichero.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/equipo-nuevo-lleva-remision) · docs/sdd/ENTRADA.md → E-158 (cerrada en sitio) y E-240"
+    maestro_pasaje: "Anexo D nº 43 (remisión obligatoria para habilitar)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+  - clave: "decision/comprobaciones-n8n-y-drive"
+    fecha: "2026-10-09"
+    origen: "panel, apartado 06, qid `comprobaciones-n8n-y-drive`; escrita el 09/10/2026 a las 11:24 (−05); aterrizada en el corte del 13/10/2026"
+    estado: "PARCIAL — falta la confirmación de los nombres de informes en Drive (Gerencia, antes del 14/10) y de qué se deduce el prefijo (pregunta `prefijo-de-que-se-deduce` del panel)"
+    precisa: "pendiente/e094-comprobacion-prefijos (la resuelve en parte) · decision/e167-rotulado-tras-enviar-12-10 (la mitad del rotulado ya la superó)"
+    pregunta: |
+      Te reservaste dos comprobaciones en las automatizaciones (n8n) y en Drive, y de ellas dependen dos piezas: quitar
+      los prefijos de los números de ticket nuevos, y en qué momento se confirma el rotulado del equipo en la
+      recepción. ¿Quién las hace, y para cuándo?
+    respuesta_textual: |
+      «Comprobado en el código: los flujos de n8n reciben sólo el número del ticket, sin prefijo, así que no dependen de él. Sí dependen el código de servicio (PREFIJO_SERIE_MODELO_FECHA), la lectura de oportunidades de Zoho CRM y, probablemente, los nombres de informes en Drive. Decisión: el campo prefijo desaparece del alta, pero el código de servicio lo sigue llevando, derivado automáticamente de la clasificación. Confirmo los nombres de informes en Drive antes del 14/10.
+      Rotulado: la etiqueta la genera n8n al enviar la remisión. [Servicio Técnico confirma si rotula con esa etiqueta; si es así, la confirmación de «Rotulado y guardado» pasa a después del envío.]»
+    consecuencias: |
+      (1) PREFIJOS — el campo «prefijo» desaparece del alta; el código de servicio CONSERVA el prefijo, derivado
+      automáticamente. Medido en el código: el prefijo entra en el código (`packages/shared/src/ticketCreate.ts:12-14`,
+      `buildCodigoServicio`) y en la lectura de oportunidades de CRM (`packages/shared/src/ticketCreate.ts:20-24`,
+      `parseCodigoFromPotential`, patrón MT|CG|HV|SR|PRO); el alta lo exige (`apps/desk/server/services/ticketService.ts:87`).
+      (2) CONSECUENCIA NO PREVISTA, que se señala y no se discute: SUPERA EN PARTE la corrección E-094 del 30/09, que
+      decía «no se genera automáticamente» y daba por superada la R08 («se deriva de la clasificación»). Para el
+      código de servicio vuelve la derivación; para el campo del alta se mantiene la supresión. Va al expediente
+      (`docs/sdd/R08.4_Expediente_de_cambios.md` §13: M1.1 y Anexo D nº 37).
+      (3) AMBIGÜEDAD — «de la clasificación». Medido: la clasificación tiene tres valores (`packages/shared/src/ticketCreate.ts:5`:
+      mantenimiento, equipo nuevo, soporte remoto) y los prefijos son cinco (`:1`); la única derivación que hoy existe
+      parte del TIPO DE SERVICIO, no de la clasificación, y sólo da CG o MT (`packages/shared/src/ticketCreate.ts:46-49`,
+      `defaultPrefijoFor`). Con ella HV, SR y PRO no saldrían nunca. No se fuerza: se devuelve como pregunta
+      `prefijo-de-que-se-deduce` del apartado 06. Hasta la respuesta, el segundo cambio de F1B-03 (prefijos) NO se construye.
+      (4) DRIVE — Gerencia confirma los nombres de informes antes del 14/10/2026. Sin esa confirmación tampoco se construye.
+      (5) ROTULADO — la mitad entre corchetes ya la cerró `decision/e167-rotulado-tras-enviar-12-10` (12/10: Servicio
+      Técnico rotula con la etiqueta DYMO tras enviar), construida y fusionada en `1ac306c` (`rotulado-tras-enviar`,
+      F1B-04, cierra: no), sin publicar.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/comprobaciones-n8n-y-drive) · docs/sdd/ENTRADA.md → E-094 y E-167 (anotadas en sitio) y E-241 · docs/sdd/R08.4_Expediente_de_cambios.md §13"
+    maestro_pasaje: "M1.1 y Anexo D nº 37 (prefijos)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna nueva — segundo cambio de F1B-03 (prefijos, XS), retenido hasta las dos confirmaciones"
+  # Corte del 20/10/2026 — CLAVES ENGRAM QUE LA PRÓXIMA SESIÓN DE CONSTRUCCIÓN DEBE CARGAR:
+  # decision/ingreso-servicio-reescribe-codigo · decision/capturas-de-vistas-llegaron · decision/suplente-de-la-migracion
+  - clave: "decision/ingreso-servicio-reescribe-codigo"
+    fecha: "2026-10-16"
+    origen: "panel, apartado 06, qid `ingreso-servicio-reescribe-codigo`; escrita el 16/10/2026; aterrizada en el corte del 20/10/2026"
+    pregunta: |
+      Al pasar un ticket a diagnóstico, la pantalla ya enseña el código de servicio bloqueado cuando el ticket lo trae.
+      Quedan dos huecos: si alguien manda otro código directamente al servidor, y los tickets traídos de Zoho que no
+      tienen código, donde el campo sale vacío y libre. ¿Se deja como está, o se cierra también en el servidor?
+    respuesta_textual: |
+      «Opción 2: el servidor también impide cambiar el código de servicio de un ticket que ya lo tiene; sólo un administrador puede cambiarlo, con traza. Tickets traídos de Zoho sin código: la aplicación lo propone deducido como en el alta (prefijo según clasificación y tipo de servicio, serie, modelo y fecha), Servicio Técnico puede corregirlo una sola vez para que coincida con la carpeta de Drive si ya existe, y después queda bloqueado.»
+    consecuencias: |
+      (1) SERVIDOR: un ticket con código de servicio no admite otro distinto por ninguna vía salvo administrador
+      (`isAdmin`, `apps/desk/server/auth/middleware.ts:27`), y el cambio deja traza. Hoy sólo lo impide la pantalla
+      (`apps/desk/src/components/TransitionPanel.tsx:32-36` y `:174`, según E-243); que el servidor lo rechace hoy está
+      NO MEDIDO. El campo es `cfText('Código Servicio')` de `ingreso_a_servicio` (`packages/shared/src/transitions.ts:190-191`).
+      (2) TICKETS DE ZOHO SIN CÓDIGO: la aplicación propone el código deducido con la misma regla del alta
+      (`decision/prefijo-de-que-se-deduce`); Servicio Técnico lo puede corregir UNA sola vez, para que coincida con la
+      carpeta de Drive si ya existe; después queda bloqueado (y sólo el administrador, por (1), lo cambia).
+      (3) CONSECUENCIAS QUE SE SEÑALAN Y NO SE DISCUTEN: (a) «una sola vez» exige que el ticket recuerde que ya se
+      corrigió —una marca o la propia traza—; si es columna nueva, lleva migración (SUPUESTO, no medido). (b) La deducción
+      necesita serie, modelo y fecha, y un ticket de Zoho puede no traerlos: qué se propone entonces no está dicho
+      (no medido cuántos llegan sin ellos); es pregunta de detalle de la construcción (`decision/preguntas-de-detalle-sin-llegar`),
+      no de Gerencia. (c) Toca a los tickets que traiga la migración del 12/12 (F1F-01), que lleguen sin código.
+      (4) TANDA: SIN ASIGNAR. Destino PROPUESTO, no decidido: ampliación de F1B-03 por contenido (`tanda: F1B-03`,
+      `cierra: no`), por la regla `decision/tanda-por-contenido`; la alternativa es `fuera-del-plan` con motivo. Lo declara
+      la construcción en la cabecera y el barrido lo enseña. No es gate: §4.5 sin tocar.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/ingreso-servicio-reescribe-codigo) · docs/sdd/ENTRADA.md → E-243 (cerrada en sitio) · docs/sdd/R08.4_Expediente_de_cambios.md §13"
+    maestro_pasaje: "M1.1 y Anexo D nº 37 (código de servicio)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "sin asignar — propuesta: F1B-03 por contenido (cierra: no)"
+  - clave: "decision/capturas-de-vistas-llegaron"
+    fecha: "2026-10-16"
+    origen: "panel, apartado 06, qid `capturas-de-vistas-llegaron`; escrita el 16/10/2026; aterrizada en el corte del 20/10/2026"
+    precisa: "decision/f1b08-cierre-sin-capturas (la construcción la registró el 17/10 en decisiones_de_gerencia_adenda, en versión abreviada; donde diga más el literal de aquí, manda éste)"
+    pregunta: |
+      El plazo para que llegaran las capturas de las vistas de Zoho venció el 16/10. ¿Llegó alguna?
+    respuesta_textual: |
+      «No llegó ninguna. Como estaba decidido, F1B-08 se cierra con lo construido. Para no descubrir faltas después del corte, se añade a la prueba con servicios reales (F1F-03, del 16/11 al 04/12): cada persona anota cualquier vista, columna o filtro de Zoho Desk que eche en falta, y lo que salga se corrige antes del 09/12.»
+    consecuencias: |
+      (1) Lo que el literal añade a la versión abreviada: la anotación se hace DURANTE la prueba con servicios reales,
+      del 16/11 al 04/12, y su motivo es «no descubrir faltas después del corte». Coincide con `decision/f1f03-criterio-aceptacion`.
+      (2) Nada que construir: F1B-08 ya está cerrada por archivo (`cierre-f1b08-con-lo-construido`, fusionado en `eacd7d1`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/capturas-de-vistas-llegaron) · docs/sdd/ENTRADA.md → E-245 (cerrada en sitio)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (contenido de F1F-03 ya registrado por decision/f1b08-cierre-sin-capturas)"
+  - clave: "decision/suplente-de-la-migracion"
+    fecha: "2026-10-16"
+    origen: "panel, apartado 06, qid `suplente-de-la-migracion`; escrita el 16/10/2026; aterrizada en el corte del 20/10/2026"
+    precisa: "decision/suplente-12-12 (la construcción la registró el 17/10 en decisiones_de_gerencia_adenda, sin la última frase; donde diga más el literal de aquí, manda éste)"
+    pregunta: |
+      Si el 12/12 no puedes abrir el interruptor y lanzar la mudanza de los tickets abiertos, ¿quién lo hace?
+    respuesta_textual: |
+      «No se nombra suplente por ahora. La mudanza del 12/12 la hago yo. Si ese día no puedo, la mudanza se aplaza a la primera fecha en que pueda hacerla con el mismo procedimiento; nadie más abre el interruptor. Si más adelante nombro a alguien, lo diré con tiempo para darle acceso a EasyPanel y que repase el procedimiento.»
+    consecuencias: |
+      (1) Lo que el literal añade: si Gerencia nombra a alguien más adelante, lo avisará con tiempo para darle acceso a
+      EasyPanel y que repase el procedimiento. Hasta entonces, sin suplente.
+      (2) `DEPLOY.md:693` dice que el procedimiento «no nombra al suplente»: ya no es un hueco, es lo decidido. Que
+      `DEPLOY.md` lo diga con esas palabras es de la construcción, en el próximo cambio que lo toque.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/suplente-de-la-migracion) · docs/sdd/ENTRADA.md → E-244 (cerrada en sitio)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+  # Corte del 23/10/2026 (segundo) — CLAVE ENGRAM QUE LA PRÓXIMA SESIÓN DE CONSTRUCCIÓN DEBE CARGAR:
+  # decision/estados-zoho-espacios
+  - clave: "decision/estados-zoho-espacios"
+    fecha: "2026-10-23"
+    origen: "panel, apartado 07 (ideas), id `taj1mrqkvcmdeer5gjzi`, tipo `correccion`; escrita el 23/10/2026; aterrizada en el segundo corte del 23/10/2026"
+    pregunta: |
+      Sin pregunta previa: corrección anotada por Gerencia sobre la marcha (ticket #1004 en «Otros» y sin botones).
+    respuesta_textual: |
+      «Corrección. El ticket #1004 está en «Notificación Comercial» y el tablero lo muestra en «Otros» en vez de en su columna. Causa comprobada en Zoho: el estado se llama allí «Notificación Comercial», con dos espacios, y la aplicación compara el texto exacto. Consecuencias: cae en «Otros» y no tiene botones de transición. Arreglo: normalizar los espacios de los estados al sincronizar desde Zoho (colapsar espacios repetidos y recortar extremos), y una prueba que compruebe que todos los estados de Zoho casan con los del blueprint. Revisar si otros estados de Zoho tienen el mismo defecto. Antes del 12/12, porque la migración traerá todos los abiertos.»
+    consecuencias: |
+      (1) QUÉ SE CONSTRUYE: normalizar el estado al sincronizar desde Zoho (colapsar espacios repetidos, recortar
+      extremos) y una prueba de que todos los estados de Zoho casan con el catálogo del blueprint. Hoy el estado entra
+      tal cual (`packages/zoho-sync/src/db/mappers.ts:47`) y el tablero lo busca por igualdad exacta
+      (`packages/shared/src/columns.ts:40-47`, a `'otros'` por `:38`); medido en `78e7ed14`.
+      (2) PLAZO: antes del 12/12/2026, fecha de la migración de los abiertos (F1F-01, `decision/fecha-corte`).
+      (3) CONSECUENCIAS QUE SE SEÑALAN Y NO SE DISCUTEN: (a) normalizar sólo en la sincronización deja como están las
+      filas ya guardadas con dos espacios hasta que Zoho las vuelva a mandar o se reescriban — SUPUESTO, no medido
+      cuántas hay hoy en la base. (b) Si alguna escritura hacia Zoho manda el nombre del estado, tendrá que mandar el
+      de Zoho y no el normalizado — NO MEDIDO. (c) El hallazgo ya estaba escrito el 10/09
+      (`docs/sdd/Paquete_de_Despliegue_2026-09-10.md` §7.2, l. 269-298) sin destino; ésta lo cierra en cuanto a qué hacer.
+      (4) OTROS ESTADOS: en `docs/analisis-tickets/Tickets.csv` (08/09) sólo «Notificación··Comercial» tiene el defecto;
+      contra la configuración de Zoho Desk, NO MEDIDO — lo cubre la prueba de (1).
+      (5) TANDA: SIN ASIGNAR. Destino PROPUESTO: F1F-01 por contenido (`cierra: no`), por `decision/tanda-por-contenido`;
+      alternativa, `fuera-del-plan` con motivo. No es gate: §4.5 sin tocar.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/estados-zoho-espacios) · docs/sdd/ENTRADA.md → E-249"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "sin asignar — propuesta: F1F-01 por contenido (cierra: no), antes del 12/12"
 
 mediciones_de_produccion:
   # Mediciones que Gerencia ejecuta contra producción y que la construcción registra (R-5, directo en main).

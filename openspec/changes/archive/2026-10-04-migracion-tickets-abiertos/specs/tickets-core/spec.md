@@ -16,7 +16,7 @@ su estado equivalente en la aplicación o el resultado «sin equivalencia». El 
    «Pendiente»**, que está en `ESTADOS` y se decide por las reglas 3 y 4. La tabla **MUST** consumir `ESTADOS`
    y **MUST NOT** duplicar la lista de nombres (regla invariable 13, punto 1).
 2. **`Entregado` → `Finalizado`.** `Entregado` no es uno de los 23. Su equivalente **SHALL** ser `Finalizado`
-   (`docs/sdd/ENTRADA.md:1349`, `docs/sdd/ENTRADA.md:1385`), y la regla **SHALL** declarar que el `status_type`
+   (`docs/sdd/ENTRADA.md:1349` en `a729a371`, `docs/sdd/ENTRADA.md:1385` en `a729a371`), y la regla **SHALL** declarar que el `status_type`
    destino es `Closed` y que `closed_time` no se toca (supuesto S-2, reversible: una línea del plan por ticket).
 3. **`Pendiente` de servicio técnico → `En Proceso`.** Un ticket en `Pendiente` cuya clasificación **no** es
    «Soporte remoto» **SHALL** pasar a `En Proceso` con `statusTypeDestino = 'Open'` (D-10; supuesto S-3, el mismo que ya escribió

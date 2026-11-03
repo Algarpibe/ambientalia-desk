@@ -137,7 +137,7 @@ Método: se listaron las líneas viejas tocadas en cada fichero editado entre `e
 | `poblacion-cierre-variante-47-51` (archivado): design:151, proposal:70, spec:323-324, tasks:55 | 8 | A: localizan dónde están las tres caracterizaciones y dicen que se actualizan | Sin cambio |
 | ídem: apply-progress:94 y verify-report:76 (dos citas cada una) | 4 | B: nombran los hashes `0975f415…` y `862d1958…`, que dejaron de ser los de esas líneas | Anclados «en `e1a92b59`» (y una nota en apply-progress) |
 | `openspec/specs/kpis/spec.md:1636-1637` | 2 | A: localizan las caracterizaciones, que siguen en `:263`, `:271` y `:326` | Sin cambio |
-| `openspec/config.yaml`, `DEPLOY.md`, `docs/` | 0 | — | Ninguna cita toca una línea reescrita (la de `config.yaml:5290` apunta a `shared:9`, `MENSAJE_SIN_PARES`, intacta; la de `spec.md:1160`, a `shared:90`, intacta) |
+| `openspec/config.yaml`, `DEPLOY.md`, `docs/` | 0 | — | Ninguna cita toca una línea reescrita (la de `config.yaml:5290` en `a729a371` apunta a `shared:9`, `MENSAJE_SIN_PARES`, intacta; la de `spec.md:1160`, a `shared:90`, intacta) |
 
 **Pendientes de main: ninguno.** Pase de abreviadas `:NN` en las líneas físicas de esas 53 citas: las que hay (`:271`, `:58`, `:2`, `:136-141`, `:93-98`) o caen en líneas intactas o heredan el ancla puesta; el detector (`cli.ts --sha HEAD`) da 13 abreviadas rotas informativas y **ninguna** es de estos ficheros. Como siempre, el detector comprueba que la línea exista, no que diga lo que la frase afirma: la lectura de arriba es la comprobación de lo segundo.
 

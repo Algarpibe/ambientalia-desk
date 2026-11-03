@@ -13,7 +13,7 @@
   - Ante `429`, `≥ 500` o fallo de red al leer un detalle se corta la pasada (`:418`, `:424`); el orden ascendente propio (`:410`) hace que lo persistido sea un prefijo.
 - `packages/zoho-sync/src/sync.modificados.test.ts`: 15 pruebas nuevas, con `zohoFetch` enrutado por ruta y pg-mem. Las pruebas existentes de `syncRecent` no se tocaron y siguen en verde: sus filas no tienen `modified_time`, así que la marca es nula.
 - `DEPLOY.md`: dos líneas al final sobre el permiso de búsqueda del token y el aviso del log.
-- `docs/sdd/ENTRADA.md:2048`: la cita a `sync.ts:173-177` queda anclada a `9822bd7` y dice qué la superó (caso C de la regla de mutación 4).
+- `docs/sdd/ENTRADA.md:2048` en `a729a371`: la cita a `sync.ts:173-177` queda anclada a `9822bd7` y dice qué la superó (caso C de la regla de mutación 4).
 - Spec: RQ-ZS-22 fusionado por script **al final** de `openspec/specs/zoho-sync/spec.md` (`@@ -1273,0 +1274,93 @@`), bloque idéntico al delta según la comprobación del propio script. Sólo ADDED; ningún requisito vivo cambia.
 
 ## Intentos y medida

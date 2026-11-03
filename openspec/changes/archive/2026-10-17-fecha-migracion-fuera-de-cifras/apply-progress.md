@@ -55,7 +55,7 @@ artefactos de `archive/2026-10-16-fecha-cierre-migracion/`; `informeContrato.ts:
 `archive/2026-10-04-migracion-tickets-abiertos/`; y las cuatro del §2 de este `proposal.md`. Las demás que el barrido cazó
 siguen siendo ciertas (caso A) o apuntan a otro fichero del mismo nombre.
 
-**Para Supervisión:** `docs/sdd/ENTRADA.md:2073` afirma que el informe de contrato toma el marcador como llegada a «Finalizado».
+**Para Supervisión:** `docs/sdd/ENTRADA.md:2073` en `a729a371` afirma que el informe de contrato toma el marcador como llegada a «Finalizado».
 Desde este cambio es caso C (lo cierra RQ-TC-69). No se toca desde aquí: el fichero tiene cambios sin commitear de Supervisión.
 
 ## Hallazgos para la bandeja (no se corrigen)

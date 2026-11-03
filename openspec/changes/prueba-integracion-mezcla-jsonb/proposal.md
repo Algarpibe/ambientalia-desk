@@ -17,7 +17,7 @@ real y lee la fila de vuelta: `packages/zoho-sync/src/db/liberacion.integration.
 (`packages/zoho-sync/src/db/repo.ts:309`). pg-mem no soporta esa mezcla y el arnés la emula con
 `{...actual, ...nuevos}` (`apps/desk/server/testing/appHarness.ts:105-117`). Desde F1C-05 la liberación la usa
 siempre (`apps/desk/server/services/ticketService.ts:133`), y que el operador real hiciera lo mismo que la
-emulación era hipótesis: `docs/sdd/ENTRADA.md:2026-2029` (E-206) y el aviso W2 de
+emulación era hipótesis: `docs/sdd/ENTRADA.md:2026-2029` en `a729a371` (E-206) y el aviso W2 de
 `openspec/changes/archive/2026-10-04-liberacion-sin-factura-motivo-fecha/verify-report.md:298-301`.
 
 **Alcance.** Dos ficheros nuevos: la prueba y esta propuesta. La prueba se omite sin `TEST_DATABASE_URL`, como

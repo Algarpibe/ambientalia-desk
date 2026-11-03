@@ -2,7 +2,7 @@
 
 Delta sobre `openspec/specs/zoho-sync/spec.md`. Tanda F1F-01 (`cierra: no`). Propuesta:
 `openspec/changes/fecha-cierre-migracion/proposal.md`. Decisión que construye: `decision/migracion-e207-e212`
-(Gerencia; `openspec/config.yaml:4737-4770`, consecuencia (1) en `:4747-4751`). La regla de qué fecha se escribe es
+(Gerencia; `openspec/config.yaml:4737-4770` en `a729a371`, consecuencia (1) en `:4747-4751` en `a729a371`). La regla de qué fecha se escribe es
 `tickets-core` RQ-TC-64 (`cierreDeMigracion`); aquí se exige lo que hacen con ella el ejecutor, el informe y la
 reversión. Las líneas citadas de la spec viva son las del worktree en `main`.
 

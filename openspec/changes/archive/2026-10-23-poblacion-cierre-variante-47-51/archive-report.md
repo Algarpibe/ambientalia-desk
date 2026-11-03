@@ -88,7 +88,7 @@ elimina porque se ejecuta al cargar el módulo; el cliente no la usa. Hojas de e
 
 - **O-1 (caso B):** `openspec/config.yaml:4096` cita `packages/shared/src/indicadores.ts:88-89` (el motivo de entonces): anclarla «en
   `f0eb92c4`» y decir que hoy es `MOTIVO_CIERRE`.
-- **O-2 (caso B):** `openspec/config.yaml:5199-5200` citan los rangos 59-60 y 67-70 de `apps/desk/server/indicadores.ts`: anclarlas «en
+- **O-2 (caso B):** `openspec/config.yaml:5199-5200` en `a729a371` citan los rangos 59-60 y 67-70 de `apps/desk/server/indicadores.ts`: anclarlas «en
   `f0eb92c4`».
 - **Siete citas de caso C** en `docs/sdd/` y en archivos de cambios anteriores, que esta tanda deja superadas: la lista, fichero a fichero,
   está en la sección 7 de `verify-report.md`.

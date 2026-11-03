@@ -7,7 +7,7 @@ CodeGraph no tiene índice en este worktree; la exploración se hizo con búsque
 
 | Fuente | Ruta:línea | Qué dice |
 |---|---|---|
-| Entrada literal de Gerencia | `docs/sdd/ENTRADA.md:1460-1464` (E-114) | «Rechazo» desde Notificación cliente pasa a ejecutarla sólo Comercial; no cambian origen, destino ni las otras dos «Rechazo»; actualizar M1.3 y el mapa del blueprint |
+| Entrada literal de Gerencia | `docs/sdd/ENTRADA.md:1460-1464` en `a729a371` (E-114) | «Rechazo» desde Notificación cliente pasa a ejecutarla sólo Comercial; no cambian origen, destino ni las otras dos «Rechazo»; actualizar M1.3 y el mapa del blueprint |
 | Fila del plan | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:178` (§E), `:108` (§C), `:222`, `:307`, `:355` | F1C-10, talla XS; «junto con» se lee como consecutiva a F1C-09 (R-4) |
 | Orden de ejecución | `openspec/config.yaml:3615` (`decision/escenario-a-festivos-plan-a-01-10`, punto 5) | barrido → F1C-09 → **F1C-10** → F1B-15, cada uno en su worktree |
 | Maestro vigente | `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1616` (M1.3.7), `:1945` (M1.9.1), `:1523-1527` (tabla de M1.3), `:2598`, `:4532`, `:4554` | Ya dice «solo Comercial». La tabla de M1.3 ya trae la fila con `Comercial` y la nota «Solo Comercial desde el 01/10» |

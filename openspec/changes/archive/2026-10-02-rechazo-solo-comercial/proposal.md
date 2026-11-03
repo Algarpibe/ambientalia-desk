@@ -14,7 +14,7 @@ Rutas y líneas completas en `exploration.md` (misma carpeta). Aquí sólo lo qu
 
 ## Intención
 
-Ejecutar E-114 (`docs/sdd/ENTRADA.md:1460-1464`): la transición «Rechazo» que sale de Notificación
+Ejecutar E-114 (`docs/sdd/ENTRADA.md:1460-1464` en `a729a371`): la transición «Rechazo» que sale de Notificación
 cliente la ejecuta sólo Comercial, que es quien recibe del cliente la respuesta a la cotización. El
 maestro vigente ya lo dice (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1616`,
 `:1945`, y la fila de M1.3 en `:1523-1527`); el código sigue en `Comercial / Servicio Técnico`

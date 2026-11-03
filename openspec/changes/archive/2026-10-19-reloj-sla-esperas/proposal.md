@@ -117,7 +117,7 @@ El cliente no decide nada: pinta dos números del servidor.
 - **S-5** Si la historia no llega al estado actual del ticket, o no hay ninguna entrada, el ticket queda sin dato y no
   entra en las medias: nunca se inventa un tramo.
 - **S-6** `Pendiente` corre, por c7 (`openspec/config.yaml:1914`) y B.4 (`R08.4.md:4655`). Que E-226 la haga espera
-  externa es del tablero (`openspec/config.yaml:4951`, `:4958`), no del reloj.
+  externa es del tablero (`openspec/config.yaml:4951` en `a729a371`, `:4958` en `a729a371`), no del reloj.
 - **S-7** El reloj arranca en la creación del ticket, como el tiempo de servicio de hoy (`packages/shared/src/analisis.ts:63`); el tiempo en
   Remisión creada cuenta porque c7 la hace correr.
 - **S-8** El reloj se calcula para todos los flujos que entran en la media de Análisis, con la misma lista.

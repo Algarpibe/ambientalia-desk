@@ -38,7 +38,7 @@ y la carpeta del cambio. Ni ejecutor, ni ruta, ni esquema, ni `openspec/specs/` 
 - Hechos comprobados abriendo el código: ruta con `requireSuperAdmin` (alias de `requireAdmin`, `admin.ts:17`) + interruptor
   (`admin.ts:222`); 409 con negativa (`admin.ts:231`); `403` al aplicar cerrado (`admin.ts:250-255`); `500` genérico
   (`app.ts:90-92`: log, `headersSent`, `500 «Error interno»`); informe `aplicado`/`negativa`/`numeracion` (`migracionTicketsAbiertos.ts:21,22,24`);
-  E-208 (`ENTRADA.md:2047` es su cabecera); copia de EasyPanel (`Paquete_de_Despliegue_2026-10-10b.md:224-225`); script SQL de reversión existe.
+  E-208 (`ENTRADA.md:2047` en `a729a371` es su cabecera); copia de EasyPanel (`Paquete_de_Despliegue_2026-10-10b.md:224-225`); script SQL de reversión existe.
   «La pasada en seco da `migrables: 0`» es cierto por `migracionTickets.ts:64` (gobernado → `ya-gobernado`).
 - Ninguna mención a reuniones en `DEPLOY.md`, artefactos ni prueba (búsqueda «reuni», 0 resultados).
 - Ninguna afirmación de la §14 sin respaldo. El `500` está marcado «lectura de código, no medido por HTTP».
@@ -47,7 +47,7 @@ y la carpeta del cambio. Ni ejecutor, ni ruta, ni esquema, ni `openspec/specs/` 
 Abiertas y leídas: `app.ts:90-92`, `admin.ts:222-232/231/250-255`, `transaccion.ts:13-28`, `migracionTicketsAbiertos.ts:21-24,32-34,63-95,84-90`,
 `.test.ts:13-15` (pg-mem no revierte), `:121-131`, `:168-177`, `ci.yml:12,45-47`, `liberacion.integration.test.ts:22-23`,
 `config.ts:123`, `repo.ts:71`, `migrate.ts:43,126`, `pool.ts:9-11`, `spec.md:1275` (RQ-ZS-22), `DEPLOY.md:363/418/406-407/413-416`,
-`ENTRADA.md:2047`, `migracionTicketsAbiertosRuta.test.ts:10,15`. Todas dicen lo que la frase afirma salvo lo anotado en W2.
+`ENTRADA.md:2047` en `a729a371`, `migracionTicketsAbiertosRuta.test.ts:10,15`. Todas dicen lo que la frase afirma salvo lo anotado en W2.
 
 ## Cabecera, tareas y ciclo (punto 6)
 Cabecera R-1 de siete campos presente. `cierra: no` es correcto: la fila `Plan…R01.4.md:125` sigue «en curso» y quedan

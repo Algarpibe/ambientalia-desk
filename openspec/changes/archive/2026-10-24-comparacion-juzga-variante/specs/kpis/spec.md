@@ -2,7 +2,7 @@
 
 Delta sobre `openspec/specs/kpis/spec.md`. Tanda F1F-05 (`cierra: no`). Propuesta:
 `openspec/changes/comparacion-juzga-variante/proposal.md`. Decisión: `decision/f1f05-variante-juzga-el-95`
-(`openspec/config.yaml:5301-5319`); relacionadas `decision/e009b-lista-indicadores` y
+(`openspec/config.yaml:5301-5319` en `a729a371`); relacionadas `decision/e009b-lista-indicadores` y
 `decision/f1f05-referencia-semanal-indicadores`. «El GET» es `GET /api/indicadores`; «el POST» es
 `POST /api/indicadores/comparacion` (RQ-KP-26). Las citas a la spec viva van por RQ-KP-NN.
 

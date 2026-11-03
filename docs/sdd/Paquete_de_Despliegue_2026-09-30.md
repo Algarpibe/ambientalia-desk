@@ -720,7 +720,7 @@ propuesta lo registra con probabilidad **Media** y mitigación «P.1 antes de de
 `Servicio Técnico` por equivalencia, no por decisión (`packages/shared/src/transitions.ts:384-385` en `c2b28880`, `:389`):
 un usuario sólo de Comercial recibe 403 en las cuatro (matriz de `apps/desk/server/permisos.test.ts:300-306`).
 La pregunta está en la bandeja como **E-090** (`docs/sdd/ENTRADA.md:1253`, `NUEVA`); con la respuesta
-pendiente, el sistema funciona con Servicio Técnico (`docs/sdd/ENTRADA.md:1259`). Es la P.3 de
+pendiente, el sistema funciona con Servicio Técnico (`docs/sdd/ENTRADA.md:1259` en `a729a371`). Es la P.3 de
 `blueprint-soporte-remoto` (§6.4).
 
 **R16 · `Solicitud Soporte` no tiene columna propia** y cae en «Otros» (S-10; columna propia destinada a
@@ -731,7 +731,7 @@ solicitudes nuevas de soporte se mezclan con cualquier otro estado sin columna, 
 único `setInterval` del proceso, encadenadas antes del ritmo de contratos y de la sincronización
 (`apps/desk/server/index.ts:88`). Si esa pasada se retira sin trasladar la llamada, las alarmas **callan sin
 que nada se ponga rojo** en producción (`apps/desk/server/services/alarmasSla.ts:141-146`, nunca lanza); lo
-vigilan dos guardianes de prueba que leen `index.ts` (`docs/sdd/ENTRADA.md:1269-1272`). Sin destino
+vigilan dos guardianes de prueba que leen `index.ts` (`docs/sdd/ENTRADA.md:1269-1272` en `a729a371`). Sin destino
 asignado. *Hipótesis, no medida:* como la pasada de alarmas va **delante** de la sincronización en la misma
 cadena, una pasada de alarmas lenta retrasaría la sincronización de ese ciclo (la bandera `syncing` de
 `apps/desk/server/index.ts:84-87` evita solapes, no retrasos). Hace cuatro consultas fijas sin N+1

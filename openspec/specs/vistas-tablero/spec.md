@@ -749,7 +749,7 @@ Verificación por persona, dueño QA / quien despliegue, **tras el despliegue** 
 
 ### Requirement: RQ-VT-14 · Las listas de tickets traen la marca de garantía calculada por el servidor, por lote
 
-Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`): distintivo «en cabecera, lista y tablero»; maestro R08.4 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`). Mismo molde que `RQ-VT-07`.
+Fuente: E-105 (`docs/sdd/ENTRADA.md:1397-1401`): distintivo «en cabecera, lista y tablero»; maestro R08.4 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`). Mismo molde que `RQ-VT-07`.
 
 Toda lista de tickets que sirve el servidor **SHALL** traer, en cada ticket con equipo, la marca de garantía del predicado de `RQ-TC-58` (nombre y forma los fija el diseño, el mismo campo que el detalle de `RQ-TC-59`). Los productores son tres, y **los tres** la llevan:
 
@@ -809,7 +809,7 @@ Toda lista de tickets que sirve el servidor **SHALL** traer, en cada ticket con 
 
 ### Requirement: RQ-VT-15 · Tarjeta, lista, tabla y cabecera pintan «En garantía» y «Garantía sin dato», y se verifican a mano (`.tsx` fuera de la red)
 
-Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`); maestro R08.4 (`R08.4.md:1611-1614`). Precedente: `RQ-VT-08`, `RQ-VT-13`.
+Fuente: E-105 (`docs/sdd/ENTRADA.md:1397-1401`); maestro R08.4 (`R08.4.md:1611-1614`). Precedente: `RQ-VT-08`, `RQ-VT-13`.
 
 El cliente **SHALL** pintar la marca de `RQ-VT-14` y `RQ-TC-59` como distintivo visible, con texto en español, en la tarjeta del tablero (`TicketCard.tsx`), la lista (`TicketList.tsx`), la tabla (`TicketTable.tsx`) y la cabecera del ticket (`TicketDetailView.tsx`):
 

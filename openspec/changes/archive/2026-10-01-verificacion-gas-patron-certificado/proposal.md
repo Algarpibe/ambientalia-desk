@@ -22,7 +22,7 @@ superficie revisable y ninguno es PARADA (se razona en «Supuestos»).
 | Catálogo `R01.1.md:491` | F1A-03 · `transitions-equipo-nuevo` · P38 · talla S | Misma capacidad, modificada aquí |
 | `R01.2.md:60` | Gate P38 desbloqueado: «la Verificación es obligatoria por tipo de equipo» | Este cambio |
 | `openspec/changes/archive/2026-09-27-salidas-verificacion/archive-report.md:9-18` | Construyó E1+E2; dejó fuera E3+E4 (→ E-082) y E5 (→ E-083); por eso `cierra: no` | E3+E4+E5: este cambio |
-| `docs/sdd/ENTRADA.md:1312`, `:1316` | E-082 y E-083 cerradas por Gerencia el 28/09 | Base de este cambio |
+| `docs/sdd/ENTRADA.md:1312` en `a729a371`, `:1316` en `a729a371` | E-082 y E-083 cerradas por Gerencia el 28/09 | Base de este cambio |
 
 El propio informe dice lo que faltaba para `cierra: si`: construir E-082/E-083 cuando Gerencia decidiera
 (`archive-report.md:122`). Ya están decididas. **Lo que no entra y no impide cerrar:** la siembra en producción es

@@ -23,7 +23,7 @@ de estar disponible en el corte del 14/12: sin esto se pierde algo que hoy exist
 
 - `openspec/config.yaml:3469` (`decision/trabajo-del-01-10-antes-del-corte-sin-fila`, `respuesta_textual`):
   «(1) la búsqueda por número de ticket y serial entra en F1B-08, antes del corte».
-- `docs/sdd/ENTRADA.md:1579` (E-133): «El serial se filtra con búsqueda parcial (por ejemplo, los últimos
+- `docs/sdd/ENTRADA.md:1579` en `a729a371` (E-133): «El serial se filtra con búsqueda parcial (por ejemplo, los últimos
   dígitos), con la misma lógica que el autocompletado por serial de la recepción. En el listado de tickets, la
   búsqueda por número de ticket y por serial es paridad con Zoho Desk y debe estar antes del corte del 14/12; si
   ya existe, solo se confirma. En el cuadro de mando con indicadores entra con el resto de los filtros, en Fase 2.»
@@ -31,7 +31,7 @@ de estar disponible en el corte del 14/12: sin esto se pierde algo que hoy exist
 Comprobado en la letra: (a) serial PARCIAL, con el ejemplo de los últimos dígitos, es decir «contiene» y no
 «empieza por»; (b) la MISMA lógica que el autocompletado de la recepción, que es `searchEquipos`
 (`apps/desk/server/db/equipos.ts:59-74`); (c) paridad con Zoho en el listado; (d) «si ya existe, solo se
-confirma»: medido, **no existe** (`docs/sdd/ENTRADA.md:1582` y exploración §1).
+confirma»: medido, **no existe** (`docs/sdd/ENTRADA.md:1582` en `a729a371` y exploración §1).
 
 Maestro vigente: M7.5, `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3061-3062`, y
 `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1152`. Ya recoge el pasaje: por eso

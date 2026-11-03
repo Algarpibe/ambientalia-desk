@@ -255,7 +255,7 @@ de estas tres cosas, evaluadas **en este orden**:
 
 1. **Rotulado:** `rotulado_at` es `NULL`.
 2. **Fotos mínimas:** no hay al menos una foto de cada categoría `equipo`, `accesorios` y `embalaje`. El registro
-   fotográfico es siempre obligatorio, haya o no novedad (E-123, `docs/sdd/ENTRADA.md:1515`; maestro,
+   fotográfico es siempre obligatorio, haya o no novedad (E-123, `docs/sdd/ENTRADA.md:1515` en `a729a371`; maestro,
    `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1241`). El `422` **SHALL**
    nombrar las categorías que faltan.
 3. **Foto de cada novedad:** alguna novedad marcada sin `excluye_demas` no tiene al menos una foto con

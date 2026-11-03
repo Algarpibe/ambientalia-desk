@@ -11,7 +11,7 @@ origen_cabecera: declarada
 # Propuesta — motivo de lista cerrada y fecha prevista en «Liberación sin factura»
 
 Parte de **paridad** de F1C-05 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:103`), partida
-por E-102 (`docs/sdd/ENTRADA.md:1378-1382`). `cierra: no`: la fila conserva, para después del corte,
+por E-102 (`docs/sdd/ENTRADA.md:1378-1382` en `a729a371`). `cierra: no`: la fila conserva, para después del corte,
 Decisionales y propietario del registro. Exploración releída: `exploration.md`, en esta carpeta.
 
 ## 1 · La letra que manda

@@ -66,7 +66,7 @@ Sólo la carpeta del cambio (`apply-progress`, `design`, `exploration`, `proposa
 Citas a la `:15` y `:20`: las de esta carpeta (`proposal.md:74,114`, `tasks.md:16-17`, deltas, `apply-progress.md:4`) afirman «ahí va la entrada nueva» y son ciertas. Las dos de `archive/2026-09-29-blueprint-soporte-remoto` (`design.md:101`, `tasks.md:187`) dicen «`columns.ts:15`… cae en `otros`»: caso B histórico, falsas hoy como presente; no se tocan.
 
 **Texto que deja de ser cierto sin mover la línea**
-- En ficheros que la rama no puede tocar (traspaso a Supervisión): `docs/sdd/ENTRADA.md:2133` («no tienen columna»); `openspec/config.yaml:4193-4195` («pruebas que hoy afirman lo contrario», «requisitos que hoy lo prohíben»); `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:259-261` (B-4).
+- En ficheros que la rama no puede tocar (traspaso a Supervisión): `docs/sdd/ENTRADA.md:2133` en `a729a371` («no tienen columna»); `openspec/config.yaml:4193-4195` («pruebas que hoy afirman lo contrario», «requisitos que hoy lo prohíben»); `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:259-261` (B-4).
 - Specs vivas `transitions-equipo-nuevo/spec.md:264-267` y `transitions-soporte-remoto/spec.md:108-109`: las reemplazan los deltas al archivar.
 - Caso B (fechados, no se tocan): `Paquete_de_Despliegue_2026-09-30.md:458` y `2026-10-01.md:620` («en `ae5aaf4`»).
 

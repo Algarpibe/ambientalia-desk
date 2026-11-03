@@ -1,7 +1,7 @@
 # Delta para `permissions` — matriz de 93 casos, 55 prohibidos y 38 permitidos (F1C-10)
 
 Cambio `rechazo-solo-comercial`. `rechazo_cliente` (`Notificación cliente` → `Por Facturar`) pasa de
-`Comercial / Servicio Técnico` a `Comercial` (E-114, `docs/sdd/ENTRADA.md:1460-1464`; maestro vigente
+`Comercial / Servicio Técnico` a `Comercial` (E-114, `docs/sdd/ENTRADA.md:1460-1464` en `a729a371`; maestro vigente
 `R08.4.md:1616`). Las cifras de este delta son las posteriores a F1C-10; las de F1C-09 (54/39, 23 simples
 + 8 compartidas) quedan nombradas en cada `(Previously: …)`, que es el caso B de la regla de mutación 4.
 

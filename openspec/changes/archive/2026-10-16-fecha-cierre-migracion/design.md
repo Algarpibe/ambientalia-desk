@@ -31,7 +31,7 @@ el reloj: la cabecera `:9` («sin reloj») sigue siendo cierta.
 |---|---|---|
 | A1 · `closedTime` en una línea nueva tras `:48` | +1 desde `:49`: **2 vivas** (`DEPLOY.md:684` → `:64`, `:103-104`), más las archivadas e históricas (caso B, no se tocan) y `proposal.md:61` | limpio |
 | **A2 · `closedTime?: string \| null` en la MISMA línea `:48`** (`createdTime: string \| null; closedTime?: string \| null`) | **0** | un miembro más en la línea; opcional, así que los fixtures de `migracionTickets.test.ts:21` siguen compilando |
-| B · mapa id→closed_time en el ejecutor | 0 en `shared`; en el ejecutor, añadir líneas antes de `:79` desplaza `:79`, `:84-90`, `:90` y `:92` (zoho-sync `spec.md:1371`, `:1381`, `:1407`; trazas `spec.md:615`; `config.yaml:4749`, `:4759`; `migracionConcurrente.integration.test.ts:204`): **≥7 vivas** | estructura paralela al plan; degrada |
+| B · mapa id→closed_time en el ejecutor | 0 en `shared`; en el ejecutor, añadir líneas antes de `:79` desplaza `:79`, `:84-90`, `:90` y `:92` (zoho-sync `spec.md:1371`, `:1381`, `:1407`; trazas `spec.md:615`; `config.yaml:4749` en `a729a371`, `:4759` en `a729a371`; `migracionConcurrente.integration.test.ts:204`): **≥7 vivas** | estructura paralela al plan; degrada |
 
 **Elegida A2.** Rechazada B: mueve más citas y parte el dato del ticket en dos estructuras. A1 se rechaza sólo por
 el coste del barrido. Opcional y no requerido porque `undefined` se trata como `null` (`t.closedTime ?? null`).
@@ -98,7 +98,7 @@ Rechazado: ampliar `resumenDeMigracion`, porque desplaza `:89-113` y con ello `D
 
 ### D-9 · Barrido al cierre (regla 4)
 Si el apply cumple «cero desplazadas», el barrido comprueba lo que AFIRMAN las citas, no sus números:
-- `config.yaml:4749` (`:84-88`) y `:4759` (`:86-87`): las frases describen el `UPDATE` sin `closed_time`, que pasa a ser falso.
+- `config.yaml:4749` en `a729a371` (`:84-88`) y `:4759` en `a729a371` (`:86-87`): las frases describen el `UPDATE` sin `closed_time`, que pasa a ser falso.
   Son caso B o C, y las anota quien tenga permiso sobre `config.yaml`, no esta tanda.
 - zoho-sync `spec.md:1381` (`:84-90`): la reescribe el delta del agente de specs.
 

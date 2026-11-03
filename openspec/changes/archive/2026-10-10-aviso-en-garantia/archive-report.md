@@ -15,7 +15,7 @@ equipo». Por eso declara `cierra: si`.
 - `decision/f1b18-entra-ya-confirmada-10-10` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`, commit `fc06f7b`):
   «Autorizo construir F1B-18 en su worktree con ciclo SDD completo, parando antes de fusionar». Confirma la «Opción 3» de
   `decision/reserva-con-el-margen-nuevo`, que Supervisión tiene sin versionar.
-- El contenido es el de E-105 (`docs/sdd/ENTRADA.md:1396-1400`) y el del maestro
+- El contenido es el de E-105 (`docs/sdd/ENTRADA.md:1396-1400` en `a729a371`) y el del maestro
   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`).
 
 ## Qué quedó construido

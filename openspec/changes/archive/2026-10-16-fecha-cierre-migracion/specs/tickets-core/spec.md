@@ -2,7 +2,7 @@
 
 Delta sobre `openspec/specs/tickets-core/spec.md`. Tanda F1F-01 (`cierra: no`). Propuesta:
 `openspec/changes/fecha-cierre-migracion/proposal.md`. Decisión que construye: `decision/migracion-e207-e212`
-(Gerencia; `openspec/config.yaml:4737-4770`, consecuencia (1) en `:4747-4751`): «"Entregado" → "Finalizado", cerrado
+(Gerencia; `openspec/config.yaml:4737-4770` en `a729a371`, consecuencia (1) en `:4747-4751` en `a729a371`): «"Entregado" → "Finalizado", cerrado
 con la fecha de cierre de Zoho o, si no tiene, la de la migración marcada como tal». Esa decisión **sustituye** el
 supuesto S-2 de la tanda anterior («`closed_time` no se toca»), que la spec viva fija en `spec.md:2111` y `:2149`.
 Las líneas citadas de la spec viva son las del worktree en `main`. La función pura nueva se nombra
@@ -31,7 +31,7 @@ su estado equivalente en la aplicación o el resultado «sin equivalencia». El 
    «Pendiente»**, que está en `ESTADOS` y se decide por las reglas 3 y 4. La tabla **MUST** consumir `ESTADOS`
    y **MUST NOT** duplicar la lista de nombres (regla invariable 13, punto 1).
 2. **`Entregado` → `Finalizado`.** `Entregado` no es uno de los 23. Su equivalente **SHALL** ser `Finalizado`
-   (`docs/sdd/ENTRADA.md:1349`, `docs/sdd/ENTRADA.md:1385`), y la regla **SHALL** declarar que el `status_type`
+   (`docs/sdd/ENTRADA.md:1349` en `a729a371`, `docs/sdd/ENTRADA.md:1385` en `a729a371`), y la regla **SHALL** declarar que el `status_type`
    destino es `Closed` y que **cierra** el ticket: su `closed_time` se decide con la fecha de Zoho si el ticket la
    tiene o, si no, con el instante de la migración, marcada como tal (RQ-TC-64; `decision/migracion-e207-e212`).
    Esto sustituye al supuesto S-2 anterior («`closed_time` no se toca»).
@@ -129,7 +129,7 @@ si alguno cae mal. Confirmado por el orquestador: se usa el predicado compartido
 
 ### Requirement: RQ-TC-64 · El cierre de un «Entregado» migrado: fecha de Zoho si existe, si no el instante de la migración, con el origen marcado
 
-Fuente: `decision/migracion-e207-e212` (Gerencia; `openspec/config.yaml:4737-4770`, consecuencia (1) en
+Fuente: `decision/migracion-e207-e212` (Gerencia; `openspec/config.yaml:4737-4770` en `a729a371`, consecuencia (1) en
 `:4747-4751`). Supuestos reversibles de `fecha-cierre-migracion`: S-1 (el instante de la migración es uno por
 ejecución), S-2 (la marca es un dato del marcador, no una columna ni una etiqueta visible), S-3 (la fecha de Zoho se
 conserva tal cual) y S-4 (sólo la regla que cierra toca `closed_time`).

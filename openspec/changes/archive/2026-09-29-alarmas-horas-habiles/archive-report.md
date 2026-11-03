@@ -107,7 +107,7 @@ en su fecha (caso C): se conservan y se añade qué las cerró.
 
 Las alarmas son el segundo dependiente de la pasada de sincronización con Zoho (`apps/desk/server/index.ts:88`):
 si esa pasada se retira sin trasladar la llamada, las alarmas callan sin que nada se ponga rojo (RQ-AV-17). La adenda
-está escrita en `docs/sdd/ENTRADA.md:1269`.
+está escrita en `docs/sdd/ENTRADA.md:1269` en `a729a371`.
 
 ## Nota del paquete de despliegue (literal de `tasks.md:324-333`)
 

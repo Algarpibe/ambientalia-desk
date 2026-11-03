@@ -36,7 +36,7 @@ No son casillas y **archivar no las da por hechas** (regla del ciclo 1).
 |---|---|---|
 | Comprobación visual: un ticket en `Verificación` y otro en `Solicitud Soporte` aparecen en su columna, en la posición de S-1; `Otros` deja de enseñarlos | Persona con acceso a la aplicación desplegada | `archive-report.md` de este cambio, como pendiente declarado |
 | Respuesta a S-1 (posición), S-2 (rótulo) y S-3 (columnas vacías visibles sólo sin «ocultar vacías») | Gerencia | `openspec/config.yaml` → `decisiones_de_gerencia`, por la sesión que la recoja |
-| Citas que quedan falsas de texto: `openspec/config.yaml:4193-4195`, `docs/sdd/ENTRADA.md:2133` y `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:258-260` | Supervisión (no se editan en la rama) | Traspaso en el parte de cierre; el `archive-report.md` lo declara |
+| Citas que quedan falsas de texto: `openspec/config.yaml:4193-4195`, `docs/sdd/ENTRADA.md:2133` en `a729a371` y `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:258-260` | Supervisión (no se editan en la rama) | Traspaso en el parte de cierre; el `archive-report.md` lo declara |
 
 ## Review Workload Forecast
 

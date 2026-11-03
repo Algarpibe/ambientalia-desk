@@ -13,8 +13,8 @@ origen_cabecera: declarada
 ## Intención
 
 Gerencia decidió el 24/10 qué lectura juzga el 95 % de `decision/e009b-lista-indicadores` (`openspec/config.yaml:2650`):
-`decision/f1f05-variante-juzga-el-95` (`openspec/config.yaml:5301-5319`; respuesta literal en `:5309`). Consecuencias
-(`openspec/config.yaml:5311-5315`): el 95 % se juzga con la variante (`formula_zoho`), **por indicador y por ticket**; la
+`decision/f1f05-variante-juzga-el-95` (`openspec/config.yaml:5301-5319` en `a729a371`; respuesta literal en `:5309` en `a729a371`). Consecuencias
+(`openspec/config.yaml:5311-5315` en `a729a371`): el 95 % se juzga con la variante (`formula_zoho`), **por indicador y por ticket**; la
 letra se publica como información, con sus diferencias explicadas por definición; cambio de código dentro de F1F-05, antes
 del 16/11. La comprobación del maestro está en el Anexo G
 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2957`; lista en `:2954`).
@@ -27,7 +27,7 @@ Hoy el código no lo cumple en tres puntos:
   (`packages/shared/src/indicadoresComparacion.ts:10` en `e1a92b59`), y la cabecera, que «el 95 % de la letra lo juzgan las personas» (`:2`).
 - La pantalla no pinta la variante: una sola tabla con los recuentos de la letra (`apps/desk/src/lib/comparacionExportacion.ts:68-72` en `e1a92b59`;
   `apps/desk/src/components/ComparacionExportacion.tsx:50-59` en `e1a92b59`). El ensayo del 24/10 enseñó tickets 3/12 = 25 % con la letra; la
-  variante, recalculada por el analista, da 13/13 (`openspec/config.yaml:5304-5306`).
+  variante, recalculada por el analista, da 13/13 (`openspec/config.yaml:5304-5306` en `a729a371`).
 
 `cierra: no`: F1F-05 sigue abierta por la encuesta (55) y la medición en paralelo del 16/11 al 14/12.
 
@@ -50,7 +50,7 @@ Hoy el código no lo cumple en tres puntos:
 
 - Umbral, semáforo, color o veredicto de aprobado (RQ-KP-18, `openspec/specs/kpis/spec.md:638`; maestro `R08.4.md:2956`).
 - El CSV del `GET` (no lleva comparación, `apps/desk/server/routes/indicadores.ts:45-50`).
-- La encuesta y los pares de la 55 de enero (`decision/f1f05-referencia-semanal-indicadores`, `openspec/config.yaml:5264`).
+- La encuesta y los pares de la 55 de enero (`decision/f1f05-referencia-semanal-indicadores`, `openspec/config.yaml:5264` en `a729a371`).
 - Cambiar la letra o el cálculo de cualquier indicador, o de la variante.
 - El `.tsx` más allá de pintar lo que la vista le da; sin pruebas de `.tsx` (F0-00).
 
@@ -90,7 +90,7 @@ Con o sin `flujo` y periodo, la regla es la misma: el `POST` hereda el tipo por 
   (`apps/desk/src/lib/comparacionExportacion.ts:48` en `e1a92b59`). Supuesto: en la tabla de la VARIANTE, un `porcentaje` `null` (indicador o
   tickets) se pinta con `MENSAJE_SIN_PARES` importado de `@ambientalia/shared` (`packages/shared/src/indicadoresComparacion.ts:9`);
   en la de la letra sigue «—» (`apps/desk/src/lib/comparacionExportacion.test.ts:93-98` en `e1a92b59`, intacta entonces; L2 reescribió sus líneas 95 y 98 para leer `tablas[1]` y la afirmación «—» sigue igual). Razón: Gerencia fijó que «la 55
-  queda «sin pares comparables»» (`openspec/config.yaml:5271`, consecuencia en `:5290`).
+  queda «sin pares comparables»» (`openspec/config.yaml:5271` en `a729a371`, consecuencia en `:5290` en `a729a371`).
 - **S-3 · Rótulos.** Variante: «Variante de la fórmula de Zoho · cuenta para el 95 %»; letra: «Letra de la aplicación ·
   informativa». Sólo texto, sin color ni semáforo.
 - **S-4 · Aceptación por el `POST`.** Es la ruta que usa Gerencia. El fixture se siembra con `sembrarSeptiembre`
@@ -112,7 +112,7 @@ Con o sin `flujo` y periodo, la regla es la misma: el `POST` hereda el tipo por 
 
 | Riesgo | Prob. | Mitigación |
 |---|---|---|
-| Insertar líneas antes de `:90` en `indicadoresComparacion.ts` desfasa `openspec/specs/kpis/spec.md:1160` y `openspec/config.yaml:5290` (que cita `:9`) | Media | `ticketsVariante` en la misma línea `:45`; el resto dentro de `compararIndicadores`; barrido de la regla de mutación 4 al cerrar |
+| Insertar líneas antes de `:90` en `indicadoresComparacion.ts` desfasa `openspec/specs/kpis/spec.md:1160` y `openspec/config.yaml:5290` en `a729a371` (que cita `:9`) | Media | `ticketsVariante` en la misma línea `:45`; el resto dentro de `compararIndicadores`; barrido de la regla de mutación 4 al cerrar |
 | MODIFIED de RQ-KP-16 desplaza las citas `spec.md:NNNN` posteriores | Alta | Mismo número de líneas; lo nuevo como ADDED al final |
 | La frase por fila confunde «sin valor de Zoho» con «sin pares» | Baja | El `mensaje` global sigue distinguiendo los dos casos (`indicadoresComparacion.ts:123`); la fila dice algo literalmente cierto |
 | Un lector externo del JSON (hipótesis: no hay ninguno fuera de la pantalla) | Baja | `tickets` no cambia; sólo se añade una clave |
@@ -173,5 +173,5 @@ Archivar NO las da por hechas.
 | Tarea | Dueño | Dónde queda escrito |
 |---|---|---|
 | Corregir, si procede, S-1 a S-7 | Gerencia | Lista semanal de supuestos (regla E-237) |
-| Repetir la comparación de septiembre (01/09 a 30/09) y pasar el «Sólo en Desk» | Gerencia | `openspec/config.yaml:5309` |
+| Repetir la comparación de septiembre (01/09 a 30/09) y pasar el «Sólo en Desk» | Gerencia | `openspec/config.yaml:5309` en `a729a371` |
 | Probar en la aplicación la tabla de la variante | Gerencia / analista | Lista acumulada de pruebas en la app |

@@ -9,7 +9,7 @@ se leyó en el worktree.
 
 | Fuente | Qué fija |
 |---|---|
-| `docs/sdd/ENTRADA.md:1555` (E-129, literal) | Equipo: serial ×2, marca, modelo del catálogo o «no catalogado» con texto, tipo; si el serial existe se ofrece el existente. Cliente provisional: razón social, NIT, contacto, teléfono, correo. Ambos «pendiente de validar». Comercial enlaza el cliente con Books (o lo crea allí) y completa los datos comerciales. Sin «Habilitar Servicio» mientras siga pendiente. Traza de quién y por qué |
+| `docs/sdd/ENTRADA.md:1555` en `a729a371` (E-129, literal) | Equipo: serial ×2, marca, modelo del catálogo o «no catalogado» con texto, tipo; si el serial existe se ofrece el existente. Cliente provisional: razón social, NIT, contacto, teléfono, correo. Ambos «pendiente de validar». Comercial enlaza el cliente con Books (o lo crea allí) y completa los datos comerciales. Sin «Habilitar Servicio» mientras siga pendiente. Traza de quién y por qué |
 | `openspec/config.yaml:3526` (`decision/orden-ejecucion-encargo-01-10`, b) y `:3534-3535` | Fila nueva F1B-15; **F1B-14 sigue cerrada** |
 | `openspec/config.yaml:3469` (`decision/trabajo-del-01-10-antes-del-corte-sin-fila`) | Antes del corte sólo paridad, con fila y talla. Su punto (2) mandaba E-129 a F1B-14; lo precisa la decisión anterior |
 | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:95`, `:154`, `:308` | Fila F1B-15, talla M, antes del 14/12. §H: «añade una guarda a "Habilitar Servicio", la misma transición en la que F1B-03 añadirá la de remisión vigente; hacerla antes … deja a F1B-03 la prueba de posición entre ambas». **Comprobado**: F1B-03 lleva «guarda de remisión vigente» en su fila (`:83`) |

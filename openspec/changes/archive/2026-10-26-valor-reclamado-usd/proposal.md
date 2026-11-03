@@ -10,10 +10,10 @@ origen_cabecera: declarada
 
 # Propuesta — `valor-reclamado-usd`
 
-Construye `decision/f1b13-valor-reclamado-usd` (Gerencia, 2026-10-26; `openspec/config.yaml:5434-5460`), que cierra la P-1
+Construye `decision/f1b13-valor-reclamado-usd` (Gerencia, 2026-10-26; `openspec/config.yaml:5434-5460` en `a729a371`), que cierra la P-1
 (`openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/proposal.md:279`) y corrige el S-4
 (`openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/proposal.md:159`) de `ficha-garantia-proveedor`. Fila:
-`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:93`; regla de dominio: `CLAUDE.md:691-701`. Sin exploración previa.
+`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:93`; regla de dominio: `CLAUDE.md:691-701` en `a729a371`. Sin exploración previa.
 
 *Sobre la cabecera.* `cierra: no`: queda el envío físico de la pieza por remisión sin ticket
 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2667`), que depende de F1B-16, «condicionada»
@@ -23,7 +23,7 @@ terminar queda desactualizado M4.4, «valor reclamado (tomado del costo de la OV
 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2664`), porque el valor sale del costo de
 catálogo del artículo y no de la OVI; y queda falsa la frase «las líneas de una OVI conservan el costo de referencia»
 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1232`), que contradice el hecho (b) medido
-(`openspec/config.yaml:5444-5446`). El Anexo D nº 7 sigue siendo cierto: sólo nombra «valor reclamado y valor recuperado»
+(`openspec/config.yaml:5444-5446` en `a729a371`). El Anexo D nº 7 sigue siendo cierto: sólo nombra «valor reclamado y valor recuperado»
 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5699`). La corrección 29 queda caduca (§12).
 
 ## 1 · Intención
@@ -32,7 +32,7 @@ Hoy el valor reclamado lo teclea una persona al abrir la ficha, siempre con orig
 (`apps/desk/server/db/garantiaProveedor.ts:95-100` en `c6147860`), y ningún importe dice su moneda: la pantalla pinta el número pelado
 (`apps/desk/src/components/PanelGarantiaProveedor.tsx:26` en `c6147860`, `apps/desk/src/components/MedicionGarantias.tsx:16` en `c6147860`) y la spec
 viva supone «pesos» (`openspec/specs/tickets-core/spec.md:2556-2557` en `c6147860`), cuando el costo de Books está en USD
-(`openspec/config.yaml:5439`). Al terminar: al responder «sí», el servidor guarda como foto el valor reclamado calculado de
+(`openspec/config.yaml:5439` en `a729a371`). Al terminar: al responder «sí», el servidor guarda como foto el valor reclamado calculado de
 las líneas de la OVI y del costo de catálogo, en USD y con origen `ovi`; corregirlo a mano lo deja `manual`; y cada importe
 de la ficha y de la medición sale de la API y se pinta con «USD» al lado.
 
@@ -46,8 +46,8 @@ de la ficha y de la medición sale de la API y se pinta con «USD» al lado.
 - Datos: `public.garantia_proveedor` sin columna de moneda (`packages/zoho-sync/src/db/schema.sql:727-751`);
   `books.sales_orders`, PK `salesorder_id`, con `raw` (`packages/zoho-sync/src/db/schema.sql:160-165`); `books.items` con
   `purchase_rate` (`packages/zoho-sync/src/db/schema.sql:380-384`). Las líneas de la orden no son tabla en `desk`: sólo
-  `raw->'line_items'`, sin clave de costo (`openspec/config.yaml:5444-5446`); el costo está en `books.items`, relleno y
-  mayor que 0 en las 15 líneas medidas (`openspec/config.yaml:5447-5448`).
+  `raw->'line_items'`, sin clave de costo (`openspec/config.yaml:5444-5446` en `a729a371`); el costo está en `books.items`, relleno y
+  mayor que 0 en las 15 líneas medidas (`openspec/config.yaml:5447-5448` en `a729a371`).
 - `ov_asociaciones.salesorder_id` admite NULL (`packages/zoho-sync/src/db/schema.sql:543`). Lo escriben con el id de Books
   el alta (`apps/desk/server/services/equipoNuevo.ts:91-95`) y la remisión (`apps/desk/server/routes/remision.ts:243`); las
   transiciones lo resuelven por número y lo dejan NULL si no resuelve (`packages/zoho-sync/src/db/ovAsociaciones.ts:163-166`).
@@ -61,7 +61,7 @@ de la ficha y de la medición sale de la API y se pinta con «USD» al lado.
 2. Editar: si el valor cambia, el origen pasa a `manual`; si no, se conserva (S-5). La regla, pura en `shared`.
 3. Moneda: todo importe de la ficha (reclamado y recuperado) y de la medición (RQ-TC-65 a RQ-TC-68) sale de la API con su
    moneda al lado, USD; el `.tsx` pinta «USD» junto a cada importe y en cada campo de captura. Sin código de conversión
-   (consecuencia (3), `openspec/config.yaml:5455`).
+   (consecuencia (3), `openspec/config.yaml:5455` en `a729a371`).
 4. S-4 corregido en sitio: el comentario de `packages/shared/src/garantiaProveedor.ts:36-37` en `c6147860` deja de decir «mientras no se
    calcule solo», sin desplazar líneas.
 5. Spec viva `tickets-core`: MODIFIED en sitio con el mismo número de líneas, y ADDED al final (§4).
@@ -110,7 +110,7 @@ moneda de todos los importes de la ficha y de la medición; deja fuera el envío
 | S-7 | La ficha enseña el origen junto al valor («calculado de la OVI» / «a mano»), con etiqueta de `shared` | Quien lee sabe si el número es del catálogo o de una persona | No enseñarlo |
 | S-8 | Moneda: **constante o columna; lo cierra el diseño** (debajo) | — | — |
 | S-9 | La foto va tras G6 y antes del `INSERT`, sin transacción propia | No rechaza nada: G1 a G6 y sus pruebas de posición no cambian | En la transacción del `INSERT` |
-| S-10 | No se lee la moneda de la orden (`currency_code`, `packages/zoho-sync/src/db/schema.sql:162`): el costo de catálogo está en la moneda base, USD. **Hipótesis** fuera del artículo 300-P-C | Hecho (a) de la decisión (`openspec/config.yaml:5442-5443`) | Negar la foto si algo indica otra moneda |
+| S-10 | No se lee la moneda de la orden (`currency_code`, `packages/zoho-sync/src/db/schema.sql:162`): el costo de catálogo está en la moneda base, USD. **Hipótesis** fuera del artículo 300-P-C | Hecho (a) de la decisión (`openspec/config.yaml:5442-5443` en `a729a371`) | Negar la foto si algo indica otra moneda |
 | S-11 | La foto no se recalcula si el catálogo cambia después | Es lo que «foto» significa en la decisión | Un acto de recálculo |
 
 **S-8, enmarcado.** (a) *Constante* en `shared`: la API pone `USD` al lado de cada importe; sin migración, pero toda ficha
@@ -210,7 +210,7 @@ mediciones; falta el envío físico. Se reescribe dentro de sus líneas; si no c
 ## 13 · Entregable del cierre: importes sin moneda
 
 El `archive-report.md` lleva el inventario de los demás importes que Desk guarda o devuelve sin moneda, cada uno con ruta y
-línea, como entrada para la bandeja (R-3). Esta tanda no corrige ninguno (`CLAUDE.md:691-701`).
+línea, como entrada para la bandeja (R-3). Esta tanda no corrige ninguno (`CLAUDE.md:691-701` en `a729a371`).
 
 ## 14 · Criterios de éxito
 

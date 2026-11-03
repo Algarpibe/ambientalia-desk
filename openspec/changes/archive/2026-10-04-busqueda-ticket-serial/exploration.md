@@ -64,7 +64,7 @@ el servidor no impone ese mínimo.
 
 - `openspec/config.yaml:3469` (`decision/trabajo-del-01-10-antes-del-corte-sin-fila`, `respuesta_textual`):
   «(1) la búsqueda por número de ticket y serial entra en F1B-08, antes del corte».
-- `docs/sdd/ENTRADA.md:1579` (E-133, literal): «El serial se filtra con búsqueda parcial (por ejemplo, los
+- `docs/sdd/ENTRADA.md:1579` en `a729a371` (E-133, literal): «El serial se filtra con búsqueda parcial (por ejemplo, los
   últimos dígitos), con la misma lógica que el autocompletado por serial de la recepción. En el listado de
   tickets, la búsqueda por número de ticket y por serial es paridad con Zoho Desk y debe estar antes del corte
   del 14/12; si ya existe, solo se confirma. En el cuadro de mando con indicadores entra con el resto de los
@@ -73,7 +73,7 @@ el servidor no impone ese mínimo.
   y, dentro de M7.5, `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3061-3062`.
 - Plan: `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:88` y
   `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:153` (talla S, ampliación de F1B-08).
-- **No existe hoy**: medido en E-133 (`docs/sdd/ENTRADA.md:1582`) y vuelto a medir aquí (§1).
+- **No existe hoy**: medido en E-133 (`docs/sdd/ENTRADA.md:1582` en `a729a371`) y vuelto a medir aquí (§1).
 - **Lo que la letra no dice:** si el número coincide exacto o parcial; mayúsculas y espacios; si la búsqueda
   respeta la vista activa; longitud máxima.
 

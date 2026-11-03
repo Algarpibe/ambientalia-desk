@@ -10,7 +10,7 @@ origen_cabecera: declarada
 
 # Propuesta — `prefijo-deducido-en-el-alta`
 
-Construye `decision/prefijo-de-que-se-deduce` (Gerencia, 2026-10-14; `openspec/config.yaml:4707-4736`). Segundo
+Construye `decision/prefijo-de-que-se-deduce` (Gerencia, 2026-10-14; `openspec/config.yaml:4707-4736` en `a729a371`). Segundo
 cambio de la fila F1B-03 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:83`, ampliación `:177`, nota
 `:309`). Leído en el worktree sobre `968bb53`. Modo de ejecución `auto` (`openspec/config.yaml:26`): no hay ronda de
 preguntas; las dudas con supuesto razonable van a §7.
@@ -23,7 +23,7 @@ servicio, ticket sin OV y guarda de remisión vigente los cubrió `tipo-servicio
 (`openspec/changes/archive/2026-10-03-tipo-servicio-ticket-sin-ov/archive-report.md:5`), la OVI de garantía
 `ovi-garantia-por-cargo` (`openspec/changes/archive/2026-10-06-ovi-garantia-por-cargo/archive-report.md:6-8`), y lo
 único que esos informes dejan fuera son los prefijos y E-158; E-158 se cerró sin construir nada
-(`openspec/config.yaml:4352`), y E-184 es punto abierto «si Gerencia lo pide» (`docs/sdd/ENTRADA.md:1919`), no
+(`openspec/config.yaml:4352`), y E-184 es punto abierto «si Gerencia lo pide» (`docs/sdd/ENTRADA.md:1919` en `a729a371`), no
 contenido de la fila.
 
 ## 1 · Intención

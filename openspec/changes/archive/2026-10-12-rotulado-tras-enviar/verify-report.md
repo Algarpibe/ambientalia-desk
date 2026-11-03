@@ -94,11 +94,11 @@ Barrido sobre `a947b48` (sin excluir `openspec/changes/archive`): 143 citas comp
 |---|---|---|---|
 | A | `DEPLOY.md:254` hacia `apps/desk/server/db/remisiones.ts:47` | el `INSERT` ya no nombra `rotulado_at` ni `rotulado_por` | Sí; la corrige el orquestador (W1) |
 | C | `openspec/specs/remisiones/spec.md:170` (cita abreviada del comentario de `apps/desk/server/db/remisiones.ts`, líneas 129 a 131) | cita el comentario viejo («algún aviso (correo o Telegram)») | No (`openspec/specs`); la sustituye el delta de RQ-RE-05 al archivar |
-| B | `docs/sdd/ENTRADA.md:1828` hacia `packages/shared/src/recepcion.ts:101` | describe el problema que E-167 cierra | No (`docs/sdd/ENTRADA.md`); la supervisión marca E-167 |
+| B | `docs/sdd/ENTRADA.md:1828` en `a729a371` hacia `packages/shared/src/recepcion.ts:101` | describe el problema que E-167 cierra | No (`docs/sdd/ENTRADA.md`); la supervisión marca E-167 |
 | B | `docs/sdd/Paquete_de_Despliegue_2026-10-04.md:210`, `:335`, `:585`, `:602`; `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:255`, `:474`, `:511`, `:863`, `:919`; `docs/sdd/Paquete_de_Despliegue_2026-10-05b.md:337`; `docs/sdd/Paquete_de_Despliegue_2026-10-09.md:493` | paquetes fechados (casilla de rotulado, `INSERT` con `rotulado_at`, guarda de `recepcion.ts` línea 101) | Sí, pero son históricos: se nombra la revisión, no se renumera |
 | B | `openspec/changes/archive/2026-10-03-recepcion-rotulacion-foto-entrada/verify-report.md:89`, `:101`, `:136`, `:148`, `:158` y `design.md:193`, `:244`, `:246`, `:447`; `openspec/changes/archive/2026-10-12-recepcion-exencion-foto-y-casilla/design.md:38`, `proposal.md:36` | afirman el estado anterior (guarda de rotulado, `rotulado?` en el cliente, firma de `recepcionForm.ts`) | Archivo: no se reescribe |
 
-Ninguna de las cuatro rutas protegidas (`CLAUDE.md`, `openspec/config.yaml`, `docs/sdd/ENTRADA.md`, `docs/sdd/TRASPASO_2026-10-08.md`) tiene una cita caso A: las de `CLAUDE.md:349`, `openspec/config.yaml:1206` y `docs/sdd/ENTRADA.md:1838` hacia `apps/desk/server/recepcion.test.ts:245` a `:273` siguen ciertas (PA-1, PA-2 y el 409 fijan serial < novedades < pendiente). Ninguna línea existente cambió de número: no hay nada que renumerar.
+Ninguna de las cuatro rutas protegidas (`CLAUDE.md`, `openspec/config.yaml`, `docs/sdd/ENTRADA.md`, `docs/sdd/TRASPASO_2026-10-08.md`) tiene una cita caso A: las de `CLAUDE.md:349`, `openspec/config.yaml:1206` y `docs/sdd/ENTRADA.md:1838` en `a729a371` hacia `apps/desk/server/recepcion.test.ts:245` a `:273` siguen ciertas (PA-1, PA-2 y el 409 fijan serial < novedades < pendiente). Ninguna línea existente cambió de número: no hay nada que renumerar.
 
 ## Qué falta para cerrar la fila F1B-04
 

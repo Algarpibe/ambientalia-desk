@@ -301,7 +301,7 @@ proponer y NO lo repitas ni lo reescribas:
   cero huérfanas); destino de IV-2 → F1A-07; PF-2 en premisas_falsas_corregidas; clave
   nueva cifras_ancladas; rules.proposal ya no cita la R08.1.
 - docs/sdd/ENTRADA.md existe y está sembrada con once entradas.
-- La tarea programada del parte (lunes y jueves) vive fuera del repositorio.
+- La tarea programada del parte (lunes y jueves; **martes y viernes 8:30 a. m., hora de Bogotá, desde el 03/10/2026** — corrección de Gerencia, panel, E-234) vive fuera del repositorio.
 
 Objetivo: lo que falta, que es todo lo ejecutable.
 1. Comprobación de forma en el hook de pre-push que hook-citas-pre-push ya dejó instalado:

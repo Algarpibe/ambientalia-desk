@@ -16,7 +16,7 @@ origen_cabecera: declarada
 
 Pasaje del maestro: ninguno. El cambio sale de una decisión de Gerencia, no de un apartado del maestro.
 
-`cierra: no`: a la fila le quedan tareas de persona —nombrar al suplente, responder E-208 (`docs/sdd/ENTRADA.md:2047`), el cotejo de la hoja de Google y la ejecución en producción (`openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive-report.md:5`).
+`cierra: no`: a la fila le quedan tareas de persona —nombrar al suplente, responder E-208 (`docs/sdd/ENTRADA.md:2047` en `a729a371`), el cotejo de la hoja de Google y la ejecución en producción (`openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive-report.md:5`).
 
 ## Medición previa
 
@@ -120,6 +120,6 @@ Archivar este cambio **no las da por hechas** (regla del ciclo 1).
 | Tarea | Dueño | Dónde queda escrito |
 |---|---|---|
 | Nombrar al suplente | Gerencia | `DEPLOY.md`, sección nueva, como «suplente por nombrar» |
-| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` |
+| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` en `a729a371` |
 | Decidir si la perdedora debe recibir un `409` con mensaje claro | Gerencia | Esta propuesta, «Hallazgo»; el orquestador la sube a la bandeja |
 | Ejecución del 12/12 en producción | Gerencia o su suplente | `DEPLOY.md`, sección nueva |

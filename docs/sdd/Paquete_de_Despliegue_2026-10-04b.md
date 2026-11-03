@@ -145,7 +145,7 @@ App: publicar `f619d04` es publicarla (§10).
 
 **Antes de desplegar hacen falta dos cosas, las dos de personas:**
 
-1. **La respuesta de Gerencia a E-158** (`docs/sdd/ENTRADA.md:1782`): si la guarda alcanza a los tickets de
+1. **La respuesta de Gerencia a E-158** (`docs/sdd/ENTRADA.md:1782` en `a729a371`): si la guarda alcanza a los tickets de
    «Equipo nuevo». Lo construido aplica el supuesto «sí, sin excepciones», **no decidido**. Si la respuesta es
    «no alcanza», hace falta un cambio de código nuevo (una excepción por clasificación) y **`f619d04` deja de ser
    el commit a publicar**. El 2026-10-04 no hay respuesta registrada (`grep -n "E-158" openspec/config.yaml` → 0).
@@ -172,18 +172,18 @@ caso.** En `f619d04` el predicado admite los tres orígenes de «Habilitar Servi
 las remisiones del ticket no han cargado (`apps/desk/src/lib/botonRemision.ts:31`) y salvo que ya haya una de
 entrada confirmada (`apps/desk/src/lib/botonRemision.ts:39-40`). El servidor ya aceptaba el alta desde cualquier
 estado —el alta de remisión no lee el estado del ticket (`apps/desk/server/routes/remision.ts:120-264`; es la
-pregunta E-184, `docs/sdd/ENTRADA.md:1916`)—; ahora una prueba fija que desde los tres orígenes el recorrido completo funciona —422 de la guarda, alta
+pregunta E-184, `docs/sdd/ENTRADA.md:1916` en `a729a371`)—; ahora una prueba fija que desde los tres orígenes el recorrido completo funciona —422 de la guarda, alta
 `201`, y «Habilitar Servicio» `200`— (`apps/desk/server/remisionCreadaSinSalida.test.ts:31-39`), también con una
 remisión de salida o con la única de entrada anulada (`apps/desk/server/remisionCreadaSinSalida.test.ts:42-59`).
 
 De dónde sale un ticket así sigue siendo **hipótesis sin recuento**: por las rutas de la App no se produce, porque
 anular la última remisión confirmada devuelve el ticket a `Ticket creado`
 (`apps/desk/server/routes/remision.ts:334-336`); quedan escrituras directas en la base, una petición caída entre
-la anulación y su sincronización (E-186, `docs/sdd/ENTRADA.md:1926`) y, cuando exista, una remisión confirmada que
-no sea de entrada (E-187, `docs/sdd/ENTRADA.md:1931`)
+la anulación y su sincronización (E-186, `docs/sdd/ENTRADA.md:1926` en `a729a371`) y, cuando exista, una remisión confirmada que
+no sea de entrada (E-187, `docs/sdd/ENTRADA.md:1931` en `a729a371`)
 (`openspec/changes/archive/2026-10-04-remision-creada-sin-salida/archive-report.md:38-41`). El recuento del
 2026-10-03 reparte por estado y por `managed_by_app`, así que dirá cuántos hay: es E-185
-(`docs/sdd/ENTRADA.md:1921`), **informativo**, ya no motivo de consulta previa —si la fila de `Remisión creada`
+(`docs/sdd/ENTRADA.md:1921` en `a729a371`), **informativo**, ya no motivo de consulta previa —si la fila de `Remisión creada`
 trae `sin_remision_vigente` mayor que cero, esos tickets tienen ahora el botón—.
 
 **Lo que este cambio NO toca:** la condición de parada. La guarda es la misma, sigue sin interruptor y sigue
@@ -220,18 +220,18 @@ reversión de código no recupera filas borradas.** Nada de esto cambia desde `5
 ### (d) F1F-05 — CONDICIÓN CON FECHA: en producción antes del viernes 13/11/2026
 
 F1F-05 tiene que estar desplegada **antes del viernes 13/11/2026** para medir las cuatro semanas desde el 16/11
-(`DEPLOY.md:270-271`; E-181, `docs/sdd/ENTRADA.md:1899`). Como va en el mismo código que la guarda de F1B-03 (§10),
+(`DEPLOY.md:270-271`; E-181, `docs/sdd/ENTRADA.md:1899` en `a729a371`). Como va en el mismo código que la guarda de F1B-03 (§10),
 **esa fecha queda atada a la respuesta de E-158**: si E-158 no está respondida a tiempo, F1F-05 tampoco llega.
 
 Con ella va la **consulta de sólo lectura P-1** (`DEPLOY.md:272-298`): dice si los valores de Zoho de las columnas
 47 a 59 y la calificación de satisfacción llegan sincronizados en `desk.tickets`. Lee `custom_fields` y `raw`, que
 ya existen en el esquema de `ae5aaf4`, así que **se puede ejecutar hoy**. No se ha probado contra el PostgreSQL de
 producción (`DEPLOY.md:300-302`). Si ninguna consulta trae los nombres de los indicadores, la comparación no tiene
-con qué comparar y se abre E-173 (`docs/sdd/ENTRADA.md:1859`); no es un fallo del despliegue.
+con qué comparar y se abre E-173 (`docs/sdd/ENTRADA.md:1859` en `a729a371`); no es un fallo del despliegue.
 
 ### (e) E-162 y E-170 — condiciones de publicación de F1C-11 y de F1B-04
 
-**E-162 (F1C-11)** (`docs/sdd/ENTRADA.md:1802`). Dos tareas en producción, de Gerencia o de un administrador:
+**E-162 (F1C-11)** (`docs/sdd/ENTRADA.md:1802` en `a729a371`). Dos tareas en producción, de Gerencia o de un administrador:
 
 - **(b) Confirmar que el cargo de quien es Director Técnico está escrito «Director Técnico».** Condiciona que la
   derivación haga efecto: la propuesta busca a la persona por el texto de su cargo de firma
@@ -243,7 +243,7 @@ con qué comparar y se abre E-173 (`docs/sdd/ENTRADA.md:1859`); no es un fallo d
   Director Técnico (`packages/shared/src/transitions.ts:276`); el respaldo al Especialista técnico no está
   construido (`openspec/changes/archive/2026-10-03-derivacion-repuestos-director-tecnico/archive-report.md:8-10`).
 
-**E-170 (F1B-04)** (`docs/sdd/ENTRADA.md:1842`). Tres comprobaciones; las dos primeras son **antes de publicar**:
+**E-170 (F1B-04)** (`docs/sdd/ENTRADA.md:1842` en `a729a371`). Tres comprobaciones; las dos primeras son **antes de publicar**:
 
 1. **Servicio Técnico confirma la lista de diez novedades** (`packages/zoho-sync/src/db/schema.sql:690-699`).
    Condiciona lo que el técnico ve en el formulario desde el primer minuto. La lista es dato: se corrige por SQL
@@ -253,7 +253,7 @@ con qué comparar y se abre E-173 (`docs/sdd/ENTRADA.md:1859`); no es un fallo d
 2. **Quien administra n8n comprueba que la etiqueta que imprime lleva el código del ticket.** Condiciona que la
    casilla «Rotulado y guardado» signifique algo: el formulario la exige antes de crear la remisión
    (`packages/shared/src/recepcion.ts:101`) y la etiqueta sale —hipótesis, no verificada contra el flujo de n8n—
-   al enviar (E-167, `docs/sdd/ENTRADA.md:1827`).
+   al enviar (E-167, `docs/sdd/ENTRADA.md:1827` en `a729a371`).
 3. Servicio Técnico comprueba el formulario en la aplicación, **tras publicar** (§6.7).
 
 Y, de quien despliega, la **comprobación de lectura** de `DEPLOY.md:234-261`: diez filas en el catálogo y las seis
@@ -343,7 +343,7 @@ declara la casilla: declara motivo, fecha prevista y texto de la autorización
 `custom_fields` (`apps/desk/server/services/ticketService.ts:133`). Nada escribe ya la columna
 `liberacion_sin_facturar` desde la App: una liberación nueva **ni la marca ni la desmarca**, la deja como
 estuviera (una prueba fija que queda vacía en un ticket que no la traía,
-`apps/desk/server/liberacionSinFactura.test.ts:94`). Es la pregunta E-203 (`docs/sdd/ENTRADA.md:2011`). **Quién
+`apps/desk/server/liberacionSinFactura.test.ts:94`). Es la pregunta E-203 (`docs/sdd/ENTRADA.md:2011` en `a729a371`). **Quién
 lee hoy ese dato, y qué deja de ver** — tabla completa en §5.1; en corto: **la ficha del ticket**, que enseña la
 casilla «Liberación del ticket sin facturar» sin marcar en los tickets liberados por la vía nueva
 (`apps/desk/src/components/TicketProperties.tsx:88`). No hay ningún informe, indicador, guarda ni alarma en el
@@ -358,7 +358,7 @@ texto o con `null`. El motor de las pruebas no soporta ese operador, así que el
 probado es la emulación, no el operador. Que en PostgreSQL una segunda liberación sin texto deje la clave vacía y
 no herede el texto de la primera es **hipótesis**
 (`openspec/changes/archive/2026-10-04-liberacion-sin-factura-motivo-fecha/verify-report.md:298-301`); está
-registrado como E-206 (`docs/sdd/ENTRADA.md:2026`). **Es una comprobación a hacer en la primera liberación real
+registrado como E-206 (`docs/sdd/ENTRADA.md:2026` en `a729a371`). **Es una comprobación a hacer en la primera liberación real
 tras desplegar** (§6.6, paso P3, con su consulta).
 
 ---
@@ -892,7 +892,7 @@ nombran**, cinco ficheros, y no cuentan como lectores:
 `packages/shared/src/prioridad.test.ts`, `packages/zoho-sync/src/db/liberacionFicha.test.ts` y
 `packages/zoho-sync/src/db/mappers.test.ts`. *Hipótesis:* que fuera del repositorio —un informe de Zoho, una
 consulta guardada, una hoja de cálculo— alguien cuente liberaciones por esa casilla; es justo la pregunta E-203
-(`docs/sdd/ENTRADA.md:2011`), y no es comprobable desde aquí. Un matiz: la liberación nueva **no desmarca** la
+(`docs/sdd/ENTRADA.md:2011` en `a729a371`), y no es comprobable desde aquí. Un matiz: la liberación nueva **no desmarca** la
 casilla. Un ticket que ya la traía marcada de un ciclo anterior la conserva.
 
 **Las rutas nuevas o cambiadas, con su guarda.** Las dos de F1B-04 y F1F-05 se registran en
@@ -920,8 +920,8 @@ registrados (`apps/desk/server/app.ts` no cambia desde `24a14eb`).
 | No dejar enviar sin las fotos exigidas | `apps/desk/server/routes/remision.ts:289-293`: 422 |
 | Subir cada foto con su categoría (`apps/desk/src/components/CrearRemision.tsx:82`) | `apps/desk/server/routes/remision.ts:384`: 422 |
 | Enseñar el enlace de indicadores sólo al administrador (`apps/desk/src/lib/indicadoresUrl.ts:16-18`) | `apps/desk/server/routes/indicadores.ts:41`: 403 |
-| Proponer al Director Técnico en la casilla «Derivado a» (`apps/desk/src/lib/personas.ts:74-79`) | **Ninguna, declarado:** el servidor no impone el destinatario (`apps/desk/server/services/ticketService.ts:138-142`); es la pregunta E-160 (`docs/sdd/ENTRADA.md:1792`) |
-| **Nueva** · Ofrecer «Crear remisión» sólo en los tres orígenes de «Habilitar Servicio» (`apps/desk/src/lib/botonRemision.ts:31`) | **Ninguna, declarado y no corregido:** el alta de remisión no lee el estado del ticket (`apps/desk/server/routes/remision.ts:120-264`). Es el punto 2 de la regla 13 —sin contrapartida, el cliente es la guarda— y la pregunta E-184 (`docs/sdd/ENTRADA.md:1916`). El hueco es anterior a este cambio |
+| Proponer al Director Técnico en la casilla «Derivado a» (`apps/desk/src/lib/personas.ts:74-79`) | **Ninguna, declarado:** el servidor no impone el destinatario (`apps/desk/server/services/ticketService.ts:138-142`); es la pregunta E-160 (`docs/sdd/ENTRADA.md:1792` en `a729a371`) |
+| **Nueva** · Ofrecer «Crear remisión» sólo en los tres orígenes de «Habilitar Servicio» (`apps/desk/src/lib/botonRemision.ts:31`) | **Ninguna, declarado y no corregido:** el alta de remisión no lee el estado del ticket (`apps/desk/server/routes/remision.ts:120-264`). Es el punto 2 de la regla 13 —sin contrapartida, el cliente es la guarda— y la pregunta E-184 (`docs/sdd/ENTRADA.md:1916` en `a729a371`). El hueco es anterior a este cambio |
 | **Nueva** · Pedir `/api/remision-creada` y enseñar la lista tal como llega, sin filtrar ni reordenar (`apps/desk/src/App.tsx:69`) | `apps/desk/server/routes/prioridad.ts:92-94`; el orden lo pone `apps/desk/server/db/listaRemisionCreada.ts:16` |
 | **Nueva** · Enseñar «N tickets abiertos actualizados» (`apps/desk/src/components/Top5Panel.tsx:28`) | El recuento lo devuelve `apps/desk/server/db/prioridadCliente.ts:122`; quién puede guardar, `apps/desk/server/routes/prioridad.ts:40`: 403 |
 | **Nueva** · Enviar el texto de búsqueda tal cual, con `maxLength` 64 (`apps/desk/src/components/BuscadorTickets.tsx:19`) | `packages/shared/src/busquedaTickets.ts:33`, que da el 422 en `apps/desk/server/util/busquedaTickets.ts:10` |
@@ -960,12 +960,12 @@ para crearla—, queda retirada por `remision-creada-sin-salida`** (§0 b): ese 
 recorrido está probado en el servidor. Lo que queda es saber si hay alguno (E-185).
 
 **R40 · La decisión que sostiene la guarda no está registrada como clave** en `openspec/config.yaml` (E-159,
-`docs/sdd/ENTRADA.md:1787`). No bloquea el despliegue. Además, mover el par de guardas de «Habilitar Servicio»
+`docs/sdd/ENTRADA.md:1787` en `a729a371`). No bloquea el despliegue. Además, mover el par de guardas de «Habilitar Servicio»
 delante de cargo, prioridad o verificación no lo caza ninguna prueba
 (`openspec/changes/archive/2026-10-03-tipo-servicio-ticket-sin-ov/archive-report.md:122-125`).
 
-**R41 · F1B-04 se publica con cinco preguntas abiertas** (E-163 a E-167, `docs/sdd/ENTRADA.md:1807`,
-`docs/sdd/ENTRADA.md:1812`, `docs/sdd/ENTRADA.md:1817`, `docs/sdd/ENTRADA.md:1822`, `docs/sdd/ENTRADA.md:1827`):
+**R41 · F1B-04 se publica con cinco preguntas abiertas** (E-163 a E-167, `docs/sdd/ENTRADA.md:1807` en `a729a371`,
+`docs/sdd/ENTRADA.md:1812` en `a729a371`, `docs/sdd/ENTRADA.md:1817` en `a729a371`, `docs/sdd/ENTRADA.md:1822` en `a729a371`, `docs/sdd/ENTRADA.md:1827` en `a729a371`):
 una foto por cada novedad o basta una; quién edita la lista y dónde; «Falta un accesorio» exige una foto de algo
 que no está; un equipo sin accesorios o sin embalaje tiene que subir otra foto para poder enviar; y el rotulado se
 confirma antes de que exista la etiqueta. Mientras no haya respuesta rige lo construido, que es lo más estricto.
@@ -980,14 +980,14 @@ así, no hay propuesta ni aviso (E-162 b). Y la derivación es propuesta, no imp
 **hipótesis sin medir**. Cómo entrega la base real una columna de fecha sólo se probó con filas simuladas
 (`openspec/changes/archive/2026-10-03-continuidad-indicadores/archive-report.md:125-127`).
 
-**R44 · F1F-05 se publica con diez preguntas abiertas** (E-171 a E-180, de `docs/sdd/ENTRADA.md:1847` a
-`docs/sdd/ENTRADA.md:1894`) y un hallazgo medido: Zoho no descuenta festivos, así que la medición a la letra
-quedará bajo el 95 % en esos tickets (E-182, `docs/sdd/ENTRADA.md:1904`). Ninguna bloquea el despliegue; deciden
+**R44 · F1F-05 se publica con diez preguntas abiertas** (E-171 a E-180, de `docs/sdd/ENTRADA.md:1847` en `a729a371` a
+`docs/sdd/ENTRADA.md:1894` en `a729a371`) y un hallazgo medido: Zoho no descuenta festivos, así que la medición a la letra
+quedará bajo el 95 % en esos tickets (E-182, `docs/sdd/ENTRADA.md:1904` en `a729a371`). Ninguna bloquea el despliegue; deciden
 cómo se lee la comparación.
 
 **R45 · IV-12 gana un tercer punto**: la guarda nueva de recepción del alta corre antes de «Orden de venta no
 encontrada» (`apps/desk/server/routes/remision.ts:158`, `apps/desk/server/routes/remision.ts:220`; E-169,
-`docs/sdd/ENTRADA.md:1837`). Un alta con novedades inválidas y una orden inexistente da el error de las novedades.
+`docs/sdd/ENTRADA.md:1837` en `a729a371`). Un alta con novedades inválidas y una orden inexistente da el error de las novedades.
 
 **Nuevos de este paquete (R46 a R51).**
 
@@ -997,19 +997,19 @@ ticket (`packages/zoho-sync/src/sync.ts:125-133`). En las dos bases. La mitigaci
 §4.4, que no es opcional (§0 g, punto 1). **No ejecutado: sale de leer el código.**
 
 **R47 · F1B-07 escribe sobre tickets abiertos en el acto, con seis supuestos sin decidir** (E-188 a E-193, de
-`docs/sdd/ENTRADA.md:1936` a `docs/sdd/ENTRADA.md:1961`). Los que se notan el primer día: **un Top 5 más bajo que
+`docs/sdd/ENTRADA.md:1936` en `a729a371` a `docs/sdd/ENTRADA.md:1961` en `a729a371`). Los que se notan el primer día: **un Top 5 más bajo que
 la prioridad que el ticket tenía lo baja**, salvo contrato vigente (E-190); una prioridad cambiada en una
 transición entre marcar y desmarcar se pierde al revertir (E-189); y tras desmarcar, la marca se conserva y sigue
 mandando la App sobre Zoho (E-188). Además: la atomicidad de la propagación está probada **por secuencia, no por
 efecto sobre filas**, porque el motor de las pruebas no revierte (aviso W-1,
 `openspec/changes/archive/2026-10-04-propagar-top5-lista-remision-creada/archive-report.md:51-52`), y la
-propagación lee tickets y trazas sin bloquear las filas (E-194, `docs/sdd/ENTRADA.md:1966`): un ajuste manual
+propagación lee tickets y trazas sin bloquear las filas (E-194, `docs/sdd/ENTRADA.md:1966` en `a729a371`): un ajuste manual
 confirmado en ese instante podría perder su exención. **Hipótesis sin probar**; exige concurrencia real.
 
 **R48 · F1B-08: la búsqueda es un `LIKE` con comodín delante, sin índice.** Que la tabla tenga «miles de filas» y
 el coste sea despreciable es **hipótesis** del diseño, a confirmar con el recuento que pide a quien despliegue
 (`openspec/changes/archive/2026-10-04-busqueda-ticket-serial/archive-report.md:77-78`; §4.4 lo incluye). Se
-publica con cinco preguntas (E-195 a E-199, de `docs/sdd/ENTRADA.md:1971` a `docs/sdd/ENTRADA.md:1991`): la que
+publica con cinco preguntas (E-195 a E-199, de `docs/sdd/ENTRADA.md:1971` en `a729a371` a `docs/sdd/ENTRADA.md:1991` en `a729a371`): la que
 más se nota es que **un ticket histórico sin copia del serial y sin equipo enlazado no se encuentra por serial**
 (E-197). Y un arreglo del cliente quedó sin prueba automática, por ser `.tsx`: el vaciado del texto al entrar en
 «Equipos en Remisión creada»
@@ -1018,9 +1018,9 @@ más se nota es que **un ticket histórico sin copia del serial y sin equipo enl
 **R49 · F1C-05 cambia lo que significa «liberado sin factura» en los datos.** (a) Las liberaciones nuevas no
 marcan la casilla (E-203): §0 (g), punto 3. (b) **Los tickets que ya estén en `Por Entregar / Sin facturar` el día
 del Deploy se liberaron con la casilla y no tienen ni motivo ni fecha**; no hay relleno (E-204,
-`docs/sdd/ENTRADA.md:2016`). (c) Una fecha prevista **pasada** se acepta (E-201, `docs/sdd/ENTRADA.md:2001`).
+`docs/sdd/ENTRADA.md:2016` en `a729a371`). (c) Una fecha prevista **pasada** se acepta (E-201, `docs/sdd/ENTRADA.md:2001` en `a729a371`).
 (d) Una segunda liberación borra de la ficha el texto de la primera; el historial lo conserva (E-205,
-`docs/sdd/ENTRADA.md:2021`). (e) **La mezcla de `custom_fields` no está probada contra PostgreSQL real** (aviso
+`docs/sdd/ENTRADA.md:2021` en `a729a371`). (e) **La mezcla de `custom_fields` no está probada contra PostgreSQL real** (aviso
 W2, E-206): §0 (g), punto 4. Ninguna bloquea el despliegue; la (e) pide una comprobación en la primera liberación
 real.
 
@@ -1068,7 +1068,7 @@ E-184 a E-206.
 | **Nueva · Durante el corte, justo tras el Deploy de la App** | **Comprobación de lectura de F1B-07 sobre `desk`**: las tres columnas de `tickets` de las que depende el sincronizador, y con ella las de F1C-05 | Saber que el sincronizador de `desk` no está roto en silencio, y que se puede liberar sin factura | §4.4, la consulta larga y el bloque «F1B-07»; razón, §0 (g) |
 | **Nueva · Justo tras redesplegar el worker** | **La misma comprobación de F1B-07 sobre `zoho-hub`** | Saber que el sincronizador del hub no está roto en silencio | §4.4, bloque «F1B-07» |
 | **Nueva · Durante el corte** | **Mirar `filas_top5` en §4.4.** Si no es cero, avisar al Director Comercial: hay clientes Top 5 que volver a guardar | Que la propagación alcance a los Top 5 marcados antes | §0 (g), punto 2; §6.5 |
-| **Nueva · Antes, con los dos recuentos de F1B-03** | **E-185** — leer, en el recuento del 2026-10-03, la fila de estado `Remisión creada` con `sin_remision_vigente` | Saber si al publicar hay tickets que usarán el botón nuevo. **Informativo, no bloquea** | `docs/sdd/ENTRADA.md:1921`; es el mismo recuento de abajo |
+| **Nueva · Antes, con los dos recuentos de F1B-03** | **E-185** — leer, en el recuento del 2026-10-03, la fila de estado `Remisión creada` con `sin_remision_vigente` | Saber si al publicar hay tickets que usarán el botón nuevo. **Informativo, no bloquea** | `docs/sdd/ENTRADA.md:1921` en `a729a371`; es el mismo recuento de abajo |
 | **Antes del viernes 13/11/2026** | **P-2 de `continuidad-indicadores`** — que F1F-05 esté desplegada | Medir desde el 16/11 | §0 (d) |
 | **Después** | Verificación en la app de F1C-09; siembra de F1A-03 cuando llegue el dato; cierres de fin de año; y las verificaciones arrastradas | Lo que dice cada una | `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:652-655` y `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:670-718` |
 
@@ -1092,17 +1092,17 @@ indicadores y de la calificación de satisfacción.
 
 | Cuándo | Decisión | Qué desbloquea | Dónde está |
 |---|---|---|---|
-| **Antes — PARADA** | **E-158** — ¿la guarda de remisión alcanza a los tickets de «Equipo nuevo»? (con Servicio Técnico) | **Publicar `f619d04`.** Si es «no», hace falta código nuevo y este paquete no vale | `docs/sdd/ENTRADA.md:1782` |
+| **Antes — PARADA** | **E-158** — ¿la guarda de remisión alcanza a los tickets de «Equipo nuevo»? (con Servicio Técnico) | **Publicar `f619d04`.** Si es «no», hace falta código nuevo y este paquete no vale | `docs/sdd/ENTRADA.md:1782` en `a729a371` |
 | **Antes** | P.3 de `alarmas-horas-habiles` (la ráfaga); la precondición de P.1 de `permisos-por-cargo`; y cuál de las dos lecturas de la siembra vale | Lo que dice cada una | `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:724-726` |
-| Sin orden | **E-160** — ¿la derivación al Director Técnico se propone o se impone? | Si hay cambio nuevo con la guarda. **No bloquea** | `docs/sdd/ENTRADA.md:1792` |
+| Sin orden | **E-160** — ¿la derivación al Director Técnico se propone o se impone? | Si hay cambio nuevo con la guarda. **No bloquea** | `docs/sdd/ENTRADA.md:1792` en `a729a371` |
 | Sin orden | **E-163 a E-167** (con Servicio Técnico) — las cinco de la recepción | Alcance de F1B-04. **No bloquean** | R41 |
 | Sin orden | **E-171 a E-180** — las diez de los indicadores | El 51, el 55 y cómo se lee la comparación. **No bloquean** | R44 |
-| Sin orden | **E-157** — qué es «crear la OVI de garantía» en Desk | La parte de OVI de F1B-03, no construida | `docs/sdd/ENTRADA.md:1777` |
-| **Nueva** · Sin orden | **E-184** — ¿debe el servidor impedir crear una remisión de entrada fuera de la fase inicial? | Si se abre un cambio que imponga el estado en el alta. **No bloquea** | `docs/sdd/ENTRADA.md:1916` |
+| Sin orden | **E-157** — qué es «crear la OVI de garantía» en Desk | La parte de OVI de F1B-03, no construida | `docs/sdd/ENTRADA.md:1777` en `a729a371` |
+| **Nueva** · Sin orden | **E-184** — ¿debe el servidor impedir crear una remisión de entrada fuera de la fase inicial? | Si se abre un cambio que imponga el estado en el alta. **No bloquea** | `docs/sdd/ENTRADA.md:1916` en `a729a371` |
 | **Nueva** · Sin orden | **E-188 a E-193** — las seis de la propagación del Top 5: si manda la App sobre Zoho tras propagar, si una prioridad puesta en una transición exime al ticket, **si el Top 5 también baja**, qué trae la lista de «Remisión creada», si la lista pinta el tiempo, y qué base se guarda al nacer bajo Top 5 | Alcance de F1B-07. **No bloquean**; mientras tanto rige lo construido | R47 |
 | **Nueva** · Sin orden | **E-195 a E-199** — las cinco de la búsqueda: si se conserva al cambiar de vista, número exacto o por trozo, **relleno de los tickets antiguos sin copia del serial** (con la medición de quien despliegue), si cubre asunto, cliente y contacto, y si cubre la lista de «Remisión creada» | Alcance de F1B-08. **No bloquean** | R48 |
 | **Nueva** · Sin orden | **E-201 a E-205** — las cinco de la liberación: si la fecha tiene que ser futura, si el texto es obligatorio con los tres motivos, **cómo se cuentan las liberaciones ahora que la casilla no se marca**, qué se hace con los tickets ya liberados sin motivo ni fecha, y si una segunda liberación debe borrar el texto de la primera | Alcance de F1C-05 y de la alarma de F1C-02. **No bloquean** | R49 |
-| **Desde el 16/11** | **P-3 de `continuidad-indicadores`** (con Servicio Técnico y Comercial) — comprobar las cuatro semanas y explicar por escrito cada diferencia mayor de un día | Dar los nueve indicadores por buenos | `docs/sdd/ENTRADA.md:1899` |
+| **Desde el 16/11** | **P-3 de `continuidad-indicadores`** (con Servicio Técnico y Comercial) — comprobar las cuatro semanas y explicar por escrito cada diferencia mayor de un día | Dar los nueve indicadores por buenos | `docs/sdd/ENTRADA.md:1899` en `a729a371` |
 | Sin orden | Las del paquete anterior que siguen abiertas | Lo que cada una dice allí | `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:727-731` |
 
 ### 6.3 · Administrador de la aplicación
@@ -1264,7 +1264,7 @@ abolladura en la carcasa · Rayón o daño estético · Pantalla o display daña
 accesorio · Embalaje inadecuado o dañado · Humedad, suciedad o contaminación visible · Sello o precinto roto ·
 Otro. Si hay que cambiarla, se cambia por SQL, antes o después de publicar.
 
-**E-170 (3), los nueve pasos** (`docs/sdd/ENTRADA.md:1843`):
+**E-170 (3), los nueve pasos** (`docs/sdd/ENTRADA.md:1843` en `a729a371`):
 
 | # | Paso | Resultado esperado |
 |---|---|---|
@@ -1317,10 +1317,10 @@ los prefijos, de Gerencia, que es del segundo cambio de la tanda y no de este de
 (`openspec/changes/archive/2026-10-03-tipo-servicio-ticket-sin-ov/archive-report.md:117`).
 
 **De la sesión de supervisión, nuevas, ninguna condiciona el despliegue:** que la aceptación con servicios reales
-incluya una segunda liberación sin texto (E-206, `docs/sdd/ENTRADA.md:2026`) y la concurrencia de la propagación
-(E-194, `docs/sdd/ENTRADA.md:1966`); y decidir si se corrige que anular una remisión y sincronizar el estado no
-compartan transacción (E-186, `docs/sdd/ENTRADA.md:1926`). Y, sin destino asignado a propósito, que la gestión de
-equipos busque el serial con su propio patrón (E-200, `docs/sdd/ENTRADA.md:1996`).
+incluya una segunda liberación sin texto (E-206, `docs/sdd/ENTRADA.md:2026` en `a729a371`) y la concurrencia de la propagación
+(E-194, `docs/sdd/ENTRADA.md:1966` en `a729a371`); y decidir si se corrige que anular una remisión y sincronizar el estado no
+compartan transacción (E-186, `docs/sdd/ENTRADA.md:1926` en `a729a371`). Y, sin destino asignado a propósito, que la gestión de
+equipos busque el serial con su propio patrón (E-200, `docs/sdd/ENTRADA.md:1996` en `a729a371`).
 
 ---
 

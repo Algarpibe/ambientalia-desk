@@ -1,7 +1,7 @@
 # Diseño: la creación del 49 en el fixture de septiembre es el campo manual
 
 Tanda F1F-05 (`cierra: no`). Entradas: `proposal.md` (S-1 a S-5) y `specs/kpis/spec.md` (MODIFIED RQ-KP-38 y RQ-KP-42).
-Decisión: `decision/f1f05-creacion-del-49-campo-manual` (`openspec/config.yaml:5321-5344`). Las líneas citadas se leyeron en el
+Decisión: `decision/f1f05-creacion-del-49-campo-manual` (`openspec/config.yaml:5321-5344` en `a729a371`). Las líneas citadas se leyeron en el
 worktree sobre `186c2fe4`; las que el apply cambia de contenido llevan el ancla «en `186c2fe4`».
 
 ## Enfoque técnico
@@ -64,7 +64,7 @@ aceptación existente ya discrimina (D3). La del 998 (`apps/desk/server/routes/i
 | M1 | `:60` vuelve a `t.creado` | Rojo en 940 y 941, igual que el paso rojo. El 972 NO lo caza: su celda de Gerencia es `null` y no se compara (filtro de `apps/desk/server/routes/indicadoresSeptiembre.test.ts:47`; celda vacía en el CSV de RQ-KP-42) |
 | M2 (regla 2) | quitar `'fechaCreacionTicket'` de `:19` | Rojo en la prueba de claves (`apps/desk/server/routes/indicadoresSeptiembre.test.ts:55-63`) en los trece |
 
-La cifra 84.6 coincide con el ensayo de producción del 24/10 (`openspec/config.yaml:5324-5325`). Aritmética de lunes a viernes
+La cifra 84.6 coincide con el ensayo de producción del 24/10 (`openspec/config.yaml:5324-5325` en `a729a371`). Aritmética de lunes a viernes
 hasta el 28/05: del 07/05 salen 15, del 20/05 salen 6 y del 21/05 salen 5. La mutación 1 de la regla (posición) no aplica: no
 hay guarda nueva.
 
@@ -78,7 +78,7 @@ que enfrentar al servidor. La regla de dominio del 49 sigue en `packages/shared/
 Ninguna línea se desplaza (D1, D2, S-2), así que se comprueba qué AFIRMA cada cita, no sólo dónde cae:
 
 - **Vivas, caso A:** `openspec/specs/kpis/spec.md:1776` (cita `:55-63`, el sembrador) sigue cierta.
-  `openspec/config.yaml:5335` nombra el fichero sin línea.
+  `openspec/config.yaml:5335` en `a729a371` nombra el fichero sin línea.
 - **Archivadas, caso B (no se tocan):** en la carpeta archivada de `comparacion-juzga-variante`, el `design.md` (línea 111,
   ids sintéticos en la 60: sigue cierta), el `proposal.md` (línea 97: sembrador y lista de columnas), la spec delta (línea 199)
   y el `verify-report.md` (línea 61, `idDe`); en la de `poblacion-cierre-variante-47-51`, el `verify-report.md` (línea 75, los

@@ -138,8 +138,8 @@ Los detectores discriminan: M1 cae sólo en sincronización; M2 cae en lista, co
 - `openspec/specs/tickets-core/spec.md:2129` en `06a6dff3`: ver arriba; el delta la corrige.
 - `openspec/specs/zoho-sync/spec.md:936` (nombra `entradasActuales`, rango `apps/desk/server/db/sla.ts:88-95`): sigue cierta, la consulta está en esas líneas.
 - `openspec/specs/zoho-sync/spec.md:226` (cita `apps/desk/server/db/estadoPorRemision.ts:41`): la `:41` es la guarda `if (actual === undefined || …)`; lo que cambió es la `:40`. Cierta.
-- `openspec/config.yaml:5357` cita `packages/zoho-sync/src/db/mappers.ts:47` para «la sincronización usa la función»: cierta desde este cambio.
-- Barrido propio de las citas al mapeador y a los lectores de `repo.ts` fuera de `openspec/changes/archive` y de este cambio: sólo aparecen tres citas vivas (`openspec/config.yaml:5357`, `openspec/specs/tickets-core/spec.md:2129` en `06a6dff3`, `openspec/specs/zoho-sync/spec.md:1374`), exactamente las que analiza apply-progress. «Ninguna línea se movió» se confirma: el diff de producción es una línea por una línea salvo `packages/shared/src/index.ts:54`.
+- `openspec/config.yaml:5357` en `a729a371` cita `packages/zoho-sync/src/db/mappers.ts:47` para «la sincronización usa la función»: cierta desde este cambio.
+- Barrido propio de las citas al mapeador y a los lectores de `repo.ts` fuera de `openspec/changes/archive` y de este cambio: sólo aparecen tres citas vivas (`openspec/config.yaml:5357` en `a729a371`, `openspec/specs/tickets-core/spec.md:2129` en `06a6dff3`, `openspec/specs/zoho-sync/spec.md:1374`), exactamente las que analiza apply-progress. «Ninguna línea se movió» se confirma: el diff de producción es una línea por una línea salvo `packages/shared/src/index.ts:54`.
 - `openspec/changes/archive/2026-10-25-normalizar-estados-zoho/proposal.md:17` quedó anclada en `f5465799` (caso B).
 
 ### Coherence (Design)

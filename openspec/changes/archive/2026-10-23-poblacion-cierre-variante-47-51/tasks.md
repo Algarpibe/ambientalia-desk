@@ -93,7 +93,7 @@ La rama NO toca `openspec/config.yaml`; lo escribe el orquestador en `main` tras
 | # | Qué | Caso |
 |---|---|---|
 | O-1 | `openspec/config.yaml:4096` cita `MOTIVO_H1` en `:88`: nombrar la revisión en la cita (`MOTIVO_H1`, `:88` en `f0eb92c4`) y decir que hoy es `MOTIVO_CIERRE` | B |
-| O-2 | `openspec/config.yaml:5199-5200` citan `:59` y `:67` de `apps/desk/server/indicadores.ts`: anclarlas «en `f0eb92c4`» | B |
+| O-2 | `openspec/config.yaml:5199-5200` en `a729a371` citan `:59` y `:67` de `apps/desk/server/indicadores.ts`: anclarlas «en `f0eb92c4`» | B |
 
 ## Tareas de persona — fuera del recuento
 

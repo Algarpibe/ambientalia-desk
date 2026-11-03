@@ -92,7 +92,7 @@ Supuestos de diseño (reversibles, a la lista semanal):
 |---|---|---|
 | `tickets-core/spec.md:4264` → `packages/shared/src/analisis.ts:59` | condición única | intacta; las medias nuevas cuelgan de ella |
 | `kpis/spec.md:648` → `packages/shared/src/analisis.ts:17-95` | rango de `computeAnalisis` | los dos extremos se quedan; prohíbe tocarla a `kpis`, no a esta capacidad |
-| `ENTRADA.md:1284` → `packages/shared/src/analisis.ts:66` | la promesa | intacta (`:65` crece a lo ancho) |
+| `ENTRADA.md:1284` en `a729a371` → `packages/shared/src/analisis.ts:66` | la promesa | intacta (`:65` crece a lo ancho) |
 | `kpis/spec.md:462` → `apps/desk/server/routes/analisis.ts:11` | `requireSuperAdmin` | fichero no tocado |
 | `TRASPASO_2026-10-08.md:1108` → `apps/desk/server/analisis.ts:13`; `equipos.ts:163` → `analisis.ts:17` | `SELECT`, `JOIN clients` | intactas |
 | `TRASPASO_2026-10-08.md:1151` → `apps/desk/server/analisis.ts:26` en `73bd52f` | anclada | caso B, no se toca |

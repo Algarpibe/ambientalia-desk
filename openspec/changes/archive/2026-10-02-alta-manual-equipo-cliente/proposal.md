@@ -17,7 +17,7 @@ Detalle medido en `exploration.md` de esta carpeta.
 Hoy la recepción se bloquea con un cliente que no está en Books: el alta exige un cliente existente
 (`apps/desk/server/services/ticketService.ts:84`, `:89-90`) y, salvo en «Equipo nuevo», un equipo ya
 registrado (`:24`). Zoho Desk permite registrar cualquier equipo; sin esto se pierde paridad el 14/12.
-Fuentes: E-129 (`docs/sdd/ENTRADA.md:1555`), `decision/orden-ejecucion-encargo-01-10` (b)
+Fuentes: E-129 (`docs/sdd/ENTRADA.md:1555` en `a729a371`), `decision/orden-ejecucion-encargo-01-10` (b)
 (`openspec/config.yaml:3526`) y el maestro (`…R08.4.md:2529-2535`).
 
 ## Alcance

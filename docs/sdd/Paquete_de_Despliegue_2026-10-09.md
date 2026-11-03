@@ -105,7 +105,7 @@ tiene interruptor**: publicar `473665b` es publicarla.
 
 Hacen falta, antes del Deploy:
 
-1. **La confirmación de Gerencia a E-158** (`docs/sdd/ENTRADA.md:1782`). Está registrada como **pendiente, no como
+1. **La confirmación de Gerencia a E-158** (`docs/sdd/ENTRADA.md:1782` en `a729a371`). Está registrada como **pendiente, no como
    decisión** (`openspec/config.yaml:3889-3891`), con esta respuesta textual (`openspec/config.yaml:3897`):
    «[Pendiente de confirmar con Servicio Técnico.] Si equipo nuevo no lleva remisión de entrada: excepción por
    clasificación «Equipo nuevo», construida antes de publicar.» Si la confirmación es «no la lleva», hace falta código
@@ -292,7 +292,7 @@ la sentencia 73 (`packages/zoho-sync/src/db/schema.sql:807`).
 ### (l) F1F-05 — en producción antes del viernes 13/11/2026
 
 F1F-05 tiene que estar desplegada **antes del viernes 13/11/2026** para medir las cuatro semanas desde el 16/11
-(`DEPLOY.md:270-271`; E-181, `docs/sdd/ENTRADA.md:1899`). Va en el mismo código que la guarda de F1B-03 y no puede
+(`DEPLOY.md:270-271`; E-181, `docs/sdd/ENTRADA.md:1899` en `a729a371`). Va en el mismo código que la guarda de F1B-03 y no puede
 separarse (§7): **esa fecha queda atada a E-158**. Si E-158 no se confirma a tiempo, la única salida es código nuevo,
 otro commit y otro paquete.
 
@@ -919,7 +919,7 @@ paso es largo y no ha cambiado, se remite a él con ruta y línea; la tarea, su 
 - **Los dos recuentos de F1B-03 (tarea 2).** Conectarse a `desk` como siempre —**sin pegar la cadena de conexión
   ni la contraseña en ningún chat, captura ni documento**—, ejecutar enteros los dos ficheros de §0 (c) y devolver: de
   la primera, el total de `sin_remision_vigente` y, aparte, las filas de «Equipo nuevo» y las de `Remisión creada`
-  (esta última es E-185, `docs/sdd/ENTRADA.md:1921`, informativa); de la segunda, `llegaron` y
+  (esta última es E-185, `docs/sdd/ENTRADA.md:1921` en `a729a371`, informativa); de la segunda, `llegaron` y
   `sin_remision_al_llegar` (`docs/sdd/Consulta_Recuento_Ingresado_sin_remision_2026-09-25.sql:68-75`).
 - **Las dos lecturas (tarea 3).** En `desk`, sólo lectura:
   `SELECT to_regclass('public.clientes_provisionales'), to_regclass('public.prioridad_ajustes');`. Devolver «las dos
@@ -1045,7 +1045,7 @@ sólo lo que toca al corte:
 
 ### 6.8 · Quien administra n8n
 
-**Antes — PARADA de F1B-04:** E-170 (2), la etiqueta lleva el código del ticket (`docs/sdd/ENTRADA.md:1842`).
+**Antes — PARADA de F1B-04:** E-170 (2), la etiqueta lleva el código del ticket (`docs/sdd/ENTRADA.md:1842` en `a729a371`).
 
 ### 6.9 · Quien publica
 

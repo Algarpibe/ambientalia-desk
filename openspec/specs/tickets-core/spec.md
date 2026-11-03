@@ -2107,7 +2107,7 @@ su estado equivalente en la aplicación o el resultado «sin equivalencia». El 
    «Pendiente»**, que está en `ESTADOS` y se decide por las reglas 3 y 4. La tabla **MUST** consumir `ESTADOS`
    y **MUST NOT** duplicar la lista de nombres (regla invariable 13, punto 1).
 2. **`Entregado` → `Finalizado`.** `Entregado` no es uno de los 23. Su equivalente **SHALL** ser `Finalizado`
-   (`docs/sdd/ENTRADA.md:1349`, `docs/sdd/ENTRADA.md:1385`), y la regla **SHALL** declarar que el `status_type`
+   (`docs/sdd/ENTRADA.md:1350`, `docs/sdd/ENTRADA.md:1386`), y la regla **SHALL** declarar que el `status_type`
    destino es `Closed` y que **cierra** el ticket: su `closed_time` se decide con la fecha de Zoho si el ticket la
    tiene o, si no, con el instante de la migración, marcada como tal (RQ-TC-64; `decision/migracion-e207-e212`).
    Esto sustituye al supuesto S-2 anterior («`closed_time` no se toca»).
@@ -3489,7 +3489,7 @@ capacidad **MUST NOT** escribir en `books.*` ni hacia Zoho.
 
 ### RQ-TC-58 · El estado de garantía de un ticket es un predicado único de `packages/shared`: día de creación contra fin de garantía, en `America/Bogota`
 
-Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`) y maestro R08.4 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`, `[DECIDIDO 30/09/2026]`): el distintivo se calcula por «fecha de creación ≤ fin de garantía», y sin fin registrado se muestra «Garantía sin dato».
+Fuente: E-105 (`docs/sdd/ENTRADA.md:1397-1401`) y maestro R08.4 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`, `[DECIDIDO 30/09/2026]`): el distintivo se calcula por «fecha de creación ≤ fin de garantía», y sin fin registrado se muestra «Garantía sin dato».
 
 El sistema **SHALL** tener **una sola** función pura en `packages/shared` (nombre y fichero los fija el diseño) que, dados el instante de creación del ticket y el fin de garantía del equipo, devuelve exactamente uno de tres valores: `en_garantia`, `sin_dato` o `vencida`.
 
@@ -3538,7 +3538,7 @@ El sistema **SHALL** tener **una sola** función pura en `packages/shared` (nomb
 
 ### RQ-TC-59 · El servidor calcula la marca de garantía del ticket y la entrega en el detalle y en la búsqueda de equipos
 
-Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`); maestro R08.4 (`R08.4.md:1611-1614`).
+Fuente: E-105 (`docs/sdd/ENTRADA.md:1397-1401`); maestro R08.4 (`R08.4.md:1611-1614`).
 
 El detalle del ticket (`GET /api/tickets/:id`) **SHALL** traer la marca de garantía calculada por el servidor con el predicado de `RQ-TC-58` (nombre y forma del campo los fija el diseño). La marca **SHALL** calcularse con una consulta aparte del fin de garantía del equipo del ticket, **sin unir `equipos` en las consultas de tickets** y sin tocar el esquema. Si el ticket no tiene equipo, la marca **SHALL** estar ausente. El fin de garantía **SHALL** leerse como día `YYYY-MM-DD` sin pasar por un `Date` en la zona del proceso. Si la consulta del fin falla, la marca queda sin calcular y la respuesta **MUST** servirse igual (la marca nunca bloquea la lectura).
 
@@ -3588,7 +3588,7 @@ La marca es una vista: **MUST NOT** escribir en la base, ni cambiar el estado de
 
 ### RQ-TC-60 · Aviso al elegir equipo en el alta y sugerencia de «Reporte por garantía» en Notificado; ninguno bloquea ni rellena (verificación manual)
 
-Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`): aviso «al elegir el equipo» y sugerencia en Notificado «sin obligar»; maestro R08.4 (`R08.4.md:1611-1614`; `R08.4.md:1477`, `R08.4.md:4550`: la aplicación sugiere, no obliga).
+Fuente: E-105 (`docs/sdd/ENTRADA.md:1397-1401`): aviso «al elegir el equipo» y sugerencia en Notificado «sin obligar»; maestro R08.4 (`R08.4.md:1611-1614`; `R08.4.md:1477`, `R08.4.md:4550`: la aplicación sugiere, no obliga).
 
 **Aviso en el alta.** Al elegir un equipo existente en `CreateTicket`, el cliente **SHALL** mostrar el aviso «En garantía» si el predicado de `RQ-TC-58`, evaluado con el instante actual y el `finGarantia` que devuelve la búsqueda de equipos, da `en_garantia`, y «Garantía sin dato» si da `sin_dato`; con `vencida`, no muestra nada. Es **informativo**: **MUST NOT** bloquear el alta, rellenar campos ni cambiar la selección. El ticket que se cree recibe la marca del servidor (`RQ-TC-59`). Al dar de alta un **equipo nuevo** desde el ticket **no** hay aviso (supuesto S5: la fecha la teclea el usuario y no hay contrapartida probada en servidor antes de crear).
 
@@ -3630,7 +3630,7 @@ Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`): aviso «al elegir el equipo» y
 
 ### Requirement: RQ-TC-61 · El prefijo del Código Servicio se deduce de la clasificación y del tipo de servicio, y lo impone el servidor
 
-Fuente: `decision/prefijo-de-que-se-deduce` (Gerencia, 2026-10-14; `openspec/config.yaml:4707-4736`). Los cinco
+Fuente: `decision/prefijo-de-que-se-deduce` (Gerencia, 2026-10-14; `openspec/config.yaml:4707-4745`). Los cinco
 prefijos se conservan porque Drive nombra carpetas e informes con ellos; lo que cambia es que ya no se **eligen**.
 
 El sistema **SHALL** tener **una sola** función pura en `packages/shared` (`prefijoDeducido`, en
@@ -3856,7 +3856,7 @@ deducción ni dejar teclear el código o el asunto (hoy: `CreateTicket.tsx:46`, 
 
 ### Requirement: RQ-TC-64 · El cierre de un «Entregado» migrado: fecha de Zoho si existe, si no el instante de la migración, con el origen marcado
 
-Fuente: `decision/migracion-e207-e212` (Gerencia; `openspec/config.yaml:4737-4770`, consecuencia (1) en
+Fuente: `decision/migracion-e207-e212` (Gerencia; `openspec/config.yaml:4746-4779`, consecuencia (1) en
 `:4747-4751`). Supuestos reversibles de `fecha-cierre-migracion`: S-1 (el instante de la migración es uno por
 ejecución), S-2 (la marca es un dato del marcador, no una columna ni una etiqueta visible), S-3 (la fecha de Zoho se
 conserva tal cual) y S-4 (sólo la regla que cierra toca `closed_time`).

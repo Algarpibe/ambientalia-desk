@@ -2,7 +2,7 @@
 
 Delta sobre `openspec/specs/tickets-core/spec.md`. Tanda F1B-03 (segundo cambio, `cierra: si`). Propuesta:
 `openspec/changes/prefijo-deducido-en-el-alta/proposal.md`. Decisión que construye: `decision/prefijo-de-que-se-deduce`
-(Gerencia, 2026-10-14; `openspec/config.yaml:4707-4736`). «La deducción» es la función pura `prefijoDeducido` de
+(Gerencia, 2026-10-14; `openspec/config.yaml:4707-4736` en `a729a371`). «La deducción» es la función pura `prefijoDeducido` de
 `packages/shared/src/ticketCreate.ts`; su nombre y firma los fija el diseño, aquí se exige su comportamiento. Las
 líneas citadas de la spec viva son las de `968bb53`.
 
@@ -237,7 +237,7 @@ cayendo en el grafo de servicio técnico.»)
 
 ### Requirement: RQ-TC-61 · El prefijo del Código Servicio se deduce de la clasificación y del tipo de servicio, y lo impone el servidor
 
-Fuente: `decision/prefijo-de-que-se-deduce` (Gerencia, 2026-10-14; `openspec/config.yaml:4707-4736`). Los cinco
+Fuente: `decision/prefijo-de-que-se-deduce` (Gerencia, 2026-10-14; `openspec/config.yaml:4707-4736` en `a729a371`). Los cinco
 prefijos se conservan porque Drive nombra carpetas e informes con ellos; lo que cambia es que ya no se **eligen**.
 
 El sistema **SHALL** tener **una sola** función pura en `packages/shared` (`prefijoDeducido`, en

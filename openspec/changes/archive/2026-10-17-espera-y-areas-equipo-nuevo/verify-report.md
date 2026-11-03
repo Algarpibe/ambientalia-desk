@@ -44,7 +44,7 @@ Barrido de citas a las líneas cambiadas (`estados.ts:21`, `:28`, `:60`, `:88`, 
 |---|---|
 | `comentariosVigilados.test.ts:95-98`, `sla.test.ts:45`, deltas y tasks del cambio (`estados.ts:21`, `:28`, `:115`, `:101-105`) | A: dicen lo de hoy |
 | `openspec/specs/transitions-st/spec.md:1191` (`estados.ts:28`, «once») | la línea acierta, el texto dice once: previsto en el archive (3.3) |
-| `docs/sdd/ENTRADA.md:2138`, `:2148`; `F1B-09_Auditoria_blueprint_audit-F1B.md:86`, `:265`, `:269`, `:306` | B/C: registro fechado, anterior a E-226; no se tocan |
+| `docs/sdd/ENTRADA.md:2138` en `a729a371`, `:2148` en `a729a371`; `F1B-09_Auditoria_blueprint_audit-F1B.md:86`, `:265`, `:269`, `:306` | B/C: registro fechado, anterior a E-226; no se tocan |
 | `Paquete_de_Despliegue_2026-09-27` a `2026-10-01` (`estados.ts:105`, `transitions.ts:347`) | B: paquetes fechados |
 | `openspec/changes/archive/*` (`estados.ts:21`, `:28`, `:105`; `transitions.ts:348`) | B: archivados; `:348` sigue conteniendo «Campos:» |
 

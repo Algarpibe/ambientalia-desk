@@ -55,7 +55,7 @@ merges, con sus dos padres):
 - **Sus riesgos R1 y R2 —liberar un analizador sin Verificación y sin certificado— ya están CONSTRUIDOS** por
   F1A-03 (§5.1). La guarda de Verificación sólo actúa cuando haya compuestos y gases sembrados (§6).
 - **E-109 y E-110 ya no son decisiones pendientes.** Las dos están decididas desde el 2026-10-01
-  (`docs/sdd/ENTRADA.md:1422`, `docs/sdd/ENTRADA.md:1430`; respuesta en `docs/sdd/ENTRADA.md:1670`). La cola queda
+  (`docs/sdd/ENTRADA.md:1422` en `a729a371`, `docs/sdd/ENTRADA.md:1430` en `a729a371`; respuesta en `docs/sdd/ENTRADA.md:1670` en `a729a371`). La cola queda
   como está construida; en cambio, **la propagación del Top 5 a los tickets abiertos está decidida y NO construida**
   (`openspec/config.yaml:3392-3394`): lo que se publica hace lo contrario de lo decidido (§5.3, R38).
 - **La unión de los tres catálogos pasa de 44 a 41 transiciones** (`packages/shared/src/invariantesGrafo.test.ts:172-174`):
@@ -585,8 +585,8 @@ confirma sin esperar a que nadie mire. Hay que ejecutarlo sentencia a sentencia 
 se ha ejecutado nunca (`docs/sdd/Siembra_Compuestos_y_Gases_Patron_2026-10-01.sql:3-5`).
 
 **R36 · F1B-15: dos decisiones abiertas y un coste sin medir.** Hoy **todo** NIT que ya esté en Books bloquea el
-alta manual, también uno genérico (E-154, `docs/sdd/ENTRADA.md:1761`); y nadie avisa de que un provisional ya
-tiene contacto en Books: el enlace depende de que alguien se acuerde (E-155, `docs/sdd/ENTRADA.md:1766`). Son
+alta manual, también uno genérico (E-154, `docs/sdd/ENTRADA.md:1761` en `a729a371`); y nadie avisa de que un provisional ya
+tiene contacto en Books: el enlace depende de que alguien se acuerde (E-155, `docs/sdd/ENTRADA.md:1766` en `a729a371`). Son
 **alcance pendiente de Gerencia, no bloqueo del despliegue**. Además, cada alta manual con cliente provisional
 lee todos los contactos de Books (`apps/desk/server/db/clientesProvisionales.ts:69-75`); su coste es hipótesis sin
 medir (`openspec/changes/archive/2026-10-02-alta-manual-equipo-cliente/archive-report.md:122-123`).
@@ -726,8 +726,8 @@ gases cambia el taller (R34), así que **quien ejecute pregunta antes a Gerencia
 | **Antes** | Decir cuál de las dos lecturas de la siembra vale | La siembra parcial | §6.1 |
 | Sin orden | **P-1 de `tres-transiciones-cifra-anclada`** — qué pasa con los tickets de servicio en `Pendiente` que gobierna Zoho. Supuesto mientras no conteste: los mueve F1F-01 | El grupo 2 de la migración | `openspec/changes/archive/2026-10-01-tres-transiciones-cifra-anclada/archive-report.md:65` |
 | Sin orden | **Q1/Q2 de `alta-manual-equipo-cliente`** — quién hace el alta manual y si los cinco datos son el mínimo | Cerrar dos supuestos de F1B-15 | `openspec/changes/archive/2026-10-02-alta-manual-equipo-cliente/tasks.md:130` |
-| Sin orden | **E-154** — ¿hay NIT genéricos que no deban bloquear el alta manual? | **Alcance pendiente, no bloquea el despliegue** | `docs/sdd/ENTRADA.md:1761` |
-| Sin orden | **E-155** (P-A) — ¿se construye el aviso de que un provisional ya está en Books? | **Alcance pendiente, no bloquea el despliegue** | `docs/sdd/ENTRADA.md:1766` |
+| Sin orden | **E-154** — ¿hay NIT genéricos que no deban bloquear el alta manual? | **Alcance pendiente, no bloquea el despliegue** | `docs/sdd/ENTRADA.md:1761` en `a729a371` |
+| Sin orden | **E-155** (P-A) — ¿se construye el aviso de que un provisional ya está en Books? | **Alcance pendiente, no bloquea el despliegue** | `docs/sdd/ENTRADA.md:1766` en `a729a371` |
 | Sin orden | Las del paquete anterior que siguen abiertas: los dos rellenos de F1B-11, E-086, E-090, P.4 de `alarmas-horas-habiles`, E-092 y las preguntas 3.b y 3.b.3 | Lo que cada una dice allí | `docs/sdd/Paquete_de_Despliegue_2026-10-01.md:1714-1737` |
 
 *Salen de esta lista respecto al 2026-10-01:* **E-109 y E-110**, decididas (cabecera; R38 y R29).
@@ -917,7 +917,7 @@ llegó a `main` el 2026-10-03 en la fusión `a4bfc85` (cambio `tipo-servicio-tic
 del rango que cubre este paquete. Antes de publicarla hacen falta dos cosas, y las dos son de personas:
 
 1. **La respuesta de Gerencia a E-158** —si la guarda alcanza a los tickets de «Equipo nuevo»—
-   (`docs/sdd/ENTRADA.md:1782`).
+   (`docs/sdd/ENTRADA.md:1782` en `a729a371`).
 2. **Las dos consultas de recuento ejecutadas en producción**, las de
    `docs/sdd/Consulta_Recuento_Habilitables_sin_remision_2026-10-03.sql`.
 
@@ -944,9 +944,9 @@ Las seis columnas son anulables y sin relleno. F1C-11 y F1F-05 no tocan `schema.
 
 **Condiciones de publicación, todas de personas:**
 
-1. **E-158** (F1B-03) — la de arriba (`docs/sdd/ENTRADA.md:1782`).
-2. **E-162** (F1C-11) — dos tareas de persona en producción (`docs/sdd/ENTRADA.md:1802`).
-3. **E-170** (F1B-04) — tareas de persona como condición de despliegue (`docs/sdd/ENTRADA.md:1842`), con la
+1. **E-158** (F1B-03) — la de arriba (`docs/sdd/ENTRADA.md:1782` en `a729a371`).
+2. **E-162** (F1C-11) — dos tareas de persona en producción (`docs/sdd/ENTRADA.md:1802` en `a729a371`).
+3. **E-170** (F1B-04) — tareas de persona como condición de despliegue (`docs/sdd/ENTRADA.md:1842` en `a729a371`), con la
    comprobación de lectura de `DEPLOY.md`, sección «Comprobación de lectura tras desplegar F1B-04».
-4. **E-181** (F1F-05) — tareas de persona (`docs/sdd/ENTRADA.md:1899`). **Tiene fecha:** F1F-05 desplegada antes del
+4. **E-181** (F1F-05) — tareas de persona (`docs/sdd/ENTRADA.md:1899` en `a729a371`). **Tiene fecha:** F1F-05 desplegada antes del
    viernes 13/11/2026 para medir las cuatro semanas desde el 16/11 (`DEPLOY.md:270`).

@@ -2,7 +2,7 @@
 
 ### RQ-TC-58 · El estado de garantía de un ticket es un predicado único de `packages/shared`: día de creación contra fin de garantía, en `America/Bogota`
 
-Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`) y maestro R08.4 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`, `[DECIDIDO 30/09/2026]`): el distintivo se calcula por «fecha de creación ≤ fin de garantía», y sin fin registrado se muestra «Garantía sin dato».
+Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400` en `a729a371`) y maestro R08.4 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`, `[DECIDIDO 30/09/2026]`): el distintivo se calcula por «fecha de creación ≤ fin de garantía», y sin fin registrado se muestra «Garantía sin dato».
 
 El sistema **SHALL** tener **una sola** función pura en `packages/shared` (nombre y fichero los fija el diseño) que, dados el instante de creación del ticket y el fin de garantía del equipo, devuelve exactamente uno de tres valores: `en_garantia`, `sin_dato` o `vencida`.
 
@@ -51,7 +51,7 @@ El sistema **SHALL** tener **una sola** función pura en `packages/shared` (nomb
 
 ### RQ-TC-59 · El servidor calcula la marca de garantía del ticket y la entrega en el detalle y en la búsqueda de equipos
 
-Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`); maestro R08.4 (`R08.4.md:1611-1614`).
+Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400` en `a729a371`); maestro R08.4 (`R08.4.md:1611-1614`).
 
 El detalle del ticket (`GET /api/tickets/:id`) **SHALL** traer la marca de garantía calculada por el servidor con el predicado de `RQ-TC-58` (nombre y forma del campo los fija el diseño). La marca **SHALL** calcularse con una consulta aparte del fin de garantía del equipo del ticket, **sin unir `equipos` en las consultas de tickets** y sin tocar el esquema. Si el ticket no tiene equipo, la marca **SHALL** estar ausente. El fin de garantía **SHALL** leerse como día `YYYY-MM-DD` sin pasar por un `Date` en la zona del proceso. Si la consulta del fin falla, la marca queda sin calcular y la respuesta **MUST** servirse igual (la marca nunca bloquea la lectura).
 
@@ -101,7 +101,7 @@ La marca es una vista: **MUST NOT** escribir en la base, ni cambiar el estado de
 
 ### RQ-TC-60 · Aviso al elegir equipo en el alta y sugerencia de «Reporte por garantía» en Notificado; ninguno bloquea ni rellena (verificación manual)
 
-Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`): aviso «al elegir el equipo» y sugerencia en Notificado «sin obligar»; maestro R08.4 (`R08.4.md:1611-1614`; `R08.4.md:1477`, `R08.4.md:4550`: la aplicación sugiere, no obliga).
+Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400` en `a729a371`): aviso «al elegir el equipo» y sugerencia en Notificado «sin obligar»; maestro R08.4 (`R08.4.md:1611-1614`; `R08.4.md:1477`, `R08.4.md:4550`: la aplicación sugiere, no obliga).
 
 **Aviso en el alta.** Al elegir un equipo existente en `CreateTicket`, el cliente **SHALL** mostrar el aviso «En garantía» si el predicado de `RQ-TC-58`, evaluado con el instante actual y el `finGarantia` que devuelve la búsqueda de equipos, da `en_garantia`, y «Garantía sin dato» si da `sin_dato`; con `vencida`, no muestra nada. Es **informativo**: **MUST NOT** bloquear el alta, rellenar campos ni cambiar la selección. El ticket que se cree recibe la marca del servidor (`RQ-TC-59`). Al dar de alta un **equipo nuevo** desde el ticket **no** hay aviso (supuesto S5: la fecha la teclea el usuario y no hay contrapartida probada en servidor antes de crear).
 

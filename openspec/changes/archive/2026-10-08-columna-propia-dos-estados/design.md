@@ -100,7 +100,7 @@ abreviadas, en los ficheros que ya citan el módulo. Citas cuyo TEXTO deja de se
 | `openspec/specs/transitions-equipo-nuevo/spec.md:264-267`, escenario `:269-272`, título `:256` | delta de `sdd-spec` |
 | `openspec/specs/transitions-soporte-remoto/spec.md:108-109` | delta de `sdd-spec` |
 | `openspec/config.yaml:4193-4195` («dos pruebas que hoy afirman lo contrario», «hoy lo prohíben») | **nada**: traspaso a Supervisión |
-| `docs/sdd/ENTRADA.md:2133` («no tienen columna») | **nada**: traspaso a Supervisión |
+| `docs/sdd/ENTRADA.md:2133` en `a729a371` («no tienen columna») | **nada**: traspaso a Supervisión |
 | `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:258-260` (B-4, «caen en Otros») | **nada**: traspaso a Supervisión |
 
 Los paquetes de despliegue fechados y `openspec/changes/archive/` son caso B: no se tocan.

@@ -113,7 +113,7 @@ bloque de la spec anterior a la fusión se anclaron en `a1fb802` (caso B). Abrev
 | Tarea | Dueño | Dónde queda escrito |
 |---|---|---|
 | Nombrar al suplente | Gerencia | `DEPLOY.md:665` |
-| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` |
+| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` en `a729a371` |
 | Cotejo una a una de la hoja de Google | Persona con acceso a la hoja | `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive-report.md:5` |
 | Desplegar `ambientalia-desk` con este cambio | Alfonso | este informe |
 | Ejecución del 12/12 en producción | Gerencia o su suplente | `DEPLOY.md:663-693` |

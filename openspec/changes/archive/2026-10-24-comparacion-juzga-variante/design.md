@@ -39,7 +39,7 @@ desplaza. Sólo el `.tsx` cambia de longitud.
 
 | Opción | Decisión |
 |---|---|
-| Misma línea + tipo al final | **Elegida**: la línea 9 sigue siendo `MENSAJE_SIN_PARES` (la cita `openspec/config.yaml:5290`, que la rama no puede tocar) y la 90 la firma de `compararIndicadores` (la cita `openspec/specs/kpis/spec.md:1160`). Ninguna cita viva se reapunta |
+| Misma línea + tipo al final | **Elegida**: la línea 9 sigue siendo `MENSAJE_SIN_PARES` (la cita `openspec/config.yaml:5290` en `a729a371`, que la rama no puede tocar) y la 90 la firma de `compararIndicadores` (la cita `openspec/specs/kpis/spec.md:1160`). Ninguna cita viva se reapunta |
 | Tipo `LecturaTickets` declarado antes de la línea 40 | Rechazada: empuja la 90 y obliga a reapuntar la cita de la spec viva y la de `openspec/config.yaml`, que está fuera del alcance de la rama |
 | `ticketsVariante` dentro de `tickets` (`tickets.variante`) | Rechazada: cambia la forma de `tickets`, que el proposal promete intacta (S-1) |
 
@@ -194,8 +194,8 @@ Con D1-D6, NO se desplaza ninguna línea de shared, del `lib`, de `septiembre202
 `ComparacionExportacion.tsx` crece (≈ +5 desde `:51`). Barrido hecho en `e1a92b59` (Grep de los seis patrones del encargo, con
 `openspec/changes/archive/`, `docs/`, `DEPLOY.md` y `openspec/config.yaml`):
 
-- **Vivas fuera del cambio, sin reparar:** `openspec/config.yaml:5290` (cita la línea 9 de shared) y
-  `openspec/specs/kpis/spec.md:1160` (la 90) no se mueven. `openspec/config.yaml:5283`, `openspec/specs/kpis/spec.md:1445`, la línea
+- **Vivas fuera del cambio, sin reparar:** `openspec/config.yaml:5290` en `a729a371` (cita la línea 9 de shared) y
+  `openspec/specs/kpis/spec.md:1160` (la 90) no se mueven. `openspec/config.yaml:5283` en `a729a371`, `openspec/specs/kpis/spec.md:1445`, la línea
   1525 de esa spec y las cuatro de `DEPLOY.md` (731, 735, 744, 745) citan la RUTA `apps/desk/server/routes/indicadoresComparacion.ts`,
   que no se toca. `openspec/specs/kpis/spec.md:1440` cita la línea 13 del `lib`, intacta. `openspec/specs/kpis/spec.md:1636-1637`
   citan las tres caracterizaciones, que siguen en sus líneas.

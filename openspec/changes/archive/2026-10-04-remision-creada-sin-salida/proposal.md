@@ -82,7 +82,7 @@ estados queda como comportamiento actual sin decidir (§6, hueco H-1), no como r
 - La guarda `exigirRemisionVigente`: «se mantiene sin excepciones» (`openspec/config.yaml:2417`). No se toca.
 - Una guarda de estado en el alta (enfoque a'): sería un punto más de IV-12 y cambia alcance.
 - `TRANSITIONS`, las dos constantes sin botón (`transitions.ts:150-151`), `estados.ts` y `estadoPorRemision.ts`.
-- E-158 (`docs/sdd/ENTRADA.md:1782`) e IV-12.
+- E-158 (`docs/sdd/ENTRADA.md:1782` en `a729a371`) e IV-12.
 - Reconciliar tickets en producción y ejecutar recuentos.
 - La transacción anulación/sincronización (origen 2).
 
@@ -190,7 +190,7 @@ Bajo `strict_tdd`, los criterios 5 y 6 nacen verdes (el cliente y el servidor ya
 | S-3 | No se añade guarda de estado al alta | Cambio aparte, si Gerencia lo pide |
 | S-4 | La prueba de servidor fija sólo los tres orígenes, no «cualquier estado» | Ampliar o invertir cuando se decida H-1 |
 
-## 11 · Preguntas para la bandeja (al cerrar; siguiente libre E-184, tras `docs/sdd/ENTRADA.md:1909`)
+## 11 · Preguntas para la bandeja (al cerrar; siguiente libre E-184, tras `docs/sdd/ENTRADA.md:1909` en `a729a371`)
 
 - **E-184 · pregunta · Gerencia.** ¿Debe el servidor impedir crear una remisión de entrada fuera de la fase inicial
   (H-1)? Hoy sólo lo impide el botón. Desbloquea: cerrar el hueco de la regla 13; cambia qué error ve el técnico.

@@ -81,7 +81,7 @@ situación queda desactualizada. Se entrega como texto la corrección 26 de
    no de una segunda tabla de áreas (regla invariable 13, molde H5).
 8. La fila de creación y el marcador de la migración (`packages/shared/src/migracionTickets.ts:14-16`) **no**
    producen línea de traspaso. El marcador se reconoce por su identificador, no por el destino vacío: dos de sus
-   reglas sí llevan destino (`docs/sdd/ENTRADA.md:2092`).
+   reglas sí llevan destino (`docs/sdd/ENTRADA.md:2092` en `a729a371`).
 
 **Fuera, con dueño (R-3)**
 

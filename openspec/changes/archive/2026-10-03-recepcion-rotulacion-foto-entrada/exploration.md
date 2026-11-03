@@ -18,7 +18,7 @@ worktree** (rama `recepcion-rotulacion-foto-entrada`, de `f55b7d9`). Lo que la c
   obligatorio). «Servicio Técnico puede ajustar la lista antes de construirla; después, los cambios los hace el
   Director Técnico.» Maestro: `R08.4.md:1240`. La consecuencia (5) de esa decisión dice: «Es dato mantenible, no
   constante del código» (`openspec/config.yaml:2947`).
-- **Foto obligatoria** — E-123 (`docs/sdd/ENTRADA.md:1514-1521`): «En la remisión de entrada, el registro
+- **Foto obligatoria** — E-123 (`docs/sdd/ENTRADA.md:1514-1521` en `a729a371`): «En la remisión de entrada, el registro
   fotográfico es siempre obligatorio, haya o no novedad: al menos una foto del equipo, una de los accesorios y una
   del embalaje con el que llegó. Si se marca una novedad, se añade su foto como hasta ahora.» Maestro:
   `R08.4.md:1241` («más la foto de cada novedad marcada») y `R08.4.md:2276-2281`. La mitad de SALIDA queda fuera

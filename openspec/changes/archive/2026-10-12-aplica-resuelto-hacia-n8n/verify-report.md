@@ -94,7 +94,7 @@ Barrido de `remisionWebhook` y `recepcion` con `.ts:N` sobre todo el repositorio
 
 ## Cabecera R-1, `cierra: no` y qué falta para cerrar F1B-04
 
-`openspec/changes/aplica-resuelto-hacia-n8n/proposal.md:1-9`: siete campos (`tanda: F1B-04`, `motivo`, `capacidad`, `maestro`, `cierra: no`, `toca_maestro: no`, `origen_cabecera: declarada`). Coherente: la fila F1B-04 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:84` y `:211`) sigue en curso. Falta, en una línea: contenido y talla de lo que la fila deja fuera (foto por accesorio, SKU como número de parte, E-163 a E-167), la decisión de Gerencia de E-167 (`docs/sdd/ENTRADA.md:1827`, abierta) y la publicación a mano en n8n de este cambio.
+`openspec/changes/aplica-resuelto-hacia-n8n/proposal.md:1-9`: siete campos (`tanda: F1B-04`, `motivo`, `capacidad`, `maestro`, `cierra: no`, `toca_maestro: no`, `origen_cabecera: declarada`). Coherente: la fila F1B-04 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:84` y `:211`) sigue en curso. Falta, en una línea: contenido y talla de lo que la fila deja fuera (foto por accesorio, SKU como número de parte, E-163 a E-167), la decisión de Gerencia de E-167 (`docs/sdd/ENTRADA.md:1827` en `a729a371`, abierta) y la publicación a mano en n8n de este cambio.
 
 ## Tareas
 

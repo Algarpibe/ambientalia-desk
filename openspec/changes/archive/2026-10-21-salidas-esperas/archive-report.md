@@ -110,7 +110,7 @@ esa decisión. S-23 (`sin_pieza_en_almacen` sin regla de ejecutor) y S-24 (la al
 - **R-7:** el discriminador de `packages/shared/src/estados.ts:131-140` sigue hablando de «la única salida» y de «un alta en
   otro sistema», desfasado con c3. Los comentarios de la lista (`:154`, `:158`) sí se corrigieron en sitio.
 - **Corrección 37** para el maestro (M1.3.4), al final de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`.
-- **Cita reparada** (caso B): `docs/sdd/ENTRADA.md:2148` ahora ancla `estados.ts:144-145` en `24b86092`. ENTRADA.md es uno de
+- **Cita reparada** (caso B): `docs/sdd/ENTRADA.md:2148` en `a729a371` ahora ancla `estados.ts:144-145` en `24b86092`. ENTRADA.md es uno de
   los ficheros de Supervisión con cambios sin commitear en `main`: la fusión tendrá que tratarlo como `openspec/config.yaml`.
 - **Plazos provisionales:** 79/31/20/13 salen de `medicion/p90-esperas-2026-10-21`, muestras de 12 a 40 estancias, todas de
   Zoho. Se recalculan con medición nueva y clave propia.

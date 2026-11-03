@@ -156,7 +156,7 @@ completas y abreviadas por nombre de todo el repositorio cuyo rango toca una lí
   (`config.ts:125` sigue leyendo `CONTROL_CALIDAD_LIBERACION` y `SALIDAS_ESPERAS`); `openspec/specs/derivacion-avisos/spec.md:384-385`
   (`createSync` en `sync.ts:62` y el cableado de `index.ts:21-23` siguen ahí); `openspec/specs/trazas/spec.md:509` (la sentencia de
   `repo.ts:97-103` sigue siendo el `INSERT` de `upsertConversation`); los cinco paquetes de despliegue que citan `index.ts:23` como
-  cableado del aviso de discrepancia (sigue en esa línea). Ancladas: `docs/sdd/ENTRADA.md:2048` (`9822bd7`) y
+  cableado del aviso de discrepancia (sigue en esa línea). Ancladas: `docs/sdd/ENTRADA.md:2048` en `a729a371` (`9822bd7`) y
   `docs/sdd/Paquete_de_Despliegue_2026-09-27.md:77` (`dcb5c99`). Históricas por fecha del documento, caso B sin ancla:
   `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:292` («contaba DIEZ», en pasado) y `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:474`
   («26 sin calificar», hoy 30). No se tocan: son registros fechados.

@@ -10,7 +10,7 @@ de estas tres cosas, evaluadas **en este orden**:
 
 1. **Rotulado:** `rotulado_at` es `NULL`.
 2. **Fotos mínimas:** no hay al menos una foto de cada categoría `equipo`, `accesorios` y `embalaje`. El registro
-   fotográfico es siempre obligatorio, haya o no novedad (E-123, `docs/sdd/ENTRADA.md:1515`; maestro,
+   fotográfico es siempre obligatorio, haya o no novedad (E-123, `docs/sdd/ENTRADA.md:1515` en `a729a371`; maestro,
    `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1241`), con dos excepciones por
    casilla (RQ-RE-38): la foto de `accesorios` **MUST NOT** exigirse si la remisión lleva «Llegó sin accesorios»
    (`sin_accesorios_at` no nulo), ni la de `embalaje` si lleva «Llegó sin embalaje» (`sin_embalaje_at` no nulo).

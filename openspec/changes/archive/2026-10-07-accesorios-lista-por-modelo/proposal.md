@@ -71,7 +71,7 @@ El maestro vigente lo sitúa en M1.2
   tiene fichero, y los requisitos caben en `remisiones` (a continuación de RQ-RE-31,
   `openspec/specs/remisiones/spec.md:1441`), como hizo RQ-RE-29 (`openspec/specs/remisiones/spec.md:1346`). RQ-RE-03
   (`openspec/specs/remisiones/spec.md:78`) se amplía con el detalle.
-- E-165 («Falta un accesorio» y su foto, `docs/sdd/ENTRADA.md:1817`) y E-166 (`docs/sdd/ENTRADA.md:1822`) siguen
+- E-165 («Falta un accesorio» y su foto, `docs/sdd/ENTRADA.md:1817` en `a729a371`) y E-166 (`docs/sdd/ENTRADA.md:1822` en `a729a371`) siguen
   abiertas: son preguntas de Gerencia.
 
 ## Esta tanda NO cierra F1B-04
@@ -79,7 +79,7 @@ El maestro vigente lo sitúa en M1.2
 `cierra: no`. De la fila quedan, tras este cambio:
 
 - la **mitad de salida de E-123** (fotos obligatorias en la remisión de salida), cuyo destino es una fila condicionada
-  (`docs/sdd/ENTRADA.md:1693`);
+  (`docs/sdd/ENTRADA.md:1693` en `a729a371`);
 - la **foto por accesorio** y la confirmación del **número de parte**, que esta tanda declara sin resolver;
 - las preguntas abiertas E-163 a E-167.
 

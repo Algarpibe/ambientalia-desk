@@ -43,10 +43,10 @@ pg-mem acepta `max(modified_time)` con `WHERE id NOT LIKE $1 AND managed_by_app 
 
 `git diff 9822bd7 -U0 -- packages/zoho-sync/src/sync.ts`: un hunk en 174-176 (3 líneas por 3) y uno que añade 76 líneas tras la 358. Ninguna línea existente se movió.
 
-Barrido de citas a `sync.ts` (`git grep`, sin `archive/`): sólo caen sobre 173-177 `ENTRADA.md:2048` (caso C, anclada a `9822bd7` y con qué la superó),
+Barrido de citas a `sync.ts` (`git grep`, sin `archive/`): sólo caen sobre 173-177 `ENTRADA.md:2048` en `a729a371` (caso C, anclada a `9822bd7` y con qué la superó),
 `proposal.md:15` y `:65` (caso B, ancladas a `9822bd7`) y `design.md:57` (caso B, anclada igual: cita la frase de ENTRADA). `F0-00_Baseline_as-built.md:121`
 (`170-174`, ya anclada a `17ddfec`) no se toca. El resto de citas a `sync.ts` apunta a líneas que no se movieron. Segundo pase: `spec.md:743`, `spec.md:264-265`,
-`ENTRADA.md:1270` y el comentario de `hubSync.test.ts:154` siguen ciertos (no afirman «página 1»). `DEPLOY.md`: una frase añadida al final (tarea 5.4).
+`ENTRADA.md:1270` en `a729a371` y el comentario de `hubSync.test.ts:154` siguen ciertos (no afirman «página 1»). `DEPLOY.md`: una frase añadida al final (tarea 5.4).
 
 ## Medida del intento (tarea 5.5)
 

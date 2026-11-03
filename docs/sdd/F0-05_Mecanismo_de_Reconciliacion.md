@@ -78,7 +78,9 @@ Un comando que escribe **un solo fichero**, `docs/sdd/RECONCILIACION.md`, con la
 
 **La comprobación 5 necesita una lista, y es la única parte que exige criterio humano.** Se escribe una vez, en `openspec/config.yaml` bajo una clave nueva `cifras_ancladas`, con esta forma: qué número, dónde lo dice el maestro, de dónde se saca el del código, y si divergir es un error o una diferencia legítima de criterio —las esperas son el segundo caso: el maestro cuenta *estados sin salida de emergencia* y el código registra *estados cuya espera es externa*, y el problema no es que difieran sino que **llevan el mismo nombre y nadie lo escribió**.
 
-### 2.b · Semántico — el parte, lunes y jueves 07:00
+### 2.b · Semántico — el parte, martes y viernes 8:30 a. m. (hora de Bogotá) · *hasta el 03/10/2026: lunes y jueves 07:00*
+
+> **Corrección de Gerencia, 03/10/2026 (panel, apartado 07 · `docs/sdd/ENTRADA.md` → E-234).** Desde el 03/10/2026 el parte de desvíos corre los **martes y viernes a las 8:30 a. m., hora de Bogotá**. Lo que este apartado y la tarea 8 decían el 17/09 —lunes y jueves 07:00— se conserva como histórico; lo supera esta corrección. La tarea programada ya estaba cambiada cuando se registró (corte del 06/10/2026).
 
 Tarea programada que corre fuera de la terminal, con acceso a `docs/sdd` y `openspec`. En cada corte:
 
@@ -90,7 +92,7 @@ Tarea programada que corre fuera de la terminal, con acceso a `docs/sdd` y `open
 
 **Regla del parte:** cada desvío va con el comando que lo comprueba. Sin desvíos, el parte es una línea. Un parte que no cabe en una página significa que el corte anterior falló, y eso se dice en el propio parte.
 
-**Por qué lunes y jueves, y no «tiempo real».** Un observador que mire cada commit no sirve: el desvío no se ve en un commit, se ve en el agregado. El lunes prepara la semana; el jueves deja a Gerencia lo pendiente antes del fin de semana. Latencia de horas, que es la útil.
+**Por qué lunes y jueves, y no «tiempo real».** Un observador que mire cada commit no sirve: el desvío no se ve en un commit, se ve en el agregado. El lunes prepara la semana; el jueves deja a Gerencia lo pendiente antes del fin de semana. Latencia de horas, que es la útil. *(03/10/2026, Gerencia: la cadencia pasa a martes y viernes 8:30; el criterio —medir el agregado, con latencia de horas— no cambia.)*
 
 ---
 
@@ -144,7 +146,18 @@ Este reparto ya existe de hecho. Escribirlo es lo que lo hace exigible.
 | 5c | Las dos guardas del autocertificado: línea de cobertura en el `archive-report.md`, y marca «sin verificar» en la comprobación 2 | Claude Code (F0-05) | Que `tanda:` no sea una declaración sin contraste |
 | 6 | Construir `npm run reconcile` con las seis comprobaciones | Claude Code (F0-05) | El parte determinista |
 | 7 | Crear `docs/sdd/ENTRADA.md` y sembrarlo | hecho el 17/09 | — |
-| 8 | Tarea programada del parte, lunes y jueves 07:00 | hecho el 17/09 | — |
+| 8 | Tarea programada del parte, ~~lunes y jueves 07:00~~ **martes y viernes 8:30 a. m. (Bogotá) desde el 03/10/2026** (Gerencia, panel; E-234) | hecho el 17/09 · cadencia cambiada el 03/10 | — |
 | 9 | Versionar `docs/sdd` | Gerencia | Que el barrido 6 deje de tener trabajo |
 
 **Talla propuesta de F0-05: S.** Son cinco tareas de fichero y una de script, sin lógica de dominio. Se propone como tanda de Fase 0 aunque F0 esté cerrada, porque es cimiento de método y no de producto: lo mismo que fueron F0-01 a F0-04.
+
+## Regla de escritura en `ENTRADA.md`: no insertar líneas en medio (02/11/2026)
+
+**Desde el 02/11/2026, toda sesión que escriba en `docs/sdd/ENTRADA.md` —el parte programado incluido— añade sin desplazar líneas:**
+
+- Una **traza** de una entrada que ya existe se escribe **al final de la última línea de esa entrada**, en la misma línea, nunca como línea nueva.
+- Una **entrada nueva** va **al final del fichero**.
+- Un cambio de estado en la cabecera (por ejemplo, `~~ABIERTA~~ **RESUELTA**`) se hace en la misma línea.
+- Antes de terminar, comprueba que no ha cambiado el número de línea de nada anterior: `git diff -U0 HEAD -- docs/sdd/ENTRADA.md | grep '^@@'` sólo debe mostrar trozos al final del fichero o líneas modificadas, no líneas añadidas en medio.
+
+**Por qué:** el 02/11/2026, las trazas de supervisión insertadas en medio de `ENTRADA.md` desplazaron sus líneas, y **111 citas a ese fichero desde otros documentos quedaron rotas** (regla de mutación 4). El detector bloqueó el push, y **el commit de los ficheros de supervisión no pudo subirse**. La terminal los commitea junto con la reparación de esas citas después de 1G-01. Regla pedida por el analista y confirmada por Gerencia el 02/11/2026 en la conversación de supervisión.

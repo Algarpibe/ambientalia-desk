@@ -13,7 +13,7 @@ origen_cabecera: declarada
 ## 1. Qué fila atiende
 
 F1C-01 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:99`), ya cerrada por el archivo de `anulado-con-motivo`.
-Respaldo: `decision/f1c01-motivos-esperas` (`openspec/config.yaml:5030-5047`), que aclara `decision/c3-salida-esperas`
+Respaldo: `decision/f1c01-motivos-esperas` (`openspec/config.yaml:5030-5047` en `a729a371`), que aclara `decision/c3-salida-esperas`
 (`openspec/config.yaml:1834`): desde las dos esperas externas valen los cinco motivos, y «Repuesto no disponible» y «Sin
 solución técnica» se muestran primero, «sólo como comodidad de pantalla» (`:5036`). `cierra: no` (SA-1). `toca_maestro: no`:
 el maestro fija la lista de motivos, no su orden en pantalla.
@@ -43,11 +43,11 @@ el maestro fija la lista de motivos, no su orden en pantalla.
 
 | Decisión del cliente | ¿Bloquea o rellena? | Línea del servidor |
 |---|---|---|
-| Orden del desplegable del motivo | Ni bloquea ni rellena | **Ninguna, y es correcto:** el orden no es una regla, es presentación (consecuencia 2 de la decisión, `config.yaml:5041`) |
+| Orden del desplegable del motivo | Ni bloquea ni rellena | **Ninguna, y es correcto:** el orden no es una regla, es presentación (consecuencia 2 de la decisión, `config.yaml:5041` en `a729a371`) |
 | Ofrecer sólo los cinco motivos | Limita la elección | `anulacion.ts:50` vía `ticketService.ts:134`; probado: motivo fuera de la lista → `422` en `apps/desk/server/anulacion.test.ts:80-86` |
 
 El desplegable es comodidad legítima (regla 13, punto 3) **sólo para la pertenencia**, que el servidor impone y está probada.
-No hay restricción de motivo por estado de origen (consecuencia 1, `config.yaml:5040`): el servidor no cambia.
+No hay restricción de motivo por estado de origen (consecuencia 1, `config.yaml:5040` en `a729a371`): el servidor no cambia.
 
 ## 5. Pruebas (strict TDD) y mutaciones que deben ponerlas en rojo
 
@@ -64,14 +64,14 @@ pruebas por decisión de Gerencia (`vitest.config.ts:16-20`, F0-00): su consumo 
 | # | Supuesto | Cómo se revierte |
 |---|---|---|
 | SA-1 | El cambio no reabre F1C-01: `cierra: no`, la fila ya la cerró el archivo de `anulado-con-motivo` | Cambiar la cabecera si Gerencia la considera abierta |
-| SA-2 | Entre los dos primeros, «Repuesto no disponible» y luego «Sin solución técnica», el orden en que los nombra Gerencia (`config.yaml:5036`) | Invertir los dos en la función y en su prueba |
+| SA-2 | Entre los dos primeros, «Repuesto no disponible» y luego «Sin solución técnica», el orden en que los nombra Gerencia (`config.yaml:5036` en `a729a371`) | Invertir los dos en la función y en su prueba |
 | SA-3 | Los otros dos motivos conservan su orden relativo de `MOTIVOS_ANULACION` | Reordenarlos en la función |
 | SA-4 | La spec va como ADDED `RQ-TS-41` (hoy el último es `RQ-TS-40`, `spec.md:2615`), no como MODIFIED de `RQ-TS-40`, para no copiar un bloque grande | Fundir `RQ-TS-41` en `RQ-TS-40` en una tanda documental |
 
 ## 7. Fuera de alcance
 
 - Cambiar el servidor, la lista de motivos o restringir motivos por estado de origen. Pruebas de interfaz (excluidas, F0-00).
-- Las cifras caducas de «31 transiciones» (van a la bandeja, `config.yaml:5036`) y S-10 (ya escrito en `anulado-con-motivo`).
+- Las cifras caducas de «31 transiciones» (van a la bandeja, `config.yaml:5036` en `a729a371`) y S-10 (ya escrito en `anulado-con-motivo`).
 
 ## 8. Partición (cuatro intentos, cada uno ≤ 800)
 

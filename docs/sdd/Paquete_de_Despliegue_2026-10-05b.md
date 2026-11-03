@@ -104,7 +104,7 @@ tiene interruptor**: publicar `36dc352` es publicarla.
 
 Hacen falta, antes del Deploy:
 
-1. **La respuesta de Gerencia a E-158** (`docs/sdd/ENTRADA.md:1782`): si la guarda alcanza a «Equipo nuevo». Lo
+1. **La respuesta de Gerencia a E-158** (`docs/sdd/ENTRADA.md:1782` en `a729a371`): si la guarda alcanza a «Equipo nuevo». Lo
    construido aplica «sí, sin excepciones», **no decidido**. Si la respuesta es «no», hace falta código nuevo y
    **`36dc352` deja de ser el commit a publicar**. Hoy no hay respuesta registrada: `grep -n "E-158"
    openspec/config.yaml` no devuelve nada.
@@ -168,7 +168,7 @@ el día del corte de F1F-01, que **no es este despliegue** (§6.2).
 ### (g) F1F-05 — en producción antes del viernes 13/11/2026
 
 F1F-05 tiene que estar desplegada **antes del viernes 13/11/2026** para medir las cuatro semanas desde el 16/11
-(`DEPLOY.md:270-271`; E-181, `docs/sdd/ENTRADA.md:1899`). Va en el mismo código que la guarda de F1B-03 y no puede
+(`DEPLOY.md:270-271`; E-181, `docs/sdd/ENTRADA.md:1899` en `a729a371`). Va en el mismo código que la guarda de F1B-03 y no puede
 separarse (§7): **esa fecha queda atada a E-158**. Si E-158 no se responde a tiempo, la única salida es código nuevo,
 otro commit y otro paquete.
 
@@ -560,7 +560,7 @@ rutas de `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:902-911`, la de la regla
 `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:913-935` y los riesgos R39 a R51 de
 `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:956-1032`, con los R32 a R38 que arrastra. **Un riesgo cambia:**
 R49 (e) —la mezcla de `custom_fields` sin probar contra PostgreSQL real— queda probado en el CI por `07cf400`
-(`docs/sdd/ENTRADA.md:2031-2035`), salvo una fila con `null` de JSON, que se comprueba con una lectura (§6.1).
+(`docs/sdd/ENTRADA.md:2031-2035` en `a729a371`), salvo una fila con `null` de JSON, que se comprueba con una lectura (§6.1).
 
 **Desde `f619d04`:**
 
@@ -577,7 +577,7 @@ R49 (e) —la mezcla de `custom_fields` sin probar contra PostgreSQL real— que
 - **R52 · El respaldo apagado no avisa.** Con `RESPALDO_HABILITADO` ausente no hay copia y nadie recibe correo, porque
   un respaldo apagado no es un fallo (`DEPLOY.md:373-374`). Hasta completar §6.2, la red sigue siendo la copia manual.
 - **R53 · La migración de F1F-01 la puede aplicar cualquier administrador** el tiempo que el interruptor esté
-  encendido (E-231, `docs/sdd/ENTRADA.md:2167`). La mitigación es la disciplina de §0 (f) y §6.2: encender, aplicar y
+  encendido (E-231, `docs/sdd/ENTRADA.md:2167` en `a729a371`). La mitigación es la disciplina de §0 (f) y §6.2: encender, aplicar y
   apagar en el mismo corte.
 - **R54 · La versión de `pg_dump` de la imagen no está comprobada** frente a la del servidor; si es menor, cada copia
   falla y avisa por correo (`DEPLOY.md:413-416`). Hipótesis 11.
@@ -644,7 +644,7 @@ paso es largo y no ha cambiado, se remite a él con ruta y línea; la tarea, su 
 - **Los dos recuentos de F1B-03 (tarea 2).** Conectarse a `desk` como siempre —**sin pegar la cadena de conexión
   ni la contraseña en ningún chat, captura ni documento**—, ejecutar enteros los dos ficheros de §0 (c) y devolver: de
   la primera, el total de `sin_remision_vigente` y, aparte, las filas de «Equipo nuevo» y las de `Remisión creada`
-  (esta última es E-185, `docs/sdd/ENTRADA.md:1921`, informativa); de la segunda, `llegaron` y
+  (esta última es E-185, `docs/sdd/ENTRADA.md:1921` en `a729a371`, informativa); de la segunda, `llegaron` y
   `sin_remision_al_llegar` (`docs/sdd/Consulta_Recuento_Ingresado_sin_remision_2026-09-25.sql:68-75`).
 - **Variables (tareas 3, 4 y 5).** En EasyPanel, pestaña de variables de cada servicio. **Mirar sólo si existen y
   qué valor tienen; no copiar ningún valor a ningún sitio.** Devolver: App — `MIGRACION_TICKETS_HABILITADA` «ausente»
@@ -660,7 +660,7 @@ paso es largo y no ha cambiado, se remite a él con ruta y línea; la tarea, su 
 - **Tarea 14:** `docs/sdd/Paquete_de_Despliegue_2026-10-01.md:1264-1408`.
 - **E-206 (tarea 15):** en sólo lectura, `SELECT jsonb_typeof(custom_fields) AS forma, count(*) FROM desk.tickets
   GROUP BY 1;`. Se espera una sola fila, `object`; cualquier otra forma se devuelve con su recuento antes de decidir
-  nada (`docs/sdd/ENTRADA.md:2037-2038`). No condiciona el despliegue.
+  nada (`docs/sdd/ENTRADA.md:2037-2038` en `a729a371`). No condiciona el despliegue.
 - **Copia (tarea 18):** §0 (a).
 
 **Después (tareas 25 a 27):** verificación de F1C-09 en `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:670-678`;
@@ -714,7 +714,7 @@ Fuentes: `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive
 
 | Cuándo | Decisión | Qué desbloquea | Dónde |
 |---|---|---|---|
-| **Antes — PARADA** | **E-158** | Publicar `36dc352` | `docs/sdd/ENTRADA.md:1782` |
+| **Antes — PARADA** | **E-158** | Publicar `36dc352` | `docs/sdd/ENTRADA.md:1782` en `a729a371` |
 | **Antes** | P.3 de `alarmas-horas-habiles` (ráfaga); precondición de P.1 de `permisos-por-cargo`; qué lectura de la siembra vale | Lo que dice cada una | `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:724-726` |
 | **Antes del encendido** | **Proveedor del respaldo** (cuesta dinero) | §6.2 | `openspec/config.yaml:2616` |
 | **Antes de la migración de F1F-01** | E-207 a E-212 y la fecha de corte; E-218 | §6.2 | `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive-report.md:61` |
@@ -724,7 +724,7 @@ Fuentes: `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive
 | Sin orden | S-2 del respaldo: ¿copia previa automática al arrancar? | Alcance de F1F-02 | `openspec/changes/archive/2026-10-05-respaldo-nocturno-y-previo/archive-report.md:49` |
 | Sin orden | E-160, E-163 a E-167, E-171 a E-180, E-157, E-184, E-188 a E-193, E-195 a E-199, E-201 a E-205 | Alcance de F1C-11, F1B-04, F1F-05, F1B-03, F1B-07, F1B-08 y F1C-05. **No bloquean** | `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:1095-1106` |
 | Sin orden | P-1 de `tres-transiciones-cifra-anclada`; Q1/Q2 de `alta-manual-equipo-cliente`; E-154; E-155; los dos rellenos de F1B-11; E-086; E-090; P.4 de `alarmas-horas-habiles`; E-092; preguntas 3.b y 3.b.3 | Lo que dice cada una | `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:727-731` |
-| **Desde el 16/11** | P-3 de `continuidad-indicadores` | Dar los indicadores por buenos | `docs/sdd/ENTRADA.md:1899` |
+| **Desde el 16/11** | P-3 de `continuidad-indicadores` | Dar los indicadores por buenos | `docs/sdd/ENTRADA.md:1899` en `a729a371` |
 
 ### 6.5 · Director Comercial
 
@@ -757,7 +757,7 @@ Fuentes: `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive
 
 ### 6.8 · Quien administra n8n
 
-**Antes — PARADA de F1B-04:** E-170 (2), la etiqueta lleva el código del ticket (`docs/sdd/ENTRADA.md:1842`).
+**Antes — PARADA de F1B-04:** E-170 (2), la etiqueta lleva el código del ticket (`docs/sdd/ENTRADA.md:1842` en `a729a371`).
 
 ### 6.9 · Quien publica
 

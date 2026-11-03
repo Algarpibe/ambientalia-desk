@@ -19,7 +19,7 @@ ticket no sabe si el equipo está en garantía, y en Notificado —donde se deci
 o se cotiza— decide sin ese dato.
 
 **Alcance, literal:** fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:98` («Aviso «En garantía» calculado, y
-«Garantía sin dato»», talla S); E-105 (`docs/sdd/ENTRADA.md:1397`); maestro
+«Garantía sin dato»», talla S); E-105 (`docs/sdd/ENTRADA.md:1397` en `a729a371`); maestro
 `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`. La cuenta de margen de §F.4
 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:242-244`) le da 1 día y «ENTRA».
 

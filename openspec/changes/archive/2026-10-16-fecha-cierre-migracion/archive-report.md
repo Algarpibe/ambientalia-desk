@@ -94,7 +94,7 @@ que cierra toca `closed_time` · S-5 `closedTime` entra en `TicketParaMigrar` en
 
 ## Para Supervisión (ficheros que esta rama no toca)
 
-- `openspec/config.yaml:4749` y `:4759` en `164d322` (`decision/migracion-e207-e212`) dicen que la migración no escribe
+- `openspec/config.yaml:4749` en `a729a371` y `:4759` en `164d322` (`decision/migracion-e207-e212`) dicen que la migración no escribe
   `closed_time`: desde `6444b92` lo escribe. Caso C: conservar con su revisión y añadir qué lo cerró.
 - La entrada de bandeja de H-1 (P-3) la registra Supervisión.
 

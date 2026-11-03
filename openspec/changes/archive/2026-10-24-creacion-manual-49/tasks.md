@@ -39,7 +39,7 @@ Regla del ciclo 1: no son unidades de trabajo del repositorio. **Archivar NO las
 | # | Qué | Dueño | Dónde queda escrito |
 |---|---|---|---|
 | P-1 | Corregir, si procede, los supuestos S-1 a S-5 | Gerencia | Lista semanal de supuestos (regla E-237) |
-| P-2 | Revisión futura de la definición del 49 por campo vacío o retrasado (consecuencia (4), fuera de F1F-05) | Gerencia | `decision/f1f05-creacion-del-49-campo-manual` (`openspec/config.yaml:5321-5344`) |
+| P-2 | Revisión futura de la definición del 49 por campo vacío o retrasado (consecuencia (4), fuera de F1F-05) | Gerencia | `decision/f1f05-creacion-del-49-campo-manual` (`openspec/config.yaml:5321-5344` en `a729a371`) |
 
 ## Review Workload Forecast
 

@@ -127,8 +127,8 @@ confirmado: `openspec/specs/kpis/spec.md:1447` cita `apps/desk/server/indicadore
 
 **Pendiente para el archivo (no es defecto de la rama):** reapuntar `openspec/specs/kpis/spec.md:1447` a `:60` al fusionar el delta.
 **Pendiente para `main` (orquestador):** O-1 (`openspec/config.yaml:4096`, cita `MOTIVO_H1` en `:88-89`: anclarla «en `f0eb92c4`» y decir que hoy es
-`MOTIVO_CIERRE`) y O-2 (`openspec/config.yaml:5199-5200`, cita `:59-60` y `:67-70`: anclarlas «en `f0eb92c4`»). Y los 7 casos C (superados por esta
-tanda), anotados en `apply-progress.md` sin editar: `docs/sdd/ENTRADA.md:2128`, `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:247`, los paquetes de
+`MOTIVO_CIERRE`) y O-2 (`openspec/config.yaml:5199-5200` en `a729a371`, cita `:59-60` y `:67-70`: anclarlas «en `f0eb92c4`»). Y los 7 casos C (superados por esta
+tanda), anotados en `apply-progress.md` sin editar: `docs/sdd/ENTRADA.md:2128` en `a729a371`, `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:247`, los paquetes de
 despliegue del 2026-10-04 (líneas 643 y 978), el `design.md` archivado de `comparacion-exportacion-zoho` (línea 90) y el de `indicadores-51-55` (líneas 51-52).
 `openspec/config.yaml` no se tocó en la rama (`git diff --stat` vacío).
 
@@ -157,7 +157,7 @@ Ninguno.
   de Zoho cuenta hasta el cierre» (2 y 12) están cubiertos por sus equivalentes de RQ-KP-37 con otras fechas (11 y 12) y por la prueba de `:75` (sin cierre); la
   conducta es la misma, pero ninguna prueba usa los datos literales del escenario. Bastaría añadir las dos aserciones o reescribir el escenario del delta con las
   fechas de las pruebas.
-- **S2 · O-1 y O-2 de `tasks.md` están abreviadas.** O-2 dice «citan `:59` y `:67`», pero `openspec/config.yaml:5199-5200` cita `:59-60` y `:67-70`; y O-1 dice `:88`
+- **S2 · O-1 y O-2 de `tasks.md` están abreviadas.** O-2 dice «citan `:59` y `:67`», pero `openspec/config.yaml:5199-5200` en `a729a371` cita `:59-60` y `:67-70`; y O-1 dice `:88`
   cuando `openspec/config.yaml:4096` cita `:88-89`. Al aplicarlas en `main`, anclar los rangos completos.
 - **S3 · RQ-KP-39, segundo escenario, sin mutación propia.** «Un cambio de respuesta ajeno… las rompe» lo cubren las tres caracterizaciones existentes (así lo
   anota `tasks.md` L2.7), pero no se registra una mutación que lo demuestre; las tres pasan con sus bytes originales.

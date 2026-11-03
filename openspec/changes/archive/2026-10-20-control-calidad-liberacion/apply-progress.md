@@ -327,7 +327,7 @@ Las 30 citas con ancla `en <sha>` quedan fuera de toda reparación (se leen en s
 - `packages/shared/src/fasesBlueprint.ts:29`: «los 21 estados» → «los 23 estados».
 Medido con `tsx`: `ESTADOS.length` 26 y `ESTADOS_SERVICIO.length` 23. `estados.ts:3` («Hasta F0-04 los 21 estados») es B, fechada, y se queda.
 
-**Para Supervisión (ficheros vedados):** ninguna reparación obligatoria. Anotaciones sin urgencia: (1) `CLAUDE.md:363` y `openspec/config.yaml:474` citan `ticketService.ts:132`/`:134` para las fechas derivadas y siguen ciertas; (2) `docs/sdd/ENTRADA.md:2148` cita `ticketService.ts:238` («las otras 43… hoy son 40»): registro fechado, no se renumera (la cifra del comentario es hoy 47); (3) la línea `.env.example` de `CONTROL_CALIDAD_LIBERACION` sigue pendiente (fuera del recuento).
+**Para Supervisión (ficheros vedados):** ninguna reparación obligatoria. Anotaciones sin urgencia: (1) `CLAUDE.md:363` y `openspec/config.yaml:474` citan `ticketService.ts:132`/`:134` para las fechas derivadas y siguen ciertas; (2) `docs/sdd/ENTRADA.md:2148` en `a729a371` cita `ticketService.ts:238` («las otras 43… hoy son 40»): registro fechado, no se renumera (la cifra del comentario es hoy 47); (3) la línea `.env.example` de `CONTROL_CALIDAD_LIBERACION` sigue pendiente (fuera del recuento).
 
 **Lo que el barrido NO caza (se declara):** el detector del proyecto comprueba que la línea EXISTA y no esté vacía, no que DIGA lo que la frase afirma; el barrido propio compara contra la partida y mira si el texto se conserva, no si la frase sigue siendo verdad. Las 96 de `ticketService.ts` se leyeron por muestreo de sus frases (todas las de código, specs vivas y `config.yaml`; las de `docs/` por título), no una a una.
 

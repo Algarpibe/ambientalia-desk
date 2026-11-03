@@ -114,7 +114,7 @@ Dependencias: L2 de L1 (tipos); L3 de L1 y L2; L4 de L1 (tipos). Orden: L1 → L
 - [x] 4.9 **Tabla de la regla 13 (M21):** para C1 a C7 de D5, escribir en `apply-progress.md` la línea REAL del servidor (con las anotadas en 3.10) y comprobar, decisión a decisión, que la línea dice lo que la fila afirma. Mutar cada línea de la tabla (mover o quitar la guarda) y ver que alguna prueba de L3 se queja; si ninguna, la fila es una hipótesis y se anota así.
 - [x] 4.10 Cierre, códigos 1 a 3: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), `npm run build`, los cuatro con código MIRADO.
 - [x] 4.11 Medir (`git diff --shortstat --no-renames` más `wc -l` de lo nuevo sin trackear); si pasa de 720, parar y partir (cliente / `DEPLOY.md`).
-- [x] 4.12 Barrido de citas de `client\.ts`, `Analisis\.tsx` y `DEPLOY\.md`: las posteriores a la línea 90 de `Analisis.tsx` (`docs/sdd/ENTRADA.md:1284` cita la 95) se leen contra lo que afirman; si quedan desfasadas, se listan para Supervisión (esta rama no toca `ENTRADA.md`). Segundo pase de las abreviadas.
+- [x] 4.12 Barrido de citas de `client\.ts`, `Analisis\.tsx` y `DEPLOY\.md`: las posteriores a la línea 90 de `Analisis.tsx` (`docs/sdd/ENTRADA.md:1284` en `a729a371` cita la 95) se leen contra lo que afirman; si quedan desfasadas, se listan para Supervisión (esta rama no toca `ENTRADA.md`). Segundo pase de las abreviadas.
 - [x] 4.13 Commit del lote 4; `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con código 0 MIRADO; asentar el intento.
 
 ---

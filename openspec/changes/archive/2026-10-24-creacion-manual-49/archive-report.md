@@ -5,7 +5,7 @@ para antes de fusionar. Lo escribe el orquestador con cifras medidas. `apply-pro
 momento; donde difieran, manda este informe.
 
 **Fila F1F-05.** Este cambio cubre la consecuencia (3) de `decision/f1f05-creacion-del-49-campo-manual`
-(`openspec/config.yaml:5321-5344`): el fixture de septiembre separa el campo manual «Fecha creación ticket» de la creación del ticket, y
+(`openspec/config.yaml:5321-5344` en `a729a371`): el fixture de septiembre separa el campo manual «Fecha creación ticket» de la creación del ticket, y
 el 49 pasa a 8 celdas comparables.
 
 Deja fuera tres cosas, por lo que sigue `cierra: no`:
@@ -107,7 +107,7 @@ La medida es `git diff --shortstat --no-renames` más las líneas de lo nuevo si
 ## 7. Pendiente fuera de la rama (la rama no toca `openspec/config.yaml`)
 
 Supervisión tiene en `main`, sin commitear, +9 líneas en `openspec/config.yaml` tras la 4733 y +385 tras la 5454. Cuando se commiteen,
-la cita `openspec/config.yaml:5321-5344` de este cambio pasará a la 5330-5353. Esa cita aparece en `proposal.md`, en `design.md`, en
+la cita `openspec/config.yaml:5321-5344` en `a729a371` de este cambio pasará a la 5330-5353. Esa cita aparece en `proposal.md`, en `design.md`, en
 `tasks.md` (P-2) y en este informe, y se repara con el barrido de la regla de mutación 4 de ese commit.
 
 ## 8. Supuestos reversibles — a la lista semanal, bajo F1F-05

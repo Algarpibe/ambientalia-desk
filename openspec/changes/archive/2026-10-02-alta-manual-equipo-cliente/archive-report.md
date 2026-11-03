@@ -3,11 +3,11 @@
 ## Cobertura de la fila F1B-15 (R-1)
 
 **Cubre** todo el contenido de la fila (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:95`, origen E-129 en
-`docs/sdd/ENTRADA.md:1554`): alta manual de equipo y de cliente provisional, enlace con Books, validación del equipo y
+`docs/sdd/ENTRADA.md:1554` en `a729a371`): alta manual de equipo y de cliente provisional, enlace con Books, validación del equipo y
 guarda de «Habilitar Servicio»; **deja fuera** sólo tareas de persona (abajo) y el aviso P-A, que pasa a la bandeja.
 `cierra: si`.
 
-Decisiones de Gerencia que reorientaron la tanda: E-152 (la vista `public.clients` no se toca, `docs/sdd/ENTRADA.md:1751`)
+Decisiones de Gerencia que reorientaron la tanda: E-152 (la vista `public.clients` no se toca, `docs/sdd/ENTRADA.md:1751` en `a729a371`)
 y E-153 (P-B, el alta rechaza un NIT que ya está en Books, `:1756`). E-154 (NIT genéricos exentos, `:1761`) sigue
 **abierta** y no es trabajo de esta tanda.
 

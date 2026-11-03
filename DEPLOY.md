@@ -668,7 +668,7 @@ Respaldo: `decision/quien-ejecuta-la-migracion-confirmada-11-10` (`openspec/conf
 **Antes de empezar:**
 
 - **Sesión de administrador** en la aplicación: la ruta exige rol de administrador y no hay permiso nuevo (`apps/desk/server/routes/admin.ts:222`).
-- **Sincronización completa previa: pendiente de respuesta de Gerencia** (E-208, `docs/sdd/ENTRADA.md:2047`). Este procedimiento no la lanza ni dice quién lo hace.
+- **Sincronización completa previa: pendiente de respuesta de Gerencia** (E-208, `docs/sdd/ENTRADA.md:2047` en `1ba54985`). Este procedimiento no la lanza ni dice quién lo hace. **Superado:** E-208 se cerró el 2026-10-14 con `decision/migracion-e207-e212` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`, consecuencia (2)): la última sincronización completa la lanza Gerencia, en la misma ventana que la migración y en este orden: Zoho en sólo lectura, sincronización completa, copia previa, migración.
 - **Una pasada en seco**, que es la misma llamada sin `aplicar` y no escribe: el informe debe traer `negativa: null` y `numeracion.arrastra: false`
   (`apps/desk/server/db/migracionTicketsAbiertos.ts:22`, `:24`). Con una negativa o con numeración que arrastra, **no se aplica**: se consulta a Gerencia.
 

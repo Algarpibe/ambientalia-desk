@@ -16,7 +16,7 @@ origen_cabecera: declarada
 
 Pasaje del maestro: ninguno. El cambio sale de una decisión de Gerencia.
 
-`cierra: no`: a F1F-01 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:125`) le quedan las mismas tareas de persona: nombrar al suplente, responder E-208 (`docs/sdd/ENTRADA.md:2047`), el cotejo de la hoja de Google y la ejecución en producción.
+`cierra: no`: a F1F-01 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:125`) le quedan las mismas tareas de persona: nombrar al suplente, responder E-208 (`docs/sdd/ENTRADA.md:2047` en `a729a371`), el cotejo de la hoja de Google y la ejecución en producción.
 
 ## Problema
 
@@ -115,6 +115,6 @@ Archivar este cambio **no las da por hechas** (regla del ciclo 1).
 | Tarea | Dueño | Dónde queda escrito |
 |---|---|---|
 | Nombrar al suplente | Gerencia | `DEPLOY.md:665` |
-| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` |
+| Responder E-208: quién lanza la última sincronización completa | Gerencia | `docs/sdd/ENTRADA.md:2047` en `a729a371` |
 | Cotejo de la hoja de Google | Gerencia | `DEPLOY.md:693` |
 | Ejecución del 12/12 en producción | Gerencia o su suplente | `DEPLOY.md:663-693` |

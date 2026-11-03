@@ -14,11 +14,11 @@ origen_cabecera: declarada
 
 Gerencia fijó el 22/10 qué tickets cuentan en los nueve indicadores y con qué fórmula calcula Zoho el 47 y el 51:
 
-- `decision/e224b-poblacion-indicadores` (`openspec/config.yaml:5186-5207`): población = tickets del departamento, de los
+- `decision/e224b-poblacion-indicadores` (`openspec/config.yaml:5186-5207` en `a729a371`): población = tickets del departamento, de los
   tres flujos, **cerrados en el periodo**; fuera los anulados; cada indicador cuenta sólo los tickets con sus dos hitos.
-- `decision/e224c-formulas-47-51-y-contraste` (`openspec/config.yaml:5226-5242`): 47 = cierre − remisión de entrada y
+- `decision/e224c-formulas-47-51-y-contraste` (`openspec/config.yaml:5226-5242` en `a729a371`): 47 = cierre − remisión de entrada y
   51 = cierre − finalización ST, en días naturales; el «último cambio de estado» es el CIERRE.
-- `decision/h1-fechas-migrados` (`openspec/config.yaml:4854-4871`): en los migrados cuenta la fecha original de Zoho; la
+- `decision/h1-fechas-migrados` (`openspec/config.yaml:4854-4871` en `a729a371`): en los migrados cuenta la fecha original de Zoho; la
   de la migración no entra en ningún indicador.
 
 Hoy el código hace otra cosa: corta por **creación** en SQL (`apps/desk/server/indicadores.ts:59-60` en `f0eb92c4`, sobre

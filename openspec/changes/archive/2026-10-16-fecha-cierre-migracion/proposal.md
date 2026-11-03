@@ -11,11 +11,11 @@ origen_cabecera: declarada
 # Propuesta: fecha de cierre de «Entregado» en la migración, con marca de origen
 
 `cierra: no` — F1F-01 sigue pendiente del suplente del 12/12 (`DEPLOY.md:693`, «no nombra al suplente») y de la
-pasada en seco en producción (E-211, `openspec/config.yaml:4761-4763`), que son tareas de personas.
+pasada en seco en producción (E-211, `openspec/config.yaml:4761-4763` en `a729a371`), que son tareas de personas.
 
 ## Intención
 
-Gerencia decidió (`decision/migracion-e207-e212`, `openspec/config.yaml:4737-4770`; consecuencia (1) en `:4747-4751`):
+Gerencia decidió (`decision/migracion-e207-e212`, `openspec/config.yaml:4737-4770` en `a729a371`; consecuencia (1) en `:4747-4751` en `a729a371`):
 «"Entregado" → "Finalizado", cerrado con la fecha de cierre de Zoho o, si no tiene, la de la migración marcada como tal».
 
 Hueco actual, medido:
@@ -71,7 +71,7 @@ Dos lectores de `closed_time`: `apps/desk/server/analisis.ts:26` en `73bd52f` (`
 1. No se añade guarda: la de posición no aplica. Sí se muta la **precedencia** Zoho/migración y debe ponerse rojo.
 2. La prueba de la reversión vigila un `.sql`: quitar la restauración de `closed_time` del fichero y ver rojo.
 3. Sin cambios en `apps/desk/src`.
-4. `migracionTicketsAbiertos.ts` está citado (`openspec/config.yaml:4749`, `:4759`; specs): el cierre barre sus citas y las de `migracionTickets.ts`.
+4. `migracionTicketsAbiertos.ts` está citado (`openspec/config.yaml:4749` en `a729a371`, `:4759` en `a729a371`; specs): el cierre barre sus citas y las de `migracionTickets.ts`.
 
 ## Áreas afectadas
 

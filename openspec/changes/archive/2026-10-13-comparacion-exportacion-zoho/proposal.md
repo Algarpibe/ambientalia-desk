@@ -71,7 +71,7 @@ de cuatro semanas desde el 16/11, que es tarea de personas (§5, §14).
 Guardar el fichero o sus filas (sin tabla, sin migración, sin variables de entorno) · el cálculo del 55 ·
 el 47 y la lectura de la columna 12 (§4, c) · reordenar o cambiar las fórmulas de los otros ocho ·
 veredicto, semáforo o umbral del 95 % · las preguntas E-174 a E-180 y E-182 de `docs/sdd/ENTRADA.md`
-(E-174 en `docs/sdd/ENTRADA.md:1864`), que siguen abiertas en Gerencia · n8n · el sincronizador ·
+(E-174 en `docs/sdd/ENTRADA.md:1864` en `a729a371`), que siguen abiertas en Gerencia · n8n · el sincronizador ·
 `jsdom` o pruebas de `.tsx`.
 
 ## 3. Capacidades

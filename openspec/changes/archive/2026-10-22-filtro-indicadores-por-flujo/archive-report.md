@@ -3,8 +3,8 @@
 Archivado el 2026-10-22 en la rama `filtro-indicadores-por-flujo` (worktree hermano, base `8a068fe9`), **sin fusionar a `main`**: la tanda para
 antes de fusionar. Lo escribe el orquestador con cifras medidas; `apply-progress.md` y `verify-report.md` son instantáneas de su momento.
 
-**Fila F1F-05:** cubre la consecuencia 3 de `decision/e224-indicadores-como-zoho-y-por-flujo` (`openspec/config.yaml:4946`), filtro por flujo de
-cada indicador en la descarga y en la comparación; deja fuera la población «como Zoho» (consecuencia 2, `openspec/config.yaml:4944-4945`, POR
+**Fila F1F-05:** cubre la consecuencia 3 de `decision/e224-indicadores-como-zoho-y-por-flujo` (`openspec/config.yaml:4946` en `a729a371`), filtro por flujo de
+cada indicador en la descarga y en la comparación; deja fuera la población «como Zoho» (consecuencia 2, `openspec/config.yaml:4944-4945` en `a729a371`, POR
 CONFIRMAR), la encuesta y la medición en paralelo del 16/11. Por eso `cierra: no`.
 
 ## 1. Qué queda construido

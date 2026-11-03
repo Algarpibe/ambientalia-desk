@@ -140,7 +140,7 @@ Las casillas marcadas cuadran con lo comprobado: restricciones de §2, ficheros 
 - **W7** Acoplamiento entre pruebas (§6): un solo desfase produce 4-5 rojas; el P8 del flujo desfasado queda verde.
 - **W8** Medida: `git diff --shortstat --no-renames e026903 c58fa88` da 634 inserciones y 115 borrados = **749**, sobre la válvula de 720 y bajo el techo de 800. `apply-progress.md` lo declara; la cifra de 595 de su línea 89 no incluye las casillas de `tasks.md`.
 - **W9** Fin de línea en Windows: tras `git checkout -- <fichero>` los `.md` quedan en CRLF; el guion escribe LF y `git status` marca `M` sin diff de contenido. La prueba lo tolera (M18 demuestra que la normalización está vigilada).
-- **W10** `docs/sdd/ENTRADA.md:2118` y `openspec/config.yaml:4172` dicen que el generador recibe «sólo el catálogo de servicio»; las líneas citadas existen, pero la frase queda incompleta. Es la tarea T-P1 de Supervisión (apartado 4.3 del paquete), no de esta rama.
+- **W10** `docs/sdd/ENTRADA.md:2118` en `a729a371` y `openspec/config.yaml:4172` dicen que el generador recibe «sólo el catálogo de servicio»; las líneas citadas existen, pero la frase queda incompleta. Es la tarea T-P1 de Supervisión (apartado 4.3 del paquete), no de esta rama.
 
 ## 10 · Sugerencias
 

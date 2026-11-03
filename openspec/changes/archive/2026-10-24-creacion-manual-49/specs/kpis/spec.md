@@ -1,7 +1,7 @@
 # Delta: KPIs — la creación del 49 en el fixture de septiembre es el campo manual (`creacion-manual-49`)
 
 Delta sobre `openspec/specs/kpis/spec.md`. Tanda F1F-05 (`cierra: no`); la propuesta es la de este mismo cambio.
-Decisión: `decision/f1f05-creacion-del-49-campo-manual` (`openspec/config.yaml:5321-5344`), consecuencia (3): «creación»
+Decisión: `decision/f1f05-creacion-del-49-campo-manual` (`openspec/config.yaml:5321-5344` en `a729a371`), consecuencia (3): «creación»
 en el 49 es el campo manual «Fecha creación ticket», y con la referencia regenerada de Gerencia el 972 queda sin 49, así que
 las celdas del 49 con valor en septiembre pasan de 9 a 8. Las citas a la spec viva van por RQ-KP-NN.
 

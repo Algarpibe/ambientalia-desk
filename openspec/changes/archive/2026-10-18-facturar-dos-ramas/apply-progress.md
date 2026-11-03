@@ -20,7 +20,7 @@
 - `Pendiente de facturar` va **delante** de `Anulado` en `estados.ts:99`, para que `Anulado` siga siendo el último de `ESTADOS_SERVICIO` (`anulacion.test.ts:139`). Los alias `eNN` del mapa salen de ese orden; los artefactos se regeneraron después del cambio.
 - `mapaBlueprint.test.ts:185` exigía que el diagrama no contuviera «Pendiente» (el estado de soporte remoto, F1C-09). «Pendiente de facturar» lo contiene. La prueba se afina en su línea: quita «Pendiente de facturar» antes de buscar, y sigue vigilando lo que vigilaba.
 - `facturar.test.ts` de `packages/shared` no importa `zoho-sync` (ningún fichero de `shared` lo hace); la comprobación contra `PROMOTED_COLUMNS` vive en la prueba del servidor.
-- **E-246** (`docs/sdd/ENTRADA.md:2200`), destino de Gerencia: «el próximo cambio que toque cada uno de esos ficheros corrige su cifra en sitio». Esta tanda toca `permisos.test.ts`, `transicionesEjecucion.test.ts`, `cargos.test.ts`, `bodegaje.test.ts` y `transitions.ts`: sus «31» de comentario y título pasan a 33 (y «las otras 26» de `transitions.ts:269` a 28), sin desplazar líneas. Quedan los de `valoresDeTransicion.ts:10`, `bodegaje.ts:28`, `sla.ts:14` y `sla.test.ts:22`, que esta tanda no toca.
+- **E-246** (`docs/sdd/ENTRADA.md:2200` en `a729a371`), destino de Gerencia: «el próximo cambio que toque cada uno de esos ficheros corrige su cifra en sitio». Esta tanda toca `permisos.test.ts`, `transicionesEjecucion.test.ts`, `cargos.test.ts`, `bodegaje.test.ts` y `transitions.ts`: sus «31» de comentario y título pasan a 33 (y «las otras 26» de `transitions.ts:269` a 28), sin desplazar líneas. Quedan los de `valoresDeTransicion.ts:10`, `bodegaje.ts:28`, `sla.ts:14` y `sla.test.ts:22`, que esta tanda no toca.
 
 ## Mutaciones del lote 1 (D9), reproducidas a mano y restauradas desde copia
 
@@ -47,7 +47,7 @@ Ningún fichero muy citado cambió de longitud: `estados.ts`, `transitions.ts`, 
 Citas a las líneas cuyo CONTENIDO cambió, leídas una a una:
 
 - `ticketService.ts:134` (catorce citas): todas nombran el `422` agregado del escalón C, que sigue siendo esa línea. Caso A.
-- `ticketService.ts:238` (`docs/sdd/ENTRADA.md:2148`, `F1B-09_Auditoria_blueprint_audit-F1B.md:304`): el comentario «en las
+- `ticketService.ts:238` (`docs/sdd/ENTRADA.md:2148` en `a729a371`, `F1B-09_Auditoria_blueprint_audit-F1B.md:304`): el comentario «en las
   otras N transiciones», que sigue en esa línea con N = 44. Las dos son hallazgos fechados que citan la cifra de entonces
   («las otras 43»): caso B, y la línea sigue apuntando al mismo comentario.
 - `transitions.ts:248-249` (`F0-00_Baseline_as-built.md:69`, `por-entregar-es-espera` archivado): describen el ciclo tal

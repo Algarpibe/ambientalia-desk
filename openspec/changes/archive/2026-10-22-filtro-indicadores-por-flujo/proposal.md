@@ -15,7 +15,7 @@ línea en el worktree sobre `8a068fe9`; lo no comprobado lleva «hipótesis». M
 
 ## 1. Intención
 
-Gerencia decidió (`decision/e224-indicadores-como-zoho-y-por-flujo`, consecuencia 3, `openspec/config.yaml:4946`) que
+Gerencia decidió (`decision/e224-indicadores-como-zoho-y-por-flujo`, consecuencia 3, `openspec/config.yaml:4946` en `a729a371`) que
 «cada indicador se puede filtrar por flujo (servicio técnico, equipo nuevo, soporte remoto)». Hoy no se puede: la
 lectura de tickets (`apps/desk/server/indicadores.ts:64`) no trae `classification` —la columna existe,
 `packages/zoho-sync/src/db/schema.sql:23`— y ni `GET /api/indicadores` (`apps/desk/server/routes/indicadores.ts:41-54`)
@@ -27,8 +27,8 @@ que el periodo. La medición en paralelo empieza el 16/11 (`openspec/config.yaml
 ## 2. Por qué `cierra: no`, `maestro: []` y `toca_maestro: no`
 
 - `cierra: no`: F1F-05 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:129`) lleva además la población «como
-  Zoho» (POR CONFIRMAR, `openspec/config.yaml:4944-4945`), la encuesta y la medición en paralelo; esto es la consecuencia 3.
-- `maestro: []`: e224 registra `maestro_pasaje: "ninguno"` (`openspec/config.yaml:4948`), y en el `.md` vigente ningún
+  Zoho» (POR CONFIRMAR, `openspec/config.yaml:4944-4945` en `a729a371`), la encuesta y la medición en paralelo; esto es la consecuencia 3.
+- `maestro: []`: e224 registra `maestro_pasaje: "ninguno"` (`openspec/config.yaml:4948` en `a729a371`), y en el `.md` vigente ningún
   pasaje pide filtrar por flujo: la coincidencia más cercana
   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2972`) habla del flujo del proceso.
 - `toca_maestro: no`: recortar la población no cambia la definición de ningún indicador del Anexo G.

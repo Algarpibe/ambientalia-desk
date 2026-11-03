@@ -241,7 +241,7 @@ persona; no la hace la reversión.
 
 El modo es `auto`: no se paró a preguntar. Las preguntas no se escriben ahora en la bandeja; van a
 `docs/sdd/ENTRADA.md` en el cierre, con el primer número libre de ese momento (en este árbol la última
-entrada es la E-235, `docs/sdd/ENTRADA.md:2193`).
+entrada es la E-235, `docs/sdd/ENTRADA.md:2193` en `a729a371`).
 
 1. **S-D:** ¿el formulario de la encuesta recoge el número de ticket, u otro dato con el que asociar
    cada respuesta a su servicio?

@@ -40,7 +40,7 @@ la lista del 01/10. Cómo se revierte cada uno: `proposal.md`, «Supuestos rever
 
 ## Para Supervisión — no se editan en la rama
 
-- **E-198** (`docs/sdd/ENTRADA.md:1988`) dice que su respuesta desbloquea «un cambio posterior dentro de F1B-08»: con la
+- **E-198** (`docs/sdd/ENTRADA.md:1988` en `a729a371`) dice que su respuesta desbloquea «un cambio posterior dentro de F1B-08»: con la
   fila cerrada ese destino deja de existir y hay que situarlo (regla de `CLAUDE.md`: un destino es una promesa).
 - La fila del plan (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:88`) sigue diciendo «en curso».
 - `decision/f1b08-cierre-sin-capturas` lleva en `tanda_que_abre` «pendiente: vía de registro del cierre de F1B-08», que

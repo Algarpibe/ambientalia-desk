@@ -173,7 +173,7 @@ Reconstruido desde los esquemas (`packages/zoho-sync/src/db/schema.sql`, `packag
 
 ## 10. Corrección 29 enmendada
 
-`docs/sdd/F0-01_Correcciones_para_el_maestro.md`: sólo cambian las líneas 1454, 1474-1479 y 1482-1483 (`git diff -U0`: tres hunks N a N, 9 y 9 líneas); ninguna otra entrada se mueve. Dice lo que piden la decisión (`openspec/config.yaml:5434-5460`: USD, foto al abrir, cantidad × costo de catálogo sumado por línea, origen `ovi`, editable a mano, recuperado en USD) y el maestro (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2664` «tomado del costo de la OVI» y `:1232` «las líneas conservan el costo»; `:2666` y `:2667` para lo construido y el envío por remisión; `:2668` la frase «Cierra el punto 7 del Anexo D»). P-2 (pegarlo en el maestro) sigue siendo de Gerencia.
+`docs/sdd/F0-01_Correcciones_para_el_maestro.md`: sólo cambian las líneas 1454, 1474-1479 y 1482-1483 (`git diff -U0`: tres hunks N a N, 9 y 9 líneas); ninguna otra entrada se mueve. Dice lo que piden la decisión (`openspec/config.yaml:5434-5460` en `a729a371`: USD, foto al abrir, cantidad × costo de catálogo sumado por línea, origen `ovi`, editable a mano, recuperado en USD) y el maestro (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2664` «tomado del costo de la OVI» y `:1232` «las líneas conservan el costo»; `:2666` y `:2667` para lo construido y el envío por remisión; `:2668` la frase «Cierra el punto 7 del Anexo D»). P-2 (pegarlo en el maestro) sigue siendo de Gerencia.
 
 ## 11. Hallazgos
 

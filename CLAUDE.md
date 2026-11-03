@@ -688,6 +688,13 @@ Se mide **antes de aplicar** (`git diff --shortstat --no-renames` de esa parte);
 Y **se revisa siempre que el commit de archivo contenga sólo el cambio archivado** (`git show --numstat`): el 01/10 un
 agente de archivo metió en el de F1A-03 todos los ficheros sin trackear del repositorio, +6.450 líneas ajenas.
 
+## Regla de las preguntas a Gerencia — sólo sube lo que frena; lo demás, supuesto con plazo
+
+Gerencia, 06/10/2026, panel (`decision/preguntas-de-detalle-sin-llegar`, E-237). **Al apartado 06 del panel sólo llegan las
+preguntas que impiden cerrar una fila, tocan al cliente, tocan dinero, permisos o datos de producción, o no se deshacen sin
+coste.** Lo demás lo decide la construcción con su criterio por defecto, lo escribe como **supuesto reversible** y lo publica
+**cada semana en una lista agrupada por tanda**: Gerencia tiene una semana para corregir; lo no corregido queda aceptado, con fecha.
+
 ## Regla de dominio — todo importe lleva su moneda
 
 Gerencia, 2026-10-26 (`decision/f1b13-valor-reclamado-usd`). **Un importe en Desk sin moneda no se admite en adelante.**

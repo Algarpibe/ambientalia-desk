@@ -257,7 +257,7 @@ cierra un cambio posterior con `tanda: F1F-05`, una vez decididos H-1 y H-2.
 
 El modo es `auto` (`openspec/config.yaml:25-30`): no se paró a preguntar. Las preguntas quedan aquí y
 van a `docs/sdd/ENTRADA.md` a partir de la **E-171** (en este árbol la última es la E-159,
-`docs/sdd/ENTRADA.md:1787`; las E-160 a E-170 las usan otras ramas).
+`docs/sdd/ENTRADA.md:1787` en `a729a371`; las E-160 a E-170 las usan otras ramas).
 
 1. **E-171 · H-1 / 51:** falta la hora de actualización del estado. ¿Con qué hito se calcula el tiempo
    de recogida: la remisión de salida, la última transición registrada, o se empieza a guardar la hora

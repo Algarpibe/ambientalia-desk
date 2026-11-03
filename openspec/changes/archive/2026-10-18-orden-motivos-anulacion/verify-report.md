@@ -35,7 +35,7 @@ Revisión verificada: `2e62591` (planificación `569054c`, base `8f629b5`). Árb
 
 | Decisión del cliente | ¿Bloquea? | ¿Rellena? | ¿Avisa? | Contrapartida en el servidor |
 |---|---|---|---|---|
-| Reordena las opciones del `select` del motivo en las dos esperas | no | no | no | **Presentación, sin contrapartida**: consecuencia 2 de `decision/f1c01-motivos-esperas` (`openspec/config.yaml:5041`) «el orden es presentación; la lista la sigue imponiendo el servidor» |
+| Reordena las opciones del `select` del motivo en las dos esperas | no | no | no | **Presentación, sin contrapartida**: consecuencia 2 de `decision/f1c01-motivos-esperas` (`openspec/config.yaml:5041` en `a729a371`) «el orden es presentación; la lista la sigue imponiendo el servidor» |
 | Las opciones siguen siendo las de `MOTIVOS_ANULACION` | no | no | no | `erroresAnulacion` (`anulacion.ts:50`), probada en `apps/desk/server/anulacion.test.ts:54-62` |
 | Ningún valor por defecto (el `select` conserva «Elegir…» `:258`) | no | no | no | — (no hay decisión nueva) |
 

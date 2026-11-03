@@ -57,7 +57,7 @@ registro fechado y no se toca; ninguna corrección cambia su veredicto):
 - **El cargo de las alarmas no es el cargo de permiso.** Las alarmas de SLA buscan al `Coordinador Comercial` en
   `users.cargo`, el de la firma (`apps/desk/server/db/avisos.ts:109`), y F1C-05 añade otro, `users.cargo_permiso`.
   Asignar el cargo de permiso **no** enruta alarmas (§6.1.3). Es la divergencia H5 de E-092
-  (`docs/sdd/ENTRADA.md:1274`).
+  (`docs/sdd/ENTRADA.md:1274` en `a729a371`).
 
 ---
 
@@ -975,11 +975,11 @@ fuera de los Top 5 —el maestro dice superadministrador o Director Técnico— 
 **R28 · Marcar un cliente Top 5 no cambia sus tickets ya abiertos (S-1 de F1B-07, W1 de su verify).** Sólo
 nacen con la prioridad los tickets nuevos; para los abiertos está el ajuste por ticket, con motivo
 (`openspec/changes/archive/2026-10-01-prioridad-top5-cliente/tasks.md:254`). Es la P.3 de la tanda, en la
-bandeja como **E-109** (`docs/sdd/ENTRADA.md:1422`, `NUEVA`).
+bandeja como **E-109** (`docs/sdd/ENTRADA.md:1422` en `a729a371`, `NUEVA`).
 
 **R29 · Dos supuestos del orden de la cola sin confirmar (E-110).** La cola usa la **última** habilitación de
 cada ticket y, sin ninguna, su fecha de creación (`packages/shared/src/prioridad.ts:92-93`); la respuesta de
-Gerencia no cierra ninguno de los dos casos. Están en la bandeja como **E-110** (`docs/sdd/ENTRADA.md:1430`,
+Gerencia no cierra ninguno de los dos casos. Están en la bandeja como **E-110** (`docs/sdd/ENTRADA.md:1430` en `a729a371`,
 `NUEVA`), P.4 de la tanda.
 
 **R30 · Dos «cargo» en `public.users`, y cada uno sirve para una cosa (H5, E-092).** El de **firma**
@@ -987,7 +987,7 @@ Gerencia no cierra ninguno de los dos casos. Están en la bandeja como **E-110**
 imprime la remisión; el de **permiso** (`users.cargo_permiso`, lista cerrada) es el que exige la «Liberación
 sin factura» y el Top 5. **Asignar uno no sirve para el otro**: un Coordinador Comercial con el cargo de
 permiso puesto y el de firma vacío **no recibe alarmas**. Registrado sin destino como **E-092**
-(`docs/sdd/ENTRADA.md:1274`), P.3 de F1C-05. §6.1.3 y §6.3.0 lo recuerdan donde importa.
+(`docs/sdd/ENTRADA.md:1274` en `a729a371`), P.3 de F1C-05. §6.1.3 y §6.3.0 lo recuerdan donde importa.
 
 **R31 · Menores de F1C-05 y F1B-07.** La matriz HTTP de permisos calcula su `esperado` con la misma compuesta
 que prueba, así que frente al cargo es tautológica; lo detectan otras pruebas (W1,
@@ -1008,7 +1008,7 @@ propuesta lo registra con probabilidad **Media** y mitigación «P.1 antes de de
 `Servicio Técnico` por equivalencia, no por decisión (`packages/shared/src/transitions.ts:384-385` en `f5255d2b`, `:389`):
 un usuario sólo de Comercial recibe 403 en las cuatro (matriz de `apps/desk/server/permisos.test.ts:300-306`).
 La pregunta está en la bandeja como **E-090** (`docs/sdd/ENTRADA.md:1253`, `NUEVA`); con la respuesta
-pendiente, el sistema funciona con Servicio Técnico (`docs/sdd/ENTRADA.md:1259`). Es la P.3 de
+pendiente, el sistema funciona con Servicio Técnico (`docs/sdd/ENTRADA.md:1259` en `a729a371`). Es la P.3 de
 `blueprint-soporte-remoto` (§6.4).
 
 **R16 · `Solicitud Soporte` no tiene columna propia** y cae en «Otros» (S-10; columna propia destinada a
@@ -1019,7 +1019,7 @@ solicitudes nuevas de soporte se mezclan con cualquier otro estado sin columna, 
 único `setInterval` del proceso, encadenadas antes del ritmo de contratos y de la sincronización
 (`apps/desk/server/index.ts:88`). Si esa pasada se retira sin trasladar la llamada, las alarmas **callan sin
 que nada se ponga rojo** en producción (`apps/desk/server/services/alarmasSla.ts:141-146`, nunca lanza); lo
-vigilan dos guardianes de prueba que leen `index.ts` (`docs/sdd/ENTRADA.md:1269-1272`). Sin destino
+vigilan dos guardianes de prueba que leen `index.ts` (`docs/sdd/ENTRADA.md:1269-1272` en `a729a371`). Sin destino
 asignado. *Hipótesis, no medida:* como la pasada de alarmas va **delante** de la sincronización en la misma
 cadena, una pasada de alarmas lenta retrasaría la sincronización de ese ciclo (la bandera `syncing` de
 `apps/desk/server/index.ts:84-87` evita solapes, no retrasos). Hace cuatro consultas fijas sin N+1
@@ -1722,9 +1722,9 @@ No bloquean el Deploy. Sin ellas, lo publicado queda a medias o apoyado en supue
 | **P.5 de `registro-contrato`** | E-086: año y tope de la ampliación | La ampliación, lo único que falta para cerrar F1B-11 | `docs/sdd/ENTRADA.md:1222`; `openspec/changes/archive/2026-09-29-registro-contrato/tasks.md:451`; `docs/sdd/Preguntas_Gerencia_2026-09-29.md:16` |
 | **P.3 de `blueprint-soporte-remoto`** | E-090: área de «Asignación», «Ejecutar», «Soporte pendiente» y «Continuación soporte» | Cerrar S-1 como decisión (R15); si alguna es de Comercial, se cambia un dato por transición y la matriz de `apps/desk/server/permisos.test.ts` | `docs/sdd/ENTRADA.md:1253`; `openspec/changes/archive/2026-09-29-blueprint-soporte-remoto/tasks.md:408-409` |
 | **P.4 de `alarmas-horas-habiles`** | Si `Notificado` escala al `Coordinador Comercial` (S-3) | Si es otro cargo, se cambia un literal de `ALARMAS_SLA` (`packages/shared/src/sla.ts:138`) y su prueba | `openspec/changes/archive/2026-09-29-alarmas-horas-habiles/tasks.md:414`; `openspec/changes/archive/2026-09-29-alarmas-horas-habiles/archive-report.md:135` |
-| **P.3 de `permisos-por-cargo`** | E-092: si los dos «cargo» de `public.users` se unifican o se quedan separados a propósito (H5) | Que asignar un cargo sirva para lo que se espera (R30) | `docs/sdd/ENTRADA.md:1274`; `openspec/changes/archive/2026-09-30-permisos-por-cargo/tasks.md:280` |
-| **P.3 de `prioridad-top5-cliente`** | E-109: si el Top 5 se propaga a los tickets abiertos que ya existen, y cómo | R28 | `docs/sdd/ENTRADA.md:1422`; `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/tasks.md:302` |
-| **P.4 de `prioridad-top5-cliente`** | E-110: confirmar S-10a (última habilitación) y S-10b (sin habilitación, la fecha de creación) | R29 | `docs/sdd/ENTRADA.md:1430`; `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/archive-report.md:78` |
+| **P.3 de `permisos-por-cargo`** | E-092: si los dos «cargo» de `public.users` se unifican o se quedan separados a propósito (H5) | Que asignar un cargo sirva para lo que se espera (R30) | `docs/sdd/ENTRADA.md:1274` en `a729a371`; `openspec/changes/archive/2026-09-30-permisos-por-cargo/tasks.md:280` |
+| **P.3 de `prioridad-top5-cliente`** | E-109: si el Top 5 se propaga a los tickets abiertos que ya existen, y cómo | R28 | `docs/sdd/ENTRADA.md:1422` en `a729a371`; `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/tasks.md:302` |
+| **P.4 de `prioridad-top5-cliente`** | E-110: confirmar S-10a (última habilitación) y S-10b (sin habilitación, la fecha de creación) | R29 | `docs/sdd/ENTRADA.md:1430` en `a729a371`; `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/archive-report.md:78` |
 | **Preguntas 3.b y 3.b.3** | La calificación de los clientes sin contrato ni Top 5, y quién ajusta a mano la prioridad fuera de los Top 5 | R26 (el alta acepta cualquier prioridad) y R27 | `docs/sdd/Preguntas_Gerencia_2026-09-29.md:87`; `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/archive-report.md:13-15` |
 
 *E-082 y E-083 salen de esta tabla respecto al 2026-09-30:* están decididas (`docs/sdd/ENTRADA.md:1190`,
