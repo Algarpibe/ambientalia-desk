@@ -878,3 +878,35 @@ quitarla. La línea de entorno que corresponde, tal cual:
    (`packages/zoho-sync/src/db/repo.ts:71`), así que el relleno no marca en ellos (la pasada periódica sí); si los tickets archivados vienen
    en `/tickets` es hipótesis.
 5. Comprobar el ticket #958: el hilo `495552000057899091` oculto y los cinco comentarios visibles.
+
+## 21. `RELLENO_CONVERSACIONES_HABILITADO`: el relleno completo y verificado de conversaciones (1G-01, `decision/adelanto-09-11-empezar-1g`)
+
+**Qué enciende:** que `POST /api/admin/relleno-conversaciones` pueda lanzar la pasada. La lanza sólo un superadministrador y responde sin
+esperarla: recorre los tickets de Zoho de `desk.tickets` en orden (nunca los `app-`), pide a Zoho el detalle fresco de cada uno, lo guarda,
+lee y guarda todas sus conversaciones y lo clasifica contra los recuentos de ese detalle (completo, descuadrado, sin recuento, con error,
+no está en Zoho). Es un escritor: toca `tickets` y `conversations`. Con `limite=0` el `POST` sólo cuenta y funciona con la variable cerrada;
+el `GET` de la misma ruta sólo devuelve el estado, nunca lanza y tampoco lo gobierna esta variable.
+
+**Qué se rompe si se pone mal:** abierta por descuido, un superadministrador puede soltar el barrido entero contra la cuota de Zoho Desk (una
+petición de detalle y varias de conversaciones por ticket); un `429` agotado corta la pasada y deja el número donde reanudar. Cerrada cuando
+hace falta, el `POST` responde `403` nombrando la variable y no se lanza nada; no se pierde ningún dato. Escribir `TRUE`, `1`, `yes` o dejarla
+vacía la deja cerrada. No marca lo ausente por sí sola: eso sigue siendo `MARCAR_CONVERSACIONES_AUSENTES` (§19).
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). Cada cambio de la variable pide un redespliegue; la vuelta atrás es
+quitarla. La línea de entorno que corresponde, tal cual:
+
+> ```
+> RELLENO_CONVERSACIONES_HABILITADO=
+> ```
+
+Pasos (paso de persona; el `.env.example` lo completa Alfonso, P-1):
+
+1. Copia previa de `desk-db` (base `desk`) con el botón de EasyPanel.
+2. Abrir la variable (`true`) en la App y redesplegar.
+3. Como superadministrador, `POST /api/admin/relleno-conversaciones?limite=0`: cuenta los tickets a recorrer y los `app-` saltados, sin
+   llamar a Zoho ni escribir.
+4. Pasada corta: `POST /api/admin/relleno-conversaciones?limite=20` y `GET /api/admin/relleno-conversaciones` hasta `terminado: true`.
+5. La completa: `POST /api/admin/relleno-conversaciones` sin parámetros y el mismo `GET` hasta `terminado: true`. El `GET` trae los recuentos
+   por clase, los números de ticket que no cuadran y el motivo del primer fallo, nunca datos de cliente.
+6. Si se corta por un `429`, el estado trae `cortadoEn`: relanzar con `?desde=<cortadoEn>`.
+7. Marcar lo que Zoho ya no devuelve sigue en la §19; el resumen se pasa al analista (P-3).

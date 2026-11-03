@@ -17,10 +17,10 @@ const deploy = readFileSync(path.join(RAIZ, 'DEPLOY.md'), 'utf8')
 const config = readFileSync(path.join(RAIZ, 'packages/zoho-sync/src/config.ts'), 'utf8')
 const en = (t: string) => deploy.indexOf(t)
 const s18 = en('## 18. `SYNC_CONVERSACIONES_PERIODICA`'), s19 = en('## 19. `MARCAR_CONVERSACIONES_AUSENTES`'), s20 = en('## 20. Relleno de conversaciones')
-const tramo = (desde: number, hasta?: number) => (desde === -1 ? '' : deploy.slice(desde, hasta))
+const tramo = (desde: number, hasta?: number) => (desde === -1 ? '' : deploy.slice(desde, hasta ?? (en('## 21. ') >= 0 ? en('## 21. ') : undefined))) // relleno-completo-conversaciones añadió la §21: sin `hasta`, el tramo se para en ella; en una línea para no desplazar citas
 
 describe('DEPLOY.md §18-§20 · conversaciones de Zoho (1G-01)', () => {
-  it('las tres secciones existen tras la §17, en orden, y la §20 es la última', () => {
+  it('las tres secciones existen tras la §17, en orden, y la §20 va hasta la §21', () => {
     expect(s18).toBeGreaterThan(en('## 17. `SALIDAS_ESPERAS`'))
     expect(s19).toBeGreaterThan(s18)
     expect(s20).toBeGreaterThan(s19)

@@ -269,3 +269,161 @@ Sobre `16f54ec4`, en serie:
 
 Contraste del orquestador: M2a reproducida (`perl` en `apps/desk/server/rellenoConversaciones.ts:108`, contar los ids únicos recibidos en
 vez de `visibles(id)`), 2 rojas, las mismas que la tabla de L2; restaurada con `perl` inverso y el mismo `sha256`.
+
+## Lote L3 — estado
+
+Árbol de partida del lote L3: `82649404` (código de L2 en `16f54ec4`; `82649404` sólo añade Markdown). Mismo worktree. Tocados: `packages/zoho-sync/src/config.ts`,
+`packages/zoho-sync/src/config.test.ts`, `apps/desk/server/app.ts`, `apps/desk/server/testing/appHarness.ts`, `apps/desk/server/opcionesConversaciones.test.ts`,
+`apps/desk/server/deployConversaciones.test.ts`, `DEPLOY.md`, `debt.md`, los nuevos `apps/desk/server/routes/rellenoConversaciones.ts`,
+`apps/desk/server/rellenoConversacionesRutas.test.ts` y `apps/desk/server/deployRellenoConversaciones.test.ts`, este fichero y `tasks.md`.
+
+| Tarea | Estado |
+|---|---|
+| L3.1 M0 | [x] Hecha por el orquestador sobre `16f54ec4` (`82649404` sólo añade Markdown): `npm test` → 336 ficheros pasados + 4 omitidos (340), 5.810 pruebas pasadas + 26 omitidas (5.836), 441 s, salida 0 |
+| L3.2 ROJO `config.test.ts` | [x] |
+| L3.3 ROJO `opcionesConversaciones.test.ts` | [x] |
+| L3.4 ROJO `rellenoConversacionesRutas.test.ts` | [x] |
+| L3.5 ROJO `deployRellenoConversaciones.test.ts` | [x] |
+| L3.6 Rojo medido anotado | [x] (abajo) |
+| L3.7 `config.ts`, `app.ts`, `appHarness.ts` en sitio | [x] `git diff --numstat 82649404`: `config.ts` 2/2, `app.ts` 4/4, `appHarness.ts` 2/2 (inserciones = borrados); los tres siguen CRLF |
+| L3.8 `routes/rellenoConversaciones.ts` | [x] |
+| L3.9 `DEPLOY.md` §21 | [x] sólo añade (32/0); `.env.example` sin tocar |
+| L3.10 Guarda que cuenta el árbol | [x] `deployConversaciones.test.ts:20` y `:23` en sitio (2/2, CRLF); rojo previo medido abajo |
+| L3.11 `debt.md` | [x] `:602`, `:614`, `:616-617` en sitio (4/4, CRLF); `:631-634` sin tocar |
+| L3.12 Verde | [x] focales y regresiones cercanas (abajo); `npm run typecheck` salida 0; eslint (abajo). La suite entera la corre el orquestador en L3.15 |
+| L3.13 Mutaciones | [x] (tabla abajo) |
+| L3.14 Casilla de la regla 13 y regla de mutación 3 | [x] (abajo) |
+| L3.15 Cierre del lote | [ ] Del orquestador |
+| B.1 Barrido de L3 | [x] (abajo) |
+
+## Rojo medido de L3 (L3.6)
+
+Método: las pruebas finales de L3 contra el árbol de `82649404` + las pruebas (sin tocar producción ni `DEPLOY.md`). Los dos ficheros de pruebas
+de rutas y de `DEPLOY.md` se ejecutaron de verdad; ninguna salió roja por el arnés: las rojas de las rutas son un `404` con el cuerpo del
+comodín `{ error: 'Ruta de API no encontrada' }` (la ruta no existe), no un fallo de importación. 26 rojas de 44 (las 18 verdes son las
+anteriores de `config.test.ts` y `opcionesConversaciones.test.ts`).
+
+| Fichero › prueba | Aserción medida |
+|---|---|
+| `config.test.ts` › nace cerrado: sin la variable, o vacía | `expected undefined to be false` |
+| `config.test.ts` › sólo el literal "true" lo enciende | `false: expected undefined to be false` |
+| `config.test.ts` › es independiente de los dos interruptores… | `expected [ undefined, false, false ] to deeply equal [ true, false, false ]` |
+| `opcionesConversaciones.test.ts` › crearRellenoConversaciones pasa `opcionesConversaciones(config).marcarAusentes`… | `expected '' to contain 'marcar: opcionesConversaciones(config…'` (la línea no existe) |
+| `opcionesConversaciones.test.ts` › el interruptor del relleno llega a la ruta como booleano estricto | `expected '' to contain 'habilitado: config.rellenoConversacio…'` |
+| `rellenoConversacionesRutas.test.ts` › sin sesión, 401 en POST y en GET | `expected 404 to be 401` |
+| idem › un usuario que no es superadministrador… 403 en POST y en GET | `expected 404 to be 403` |
+| idem › con el interruptor cerrado, el rol va ANTES | `expected 404 to be 403` |
+| idem › POST cerrado: 403 que nombra la variable y ofrece limite=0 | `expected 404 to be 403` |
+| idem › cerrado y limite=abc: 403 y no 400 | `expected 404 to be 403` |
+| idem › cerrado y desde=abc&limite=5: 403 y no 400 | `expected 404 to be 403` |
+| idem › el GET no lo gobierna el interruptor | `expected 404 to be 200` |
+| idem › limite no numérico, negativo, decimal o vacío: 400 | `limite=abc: expected 404 to be 400` |
+| idem › desde no numérico: 400 | `expected 404 to be 400` |
+| idem › limite=0 sólo cuenta (abierto=false / abierto=true) | `expected 404 to be 200` ×2 |
+| idem › con desde=3 cuenta sólo del 3 en adelante | `expected { error: 'Ruta de API no encontrada' } to deeply equal { aRecorrer: 3, saltadosApp: 1 }` |
+| idem › limite=0 de un no superadministrador sigue siendo 403 | `expected 404 to be 403` |
+| idem › el GET sin pasada devuelve «sin pasada» y NO lanza | `expected 404 to be 200` |
+| idem › el POST responde SIN esperar la pasada | `expected 404 to be 200` |
+| idem › el POST pasa desde y limite a la pasada | `expected 404 to be 200` |
+| idem › un segundo POST con la pasada en marcha no lanza otra | `expected undefined to be true` |
+| `deployRellenoConversaciones.test.ts` › la sección existe, tras la §20, y es la última | `expected -1 to be greater than -1` |
+| idem › dice qué enciende y qué se rompe | `expected '' to contain '**Qué enciende:**'` |
+| idem › nace cerrado… línea de entorno vacía | `expected '' to contain '**Nace cerrado**'` |
+| idem › pide la copia previa de desk-db… | `expected '' to contain 'Copia previa de `desk-db`'` |
+
+Rojo de la guarda que cuenta el árbol (L3.10), medido DESPUÉS de escribir la §21 y ANTES de corregir `deployConversaciones.test.ts`:
+`deployConversaciones.test.ts` › las tres secciones existen tras la §17, en orden, y la §20 es la última → `expected [ '## 20.', '## 21.' ] to have a length of 1 but got 2`
+(la única roja de los dos ficheros de `DEPLOY.md`; las demás de ese fichero seguían verdes). Es el rojo que D8 predijo en `:27`.
+
+Dos defectos de MIS pruebas, corregidos antes del verde y que no son rojo del arnés de producción: (a) `limite=0 sólo cuenta` pedía `adminCookie()` dos
+veces en la misma prueba y el arnés (`instalarArnes`/`createUser`) falla con la segunda por usuario duplicado (`insert into "users"…`), así que se
+guarda la `cookie` una vez; (b) una sustitución mía con `perl` dejó un `XX` suelto en una línea que se reparó a mano. Tras ambas, 40/40.
+
+Verde tras L3.7-L3.11: `npx vitest run apps/desk/server/deploy*.test.ts packages/zoho-sync/src/config.test.ts apps/desk/server/opcionesConversaciones.test.ts
+apps/desk/server/rellenoConversaciones*.test.ts` → 9 ficheros, 93 pruebas pasadas.
+
+## Mutaciones de L3 (L3.13)
+
+`perl -i -pe '… if $. == N'` (nunca `sed -i`). Restauración por copia byte a byte de una copia hecha antes de mutar (equivale al perl inverso) y `sha256sum`
+igual al de antes; `file` comprobado (`app.ts`, `config.ts` y `DEPLOY.md` siguen CRLF; los demás LF como antes). Líneas del árbol final de este lote.
+
+| Id | Fichero:línea | Cambio | Pruebas rojas | Restauración |
+|---|---|---|---|---|
+| M3 | `apps/desk/server/rellenoConversaciones.ts:61` | `zoho: filas.filter((f) => !nacidoEnLaApp(f.id))` → `zoho: filas` (ya no se filtra `app-`) | 4: `limite=0` abierto=false, abierto=true, `desde=3` y «el POST responde SIN esperar…» (`aRecorrer` 6 en vez de 5) | sha `1b8adfccc8b59f0e…` igual |
+| M4 | `packages/zoho-sync/src/config.ts:125` | `env.RELLENO_CONVERSACIONES_HABILITADO === 'true'` → `!== 'false'` | 4: las 3 de `config.test.ts` y «nace cerrado… el código lo lee así» de `deployRellenoConversaciones.test.ts` | sha `e326941b60cd32a4…` igual; CRLF |
+| M5 | `apps/desk/server/routes/rellenoConversaciones.ts:47` | el `GET` llama a `relleno.lanzar({})` antes de `res.json(relleno.estado())` | 5: «el GET sin pasada… NO lanza», «el GET no lo gobierna el interruptor», «un usuario que no es superadministrador… no se lanza nada» y las dos de `limite=0` (el `GET` final ve `enMarcha: true`) | sha `86b1222c023d630a…` igual |
+| M7 | `apps/desk/server/app.ts:50` | `marcar: opcionesConversaciones(config).marcarAusentes === true` → `marcar: true` | 1: «crearRellenoConversaciones pasa opcionesConversaciones(config).marcarAusentes…» (fichero vigilado, regla de mutación 2) | sha `23c7126b5bd19b96…` igual; CRLF |
+| M10a | `DEPLOY.md:884` | se quita `**Qué enciende:**` de la §21 | 1: «dice qué enciende y qué se rompe si se pone mal» | sha `a87d49213fae7b85…` igual; CRLF |
+| M10b | `DEPLOY.md:872` | `Copia previa de` → `Copia de` en la §20 | 1: «la §20 pide la copia previa de desk-db y nombra la ruta del relleno» (`deployConversaciones.test.ts`; sin la acotación de `:20` seguiría verde porque la §21 trae la misma frase) | sha igual; CRLF |
+| P1 (posición) | `apps/desk/server/routes/rellenoConversaciones.ts:36` y `:38` | `interruptorRelleno(habilitado)` fuera de la cadena y la misma guarda puesta DESPUÉS de la validación | 3: «POST cerrado…», «cerrado y limite=abc: 403 y no 400» y «cerrado y desde=abc&limite=5: 403 y no 400» | sha `86b1222c023d630a…` igual |
+| Pr (extra, regla de mutación 1) | `apps/desk/server/routes/rellenoConversaciones.ts:36` | `interruptorRelleno` ANTES de `requireSuperAdmin` | 1: «con el interruptor cerrado, el rol va ANTES…» | sha igual |
+| Mx1 (extra) | `apps/desk/server/routes/rellenoConversaciones.ts:17` | `!habilitado && req.query.limite !== '0'` → `!habilitado` (el recuento ya no es libre) | 2: `limite=0` abierto=false y `desde=3` | sha igual |
+
+Ninguna mutación salió verde: no hizo falta añadir pruebas. Una primera pasada de Mx1 apuntó a la línea 16 por error (la línea es la 17), el `sha256` no cambió
+y la prueba pasó: era una no-mutación, se repitió en la 17 y es la fila de la tabla.
+
+## Comprobaciones de L3 (L3.12)
+
+- `npm run typecheck`: salida 0.
+- `npx eslint --max-warnings 0` sobre los ficheros `.ts` tocados y nuevos: salida 1 SÓLO por 8 avisos `no-explicit-any` de `packages/zoho-sync/src/config.test.ts` en
+  las líneas `:67`-`:97`, que ya estaban antes de este lote (mi bloque empieza en la `:141`); el resto de los ficheros, 0 avisos. Delta de avisos del lote: 0 (el
+  repo sigue en el tope de 165).
+- Regresiones cercanas: `apps/desk/server/deploy*.test.ts`, `packages/zoho-sync/src/config.test.ts`, `apps/desk/server/opcionesConversaciones.test.ts`,
+  `apps/desk/server/admin.test.ts`, `apps/desk/server/rellenoConversaciones*.test.ts`, `apps/desk/server/backfill.test.ts` y `apps/desk/server/auth/routes.test.ts`
+  → 12 ficheros, 147 pruebas pasadas, salida 0.
+
+## Casilla de la regla invariable 13 y regla de mutación 3 (L3.14)
+
+`git diff --name-only 82649404` y `git status --short`: ningún fichero bajo `apps/desk/src`. El cliente no decide nada (no hay pantalla). Decisiones y la línea del servidor que las impone:
+
+| Decisión | Quién | Línea del servidor |
+|---|---|---|
+| Hay sesión | servidor | `requireAuth` (`apps/desk/server/auth/middleware.ts:14`), en la cadena de `apps/desk/server/routes/rellenoConversaciones.ts:36` y `:46`; probada por «sin sesión, 401» |
+| Sólo superadministrador | servidor | `requireAdmin` (`apps/desk/server/auth/middleware.ts:26`) importado como `requireSuperAdmin`, `apps/desk/server/routes/rellenoConversaciones.ts:36` y `:46`; probada en POST y GET |
+| El interruptor cerrado impide lanzar | servidor | `interruptorRelleno`, `apps/desk/server/routes/rellenoConversaciones.ts:17`, leído de `packages/zoho-sync/src/config.ts:125` y cableado en `apps/desk/server/app.ts:57`; probada su posición (P1, Pr) |
+| `limite=0` sólo cuenta | servidor | `apps/desk/server/routes/rellenoConversaciones.ts:39` (`relleno.recuento`) |
+| `desde`/`limite` enteros | servidor | `apps/desk/server/routes/rellenoConversaciones.ts:38` |
+| No se lanza otra con una en marcha | servidor | `lanzar` en `apps/desk/server/rellenoConversaciones.ts` (L2, P4), probada en la ruta con «un segundo POST…» |
+
+Ninguna decisión depende del navegador.
+
+## Barrido de la regla de mutación 4 (B.1, L3)
+
+Detector: `grep -rnoE` sobre todo el repositorio (sin `node_modules`, `.git`, `dist`, `.codegraph`; incluidos `openspec/changes/archive/` y `docs/`) de
+`config.ts:(66|125)`, `app.ts:(9|22|50|57)`, `appHarness.ts:(46|49)`, `deployConversaciones.test.ts:N`, `debt.md:N` y `DEPLOY.md:N`. Como los cuatro ficheros de
+código y los dos de pruebas se editaron EN SITIO con el mismo número de líneas y `DEPLOY.md` sólo ganó líneas al final, **ninguna línea citada se desplazó**; lo que
+cambió es el contenido de las líneas `config.ts:66` y `:125`, `app.ts:9`, `:22`, `:50`, `:57` y `appHarness.ts:46` y `:49`, y de `debt.md:602`, `:614`, `:616-617`.
+
+| Hallazgos | Afirman | Veredicto |
+|---|---|---|
+| `config.ts:66` (≈15 en `openspec/changes/archive/{2026-10-20-control-calidad-liberacion,2026-10-21-salidas-esperas,2026-10-29-sync-conversaciones-zoho}`, `openspec/changes/relleno-completo-conversaciones`) | la línea del tipo `AppConfig` con los interruptores de `decisionalesPorCargo` en adelante | Cierta: `:66` sigue siendo esa línea; ganó `rellenoConversacionesHabilitado` antes del `}` |
+| `config.ts:125` (≈25 en `DEPLOY.md` §10-§20, `docs/sdd/Paquete_de_Despliegue_2026-10-30.md:55`, los archivados y este cambio) | la línea que lee los interruptores con `=== 'true'` | Cierta: `:125` sigue siendo esa línea; ganó `RELLENO_CONVERSACIONES_HABILITADO` |
+| `app.ts:22` (≈35 en archivados) | el registro de rutas nuevas (`registerAvisosRoutes ; …`) | Cierta: `:22` sigue siendo esa línea de importaciones; ganó `registerRellenoConversacionesRoutes` |
+| `app.ts:57` (`2026-10-05-interruptor-migracion-tickets/archive-report.md:11`, `2026-10-11-rechazo-migracion-409/design.md:44`, este cambio) | `registerAdminRoutes(...)` con `migracionTicketsHabilitada` | Cierta: `:57` sigue siendo esa línea; ganó el registro del relleno detrás de `registerRespaldoRoutes` |
+| `appHarness.ts:46` (≈20) y `:46-54` (`reasignacion-con-motivo`) | `appWith` y su tipo de `overrides` | Ciertas: `:46` y el rango siguen siendo `appWith`; el tipo ganó `rellenoConversacionesHabilitado` y `:49` su valor `false` |
+| `deployConversaciones.test.ts:31` (`2026-10-29-sync-conversaciones-zoho/verify-report.md:121`) | una línea del bucle de la §18-§19 | Cierta: `:31` no se movió |
+| `deployConversaciones.test.ts:27`, `:20`, `:23` (`design.md`, `proposal.md`, `tasks.md` de este cambio) | `:27` es la aserción que la §21 pone en rojo; `:20`/`:23` lo que se acota | Ciertas: `:27` sigue siendo `expect(tramo(s20).match(…))`; `:20` y `:23` son las líneas editadas |
+| `debt.md:602`/`:614`/`:616-617` | — | Sin hallazgos fuera de este cambio con forma completa; los demás `debt.md:N` del repositorio (`:421`, `:626-630`, `:824`, `:840`…) no caen en lo tocado |
+| `DEPLOY.md:N` (`docs/sdd/Paquete_de_Despliegue_*`, `F0-00_Baseline_as-built.md`) | líneas del principio y medio de `DEPLOY.md` | Ciertas: sólo se añadió al final |
+
+Segundo pase (abreviadas `:66`, `:125`, `:9`, `:22`, `:50`, `:57`, `:602`, `:614`, `:616-617`) en los ficheros que citan esos módulos (los del cambio y los de los
+archivados anteriores): las abreviadas de `:602`/`:614`/`:616`/`:617` del repositorio se leyeron una a una y NINGUNA es de `debt.md` (son de `schema.sql`, `types.ts`, `config.yaml`, `spec.md`
+y `Paquete_de_Despliegue_*.md`); `DEPLOY.md:616-620` de `Paquete_de_Despliegue_2026-10-09.md:996` sigue cierta. Ningún Caso A que corregir ni Caso B que anclar: no se tocó ningún
+fichero ajeno. **Hipótesis** (lectura humana, sin detector): el detector de citas no bloquea la forma abreviada.
+
+## Supuestos nuevos (L3)
+
+- **S-28 · `limite=0` es el literal `0`.** El interruptor deja libre el recuento sólo cuando `req.query.limite === '0'`; `limite=00` cerrado da `403` y abierto lanza una pasada de
+  límite 0, que no hace nada (L1, Mx). Cómo se deshace: normalizar con `Number(limite) === 0` en `apps/desk/server/routes/rellenoConversaciones.ts:17` y `:39`.
+- **S-29 · Forma de las respuestas.** `POST` responde `{ lanzada, estado }` (la pasada lanzada o la que estaba en marcha) o, con `limite=0`, `{ aRecorrer, saltadosApp }`; `GET` responde el
+  `EstadoRelleno`. Cómo se deshace: cambiar los `res.json` de `apps/desk/server/routes/rellenoConversaciones.ts:39`-`:47` y las pruebas de rutas.
+- **S-30 · Un parámetro repetido (`?limite=1&limite=2`) llega como arreglo y se rechaza con `400`** (la comprobación `/^\d+$/` pide una cadena). Cómo se deshace: aceptar el primer valor.
+- **S-31 · Restauración de las mutaciones por copia byte a byte + `sha256`,** no por `perl` inverso ni `git checkout`: es lo mismo que el perl inverso con la comprobación pedida y no
+  depende del orden del guion. Cómo se deshace: no hay nada que deshacer.
+- **S-32 · `debt.md:602`:** el título gana « — CERRADO por `relleno-completo-conversaciones` (1G-01)» aunque el relleno no se haya ejecutado todavía (queda a P-2 de Alfonso): la fila de `debt.md` §2 es
+  «pre-poblar», que el cambio cierra en código; la ejecución en producción es tarea de persona, declarada en `tasks.md`. Cómo se deshace: quitar el sufijo de la línea y rehacer `:614`/`:616-617`.
+
+## Desvíos del diseño (L3)
+
+Ninguno. Matices: (a) la guarda del interruptor y el manejador viven en `apps/desk/server/routes/rellenoConversaciones.ts` con `requireAdmin as requireSuperAdmin`, igual que `routes/admin.ts`, porque
+`requireSuperAdmin` no existe con ese nombre en `middleware.ts`; (b) la línea para `.env.example` (P-1) queda para Alfonso y es exactamente: `RELLENO_CONVERSACIONES_HABILITADO=`.

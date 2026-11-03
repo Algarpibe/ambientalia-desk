@@ -599,7 +599,7 @@ volumen real** antes de comprometer espacio, y elegir bien el destino.
 
 ---
 
-## 2. Pre-poblar detalle + conversaciones de TODOS los tickets
+## 2. Pre-poblar detalle + conversaciones de TODOS los tickets — CERRADO por `relleno-completo-conversaciones` (1G-01)
 
 **Qué:** Cargar en la BD el detalle completo (customFields) y las conversaciones de los ~900
 tickets de una vez, sin tener que abrirlos uno por uno.
@@ -611,10 +611,10 @@ tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carg
 **Estado del código:**
 - ✅ Endpoint listo: `GET /api/admin/backfill-details`
   (recorre todos los tickets, `syncTicket` + `syncConversations` por cada uno; segundo plano,
-  throttled 150 ms, reintento ante 429, tolerante a errores; `?restart=1` reinicia).
+  throttled 150 ms, reintento ante 429 sólo de la página de la lista (`apps/desk/server/backfill.ts:40`), tolerante a errores; `?restart=1` reinicia).
 
-**Cómo retomar:** llamarlo **logueado como super administrador** (ya NO hay `?token=`; ver la nota de §1)
-y sondear hasta `done: true` (~8-12 min). Idempotente; re-ejecutable para refrescar el histórico.
+**Cómo retomar:** `POST /api/admin/relleno-conversaciones` **logueado como super administrador**, con `RELLENO_CONVERSACIONES_HABILITADO` abierta
+y sondear con `GET` hasta `terminado: true`; los pasos, en `DEPLOY.md` §21. Idempotente; re-ejecutable para refrescar el histórico.
 
 **Si más adelante se quiere reportería seria:** considerar materializar campos clave de
 `customFields` (jsonb) en **columnas estructuradas** o vistas, para consultas más cómodas.

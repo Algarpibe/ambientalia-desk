@@ -70,20 +70,20 @@ Mutaciones y posiciones: M1, M2 (las dos variantes), M6 (las dos), M7 (en el mó
 Escenarios: RQ-ZS-29 interruptor sólo con `'true'`, `403` antes de validar, sólo superadministrador, POST en segundo plano y GET nunca lanza, POST en marcha (ruta), `limite=0` sólo cuenta.
 Mutaciones y posiciones: M3 (`limite=0`), M4, M5, M7 (en `app.ts:50`), M10 (las dos), P1.
 
-- [ ] L3.1 M0 del lote: `npm test` en el commit de L2.
-- [ ] L3.2 ROJO `packages/zoho-sync/src/config.test.ts`, **al final**: nace cerrado, sólo `'true'` abre (`TRUE`, `1`, `yes`, vacío), independiente de `MARCAR_CONVERSACIONES_AUSENTES`.
-- [ ] L3.3 ROJO `apps/desk/server/opcionesConversaciones.test.ts`, **al final**: `app.ts` pasa `opcionesConversaciones(config).marcarAusentes` y no lee los interruptores por su cuenta (fichero vigilado, regla de mutación 2).
-- [ ] L3.4 ROJO `apps/desk/server/rellenoConversacionesRutas.test.ts` (nuevo): `401`/`403` en las dos rutas (molde `admin.test.ts:418-423`); `403` del interruptor que nombra la variable con `limite=abc`; `limite=0` libre y sin Zoho; `400`; el `GET` no lanza; POST en marcha.
-- [ ] L3.5 ROJO `apps/desk/server/deployRellenoConversaciones.test.ts` (nuevo, molde `deployConversaciones.test.ts`): orden y última, las dos frases, nace cerrado, línea `> RELLENO_CONVERSACIONES_HABILITADO=` vacía, copia previa, `limite=0`, `desde=`, la ruta y `=== 'true'` en `config.ts`.
-- [ ] L3.6 Anotar el rojo medido de L3.2-L3.5 en `apply-progress.md`.
-- [ ] L3.7 En sitio, mismo número de líneas: `config.ts:66` y `:125`; `app.ts:9`, `:22`, `:50`, `:57`; `appHarness.ts:46` y `:49` (D7).
-- [ ] L3.8 `apps/desk/server/routes/rellenoConversaciones.ts` (nuevo): `POST` y `GET`, `requireAuth(db), requireSuperAdmin`, `interruptorRelleno` antes de validar (D7).
-- [ ] L3.9 `DEPLOY.md`, al final: §21 con **Qué enciende:**, **Qué se rompe si se pone mal:**, nace cerrado, línea de entorno y pasos de P-2 (D8). `.env.example` no se toca.
-- [ ] L3.10 Guarda que cuenta el árbol: acotar `apps/desk/server/deployConversaciones.test.ts:20` (`tramo` sin `hasta`, se para en `## 21. `) y `:23` («va hasta la §21»), en sitio y con el mismo número de líneas (D8); nunca sólo `:27`.
-- [ ] L3.11 `debt.md:602`, `:614` y `:616-617` en sitio (D9), mismo número de líneas; `debt.md:631-634` sin tocar.
-- [ ] L3.12 Verde: ficheros de L3, `typecheck` y suite entera con su log.
-- [ ] L3.13 Mutaciones L3 con su rojo: M3 (`limite=0`), M4 (`!== 'false'` en `config.ts:125`), M5 (el `GET` llama a `lanzar`), M7 (`marcar: true` en `app.ts:50`), M10 (frase de la §21; aparte, «Copia previa» de la §20), P1 (interruptor tras validar). Tabla en `apply-progress.md`.
-- [ ] L3.14 Casilla de la regla 13 y regla de mutación 3: `git diff --name-only` sin nada bajo `apps/desk/src`; el rol y el interruptor los impone el servidor (D7).
+- [x] L3.1 M0 del lote: `npm test` en el commit de L2. Hecha por el orquestador sobre `16f54ec4`: 336+4 ficheros, 5.810 pruebas, 441 s, salida 0.
+- [x] L3.2 ROJO `packages/zoho-sync/src/config.test.ts`, **al final**: nace cerrado, sólo `'true'` abre (`TRUE`, `1`, `yes`, vacío), independiente de `MARCAR_CONVERSACIONES_AUSENTES`.
+- [x] L3.3 ROJO `apps/desk/server/opcionesConversaciones.test.ts`, **al final**: `app.ts` pasa `opcionesConversaciones(config).marcarAusentes` y no lee los interruptores por su cuenta (fichero vigilado, regla de mutación 2).
+- [x] L3.4 ROJO `apps/desk/server/rellenoConversacionesRutas.test.ts` (nuevo): `401`/`403` en las dos rutas (molde `admin.test.ts:418-423`); `403` del interruptor que nombra la variable con `limite=abc`; `limite=0` libre y sin Zoho; `400`; el `GET` no lanza; POST en marcha.
+- [x] L3.5 ROJO `apps/desk/server/deployRellenoConversaciones.test.ts` (nuevo, molde `deployConversaciones.test.ts`): orden y última, las dos frases, nace cerrado, línea `> RELLENO_CONVERSACIONES_HABILITADO=` vacía, copia previa, `limite=0`, `desde=`, la ruta y `=== 'true'` en `config.ts`.
+- [x] L3.6 Anotar el rojo medido de L3.2-L3.5 en `apply-progress.md`.
+- [x] L3.7 En sitio, mismo número de líneas: `config.ts:66` y `:125`; `app.ts:9`, `:22`, `:50`, `:57`; `appHarness.ts:46` y `:49` (D7).
+- [x] L3.8 `apps/desk/server/routes/rellenoConversaciones.ts` (nuevo): `POST` y `GET`, `requireAuth(db), requireSuperAdmin`, `interruptorRelleno` antes de validar (D7).
+- [x] L3.9 `DEPLOY.md`, al final: §21 con **Qué enciende:**, **Qué se rompe si se pone mal:**, nace cerrado, línea de entorno y pasos de P-2 (D8). `.env.example` no se toca.
+- [x] L3.10 Guarda que cuenta el árbol: acotar `apps/desk/server/deployConversaciones.test.ts:20` (`tramo` sin `hasta`, se para en `## 21. `) y `:23` («va hasta la §21»), en sitio y con el mismo número de líneas (D8); nunca sólo `:27`.
+- [x] L3.11 `debt.md:602`, `:614` y `:616-617` en sitio (D9), mismo número de líneas; `debt.md:631-634` sin tocar.
+- [x] L3.12 Verde: ficheros de L3, `typecheck` y suite entera con su log.
+- [x] L3.13 Mutaciones L3 con su rojo: M3 (`limite=0`), M4 (`!== 'false'` en `config.ts:125`), M5 (el `GET` llama a `lanzar`), M7 (`marcar: true` en `app.ts:50`), M10 (frase de la §21; aparte, «Copia previa» de la §20), P1 (interruptor tras validar). Tabla en `apply-progress.md`.
+- [x] L3.14 Casilla de la regla 13 y regla de mutación 3: `git diff --name-only` sin nada bajo `apps/desk/src`; el rol y el interruptor los impone el servidor (D7).
 - [ ] L3.15 Cierre del lote: las cinco comprobaciones en 0, medida, barrido y `apply-progress.md`.
 
 ## Barrido de la regla de mutación 4 (tarea de cierre de cada lote)
