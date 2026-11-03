@@ -98,11 +98,11 @@ Mutaciones y posiciones: M3 (`limite=0`), M4, M5, M7 (en `app.ts:50`), M10 (las 
 
 ## Archivo (intento i6)
 
-- [ ] A.1 Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.
-- [ ] A.2 Fusión por script de los dos bloques ADDED (RQ-ZS-28 y RQ-ZS-29) al **final** de `openspec/specs/zoho-sync/spec.md`; comprobar la identidad bloque a bloque y conservar CRLF (`file`).
-- [ ] A.3 `archive-report.md` en UNA línea qué parte de 1G-01 cubrió y qué dejó fuera; tareas de persona declaradas aparte.
-- [ ] A.4 `apps/desk/server/reconciliacion/registro.test.ts:218` («DIEZ» → «NUEVE» y el paréntesis: 1G-01 cerrada por archivo) y `:220` (quitar '1G-01' de «en curso» y `toContain('1G-01')` en «cerradas por archivo»), en sitio y con el mismo número de líneas (S-15).
-- [ ] A.5 Cinco comprobaciones en 0 y commit que contiene sólo este cambio: `git show --numstat`.
+- [x] A.1 Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.
+- [x] A.2 Fusión por script de los dos bloques ADDED (RQ-ZS-28 y RQ-ZS-29) al **final** de `openspec/specs/zoho-sync/spec.md`; comprobar la identidad bloque a bloque y conservar CRLF (`file`).
+- [x] A.3 `archive-report.md` en UNA línea qué parte de 1G-01 cubrió y qué dejó fuera; tareas de persona declaradas aparte.
+- [x] A.4 `apps/desk/server/reconciliacion/registro.test.ts:218` («DIEZ» → «NUEVE» y el paréntesis: 1G-01 cerrada por archivo) y `:220` (quitar '1G-01' de «en curso» y `toContain('1G-01')` en «cerradas por archivo»), en sitio y con el mismo número de líneas (S-15).
+- [x] A.5 Cinco comprobaciones en 0 y commit que contiene sólo este cambio: `git show --numstat`.
 
 ## Tareas de persona — fuera del recuento; archivar NO las da por hechas
 
