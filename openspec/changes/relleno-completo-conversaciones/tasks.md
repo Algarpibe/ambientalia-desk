@@ -53,16 +53,16 @@ Mutaciones de D11 en este lote: M3, M8, M9 (las dos variantes).
 Escenarios: RQ-ZS-28 `managed_by_app`, verificación tras marcar, resumen sin datos de cliente; RQ-ZS-29 429 reintentado, 429 agotado en página, POST con la pasada en marcha (módulo).
 Mutaciones y posiciones: M1, M2 (las dos variantes), M6 (las dos), M7 (en el módulo), P2, P3, P4.
 
-- [ ] L2.1 M0 del lote: `npm test` en el commit de L1.
-- [ ] L2.2 ROJO `apps/desk/server/rellenoConversaciones.test.ts`: `managed_by_app` con `raw` viejo y detalle nuevo ⇒ completo y fila de la app intacta; fila visible que ya no viene (marcar apagado ⇒ descuadrado; encendido ⇒ marcada y completo); `source='app'` no cuenta.
-- [ ] L2.3 ROJO mismo fichero: 429 del detalle dos veces y luego 200 (repite la misma petición, `vistos429` = 2); 429 agotado en el detalle y en una página cortan, sin pedir el tercer ticket y con `cortadoEn`; fila guardada durante la lectura no se marca.
-- [ ] L2.4 ROJO mismo fichero: dos `lanzar` seguidos lanzan uno; resumen vía `registrar` con el número del descuadrado y sin asunto, contacto ni empresa del fixture (serializado); una sola línea de log.
-- [ ] L2.5 ROJO `apps/desk/server/rellenoConversacionesPausas.test.ts` (nuevo): pausas por omisión (`PAUSA_ENTRE_TICKETS_MS`, `pausa429Ms`) por conducta y con `setTimeout` falso, molde `conversacionesPausas.test.ts:16-51`.
-- [ ] L2.6 Anotar el rojo medido de L2.2-L2.5 en `apply-progress.md`.
-- [ ] L2.7 `rellenoConversaciones.ts`: verificación sobre lo guardado y visible (D3), corte (D5), `enMarcha` antes del primer `await`, resumen y `registrar` (D6), `motivoPrimerFallo ??=`.
-- [ ] L2.8 Verde: ficheros de L2 y suite entera con su log.
-- [ ] L2.9 Mutaciones L2 con su rojo: M1, M2 (contar lo recibido; aparte, quitar `source='zoho'`), M6, M7 (`marcar: true` fijo en el módulo), P2 (guarda 429 tras `!res.ok`), P3 (`inicio` tras leer), P4 (`enMarcha` tras el `await`). Tabla en `apply-progress.md`.
-- [ ] L2.10 Casilla de la regla 13 otra vez.
+- [x] L2.1 M0 del lote: `npm test` en el commit de L1 (hecho por el orquestador: 335+4 ficheros, 5.794 pruebas, 407 s, salida 0).
+- [x] L2.2 ROJO `apps/desk/server/rellenoConversaciones.test.ts`: `managed_by_app` con `raw` viejo y detalle nuevo ⇒ completo y fila de la app intacta; fila visible que ya no viene (marcar apagado ⇒ descuadrado; encendido ⇒ marcada y completo); `source='app'` no cuenta.
+- [x] L2.3 ROJO mismo fichero: 429 del detalle dos veces y luego 200 (repite la misma petición, `vistos429` = 2); 429 agotado en el detalle y en una página cortan, sin pedir el tercer ticket y con `cortadoEn`; fila guardada durante la lectura no se marca.
+- [x] L2.4 ROJO mismo fichero: dos `lanzar` seguidos lanzan uno; resumen vía `registrar` con el número del descuadrado y sin asunto, contacto ni empresa del fixture (serializado); una sola línea de log.
+- [x] L2.5 ROJO `apps/desk/server/rellenoConversacionesPausas.test.ts` (nuevo): pausas por omisión (`PAUSA_ENTRE_TICKETS_MS`, `pausa429Ms`) por conducta y con `setTimeout` falso, molde `conversacionesPausas.test.ts:16-51`.
+- [x] L2.6 Anotar el rojo medido de L2.2-L2.5 en `apply-progress.md`.
+- [x] L2.7 `rellenoConversaciones.ts`: verificación sobre lo guardado y visible (D3), corte (D5), `enMarcha` antes del primer `await`, resumen y `registrar` (D6), `motivoPrimerFallo ??=`.
+- [x] L2.8 Verde: ficheros de L2 (30/30), regresiones cercanas, typecheck y eslint; la suite entera con su log es del orquestador en L2.11.
+- [x] L2.9 Mutaciones L2 con su rojo: M1, M2 (contar lo recibido; aparte, quitar `source='zoho'`), M6, M7 (`marcar: true` fijo en el módulo), P2 (guarda 429 tras `!res.ok`), P3 (`inicio` tras leer), P4 (`enMarcha` tras el `await`). Tabla en `apply-progress.md`.
+- [x] L2.10 Casilla de la regla 13 otra vez.
 - [ ] L2.11 Cierre del lote: las cinco comprobaciones en 0, medida, barrido y `apply-progress.md`.
 
 ## Lote L3 — interruptor, cableado, rutas y despliegue (intento i4)

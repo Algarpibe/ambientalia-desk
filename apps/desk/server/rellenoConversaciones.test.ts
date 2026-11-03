@@ -4,6 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { createSync } from '@ambientalia/zoho-sync/sync'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { crearRellenoConversaciones } from './rellenoConversaciones'
+import { logger } from './util/logger'
 
 /**
  * relleno-completo-conversaciones (1G-01, RQ-ZS-28 y RQ-ZS-29), lote L1. pg-mem + `createSync` REAL con una `zohoFetch` falsa
@@ -24,19 +25,40 @@ const det = (id: string, numero: number, extra: Record<string, unknown> = {}): D
   ({ body: { id, ticketNumber: String(numero), subject: 'Asunto ' + id, status: 'Ingresado', commentCount: '0', threadCount: '1', ...extra } })
 const url = (id: string) => `/tickets/${id}?include=contacts,assignee`
 
-function servidor(detalles: Record<string, Detalle>, conversaciones: Record<string, Paginas> = {}) {
+/**
+ * Lote L2: `fallos(tipo, id, n)` devuelve el código con que responder al intento `n` (1, 2…) del detalle o de una página (se cuentan todas las del ticket juntas) del ticket
+ * `id` (o `null` para responder lo normal); `alLeer(id)` corre al recibir la primera página de un ticket, y `extra(path)` sirve rutas
+ * fuera de las dos de arriba (contacto y cuenta).
+ */
+interface OpcionesServidor {
+  fallos?: (tipo: 'detalle' | 'pagina', id: string, n: number) => number | null
+  alLeer?: (id: string) => Promise<void>
+  extra?: (path: string) => Response | undefined
+}
+
+function servidor(detalles: Record<string, Detalle>, conversaciones: Record<string, Paginas> = {}, o: OpcionesServidor = {}) {
   const peticiones: string[] = []
+  const intentos = new Map<string, number>()
+  const intento = (clave: string) => { const n = (intentos.get(clave) ?? 0) + 1; intentos.set(clave, n); return n }
   const zohoFetch = vi.fn(async (path: string) => {
     peticiones.push(path)
     const m = /^\/tickets\/([^/?]+)(\/conversations)?\?(.*)$/.exec(path)
-    if (m && !m[2]) { const d = detalles[m[1]]; return d ? json(d.body ?? {}, d.status ?? 200) : json({}, 404) }
+    if (m && !m[2]) {
+      const f = o.fallos?.('detalle', m[1], intento('d' + m[1]))
+      if (f) return json({}, f)
+      const d = detalles[m[1]]; return d ? json(d.body ?? {}, d.status ?? 200) : json({}, 404)
+    }
     if (m && m[2]) {
+      const f = o.fallos?.('pagina', m[1], intento('p' + m[1]))
+      if (f) return json({}, f)
       const c = conversaciones[m[1]] ?? []
       if (!Array.isArray(c)) return json({}, c.status)
       const q = new URLSearchParams(m[3]); const from = Number(q.get('from')); const limit = Number(q.get('limit'))
+      if (from === 0) await o.alLeer?.(m[1])
       const data = c.slice(from, from + limit).map(conv)
       return data.length ? json({ data }) : vacio()
     }
+    const e = o.extra?.(path); if (e) return e
     if (path.startsWith('/contacts/') || path.startsWith('/accounts/')) return json({}, 404)
     throw new Error('petición inesperada ' + path)
   })
@@ -215,5 +237,186 @@ describe('lectura y clases (RQ-ZS-28)', () => {
     const e = await correr(montar(s))
     expect(s.peticiones.some((p) => p.startsWith('/contacts/'))).toBe(true)
     expect(e.peticiones).toBe(4)
+  })
+})
+
+/**
+ * Lote L2 (RQ-ZS-28 verificación y resumen; RQ-ZS-29 429, corte y concurrencia). Las pruebas marcadas «caracterización» nacen
+ * verdes con el módulo de L1 y su detector es la mutación citada en `apply-progress.md`.
+ */
+function montarConRegistrar(s: ReturnType<typeof servidor>, marcar = false) {
+  const sync = createSync({ zohoFetch: s.zohoFetch, db, config })
+  const registrar = vi.fn()
+  return { r: crearRellenoConversaciones({ zohoFetch: s.zohoFetch, db, sync, marcar, pausaMs: 0, pausa429Ms: 0, registrar }), registrar }
+}
+const filaZoho = (id: string, tk: string, source = 'zoho', creada = PASADO) =>
+  db.query('INSERT INTO conversations (id, ticket_id, source, created_at) VALUES ($1, $2, $3, $4)', [id, tk, source, creada])
+const conMarca = async (tk: string) =>
+  ((await db.query('SELECT id FROM conversations WHERE ticket_id=$1 AND ausente_en_zoho_at IS NOT NULL ORDER BY id', [tk])).rows as { id: string }[]).map((x) => x.id)
+
+describe('verificación sobre lo guardado y visible (RQ-ZS-28, D3)', () => {
+  it('un managed_by_app con raw viejo se juzga por el detalle fresco: completo, y su fila conserva los valores de la app (caracterización)', async () => {
+    await ticket('Z1', 1, { commentCount: '2', threadCount: '1' }, 'De la app')
+    await db.query("UPDATE tickets SET managed_by_app = true WHERE id = 'Z1'")
+    const s = servidor({ Z1: det('Z1', 1, { commentCount: '7', threadCount: '1', subject: 'De Zoho' }) }, { Z1: ids('Z1', 8) })
+    const e = await correr(montar(s))
+    expect(e.cuentas).toMatchObject({ completo: 1, descuadrado: 0 })
+    expect(await asunto('Z1')).toBe('De la app')
+    expect(await filas('Z1')).toHaveLength(8)
+  })
+
+  it('una fila de Zoho visible que ya no viene: con marcar apagado sale descuadrado con guardadas = las visibles', async () => {
+    await ticket('Z2', 2); await filaZoho('vieja', 'Z2')
+    const s = servidor({ Z2: det('Z2', 2, { commentCount: '2', threadCount: '1' }) }, { Z2: ids('Z2', 3) })
+    const e = await correr(montar(s, false))
+    expect(e.cuentas).toMatchObject({ completo: 0, descuadrado: 1 })
+    expect(e.descuadrados).toEqual([{ numero: 2, esperado: 3, guardadas: 4 }])
+    expect(await conMarca('Z2')).toEqual([])
+  })
+
+  it('la misma fila con marcar encendido queda marcada y el ticket sale completo (se cuenta DESPUÉS de marcar)', async () => {
+    await ticket('Z2', 2); await filaZoho('vieja', 'Z2')
+    const s = servidor({ Z2: det('Z2', 2, { commentCount: '2', threadCount: '1' }) }, { Z2: ids('Z2', 3) })
+    const e = await correr(montar(s, true))
+    expect(e.cuentas).toMatchObject({ completo: 1, descuadrado: 0 })
+    expect(await conMarca('Z2')).toEqual(['vieja'])
+  })
+
+  it('una fila source=app del ticket no cuenta para la verificación (caracterización)', async () => {
+    await ticket('Z3', 3); await filaZoho('propia', 'Z3', 'app')
+    const s = servidor({ Z3: det('Z3', 3, { commentCount: '2', threadCount: '1' }) }, { Z3: ids('Z3', 3) })
+    const e = await correr(montar(s, true))
+    expect(e.cuentas).toMatchObject({ completo: 1, descuadrado: 0 })
+    expect(await conMarca('Z3')).toEqual([])
+  })
+
+  it('una fila guardada durante la lectura no se marca: `inicio` se toma antes de leer, y el ticket sale descuadrado', async () => {
+    await ticket('Z4', 4); await filaZoho('vieja', 'Z4')
+    const s = servidor({ Z4: det('Z4', 4, { commentCount: '2', threadCount: '1' }) }, { Z4: ids('Z4', 3) }, {
+      // Otra vía guarda una fila a mitad de la lectura; la espera real separa su `created_at` del `inicio` de después.
+      alLeer: async () => { await filaZoho('durante', 'Z4', 'zoho', new Date().toISOString()); await new Promise((r) => setTimeout(r, 25)) },
+    })
+    const e = await correr(montar(s, true))
+    expect(await conMarca('Z4')).toEqual(['vieja'])
+    expect(e.descuadrados).toEqual([{ numero: 4, esperado: 3, guardadas: 4 }])
+  })
+})
+
+describe('429, corte y otro fallo (RQ-ZS-29)', () => {
+  it('un 429 del detalle dos veces y luego 200: repite la MISMA petición, procesa el ticket y cuenta dos 429', async () => {
+    await ticket('Z1', 1)
+    const s = servidor({ Z1: det('Z1', 1) }, { Z1: ids('Z1', 1) }, { fallos: (t, _id, n) => (t === 'detalle' && n <= 2 ? 429 : null) })
+    const e = await correr(montar(s))
+    expect(s.deDetalle()).toEqual([url('Z1'), url('Z1'), url('Z1')])
+    expect(e.vistos429).toBe(2)
+    expect(e.peticiones).toBe(4)
+    expect(e.cuentas).toMatchObject({ completo: 1, conError: 0 })
+    expect(e.cortadoEn).toBeNull()
+  })
+
+  it('un 429 del detalle que agota los reintentos corta la pasada en ese ticket y no pide nada del siguiente', async () => {
+    for (const n of [1, 2, 3]) await ticket('Z' + n, n)
+    const u = unoPorNumero([1, 2, 3])
+    const s = servidor(u.detalles, u.conversaciones, { fallos: (t, id) => (t === 'detalle' && id === 'Z2' ? 429 : null) })
+    const e = await correr(montar(s))
+    expect(e.cortadoEn).toBe(2)
+    expect(e.enMarcha).toBe(false)
+    expect(s.deDetalle()).toEqual([url('Z1'), url('Z2'), url('Z2'), url('Z2'), url('Z2')])
+    expect(e.vistos429).toBe(4)
+    expect(e.cuentas).toEqual({ completo: 1, descuadrado: 0, sinRecuento: 0, conError: 0, noEstaEnZoho: 0 })
+    expect(e.recorridos).toBe(1)
+  })
+
+  it('un 429 agotado en una página corta la pasada: el detalle queda persistido, lo recibido guardado, nada marcado y el tercero sin pedir', async () => {
+    for (const n of [1, 2, 3]) await ticket('Z' + n, n)
+    await filaZoho('vieja', 'Z2')
+    const u = unoPorNumero([1, 2, 3])
+    const s = servidor({ ...u.detalles, Z2: det('Z2', 2, { subject: 'Fresco', commentCount: '150', threadCount: '0' }) }, { ...u.conversaciones, Z2: ids('Z2', 150) },
+      // La página 1 de Z2 (from=0) responde normal; la 2 (from=100) responde 429 siempre.
+      { fallos: (t, id, n) => (t === 'pagina' && id === 'Z2' && n > 1 ? 429 : null) })
+    const e = await correr(montar(s, true))
+    expect(e.cortadoEn).toBe(2)
+    expect(s.peticiones.some((p) => p.startsWith('/tickets/Z3'))).toBe(false)
+    expect(await asunto('Z2')).toBe('Fresco')
+    expect((await filas('Z2')).length).toBe(101)
+    expect(await conMarca('Z2')).toEqual([])
+    expect(e.cuentas.conError).toBe(0)
+    expect(e.vistos429).toBe(4)
+  })
+
+  it('otro fallo no corta: el primero sale con error, el segundo se procesa y el motivo del primer fallo queda en el estado', async () => {
+    await ticket('Z1', 1); await ticket('Z2', 2); await ticket('Z3', 3)
+    const s = servidor({ Z1: { status: 500 }, Z2: det('Z2', 2), Z3: det('Z3', 3) }, { Z2: { status: 503 }, Z3: ids('Z3', 1) })
+    const e = await correr(montar(s))
+    expect(e.conError).toEqual([1, 2])
+    expect(e.cuentas).toMatchObject({ conError: 2, completo: 1 })
+    expect(e.motivoPrimerFallo).toBe('Zoho /tickets/Z1 500')
+    expect(e.cortadoEn).toBeNull()
+  })
+
+  it('una página fallida también deja su motivo como primer fallo', async () => {
+    await ticket('Z1', 1)
+    const s = servidor({ Z1: det('Z1', 1) }, { Z1: { status: 500 } })
+    const e = await correr(montar(s))
+    expect(e.motivoPrimerFallo).toBe('Zoho /tickets/Z1/conversations 500')
+  })
+})
+
+describe('concurrencia y resumen (RQ-ZS-29, RQ-ZS-28)', () => {
+  it('dos lanzar seguidos lanzan uno: el segundo devuelve el estado en marcha y no pide nada de más; terminada, se puede relanzar', async () => {
+    for (const n of [1, 2]) await ticket('Z' + n, n)
+    const u = unoPorNumero([1, 2])
+    const s = servidor(u.detalles, u.conversaciones)
+    const r = montar(s)
+    const a = r.lanzar(); const b = r.lanzar()
+    expect([a.lanzada, b.lanzada]).toEqual([true, false])
+    expect(b.estado.enMarcha).toBe(true)
+    await vi.waitFor(() => expect(r.estado().terminado).toBe(true), { timeout: 5000 })
+    expect(s.deDetalle()).toEqual([url('Z1'), url('Z2')])
+    expect(r.lanzar().lanzada).toBe(true)
+    await vi.waitFor(() => expect(r.estado().terminado).toBe(true), { timeout: 5000 })
+  })
+
+  it('el resumen llega UNA vez a registrar, con el número del descuadrado y sin asunto, contacto ni empresa', async () => {
+    await ticket('Z1', 1); await ticket('Z2', 2)
+    const s = servidor({
+      Z1: det('Z1', 1, { subject: 'Asunto Reservado Uno', contactId: 'K1', accountId: 'A1' }),
+      Z2: det('Z2', 2, { commentCount: '4', threadCount: '1', subject: 'Asunto Reservado Dos', contactId: 'K1', accountId: 'A1' }),
+    }, { Z1: ids('Z1', 1), Z2: ids('Z2', 2) }, {
+      extra: (p) => p === '/contacts/K1' ? json({ id: 'K1', firstName: 'Contacto', lastName: 'Apellido Secreto', email: 'secreto@cliente.test', accountId: 'A1' })
+        : p === '/accounts/A1' ? json({ id: 'A1', accountName: 'Empresa Reservada SA' }) : undefined,
+    })
+    const { r, registrar } = montarConRegistrar(s)
+    r.lanzar()
+    await vi.waitFor(() => expect(r.estado().terminado).toBe(true), { timeout: 5000 })
+    expect(s.peticiones).toContain('/contacts/K1')
+    expect(registrar).toHaveBeenCalledTimes(1)
+    const texto = JSON.stringify(registrar.mock.calls[0][0])
+    expect(texto).toContain('"numero":2')
+    for (const dato of ['Asunto Reservado', 'Apellido Secreto', 'secreto@cliente.test', 'Empresa Reservada', 'Contacto']) expect(texto).not.toContain(dato)
+  })
+
+  it('al cortarse también hay una sola llamada a registrar, con el ticket del corte', async () => {
+    for (const n of [1, 2]) await ticket('Z' + n, n)
+    const u = unoPorNumero([1, 2])
+    const s = servidor(u.detalles, u.conversaciones, { fallos: (t, id) => (t === 'detalle' && id === 'Z1' ? 429 : null) })
+    const { r, registrar } = montarConRegistrar(s)
+    r.lanzar()
+    await vi.waitFor(() => expect(r.estado().terminado).toBe(true), { timeout: 5000 })
+    expect(registrar).toHaveBeenCalledTimes(1)
+    expect(registrar.mock.calls[0][0]).toMatchObject({ cortadoEn: 1, terminado: true, enMarcha: false })
+  })
+
+  it('sin registrar, el resumen va al logger de la App como UNA línea con el objeto { resumen }', async () => {
+    await ticket('Z1', 1)
+    const s = servidor({ Z1: det('Z1', 1) }, { Z1: ids('Z1', 1) })
+    const info = vi.spyOn(logger, 'info').mockImplementation(() => {})
+    const sync = createSync({ zohoFetch: s.zohoFetch, db, config })
+    const r = crearRellenoConversaciones({ zohoFetch: s.zohoFetch, db, sync, marcar: false, pausaMs: 0, pausa429Ms: 0 })
+    r.lanzar()
+    await vi.waitFor(() => expect(r.estado().terminado).toBe(true), { timeout: 5000 })
+    expect(info).toHaveBeenCalledTimes(1)
+    expect(info.mock.calls[0][0]).toMatchObject({ resumen: { terminado: true, cuentas: { completo: 1 } } })
+    expect(typeof info.mock.calls[0][1]).toBe('string')
   })
 })
