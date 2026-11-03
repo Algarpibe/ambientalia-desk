@@ -156,7 +156,7 @@ restaurada con `git checkout`, `git diff` vacío y el fichero sigue CRLF.
 | L2.8 Verde | [x] focales 30/30; regresiones cercanas 16 ficheros, 145 pruebas; `npm run typecheck` salida 0; `eslint --max-warnings 0` salida 0. La suite entera la corre el orquestador en L2.11 |
 | L2.9 Mutaciones | [x] (tabla abajo) |
 | L2.10 Casilla de la regla 13 | [x] `git status --short`: ningún fichero bajo `apps/desk/src`; el cliente no decide nada |
-| L2.11 Cierre del lote | [ ] del orquestador |
+| L2.11 Cierre del lote | [x] Orquestador, sección «Cierre de L2» al final |
 | B.1 Barrido de L2 | [x] (abajo) |
 
 ## Rojo medido de L2 (L2.6)
@@ -254,3 +254,18 @@ Segundo pase (abreviadas `:NN` sin nombre de fichero) en los ficheros que citan 
 Ninguno. Matices: (a) el ayudante `servidor` de `apps/desk/server/rellenoConversaciones.test.ts` ganó un tercer parámetro opcional
 (`fallos`, `alLeer`, `extra`) sin cambiar las pruebas de L1, que pasan igual; (b) P4 y P3 se mutaron con dos ediciones de línea (quitar y poner),
 porque `perl` por número de línea no mueve código.
+
+## Cierre de L2 (L2.11, orquestador)
+
+Sobre `16f54ec4`, en serie:
+
+| Comprobación | Salida | Dato |
+|---|---|---|
+| `npm run typecheck` | 0 | — |
+| `npm run lint -- --max-warnings 165` | 0 | 165 avisos contra 165: ninguno nuevo |
+| detector `--sha HEAD` | 0 | 7.895 citas comprobadas; las mismas 14 abreviadas rotas informativas de `5ce2f54b` |
+| `npm run build` | 0 | `index-F1jDYjEU.js` 427,51 kB, el mismo bundle: L2 no toca el cliente |
+| `npm test` | 0 | 336 ficheros pasados + 4 omitidos (340), 5.810 pruebas pasadas + 26 omitidas (5.836), 441 s; memoria antes, 13.891 MB |
+
+Contraste del orquestador: M2a reproducida (`perl` en `apps/desk/server/rellenoConversaciones.ts:108`, contar los ids únicos recibidos en
+vez de `visibles(id)`), 2 rojas, las mismas que la tabla de L2; restaurada con `perl` inverso y el mismo `sha256`.

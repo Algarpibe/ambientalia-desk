@@ -63,7 +63,7 @@ Mutaciones y posiciones: M1, M2 (las dos variantes), M6 (las dos), M7 (en el mó
 - [x] L2.8 Verde: ficheros de L2 (30/30), regresiones cercanas, typecheck y eslint; la suite entera con su log es del orquestador en L2.11.
 - [x] L2.9 Mutaciones L2 con su rojo: M1, M2 (contar lo recibido; aparte, quitar `source='zoho'`), M6, M7 (`marcar: true` fijo en el módulo), P2 (guarda 429 tras `!res.ok`), P3 (`inicio` tras leer), P4 (`enMarcha` tras el `await`). Tabla en `apply-progress.md`.
 - [x] L2.10 Casilla de la regla 13 otra vez.
-- [ ] L2.11 Cierre del lote: las cinco comprobaciones en 0, medida, barrido y `apply-progress.md`.
+- [x] L2.11 Cierre del lote: las cinco comprobaciones en 0, medida, barrido y `apply-progress.md`.
 
 ## Lote L3 — interruptor, cableado, rutas y despliegue (intento i4)
 
