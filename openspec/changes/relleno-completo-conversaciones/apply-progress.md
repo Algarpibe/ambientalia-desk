@@ -293,7 +293,7 @@ vez de `visibles(id)`), 2 rojas, las mismas que la tabla de L2; restaurada con `
 | L3.12 Verde | [x] focales y regresiones cercanas (abajo); `npm run typecheck` salida 0; eslint (abajo). La suite entera la corre el orquestador en L3.15 |
 | L3.13 Mutaciones | [x] (tabla abajo) |
 | L3.14 Casilla de la regla 13 y regla de mutación 3 | [x] (abajo) |
-| L3.15 Cierre del lote | [ ] Del orquestador |
+| L3.15 Cierre del lote | [x] Orquestador, sección «Cierre de L3» al final |
 | B.1 Barrido de L3 | [x] (abajo) |
 
 ## Rojo medido de L3 (L3.6)
@@ -427,3 +427,20 @@ fichero ajeno. **Hipótesis** (lectura humana, sin detector): el detector de cit
 
 Ninguno. Matices: (a) la guarda del interruptor y el manejador viven en `apps/desk/server/routes/rellenoConversaciones.ts` con `requireAdmin as requireSuperAdmin`, igual que `routes/admin.ts`, porque
 `requireSuperAdmin` no existe con ese nombre en `middleware.ts`; (b) la línea para `.env.example` (P-1) queda para Alfonso y es exactamente: `RELLENO_CONVERSACIONES_HABILITADO=`.
+
+## Cierre de L3 (L3.15, orquestador)
+
+Sobre `9a439c10`, en serie:
+
+| Comprobación | Salida | Dato |
+|---|---|---|
+| `npm run typecheck` | 0 | — |
+| `npm run lint -- --max-warnings 165` | 0 | 165 avisos contra 165: ninguno nuevo (los 8 `no-explicit-any` de `packages/zoho-sync/src/config.test.ts` que el ejecutor vio con `--max-warnings 0` ya estaban en `82649404` y están dentro de los 165) |
+| detector `--sha HEAD` | 0 | 7.945 citas comprobadas; las mismas 14 abreviadas rotas informativas de `5ce2f54b` |
+| `npm run build` | 0 | `index-F1jDYjEU.js` 427,51 kB, el mismo bundle: L3 no toca el cliente |
+| `npm test` | 0 | 338 ficheros pasados + 4 omitidos (342), 5.836 pruebas pasadas + 26 omitidas (5.862), 386 s; memoria antes, 14.420 MB |
+
+Contraste del orquestador: M4 reproducida (`perl` en `packages/zoho-sync/src/config.ts:125`, `=== 'true'` → `!== 'false'` sólo en
+`RELLENO_CONVERSACIONES_HABILITADO`), 4 rojas, las mismas que la tabla de L3; restaurada con `git checkout`, `git diff` vacío y CRLF.
+`requireSuperAdmin` es `requireAdmin` (`apps/desk/server/auth/middleware.ts:26-29`, exige `isAdmin`) importado con ese alias, igual que
+`apps/desk/server/routes/admin.ts:17`: es la guarda que la propuesta nombra en S-2.

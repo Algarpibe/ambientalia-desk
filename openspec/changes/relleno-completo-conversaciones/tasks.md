@@ -84,7 +84,7 @@ Mutaciones y posiciones: M3 (`limite=0`), M4, M5, M7 (en `app.ts:50`), M10 (las 
 - [x] L3.12 Verde: ficheros de L3, `typecheck` y suite entera con su log.
 - [x] L3.13 Mutaciones L3 con su rojo: M3 (`limite=0`), M4 (`!== 'false'` en `config.ts:125`), M5 (el `GET` llama a `lanzar`), M7 (`marcar: true` en `app.ts:50`), M10 (frase de la §21; aparte, «Copia previa» de la §20), P1 (interruptor tras validar). Tabla en `apply-progress.md`.
 - [x] L3.14 Casilla de la regla 13 y regla de mutación 3: `git diff --name-only` sin nada bajo `apps/desk/src`; el rol y el interruptor los impone el servidor (D7).
-- [ ] L3.15 Cierre del lote: las cinco comprobaciones en 0, medida, barrido y `apply-progress.md`.
+- [x] L3.15 Cierre del lote: las cinco comprobaciones en 0, medida, barrido y `apply-progress.md`.
 
 ## Barrido de la regla de mutación 4 (tarea de cierre de cada lote)
 
