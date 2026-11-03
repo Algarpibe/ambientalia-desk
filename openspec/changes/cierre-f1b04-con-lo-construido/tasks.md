@@ -14,10 +14,10 @@ archivo. Cada intento se asienta sólo con TODOS sus códigos en 0.
 
 ## 2. Verify
 
-- [ ] 2.1 Contrastar cada cita de `proposal.md` contra el fichero, en su ancla: qué afirma, extremo inicial y final.
-- [ ] 2.2 Comprobar que ninguna pieza de la fila queda sin construir y archivar; si queda alguna, parar sin archivar.
-- [ ] 2.3 Comprobar que el cambio no toca código de producción, `openspec/specs/` ni ficheros de Supervisión.
-- [ ] 2.4 Escribir `verify-report.md` con veredicto; los cuatro códigos con código 0.
+- [x] 2.1 Contrastar cada cita de `proposal.md` contra el fichero, en su ancla: qué afirma, extremo inicial y final.
+- [x] 2.2 Comprobar que ninguna pieza de la fila queda sin construir y archivar; si queda alguna, parar sin archivar.
+- [x] 2.3 Comprobar que el cambio no toca código de producción, `openspec/specs/` ni ficheros de Supervisión.
+- [x] 2.4 Escribir `verify-report.md` con veredicto; los cuatro códigos con código 0.
 
 ## 3. Archivo
 
