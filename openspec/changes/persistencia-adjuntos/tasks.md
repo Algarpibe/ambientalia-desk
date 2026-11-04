@@ -5,7 +5,7 @@ Entradas: `proposal.md` (S-a a S-c, S-1 a S-15, CA-1 a CA-10), `specs/zoho-sync/
 la línea de producción que la pone verde; las pruebas nuevas van en ficheros nuevos o **al final** de uno existente, nunca en medio.
 Comprobaciones de CADA intento (no sólo de verify; D15 lo dice sólo de verify y aquí se corrige), **en serie** y sobre el árbol commiteado:
 `npm run typecheck`; `npm run lint -- --max-warnings 165` (informar N avisos contra 165); detector `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`;
-compuerta de memoria `systeminfo | grep -ai disponible` ≥ 12.000 MB antes de `npm test` (si no, PARAR e informar); `npm test` solo, con la salida completa a un
+sin compuerta de memoria (corrección del 04/11): anotar memoria libre al arrancar, duración y código de cada pasada; si se corta por memoria, anotar y repetir; `npm test` solo, con la salida completa a un
 log en el scratchpad (si sale 1 SÓLO por «Timeout calling onTaskUpdate» con todo verde, repetir); `npm run build`. Las cinco en 0. Mutaciones con
 `perl -i -pe '… if $. == N'` (nunca `sed -i`: pasa a LF los ficheros CRLF); restaurar y comprobar `git diff` vacío y `file <fichero>` aún CRLF. Medida de cada
 intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; ≤ 800. `apply-progress.md` se fusiona, nunca se sobrescribe.
@@ -44,10 +44,10 @@ Mutaciones y posiciones: M2 (las dos), M3 (sin comparar con `size`), M7 (segunda
 - [x] L1.3 ROJO `apps/desk/server/adjuntos/rutaAdjunto.test.ts` (nuevo): `dirAdjuntos` (ausente, relativa, dentro de `dist/`, válida) y la tabla de rutas contra `RUTA_ADJUNTO_ZOHO` y contra el literal leído de `apps/desk/server/routes/attachment.ts:17` (H5).
 - [x] L1.4 Anotar el rojo medido de L1.2-L1.3 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
 - [x] L1.5 `apps/desk/server/adjuntos/almacen.ts` (nuevo): orden de D2 con `storage_path` sólo tras el `rename`, `estadoCopia`, `dirAdjuntos`; no crea el directorio.
-- [ ] L1.6 Verde: los dos ficheros nuevos, `npm run typecheck` y suite entera con su log.
+- [x] L1.6 Verde: los dos ficheros nuevos, `npm run typecheck` y suite entera con su log.
 - [x] L1.7 Mutaciones L1 con su rojo: M2 (nombre desde `name`; aparte, `writeFile` directo al final), M3, M7 (`\d+` → `\w+` en `attachment.ts:17`; aparte, en `almacen.ts`), P4 (`storage_path` antes del `rename`). Tabla en `apply-progress.md`.
 - [x] L1.8 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
-- [ ] L1.9 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido (B.1) y `apply-progress.md`.
+- [x] L1.9 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido (B.1) y `apply-progress.md`.
 
 ## Lote L2 — la ruta sirve de local; configuración (intento i3)
 Escenarios: RQ-ZS-31 los cinco; RQ-ZS-32 el interruptor sólo abre con `'true'`; RQ-ZS-33 interruptor cerrado (la lectura de `GUARDAR_ADJUNTOS_AL_SINCRONIZAR`).

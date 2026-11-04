@@ -71,5 +71,8 @@ Script de la tanda: fuera del repositorio, en el scratchpad de la sesión (perl 
 3. `guardarAdjunto` captura cualquier error de `zohoFetch`/`arrayBuffer` como `fallido:red` (incluida la lectura del cuerpo).
 4. Se añade `name?` a `FilaAdjunto` sólo para poder probar que no interviene.
 
-### Pendiente
-- L1.6 (suite entera con log) y L1.9 (cinco comprobaciones, medida de líneas, barrido B.1): orquestador.
+### Cierre del lote L1 (L1.6 y L1.9, orquestador, sobre `b0cbae47`)
+- `npm run typecheck` 0; `npm run lint -- --max-warnings 165` 0, **165 avisos contra 165**; detector `tsx apps/desk/server/citas/cli.ts --sha HEAD` 0; `npm run build` 0 (`index-F1jDYjEU.js` 427,51 kB, el mismo bundle: L1 no toca el cliente).
+- `npm test`, pasada 1: memoria libre al arrancar **10.863 MB**, duración **463 s**, código **0**; 340 ficheros pasan y 4 omitidos; 5.909 pruebas pasan y 26 omitidas (las 5.836 de M0 más las 73 nuevas). Desde el 04/11 no hay compuerta de memoria (corrección del usuario al encargo 17): se anotan memoria al arrancar, duración y código de cada pasada. Una pasada anterior, con la compuerta aún vigente, no se lanzó con 9.160 MB.
+- Medida del intento i2 contra `ad404b30` (`git diff --shortstat --no-renames`): el commit de L1 son 5 ficheros, +541 −7 = 548; este cierre suma `tasks.md` y `apply-progress.md`, y la medida final va en la evidencia del asiento. Sin trackear: 0.
+- Barrido B.1: L1 no edita ningún fichero muy citado. `apps/desk/server/routes/attachment.ts` sólo se mutó y se restauró: sus citas `:14`, `:17` y `:21-30` (esta, anclada en `d26ef8a5`) siguen diciendo lo que afirman. Las nueve citas `apps/desk/server/adjuntos/almacen.ts:NN` de este fichero (ocho líneas distintas; `:92` dos veces) se comprobaron contra el fichero: `:16`, `:32`, `:42`, `:82`, `:88`, `:92`, `:93` y `:129` dicen lo que afirman.
