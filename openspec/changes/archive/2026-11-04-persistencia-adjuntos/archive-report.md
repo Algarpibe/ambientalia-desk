@@ -39,7 +39,7 @@ número. `attachment.ts` es la única con inserción (+8 −4) y lo nuevo va des
 cabeceras, rol, interruptores, directorio y tope los decide el servidor (regla 13).
 
 **Guardas que cuentan el árbol**, corregidas en sitio con su molde: `apps/desk/server/opcionesConversaciones.test.ts:25` (L4, exige el
-gancho en `index.ts:23`), `apps/desk/server/deployRellenoConversaciones.test.ts:19` y `:25` (L5: la §21 deja de ser la última y su tramo
+gancho en `apps/desk/server/index.ts:23`), `apps/desk/server/deployRellenoConversaciones.test.ts:19` y `:25` (L5: la §21 deja de ser la última y su tramo
 para en la §22; rojo medido 1 de 4 al añadir la §22) y `apps/desk/server/reconciliacion/registro.test.ts:218`, `:220` (i1 metió 1G-02 en
 «en curso»; aquí sale al archivar, con rojo medido al mover la carpeta: 1 de 23, y verde tras corregirla: 23 de 23).
 
@@ -68,14 +68,14 @@ empezar; la siguiente lo asentó con el token guardado de su `acquire`, sin abri
 **Parte revisable, medida antes de asentar:** la fusión, +147 −0, y este informe, +146: 293, por debajo de 800. Fusión por
 script propio (sólo ADDED, al final, con identidad bloque a bloque y los 29 bloques viejos intactos): `openspec/specs/zoho-sync/spec.md`
 1.941 → 2.088 (RQ-ZS-30 desde `openspec/specs/zoho-sync/spec.md:1943`, 32 líneas; RQ-ZS-31 desde `:1976`, 33; RQ-ZS-32 desde `:2010`, 51;
-RQ-ZS-33 desde `:2062`, 27). Se conserva CRLF y ninguna línea viva se mueve. La capacidad ya estaba en `capabilities`, así que R-2 no
+RQ-ZS-33 desde `openspec/specs/zoho-sync/spec.md:2062`, 27). Se conserva CRLF y ninguna línea viva se mueve. La capacidad ya estaba en `capabilities`, así que R-2 no
 aplica. La rama no toca `openspec/config.yaml` ni `docs/sdd/ENTRADA.md`.
 
 La carpeta pasa a `openspec/changes/archive/2026-11-04-persistencia-adjuntos/`. Las siete citas con línea que `verify-report.md` (seis) y
 `apply-progress.md` (una) hacían por la ruta vieja se reapuntan a la nueva (caso A: mismo contenido, mismas líneas). Las menciones
 sin línea de la ruta vieja son históricas y se quedan (caso B).
 
-Las cinco comprobaciones sobre el árbol archivado: COMPROBACIONES_I8. Medida del intento contra `9dcc8f16`: +1.547 −1.254 = 2.801 sin renombrado (con renombrado, +303 −10), 0 sin trackear, con
+Las cinco comprobaciones sobre el árbol archivado: typecheck 0; lint 0 (165 contra 165); build 0 (`index-F1jDYjEU.js`, 427,51 kB, sin cambio); `npm test` 0 (346 ficheros y 4 saltados, 6.037 pruebas y 26 saltadas, con 14.749 MB libres al arrancar, 342 s, una sola pasada); detector de citas 0 sobre `b4e3aae2`. Medida del intento contra `9dcc8f16`: +1.547 −1.254 = 2.801 sin renombrado (con renombrado, +303 −10), 0 sin trackear, con
 un techo de 3.304, que es dos veces la carpeta (1.252) más 800.
 
 ## 4. Verificación y mutaciones
@@ -90,7 +90,7 @@ restauradas con el fichero idéntico (`cmp` o `git diff` vacío) y CRLF.
 Mutaciones de `design.md` D13, todas en rojo: los interruptores con `!== 'false'` (M1), el nombre desde `name` y la escritura sin temporal
 (M2), no comparar con `size` y la ruta que escribe (M3), la apertura y el worker que descargan (M4), no cortar ante `429` (M5), el nombre de
 fichero en el log y en el resumen (M6), los ficheros vigilados (M7: la §22, la §21 y la guarda de rutas), el tope, la memoria y el gancho
-(M8) y el cableado de `index.ts:23` (M9). Posiciones: la copia antes de `requireAuth` o de la guarda (P1), los interruptores tras validar
+(M8) y el cableado de `apps/desk/server/index.ts:23` (M9). Posiciones: la copia antes de `requireAuth` o de la guarda (P1), los interruptores tras validar
 (P2), el `429` y el `404` tras `!res.ok` (P3), `storage_path` antes del `rename` (P4), `enMarcha` y `guardados.push` adelantados (P5).
 
 ## 5. Reglas del encargo
@@ -102,7 +102,7 @@ fichero en el log y en el resumen (M6), los ficheros vigilados (M7: la §22, la 
 - **Interruptores:** nacen cerrados, con sus dos frases en la §22. Las líneas de `.env.example` las añade Alfonso (P-5).
 - **Ficheros de Supervisión:** la rama no toca ninguno de los seis.
 - **Regla de mutación 4:** barrido por lote, en `openspec/changes/archive/2026-11-04-persistencia-adjuntos/apply-progress.md:78`, `:172`,
-  `:238`, `:317` y `:415`; al archivar no se mueve ninguna línea citada (la fusión va al final y `registro.test.ts` se edita en sitio).
+  `openspec/changes/archive/2026-11-04-persistencia-adjuntos/apply-progress.md:238`, `:317` y `:415`; al archivar no se mueve ninguna línea citada (la fusión va al final y `registro.test.ts` se edita en sitio).
 - **Seguridad (los adjuntos son documentos de clientes):** lo de D2, D3 y D6 no se relajó; el verify lo comprobó línea a línea.
 - **Commits:** convencionales y sin línea de coautoría, por instrucción del encargo.
 
