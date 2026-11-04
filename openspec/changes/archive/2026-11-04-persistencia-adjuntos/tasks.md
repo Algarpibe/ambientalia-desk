@@ -118,11 +118,11 @@ Mutaciones y posiciones: M1 (§22), M7 (fichero vigilado), P2.
 - [x] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
 
 ## Archivo (intento i8)
-- [ ] A.1 Techo del intento = 2 × `wc -l` de la carpeta + 800. Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.
-- [ ] A.2 Fusión por script de los cuatro ADDED (RQ-ZS-30 a RQ-ZS-33) al **final** de `openspec/specs/zoho-sync/spec.md`; identidad bloque a bloque y CRLF conservado (`file`).
-- [ ] A.3 `archive-report.md` con la línea de R-1 (qué parte de 1G-02 cubrió y qué dejó fuera); tareas de persona declaradas aparte.
-- [ ] A.4 `apps/desk/server/reconciliacion/registro.test.ts:218` («NUEVE» → «OCHO», 1G-02 cerrada por archivo por `persistencia-adjuntos`) y `:220` (quitar '1G-02' de «en curso» y `toContain('1G-02')` en «cerradas por archivo»), en sitio, mismo número de líneas, con su rojo medido al mover la carpeta.
-- [ ] A.5 Cinco comprobaciones en 0 y commit que contiene sólo este cambio: `git show --numstat`.
+- [x] A.1 Techo del intento = 2 × `wc -l` de la carpeta + 800. Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.
+- [x] A.2 Fusión por script de los cuatro ADDED (RQ-ZS-30 a RQ-ZS-33) al **final** de `openspec/specs/zoho-sync/spec.md`; identidad bloque a bloque y CRLF conservado (`file`).
+- [x] A.3 `archive-report.md` con la línea de R-1 (qué parte de 1G-02 cubrió y qué dejó fuera); tareas de persona declaradas aparte.
+- [x] A.4 `apps/desk/server/reconciliacion/registro.test.ts:218` («NUEVE» → «OCHO», 1G-02 cerrada por archivo por `persistencia-adjuntos`) y `:220` (quitar '1G-02' de «en curso» y `toContain('1G-02')` en «cerradas por archivo»), en sitio, mismo número de líneas, con su rojo medido al mover la carpeta.
+- [x] A.5 Cinco comprobaciones en 0 y commit que contiene sólo este cambio: `git show --numstat`.
 
 ## Tareas de persona — fuera del recuento; archivar NO las da por hechas
 | Id | Qué | Dueño | Dónde queda escrito |
