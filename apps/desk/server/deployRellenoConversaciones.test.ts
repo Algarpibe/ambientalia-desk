@@ -7,7 +7,7 @@ import path from 'node:path'
  * secretos de CLAUDE.md: un interruptor que enciende un escritor nace cerrado y se documenta con dos frases, qué enciende y qué se rompe si
  * se pone mal). Molde: `deployConversaciones.test.ts`.
  *
- * QUÉ COMPRUEBA: que la §21 existe tras la §20 y es la última, que dice las dos frases, que nace cerrada y lleva su línea de entorno vacía,
+ * QUÉ COMPRUEBA: que la §21 existe tras la §20 y que la §22 va detrás, que dice las dos frases, que nace cerrada y lleva su línea de entorno vacía,
  * que pide la copia previa de `desk-db` y nombra la ruta, `limite=0`, la pasada corta y `desde=`, y que el código lo lee con `=== 'true'`.
  * QUÉ NO COMPRUEBA: `.env.example` (lo añade una persona, P-1) ni que cada línea citada siga diciendo lo que la frase afirma.
  */
@@ -16,13 +16,13 @@ const deploy = readFileSync(path.join(RAIZ, 'DEPLOY.md'), 'utf8')
 const config = readFileSync(path.join(RAIZ, 'packages/zoho-sync/src/config.ts'), 'utf8')
 const s20 = deploy.indexOf('## 20. Relleno de conversaciones')
 const s21 = deploy.indexOf('## 21. `RELLENO_CONVERSACIONES_HABILITADO`')
-const seccion = s21 === -1 ? '' : deploy.slice(s21)
+const seccion = s21 === -1 ? '' : deploy.slice(s21, deploy.indexOf('## 22. ') >= 0 ? deploy.indexOf('## 22. ') : undefined) // 1G-02 añadió la §22: la §21 se para en ella; en una línea para no desplazar citas
 
 describe('DEPLOY.md §21 · RELLENO_CONVERSACIONES_HABILITADO (1G-01)', () => {
-  it('la sección existe, tras la §20, y es la última', () => {
+  it('la sección existe, tras la §20, y la §22 va detrás', () => {
     expect(s21).toBeGreaterThan(-1)
     expect(s21).toBeGreaterThan(s20)
-    expect(seccion.match(/^## \d+\./gm)).toHaveLength(1)
+    expect(seccion.match(/^## \d+\./gm)).toHaveLength(1); expect(deploy.indexOf('## 22. ')).toBeGreaterThan(s21)
   })
 
   it('dice qué enciende y qué se rompe si se pone mal', () => {

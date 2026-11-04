@@ -63,7 +63,7 @@ export function createSync({ zohoFetch, db, config, alDiscrepanciaOV, conversaci
   // Cachés por proceso para no re-pedir la misma cuenta/contacto en el backfill (menos riesgo de 429).
   const accountSeen = new Set<string>()
   // contactId → accountId del contacto (el endpoint de LISTA de tickets no trae accountId).
-  const contactAccount = new Map<string, string | null>(); const pasadaConversaciones = conversaciones?.periodica === true ? crearPasadaConversaciones({ zohoFetch, db, marcar: conversaciones.marcarAusentes === true, pausaMs: conversaciones.pausaMs, pausa429Ms: conversaciones.pausa429Ms }) : undefined
+  const contactAccount = new Map<string, string | null>(); const pasadaConversaciones = conversaciones?.periodica === true ? crearPasadaConversaciones({ zohoFetch, db, marcar: conversaciones.marcarAusentes === true, pausaMs: conversaciones.pausaMs, pausa429Ms: conversaciones.pausa429Ms, trasGuardar: conversaciones.trasGuardar }) : undefined
 
   /**
    * La historia de UN ticket, paginada. Es función suelta y no solo un método porque la llaman dos: la

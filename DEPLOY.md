@@ -910,3 +910,78 @@ Pasos (paso de persona; el `.env.example` lo completa Alfonso, P-1):
    por clase, los números de ticket que no cuadran y el motivo del primer fallo, nunca datos de cliente.
 6. Si se corta por un `429`, el estado trae `cortadoEn`: relanzar con `?desde=<cortadoEn>`.
 7. Marcar lo que Zoho ya no devuelve sigue en la §19; el resumen se pasa al analista (P-3).
+
+## 22. Adjuntos en el volumen propio (1G-02, `decision/adelanto-09-11-empezar-1g`)
+
+Hasta aquí, `GET /api/attachment` pedía cada archivo a Zoho en el momento y no guardaba nada. Con esta sección los archivos de los adjuntos se
+guardan en un volumen de la App y la ruta sirve primero la copia local; si falta o no es válida (otro tamaño), cae a Zoho y deja una línea de
+log. Son tres variables en el servicio App; las tres nacen vacías y sin ellas todo sigue como antes. El `.env.example` lo completa Alfonso (P-5).
+
+### `ADJUNTOS_DIR`: el directorio del volumen
+
+**Qué enciende:** nada por sí sola, pero sin ella no se escribe ningún adjunto ni se sirve ninguna copia local. Es la ruta, dentro de la App,
+del volumen persistente donde se guardan los archivos, un fichero por adjunto con el id del adjunto como nombre. Debe ser una ruta absoluta.
+
+**Qué se rompe si se pone mal:** **Sin valor por defecto**: vacía, relativa o dentro de `dist/` se trata como ausente, y entonces el `POST` de
+`/api/admin/relleno-adjuntos` responde `403` nombrando esta variable (salvo `limite=0`), la pasada periódica no guarda y la ruta de adjuntos
+sirve desde Zoho como antes. Si apunta a una ruta que no está en el volumen, los archivos se guardan igual pero se pierden al redesplegar.
+Si el directorio no existe o no se puede escribir, la pasada se corta con el código de error del sistema y no escribe en otro sitio.
+
+La línea de entorno que corresponde, tal cual:
+
+> ```
+> ADJUNTOS_DIR=
+> ```
+
+### `RELLENO_ADJUNTOS_HABILITADO`: el relleno manual
+
+**Qué enciende:** que `POST /api/admin/relleno-adjuntos` pueda lanzar la pasada. La lanza sólo un superadministrador y responde sin esperarla:
+recorre los adjuntos de `desk.attachments` por número de ticket y luego id, descarga de Zoho los que no tienen copia válida en el volumen,
+comprueba los bytes contra el tamaño registrado y fija `storage_path`. Es un escritor: toca el disco y `attachments`. Con `limite=0` el `POST`
+sólo cuenta (pendientes, megabytes y sin ruta) y funciona con la variable cerrada; el `GET` de la misma ruta sólo devuelve el estado, nunca
+lanza y tampoco lo gobierna esta variable.
+
+**Qué se rompe si se pone mal:** abierta por descuido, un superadministrador puede soltar la descarga entera contra la cuota de Zoho Desk y
+contra el disco del volumen; un `429` agotado corta la pasada y deja el número donde reanudar, un error de disco la corta también. Cerrada
+cuando hace falta, el `POST` responde `403` nombrando la variable y no se lanza nada; no se pierde ningún dato. Escribir `TRUE`, `1`, `yes` o
+dejarla vacía la deja cerrada.
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). Cada cambio de la variable pide un redespliegue; la vuelta atrás es
+quitarla. La línea de entorno que corresponde, tal cual:
+
+> ```
+> RELLENO_ADJUNTOS_HABILITADO=
+> ```
+
+### `GUARDAR_ADJUNTOS_AL_SINCRONIZAR`: el guardado en la pasada periódica
+
+**Qué enciende:** que la pasada periódica de conversaciones (§18, `SYNC_CONVERSACIONES_PERIODICA=true`) guarde, al final de cada ciclo, los
+adjuntos pendientes de los tickets cuyas conversaciones acaba de guardar, hasta 20 peticiones por ciclo. Sin la §18 encendida no hay pasada y
+esta variable no hace nada. Es un escritor: toca el disco y `attachments`.
+
+**Qué se rompe si se pone mal:** abierta con un volumen pequeño llena el disco ciclo a ciclo; un error de disco o un `429` cortan sólo el
+guardado de ese ciclo y el ciclo de sincronización sigue. Cerrada, la pasada no descarga nada y lo pendiente espera al relleno manual.
+Escribir `TRUE`, `1`, `yes` o dejarla vacía la deja cerrada.
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). Cada cambio de la variable pide un redespliegue; la vuelta atrás es
+quitarla. La línea de entorno que corresponde, tal cual:
+
+> ```
+> GUARDAR_ADJUNTOS_AL_SINCRONIZAR=
+> ```
+
+### Pasos (paso de persona; el `.env.example` lo completa Alfonso, P-5)
+
+1. **P-1 · Volumen.** Montar en la App un volumen persistente de EasyPanel y poner en `ADJUNTOS_DIR` su ruta absoluta, fuera de `dist/`.
+2. **P-2 · Espacio.** En la terminal de la App, `df -h` sobre esa ruta. Hace falta espacio para todos los adjuntos pendientes (el recuento del
+   paso 5 da los megabytes); si no alcanza, **se para**: ampliar el volumen cuesta dinero y lo decide Gerencia.
+3. **P-3 · Copia previa de `desk-db`** (base `desk`) con el botón de EasyPanel.
+4. Abrir `RELLENO_ADJUNTOS_HABILITADO` (`true`) en la App y redesplegar.
+5. Como superadministrador, `POST /api/admin/relleno-adjuntos?limite=0`: cuenta pendientes, megabytes y sin ruta, sin llamar a Zoho ni
+   escribir.
+6. Pasada corta: `POST /api/admin/relleno-adjuntos?limite=20` y `GET /api/admin/relleno-adjuntos` hasta `terminado: true`.
+7. La completa: `POST /api/admin/relleno-adjuntos` sin parámetros y el mismo `GET` hasta `terminado: true`. El `GET` trae los recuentos por
+   clase, los adjuntos ausentes en Zoho y los fallidos con su motivo (sólo ids y números de ticket) y el motivo del primer fallo.
+8. Si se corta por un `429` o por el disco, el estado trae `cortadoEn`: relanzar con `?desde=<cortadoEn>`.
+9. Cuando el relleno esté completo, abrir `GUARDAR_ADJUNTOS_AL_SINCRONIZAR` (con la §18 ya encendida) para que lo nuevo se guarde solo.
+10. El resumen del `GET` final se pasa al analista.

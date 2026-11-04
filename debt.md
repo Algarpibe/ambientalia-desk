@@ -569,7 +569,7 @@ PATCH `serial` vacío (M-14), escapar comodines de búsqueda (M-5), TZ en `due_d
 
 ---
 
-## 1. Descargar y almacenar archivos adjuntos (imágenes, PDFs)
+## 1. Descargar y almacenar archivos adjuntos (imágenes, PDFs) — CERRADO por `persistencia-adjuntos` (1G-02)
 
 **Qué:** Guardar los archivos de los adjuntos (no solo su metadata) para tenerlos
 independientes de Zoho.
@@ -579,10 +579,10 @@ volumen real** antes de comprometer espacio, y elegir bien el destino.
 
 **Estado del código:**
 - ✅ Descarga **en vivo** ya funciona: proxy autenticado `GET /api/attachment?path=...`
-  (sirve el archivo desde Zoho en el momento; no lo guarda).
+  (sirve primero la copia local del volumen y, si falta o no es válida, cae a Zoho en el momento; 1G-02).
 - ✅ Endpoint de **medición** listo: `GET /api/admin/measure-attachments`
   (recorre todos los tickets y totaliza cantidad + GB de adjuntos, sin descargar nada).
-- ❌ Falta: persistir los archivos en un destino y servirlos desde ahí.
+- ✅ Hecho: persistir los archivos en el volumen propio (`ADJUNTOS_DIR`) y servirlos desde ahí (`persistencia-adjuntos`, 1G-02).
 
 **Cómo retomar:**
 1. Llamarlo **logueado como super administrador** (ya NO hay `?token=`: los endpoints admin pasaron a
@@ -594,8 +594,8 @@ volumen real** antes de comprometer espacio, y elegir bien el destino.
      guarda la ruta; el proxy sirve desde local y cae a Zoho si falta.
    - **MinIO / S3** — si son decenas de GB o se quiere almacenamiento de objetos dedicado.
    - **Postgres `bytea`** — solo si el total es pequeño (cientos de MB); infla BD/backups.
-3. Implementar: al sincronizar conversaciones, descargar cada adjunto vía `zohoFetch(path)` y
-   guardarlo; el proxy `/api/attachment` consulta primero el almacenamiento local.
+3. Implementado (1G-02): el relleno manual `/api/admin/relleno-adjuntos` y, con `GUARDAR_ADJUNTOS_AL_SINCRONIZAR`, el guardado en la pasada
+   periódica de conversaciones; el proxy `/api/attachment` consulta primero el volumen. Los pasos están en `DEPLOY.md` §22.
 
 ---
 

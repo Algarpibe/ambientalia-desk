@@ -22,7 +22,7 @@ describe('opcionesConversaciones · la única lectura de los dos interruptores (
 
   it('index.ts pasa esas opciones a createSync y no lee los interruptores por su cuenta', () => {
     const llamada = indice.split(/\r?\n/).find((l) => l.includes('createSync({')) ?? ''
-    expect(llamada).toContain('conversaciones: opcionesConversaciones(config)')
+    expect(llamada).toContain('conversaciones: conGuardadoDeAdjuntos(opcionesConversaciones(config), config,')
     expect(indice).not.toMatch(/config\.(syncConversacionesPeriodica|marcarConversacionesAusentes)/)
   })
 })

@@ -6,7 +6,7 @@ import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import { createMeasurer } from './measure'
-import { createDetailBackfiller } from './backfill'; import { crearRellenoConversaciones } from './rellenoConversaciones'; import { opcionesConversaciones } from './opcionesConversaciones'
+import { createDetailBackfiller } from './backfill'; import { crearRellenoConversaciones } from './rellenoConversaciones'; import { opcionesConversaciones } from './opcionesConversaciones'; import { dirAdjuntos } from './adjuntos/almacen'
 import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
@@ -19,7 +19,7 @@ import { registerAnalisisRoutes } from './routes/analisis'
 import { registerAdminRoutes } from './routes/admin'; import { registerRespaldoRoutes, type RespaldadorRuta } from './routes/respaldo'
 import { registerAttachmentRoutes } from './routes/attachment'
 import { registerRemisionRoutes } from './routes/remision'
-import { registerAvisosRoutes } from './routes/avisos'; import { registerRellenoConversacionesRoutes } from './routes/rellenoConversaciones'; import { registerPermisosDecisionalesRoutes } from './routes/permisosDecisionales'; import { registerPermisosControlCalidadRoutes } from './routes/permisosControlCalidad'; import { registerOvAsociacionesRoutes } from './routes/ovAsociaciones'; import { OvYaAsociadaError } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { registerContratosRoutes } from './routes/contratos'; import { registerPrioridadRoutes } from './routes/prioridad'; import { registerCertificadoFabricaRoutes } from './routes/certificadoFabrica'; import { registerAltaManualRoutes } from './routes/altaManual'; import { registerNovedadesRoutes } from './routes/novedades'; import { registerIndicadoresRoutes } from './routes/indicadores'; import { registerGarantiaProveedorRoutes } from './routes/garantiaProveedor'; import { registerReasignacionRoutes } from './routes/reasignacion'; import { registerAccesoriosModeloRoutes } from './routes/accesoriosModelo'; import { registerEncuestaRespuestasRoutes } from './routes/encuestaRespuestas'; import { registerIndicadoresComparacionRoutes } from './routes/indicadoresComparacion'; import { registerPermisosSalidasEsperasRoutes } from './routes/permisosSalidasEsperas'
+import { registerAvisosRoutes } from './routes/avisos'; import { registerRellenoConversacionesRoutes } from './routes/rellenoConversaciones'; import { registerPermisosDecisionalesRoutes } from './routes/permisosDecisionales'; import { registerPermisosControlCalidadRoutes } from './routes/permisosControlCalidad'; import { registerOvAsociacionesRoutes } from './routes/ovAsociaciones'; import { OvYaAsociadaError } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { registerContratosRoutes } from './routes/contratos'; import { registerPrioridadRoutes } from './routes/prioridad'; import { registerCertificadoFabricaRoutes } from './routes/certificadoFabrica'; import { registerAltaManualRoutes } from './routes/altaManual'; import { registerNovedadesRoutes } from './routes/novedades'; import { registerIndicadoresRoutes } from './routes/indicadores'; import { registerGarantiaProveedorRoutes } from './routes/garantiaProveedor'; import { registerReasignacionRoutes } from './routes/reasignacion'; import { registerAccesoriosModeloRoutes } from './routes/accesoriosModelo'; import { registerEncuestaRespuestasRoutes } from './routes/encuestaRespuestas'; import { registerIndicadoresComparacionRoutes } from './routes/indicadoresComparacion'; import { registerPermisosSalidasEsperasRoutes } from './routes/permisosSalidasEsperas'; import { registerRellenoAdjuntosRoutes } from './routes/rellenoAdjuntos'; import { crearRellenoAdjuntos } from './adjuntos/rellenoAdjuntos'
 import { HttpError } from './util/httpError'
 import multer from 'multer'
 import { LIMITE_SUBIDA_MB } from './util/subida'
@@ -47,15 +47,15 @@ export function createApp({ db, zohoFetch, sync, config, respaldador }: Deps): E
   registerAuthRoutes(app, db)
 
   const measurer = createMeasurer({ zohoFetch, config })
-  const detailBackfiller = createDetailBackfiller({ zohoFetch, sync, config }); const relleno = crearRellenoConversaciones({ zohoFetch, db, sync, marcar: opcionesConversaciones(config).marcarAusentes === true })
+  const detailBackfiller = createDetailBackfiller({ zohoFetch, sync, config }); const relleno = crearRellenoConversaciones({ zohoFetch, db, sync, marcar: opcionesConversaciones(config).marcarAusentes === true }); const dirAdj = dirAdjuntos(config.adjuntosDir); const rellenoAdj = crearRellenoAdjuntos({ zohoFetch, db, dir: dirAdj })
 
   registerTicketRoutes(app, { db, sync, zohoFetch, config })
   registerDirectoryRoutes(app, { db })
   registerCatalogoRoutes(app, { db })
   registerEquipoRoutes(app, { db })
   registerAnalisisRoutes(app, { db })
-  registerAdminRoutes(app, { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada: config.migracionTicketsHabilitada }); if (respaldador) registerRespaldoRoutes(app, { db, respaldador }); registerRellenoConversacionesRoutes(app, { db, relleno, habilitado: config.rellenoConversacionesHabilitado === true })
-  registerAttachmentRoutes(app, { db, zohoFetch })
+  registerAdminRoutes(app, { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada: config.migracionTicketsHabilitada }); if (respaldador) registerRespaldoRoutes(app, { db, respaldador }); registerRellenoConversacionesRoutes(app, { db, relleno, habilitado: config.rellenoConversacionesHabilitado === true }); registerRellenoAdjuntosRoutes(app, { db, relleno: rellenoAdj, habilitado: config.rellenoAdjuntosHabilitado === true, hayDir: dirAdj !== null })
+  registerAttachmentRoutes(app, { db, zohoFetch, dir: dirAdj })
   registerRemisionRoutes(app, { db, config })
   registerAvisosRoutes(app, { db })
   registerOvAsociacionesRoutes(app, { db }); registerContratosRoutes(app, { db }); registerPrioridadRoutes(app, { db }); registerCertificadoFabricaRoutes(app, { db }); registerAltaManualRoutes(app, { db }); registerNovedadesRoutes(app, { db }); registerIndicadoresRoutes(app, { db }); registerGarantiaProveedorRoutes(app, { db }); registerReasignacionRoutes(app, { db, config }); registerAccesoriosModeloRoutes(app, { db }); registerEncuestaRespuestasRoutes(app, { db }); registerIndicadoresComparacionRoutes(app, { db }); registerPermisosDecisionalesRoutes(app, { db, config }); registerPermisosControlCalidadRoutes(app, { db, config }); registerPermisosSalidasEsperasRoutes(app, { db, config })

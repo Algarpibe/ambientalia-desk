@@ -1,13 +1,13 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { requireAuth } from '../auth/middleware'
-import { asyncHandler } from '../util/asyncHandler'
+import { asyncHandler } from '../util/asyncHandler'; import { buscarCopia, servirCopia, registrarCaida } from '../adjuntos/servir'
 
 export function registerAttachmentRoutes(
   app: Express,
-  deps: { db: Queryable; zohoFetch: (path: string, init?: RequestInit) => Promise<globalThis.Response> },
+  deps: { db: Queryable; zohoFetch: (path: string, init?: RequestInit) => Promise<globalThis.Response>; dir: string | null },
 ): void {
-  const { db, zohoFetch } = deps
+  const { db, zohoFetch, dir } = deps
 
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
   // Requiere sesión: son documentos de clientes (facturas, fotos, etc.).
@@ -18,7 +18,11 @@ export function registerAttachmentRoutes(
       res.status(400).json({ error: 'Ruta de adjunto inválida' })
       return
     }
-    const zres = await zohoFetch(path)
+    const copia = await buscarCopia(db, dir, path)
+    if (copia.tipo === 'local') { await servirCopia(res, copia); return }
+    let zres: globalThis.Response
+    try { zres = await zohoFetch(path) } catch (e) { registrarCaida(copia, 'sin respuesta'); throw e }
+    registrarCaida(copia, zres.status)
     if (!zres.ok) {
       res.status(zres.status).json({ error: await zres.text() })
       return
