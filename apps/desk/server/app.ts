@@ -6,7 +6,7 @@ import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import { createMeasurer } from './measure'
-import { createDetailBackfiller } from './backfill'; import { crearRellenoConversaciones } from './rellenoConversaciones'; import { opcionesConversaciones } from './opcionesConversaciones'
+import { createDetailBackfiller } from './backfill'; import { crearRellenoConversaciones } from './rellenoConversaciones'; import { opcionesConversaciones } from './opcionesConversaciones'; import { dirAdjuntos } from './adjuntos/almacen'
 import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
@@ -47,7 +47,7 @@ export function createApp({ db, zohoFetch, sync, config, respaldador }: Deps): E
   registerAuthRoutes(app, db)
 
   const measurer = createMeasurer({ zohoFetch, config })
-  const detailBackfiller = createDetailBackfiller({ zohoFetch, sync, config }); const relleno = crearRellenoConversaciones({ zohoFetch, db, sync, marcar: opcionesConversaciones(config).marcarAusentes === true })
+  const detailBackfiller = createDetailBackfiller({ zohoFetch, sync, config }); const relleno = crearRellenoConversaciones({ zohoFetch, db, sync, marcar: opcionesConversaciones(config).marcarAusentes === true }); const dirAdj = dirAdjuntos(config.adjuntosDir)
 
   registerTicketRoutes(app, { db, sync, zohoFetch, config })
   registerDirectoryRoutes(app, { db })
@@ -55,7 +55,7 @@ export function createApp({ db, zohoFetch, sync, config, respaldador }: Deps): E
   registerEquipoRoutes(app, { db })
   registerAnalisisRoutes(app, { db })
   registerAdminRoutes(app, { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada: config.migracionTicketsHabilitada }); if (respaldador) registerRespaldoRoutes(app, { db, respaldador }); registerRellenoConversacionesRoutes(app, { db, relleno, habilitado: config.rellenoConversacionesHabilitado === true })
-  registerAttachmentRoutes(app, { db, zohoFetch })
+  registerAttachmentRoutes(app, { db, zohoFetch, dir: dirAdj })
   registerRemisionRoutes(app, { db, config })
   registerAvisosRoutes(app, { db })
   registerOvAsociacionesRoutes(app, { db }); registerContratosRoutes(app, { db }); registerPrioridadRoutes(app, { db }); registerCertificadoFabricaRoutes(app, { db }); registerAltaManualRoutes(app, { db }); registerNovedadesRoutes(app, { db }); registerIndicadoresRoutes(app, { db }); registerGarantiaProveedorRoutes(app, { db }); registerReasignacionRoutes(app, { db, config }); registerAccesoriosModeloRoutes(app, { db }); registerEncuestaRespuestasRoutes(app, { db }); registerIndicadoresComparacionRoutes(app, { db }); registerPermisosDecisionalesRoutes(app, { db, config }); registerPermisosControlCalidadRoutes(app, { db, config }); registerPermisosSalidasEsperasRoutes(app, { db, config })

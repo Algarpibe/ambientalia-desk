@@ -158,3 +158,37 @@ describe('loadConfig · RELLENO_CONVERSACIONES_HABILITADO (1G-01, RQ-ZS-29)', ()
     expect([marcan.rellenoConversacionesHabilitado, marcan.syncConversacionesPeriodica, marcan.marcarConversacionesAusentes]).toEqual([false, true, true])
   })
 })
+
+describe('loadConfig · adjuntos en el volumen propio (1G-02, RQ-ZS-32 y RQ-ZS-33)', () => {
+  const interruptores = [
+    ['RELLENO_ADJUNTOS_HABILITADO', 'rellenoAdjuntosHabilitado'],
+    ['GUARDAR_ADJUNTOS_AL_SINCRONIZAR', 'guardarAdjuntosAlSincronizar'],
+  ] as const
+
+  for (const [variable, campo] of interruptores) {
+    it(`${variable} nace cerrado: sin la variable, o vacía`, () => {
+      expect(loadConfig(base)[campo]).toBe(false)
+      expect(loadConfig({ ...base, [variable]: '' })[campo]).toBe(false)
+    })
+
+    it(`${variable}: sólo el literal "true" lo abre (TRUE, 1, false y los blancos lo dejan cerrado)`, () => {
+      for (const v of ['false', 'TRUE', 'True', '1', 'yes', ' true', 'true ']) {
+        expect(loadConfig({ ...base, [variable]: v })[campo], v).toBe(false)
+      }
+      expect(loadConfig({ ...base, [variable]: 'true' })[campo]).toBe(true)
+    })
+  }
+
+  it('los dos interruptores son independientes entre sí y de los de conversaciones', () => {
+    const solo = loadConfig({ ...base, RELLENO_ADJUNTOS_HABILITADO: 'true' })
+    expect([solo.rellenoAdjuntosHabilitado, solo.guardarAdjuntosAlSincronizar, solo.syncConversacionesPeriodica]).toEqual([true, false, false])
+    const otro = loadConfig({ ...base, GUARDAR_ADJUNTOS_AL_SINCRONIZAR: 'true' })
+    expect([otro.rellenoAdjuntosHabilitado, otro.guardarAdjuntosAlSincronizar, otro.syncConversacionesPeriodica]).toEqual([false, true, false])
+  })
+
+  it('ADJUNTOS_DIR no tiene valor por defecto: ausente o vacía da cadena vacía, y lo escrito se conserva tal cual', () => {
+    expect(loadConfig(base).adjuntosDir).toBe('')
+    expect(loadConfig({ ...base, ADJUNTOS_DIR: '' }).adjuntosDir).toBe('')
+    expect(loadConfig({ ...base, ADJUNTOS_DIR: '/data/adjuntos' }).adjuntosDir).toBe('/data/adjuntos')
+  })
+})

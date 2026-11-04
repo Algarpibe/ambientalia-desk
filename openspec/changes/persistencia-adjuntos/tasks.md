@@ -52,16 +52,16 @@ Mutaciones y posiciones: M2 (las dos), M3 (sin comparar con `size`), M7 (segunda
 ## Lote L2 — la ruta sirve de local; configuración (intento i3)
 Escenarios: RQ-ZS-31 los cinco; RQ-ZS-32 el interruptor sólo abre con `'true'`; RQ-ZS-33 interruptor cerrado (la lectura de `GUARDAR_ADJUNTOS_AL_SINCRONIZAR`).
 Mutaciones y posiciones: M1, M3 (servir sin comparar tamaño; la ruta que escribe), M6 (la línea de caída), P1.
-- [ ] L2.1 M0 del lote: `npm test` en el commit de L1 con su log.
-- [ ] L2.2 ROJO `apps/desk/server/adjuntos/servirLocal.test.ts` (nuevo): copia válida sin Zoho; HTML y SVG `attachment`; `4003` ausente y `4004` de otro tamaño caen a Zoho con UNA línea cada uno; cinco motivos del log; sin sesión y `/tickets/1/x` (P1: sin consultar `attachments`); `../secreto`; temporal; la ruta no escribe.
-- [ ] L2.3 ROJO `packages/zoho-sync/src/config.test.ts`, **al final**: las tres variables nuevas; sólo `'true'` abre (`TRUE`, `1`, vacío, ausente cierran); `ADJUNTOS_DIR` sin valor por defecto.
-- [ ] L2.4 Anotar el rojo medido de L2.2-L2.3 en `apply-progress.md`.
-- [ ] L2.5 En sitio, inserciones = borrados por fichero (`git diff --numstat`): `packages/zoho-sync/src/config.ts:66` y `:125`; `apps/desk/server/testing/appHarness.ts:46` y `:49`.
-- [ ] L2.6 `apps/desk/server/adjuntos/servir.ts` (nuevo) y `apps/desk/server/routes/attachment.ts` (`:4`, `:8`, `:10`; D6, `en d26ef8a5` en lo posterior a la `:20`); `requireAuth` y la guarda `:17-20` idénticas y antes de todo.
-- [ ] L2.7 `apps/desk/server/app.ts:9`, `:50` y `:58` en sitio. Condición: conservar las subcadenas de `apps/desk/server/opcionesConversaciones.test.ts:39-40` (`marcar: opcionesConversaciones(config).marcarAusentes === true` en la línea de `crearRellenoConversaciones({` y la importación de `opcionesConversaciones`) y de `:46-47`.
-- [ ] L2.8 Verde: ficheros de la prueba focal, `npm run typecheck` (el `dir` de `deps` en `index.ts` si hace falta) y suite entera con su log.
-- [ ] L2.9 Mutaciones L2 con su rojo: M1 (`!== 'false'`, un interruptor cada vez), M3, M6 (`name` en la línea de caída), P1 (buscar la copia antes de `requireAuth`; aparte, antes de la guarda). Tabla en `apply-progress.md`.
-- [ ] L2.10 Casilla de la regla 13 y regla de mutación 3: `git diff --name-only` sin `apps/desk/src`; cabeceras, rol y copia los decide el servidor.
+- [x] L2.1 M0 del lote: `npm test` en el commit de L1 con su log.
+- [x] L2.2 ROJO `apps/desk/server/adjuntos/servirLocal.test.ts` (nuevo): copia válida sin Zoho; HTML y SVG `attachment`; `4003` ausente y `4004` de otro tamaño caen a Zoho con UNA línea cada uno; cinco motivos del log; sin sesión y `/tickets/1/x` (P1: sin consultar `attachments`); `../secreto`; temporal; la ruta no escribe.
+- [x] L2.3 ROJO `packages/zoho-sync/src/config.test.ts`, **al final**: las tres variables nuevas; sólo `'true'` abre (`TRUE`, `1`, vacío, ausente cierran); `ADJUNTOS_DIR` sin valor por defecto.
+- [x] L2.4 Anotar el rojo medido de L2.2-L2.3 en `apply-progress.md`.
+- [x] L2.5 En sitio, inserciones = borrados por fichero (`git diff --numstat`): `packages/zoho-sync/src/config.ts:66` y `:125`; `apps/desk/server/testing/appHarness.ts:46` y `:49`.
+- [x] L2.6 `apps/desk/server/adjuntos/servir.ts` (nuevo) y `apps/desk/server/routes/attachment.ts` (`:4`, `:8`, `:10`; D6, `en d26ef8a5` en lo posterior a la `:20`); `requireAuth` y la guarda `:17-20` idénticas y antes de todo.
+- [x] L2.7 `apps/desk/server/app.ts:9`, `:50` y `:58` en sitio. Condición: conservar las subcadenas de `apps/desk/server/opcionesConversaciones.test.ts:39-40` (`marcar: opcionesConversaciones(config).marcarAusentes === true` en la línea de `crearRellenoConversaciones({` y la importación de `opcionesConversaciones`) y de `:46-47`.
+- [x] L2.8 Verde: ficheros de la prueba focal, `npm run typecheck` (el `dir` de `deps` en `index.ts` si hace falta) y suite entera con su log.
+- [x] L2.9 Mutaciones L2 con su rojo: M1 (`!== 'false'`, un interruptor cada vez), M3, M6 (`name` en la línea de caída), P1 (buscar la copia antes de `requireAuth`; aparte, antes de la guarda). Tabla en `apply-progress.md`.
+- [x] L2.10 Casilla de la regla 13 y regla de mutación 3: `git diff --name-only` sin `apps/desk/src`; cabeceras, rol y copia los decide el servidor.
 - [ ] L2.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
 
 ## Lote L3 — motor del relleno (intento i4)
