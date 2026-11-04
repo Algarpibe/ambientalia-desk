@@ -91,7 +91,7 @@ Mutaciones y posiciones: M4 (las dos), M5 (gancho), M8 (las tres), M9, P5 (`guar
 - [x] L4.8 Verde: la prueba focal (incluye `hubSyncSinConversaciones.test.ts` y `opcionesConversaciones.test.ts`), `npm run typecheck` y suite entera con su log.
 - [x] L4.9 Mutaciones L4 con su rojo: M4 (`syncConversations` llama a `trasGuardar`; aparte, `hub-sync.ts:21` pasa `conversaciones`), M5 (gancho), M8 (sin tope; sin memoria; `sync.ts:66` sin `trasGuardar`), M9 (`index.ts:23` sin el gancho), P5 (`guardados.push` antes de `guardarYReflejar`). Tabla en `apply-progress.md`.
 - [x] L4.10 Casilla de la regla 13: `git diff --name-only` sin `apps/desk/src`.
-- [ ] L4.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
+- [x] L4.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
 
 ## Lote L5 — rutas de administración, §22 y `debt.md` (intento i6)
 Escenarios: RQ-ZS-32 cerrado `403` antes de validar, sólo superadministrador, `GET` no lanza, `limite=0` sólo cuenta, el interruptor sólo abre con `'true'` (§22); RQ-ZS-30 directorio ausente (ruta).
