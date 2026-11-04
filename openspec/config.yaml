@@ -5386,8 +5386,8 @@ decisiones_de_gerencia_adenda:
       `area: 'Servicio Técnico'`): sin cambio de código.
       (3) La spec se corrige en un cambio con ficha de F1B-09 (`cierra: no`).
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e090-areas-soporte-remoto) · docs/sdd/ENTRADA.md → E-090"
-    maestro_pasaje: "ninguno"
-    maestro_revision: "no aplica"
+    maestro_pasaje: "M1.5 (docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1765), Anexo B.1 (docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:4542) y Anexo D nº 71 (docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5565-5569) — corregido por Supervisión el 2026-11-03 (P-2 de openspec/changes/archive/2026-10-27-areas-soporte-remoto/archive-report.md:109); decía «ninguno»"
+    maestro_revision: "pendiente — R08.5, por docs/sdd/R08.4_Expediente_de_cambios.md §17; decía «no aplica»"
     tanda_que_abre: "F1B-09 (áreas del soporte remoto)"
 
   - clave: "decision/excepcion-plazos-hook-citas"
@@ -5622,6 +5622,67 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (el cierre de F1B-04 va en un cambio de cierre, sin código)"
+  - clave: "decision/f1f01-fecha-pasada-en-seco"
+    fecha: "2026-11-03"
+    origen: "conversación del analista, 03/11/2026, actividad 12 de docs/validacion/Plan_hasta_2026-11-09.docx; clave propuesta por el analista; escrita por Supervisión al levantarse la pausa del encargo 1b"
+    pregunta: |
+      Actividad 12 · Dar fecha a la pasada en seco de la migración (F1F-01). La migración de los tickets abiertos se
+      ejecuta el 12/12; antes hay que hacer una pasada en seco en producción para ver qué estados de Zoho no tienen
+      equivalencia, que pedirían código. Estaba pendiente y sin fecha, y es condición del documento del 09/11 para
+      mantener el corte del 14/12.
+    respuesta_textual: |
+      «Pasada en seco de la migración (F1F-01): la hago el miércoles 11/11, y si ese día no se puede, el viernes 13/11.
+      Que el analista prepare el paso a paso antes del 10/11 e indique si antes hay que redesplegar el worker y cómo
+      hacer la copia de desk-db. El resultado lo paso el mismo día.» — Gerencia, 03/11/2026, conversación del analista.
+    consecuencias: |
+      (1) Fecha: miércoles 11/11/2026; reserva, viernes 13/11/2026. Ejecuta Alfonso; el resultado se pasa el mismo día.
+      (2) El analista entrega el paso a paso antes del 10/11/2026, con dos puntos dentro: si hace falta redesplegar el
+      worker antes, y cómo se hace la copia de desk-db.
+      (3) Con esta fecha y la de `decision/f1f02-b2-destino-easypanel`, las dos antes del 16/11, se cumple la condición
+      del documento del 09/11 para mantener el corte del 14/12 (`docs/validacion/Plan_hasta_2026-11-09.docx`,
+      «Margen del 14/12: se mantiene si la pasada en seco, el recuento y B2 tienen fecha antes del 16/11»). La
+      decisión del margen sigue siendo del 09/11.
+      (4) El paso a paso sigue la salida (3) de E-268: consultas a desk-db en forma `psql -c "…"` y comprobación previa
+      de que no queda ninguna sesión `idle in transaction`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f01-fecha-pasada-en-seco) · docs/sdd/ENTRADA.md → E-269"
+    engram: "decision/f1f01-fecha-pasada-en-seco — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (F1F-01, en curso)"
+  - clave: "decision/f1f02-b2-destino-easypanel"
+    fecha: "2026-11-03"
+    origen: "conversación del analista, 03/11/2026, actividad 13 de docs/validacion/Plan_hasta_2026-11-09.docx; clave propuesta por el analista; escrita por Supervisión al levantarse la pausa del encargo 1b"
+    pregunta: |
+      Actividad 13 · Decidir B2 para las copias (F1F-02). Las tres copias propias de la App (nocturna, previa a cada
+      cambio y semanal) están construidas y apagadas, y sólo cubren desk; les falta un destino fuera del servidor, y
+      Backblaze B2 ya era el proveedor decidido (`decision/p55c-proveedor-copia`). ¿Se contrata B2 antes del corte? Para
+      cubrir las dos bases, lo más sencillo es poner B2 como destino S3 de las copias de EasyPanel, que ya corren a
+      diario.
+    respuesta_textual: |
+      «Copias en Backblaze B2 (F1F-02): sí, se contrata antes del corte. Destino S3 de las copias de EasyPanel para
+      desk-db y zoho-hub-db, en un almacenamiento con bloqueo de borrado. Si al darse de alta pide tarjeta, se pone; el
+      coste esperado con el volumen actual es nulo o mínimo. Las credenciales van sólo al gestor de secretos del
+      despliegue. Lo hago yo antes del 13/11 y aviso cuando la primera copia esté en B2.» — Gerencia, 03/11/2026,
+      conversación del analista.
+    consecuencias: |
+      (1) Alfonso contrata B2 y configura el destino antes del 13/11/2026, y avisa cuando la primera copia esté en B2.
+      (2) Destino: las copias de EasyPanel de desk-db y zoho-hub-db, en un almacenamiento con bloqueo de borrado. Amplía
+      el alcance de `decision/p55c-proveedor-copia` a zoho-hub-db.
+      (3) Si el alta pide tarjeta, se pone; el coste esperado es nulo o mínimo (el documento de la actividad 13 lo
+      estima en el tramo gratuito: 10 GB regalados y unos 9 MB por copia de desk; **no medido** si el bloqueo de borrado
+      entra en ese tramo).
+      (4) Credenciales sólo en el gestor de secretos del despliegue.
+      (5) Con la fecha de `decision/f1f01-fecha-pasada-en-seco`, cumple la condición del documento del 09/11 para mantener
+      el corte; la decisión del margen sigue siendo del 09/11.
+      (6) **Consecuencia que la respuesta no dice, señalada por Supervisión:** la respuesta fija el destino de las copias
+      de **EasyPanel**, no el de las tres copias propias de la App (F1F-02), que siguen apagadas. Queda por decir si
+      F1F-02 cierra con las copias de EasyPanel en B2 o si también hay que encender las propias; y si EasyPanel admite
+      como destino S3 un almacenamiento con bloqueo de borrado está **sin comprobar**.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f02-b2-destino-easypanel) · docs/sdd/ENTRADA.md → E-270"
+    engram: "decision/f1f02-b2-destino-easypanel — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (F1F-02, en curso)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
