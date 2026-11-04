@@ -39,14 +39,14 @@ Chain strategy: pending
 ## Lote L1 — guardado seguro y estado de la copia (intento i2)
 Escenarios: RQ-ZS-30 guardado correcto, `name` con `../` no influye, id no numérico, bytes de menos, fallo a mitad de escritura, sin `size`, directorio ausente o dentro de `dist/`.
 Mutaciones y posiciones: M2 (las dos), M3 (sin comparar con `size`), M7 (segunda variante), P4.
-- [ ] L1.1 M0: `npm test` entero en el commit de partida (`d26ef8a5` más i1) con su log; anotar ficheros, pruebas y duración.
-- [ ] L1.2 ROJO `apps/desk/server/adjuntos/almacen.test.ts` (nuevo), pruebas SEPARADAS: guardado correcto y relanzar no pide; `name` con `../` no influye; id no numérico no pide ni escribe; bytes de menos; fallo a mitad de escritura (`fs` inyectado); sin `size` con `Content-Length`; sin `size` ni cabecera; `ErrorDisco`; `estadoCopia` (D3).
-- [ ] L1.3 ROJO `apps/desk/server/adjuntos/rutaAdjunto.test.ts` (nuevo): `dirAdjuntos` (ausente, relativa, dentro de `dist/`, válida) y la tabla de rutas contra `RUTA_ADJUNTO_ZOHO` y contra el literal leído de `apps/desk/server/routes/attachment.ts:17` (H5).
-- [ ] L1.4 Anotar el rojo medido de L1.2-L1.3 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
-- [ ] L1.5 `apps/desk/server/adjuntos/almacen.ts` (nuevo): orden de D2 con `storage_path` sólo tras el `rename`, `estadoCopia`, `dirAdjuntos`; no crea el directorio.
+- [x] L1.1 M0: `npm test` entero en el commit de partida (`d26ef8a5` más i1) con su log; anotar ficheros, pruebas y duración.
+- [x] L1.2 ROJO `apps/desk/server/adjuntos/almacen.test.ts` (nuevo), pruebas SEPARADAS: guardado correcto y relanzar no pide; `name` con `../` no influye; id no numérico no pide ni escribe; bytes de menos; fallo a mitad de escritura (`fs` inyectado); sin `size` con `Content-Length`; sin `size` ni cabecera; `ErrorDisco`; `estadoCopia` (D3).
+- [x] L1.3 ROJO `apps/desk/server/adjuntos/rutaAdjunto.test.ts` (nuevo): `dirAdjuntos` (ausente, relativa, dentro de `dist/`, válida) y la tabla de rutas contra `RUTA_ADJUNTO_ZOHO` y contra el literal leído de `apps/desk/server/routes/attachment.ts:17` (H5).
+- [x] L1.4 Anotar el rojo medido de L1.2-L1.3 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
+- [x] L1.5 `apps/desk/server/adjuntos/almacen.ts` (nuevo): orden de D2 con `storage_path` sólo tras el `rename`, `estadoCopia`, `dirAdjuntos`; no crea el directorio.
 - [ ] L1.6 Verde: los dos ficheros nuevos, `npm run typecheck` y suite entera con su log.
-- [ ] L1.7 Mutaciones L1 con su rojo: M2 (nombre desde `name`; aparte, `writeFile` directo al final), M3, M7 (`\d+` → `\w+` en `attachment.ts:17`; aparte, en `almacen.ts`), P4 (`storage_path` antes del `rename`). Tabla en `apply-progress.md`.
-- [ ] L1.8 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
+- [x] L1.7 Mutaciones L1 con su rojo: M2 (nombre desde `name`; aparte, `writeFile` directo al final), M3, M7 (`\d+` → `\w+` en `attachment.ts:17`; aparte, en `almacen.ts`), P4 (`storage_path` antes del `rename`). Tabla en `apply-progress.md`.
+- [x] L1.8 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
 - [ ] L1.9 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido (B.1) y `apply-progress.md`.
 
 ## Lote L2 — la ruta sirve de local; configuración (intento i3)
