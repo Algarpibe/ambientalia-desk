@@ -107,10 +107,10 @@ Mutaciones y posiciones: M1 (§22), M7 (fichero vigilado), P2.
 - [x] L5.9 `debt.md:572`, `:582`, `:585`, `:597`, `:598` en sitio (D11), 5/5.
 - [x] L5.10 Verde: la prueba focal, `npm run typecheck` y suite entera con su log.
 - [x] L5.11 Mutaciones L5 con su rojo: M1 (`config.ts:125`, un interruptor cada vez), M7 (quitar «**Qué se rompe si se pone mal:**» de la §22; aparte, «Copia previa de `desk-db`» de la §21), P2 (interruptor tras validar; aparte, el de directorio). Tabla en `apply-progress.md`.
-- [ ] L5.12 Regla 13 y regla de mutación 3 (nada bajo `apps/desk/src`; rol e interruptores los impone el servidor) y cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
+- [x] L5.12 Regla 13 y regla de mutación 3 (nada bajo `apps/desk/src`; rol e interruptores los impone el servidor) y cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
 
 ## Barrido de la regla de mutación 4 (tarea de cierre de cada lote)
-- [ ] B.1 `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` sobre TODO el repositorio, incluidos `openspec/changes/archive/` y `docs/`, para cada fichero muy citado editado en el lote (lista de D14) y para `attachment.ts`; leer cada hallazgo contra lo que AFIRMA (casos A/B/C de `CLAUDE.md`); comprobar que `conversaciones.ts:163` sigue siendo la llamada a `guardarYReflejar` y `config.ts:125` la lectura `=== 'true'`; segundo pase para las abreviadas en los ficheros que ya citan el módulo. Resultado en `apply-progress.md`.
+- [x] B.1 `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` sobre TODO el repositorio, incluidos `openspec/changes/archive/` y `docs/`, para cada fichero muy citado editado en el lote (lista de D14) y para `attachment.ts`; leer cada hallazgo contra lo que AFIRMA (casos A/B/C de `CLAUDE.md`); comprobar que `conversaciones.ts:163` sigue siendo la llamada a `guardarYReflejar` y `config.ts:125` la lectura `=== 'true'`; segundo pase para las abreviadas en los ficheros que ya citan el módulo. Resultado en `apply-progress.md`.
 
 ## Verificación (intento i7)
 - [ ] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-30 a RQ-ZS-33 contra su prueba.
