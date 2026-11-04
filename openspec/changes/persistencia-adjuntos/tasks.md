@@ -67,15 +67,15 @@ Mutaciones y posiciones: M1, M3 (servir sin comparar tamaño; la ruta que escrib
 ## Lote L3 — motor del relleno (intento i4)
 Escenarios: RQ-ZS-32 `limite=0` sólo cuenta (módulo), reanudable e idempotente, `404` es ausente, `429`/disco/otro fallo, resumen y log sin datos de cliente, un segundo `POST` (módulo).
 Mutaciones y posiciones: M5 (relleno), M6 (resumen), P3 (las dos), P5 (`enMarcha`).
-- [ ] L3.1 M0 del lote: `npm test` en el commit de L2 con su log.
-- [ ] L3.2 ROJO `apps/desk/server/adjuntos/rellenoAdjuntos.test.ts` (nuevo): orden, `desde` y `limite`; relanzar no pide; `limite=0` con `recuento` sin Zoho ni escritura; `dir` nulo no escribe.
-- [ ] L3.3 ROJO mismo fichero: `404` ausente listado; `429` dos veces y luego `200` con pausas de 2.000 ms; `429` agotado corta con `cortadoEn` sin pedir el siguiente; `500` cuenta y sigue; disco lleno corta y el tercero no se pide (`setTimeout` falso).
-- [ ] L3.4 ROJO mismo fichero: dos `lanzar` seguidos lanzan uno; resumen y línea de `registrar` con id y número del fallido y sin `name`, asunto, contacto ni empresa del fixture (serializado).
-- [ ] L3.5 Anotar el rojo medido de L3.2-L3.4 en `apply-progress.md`.
-- [ ] L3.6 `apps/desk/server/adjuntos/rellenoAdjuntos.ts` (nuevo): tipos de D8, guardas de D4 en su orden, `enMarcha` antes del primer `await`, `motivoPrimerFallo ??=`.
-- [ ] L3.7 Verde: el fichero de L3, `npm run typecheck` y suite entera con su log.
-- [ ] L3.8 Mutaciones L3 con su rojo: M5 (sin corte ante `429` agotado), M6 (`name` en el resumen), P3 (`429` tras `!res.ok`; aparte, el `404`), P5 (`enMarcha` tras el primer `await`). Tabla en `apply-progress.md`.
-- [ ] L3.9 Casilla de la regla 13: `git diff --name-only` sin `apps/desk/src`.
+- [x] L3.1 M0 del lote: `npm test` en el commit de L2 con su log.
+- [x] L3.2 ROJO `apps/desk/server/adjuntos/rellenoAdjuntos.test.ts` (nuevo): orden, `desde` y `limite`; relanzar no pide; `limite=0` con `recuento` sin Zoho ni escritura; `dir` nulo no escribe.
+- [x] L3.3 ROJO mismo fichero: `404` ausente listado; `429` dos veces y luego `200` con pausas de 2.000 ms; `429` agotado corta con `cortadoEn` sin pedir el siguiente; `500` cuenta y sigue; disco lleno corta y el tercero no se pide (`setTimeout` falso).
+- [x] L3.4 ROJO mismo fichero: dos `lanzar` seguidos lanzan uno; resumen y línea de `registrar` con id y número del fallido y sin `name`, asunto, contacto ni empresa del fixture (serializado).
+- [x] L3.5 Anotar el rojo medido de L3.2-L3.4 en `apply-progress.md`.
+- [x] L3.6 `apps/desk/server/adjuntos/rellenoAdjuntos.ts` (nuevo): tipos de D8, guardas de D4 en su orden, `enMarcha` antes del primer `await`, `motivoPrimerFallo ??=`.
+- [x] L3.7 Verde: el fichero de L3, `npm run typecheck` y suite entera con su log.
+- [x] L3.8 Mutaciones L3 con su rojo: M5 (sin corte ante `429` agotado), M6 (`name` en el resumen), P3 (`429` tras `!res.ok`; aparte, el `404`), P5 (`enMarcha` tras el primer `await`). Tabla en `apply-progress.md`.
+- [x] L3.9 Casilla de la regla 13: `git diff --name-only` sin `apps/desk/src`.
 - [ ] L3.10 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
 
 ## Lote L4 — gancho al sincronizar (intento i5)

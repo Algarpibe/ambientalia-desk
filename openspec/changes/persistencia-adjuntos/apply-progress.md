@@ -171,3 +171,62 @@ Notas de método: M3b y M3c las discrimina sólo la prueba de «no escribe». M6
 - Detector de citas sobre `a770f4e8`: **1**, por dos citas de este fichero escritas en L2 (se nombran en prosa, no en forma de cita, para que el detector no las vuelva a leer): la de las líneas 36 a 48 de la prueba de `opcionesConversaciones`, cuya primera línea está vacía (el bloque vigilado empieza en la 37), y la de las líneas 44 a 46 de `servir.ts` en el supuesto 4, cuya primera línea también está vacía (el segundo `stat` ocupa de la 45 a la 47). Reparadas aquí, junto con las abreviadas del cierre de L1 que el detector atribuía a `attachment.ts` y eran de `almacen.ts`, y las tres de `app.ts` (líneas 50, 9 y 57), que se atribuían a la prueba de `opcionesConversaciones` y ahora van completas.
 - Barrido B.1 (regla de mutación 4) sobre todo el repositorio, `openspec/changes/archive/` y `docs/` incluidos: `config.ts`, `app.ts` y `appHarness.ts` se editaron en sitio, así que sus citas (`config.ts:66` y `:125` en `DEPLOY.md:784`, `:794`, `:819`, `:826`, `:845`, `:863`, `:895` y en los archivos; `app.ts:9`, `:50`, `:57`, `:58`; `appHarness.ts:46` y `:49`) siguen apuntando a la misma línea y lo que afirman sigue en ella (caso A). `attachment.ts` desplaza +4 desde la `:21`: las citas a sus líneas posteriores son `:21-30` y `:22-30` del `proposal.md` y del `design.md` y `:26-29` del S-10, todas ancladas en `d26ef8a5` (caso B, ciertas de esa revisión); `:14` y `:17` no se mueven.
 - Regla 13: nada bajo `apps/desk/src`.
+
+## Lote L3 — intento i4 (motor del relleno de adjuntos)
+
+Modo: Strict TDD. Partida: `da5c85ca`. Ficheros nuevos, ambos LF como `apps/desk/server/adjuntos/almacen.ts`: `apps/desk/server/adjuntos/rellenoAdjuntos.ts` (191 líneas) y `apps/desk/server/adjuntos/rellenoAdjuntos.test.ts` (386 líneas). No se tocó ningún otro fichero salvo las casillas L3.1 a L3.9 de `tasks.md`. Las constantes `PAUSA_429_MS`, `REINTENTOS_429` y `PAUSA_ENTRE_TICKETS_MS` ya se exportan de `packages/zoho-sync/src/conversaciones.ts`, así que se importan (sin duplicarlas) y una prueba fija sus valores (2.000, 3, 150). `almacen.ts` no se modificó: sus 37 pruebas y las 36 de `rutaAdjunto.test.ts` siguen verdes.
+
+### L3.1 · M0 (hecha por el orquestador)
+`npm test` entero en `a770f4e8` (código de L2; `0cf5333b` y `da5c85ca` sólo documentos): memoria libre al arrancar 9.288 MB, 436 s, código 0; 341 ficheros pasan y 4 omitidos; 5.954 pruebas pasan y 26 omitidas.
+
+### Rojo medido (L3.5), contra un esqueleto de `rellenoAdjuntos.ts` con los tipos y las firmas de D8 y valores incorrectos (`lanzar` devuelve `lanzada: false`, `recuento` ceros), no un import roto
+Antes de producción: 22 rojas y 1 verde de 23 (la verde es la que fija las tres constantes, que ya existen).
+- `rellenoAdjuntos.test.ts` › orden, desde y limite (6 pruebas: orden por ticket e id, reanudable e idempotente, limite cuenta pedidos, clasificación previa, lo guardado entretanto, sin tamaño) › `expected false to be true` (el `terminado` que nunca llega en `fin`, porque el esqueleto no lanza).
+- › recuento › `expected { pendientes: +0, bytes: +0, …(4) } to deeply equal { pendientes: 3, bytes: 3145728, … }` (dos pruebas) y, en `dir` nulo, `the given combination of arguments (undefined and string) is invalid` (el esqueleto no deja `error`).
+- › 404, 429, otros fallos y disco (8 pruebas: 404, 429 dos veces, 429 agotado, 500 y red, tamaño, disco lleno, directorio inexistente, pausa de 150 ms) › `expected false to be true` en `fin` y en el `fin` del reloj falso.
+- › un solo lanzamiento, resumen y log (5 pruebas) › `expected false to be true` (`a.lanzada` en «dos lanzar seguidos») y `expected { enMarcha: false, …(12) } to match object { enMarcha: true, …(3) }` en «el estado durante y después».
+
+### Verde y una corrección que nació de la prueba
+Primera pasada con producción: 22 de 23; cayó «lo guardado entretanto por otra vía cuenta yaPresentes» (`expected [ '4001', '4002' ] to deeply equal [ '4001' ]`). Causa real, de producción y no de la prueba: la lista de D3 se fija al lanzar, así que el `storage_path` de la fila es el de entonces y `estadoCopia` daba `sinCopia` al adjunto que otra vía acababa de guardar. Se añadió `copiaActual` (`apps/desk/server/adjuntos/rellenoAdjuntos.ts:80`): si la copia no está `presente` con la fila de la lista, relee el `storage_path` de la base justo antes de pedir y vuelve a evaluar. Es lo que D3 dice («el `stat` va justo antes de pedir»). Después: 23 de 23.
+
+Focal: `npx vitest run apps/desk/server/adjuntos/rellenoAdjuntos.test.ts apps/desk/server/adjuntos/almacen.test.ts apps/desk/server/adjuntos/rutaAdjunto.test.ts` → 3 ficheros, 96 pruebas (23 + 37 + 36), código 0. `npm run typecheck` 0; `npm run lint -- --max-warnings 165` 0, 165 avisos contra 165 (ninguno nuevo).
+
+Pruebas de `rellenoAdjuntos.test.ts` (23): constantes (1); orden, desde y limite (6); recuento y `dir` nulo (3); 404, 429, otros fallos y disco (8); un solo lanzamiento, resumen y log (5).
+
+### Mutaciones (L3.8)
+Cada una con perl por número de línea; la línea mutada se imprimió con `sed -n` antes de correr la suite; suite: `rellenoAdjuntos.test.ts` (23 pruebas). Restaurado copiando el respaldo y comparando con `cmp` y `sha256sum` (idéntico, `3298e10d…`).
+
+| Id | Fichero:línea | Mutación | Pruebas que caen | Restaurado |
+|---|---|---|---|---|
+| M5 | `apps/desk/server/adjuntos/rellenoAdjuntos.ts:117` | `return 'corte'` pasa a `return` (no cortar ante `429` agotado) | 1: 429 agotado corta con cortadoEn tras 3 reintentos y NO pide el siguiente | sí |
+| M6 | `apps/desk/server/adjuntos/rellenoAdjuntos.ts:69`, `:72`, `:97` | el `name` viaja del `SELECT` al `adjunto` de `fallidos` | 5: clasificación previa (fallido:id), 500 y red, bytes de menos, el resumen (estado y registrar) y el registrar por defecto | sí |
+| P3a | `apps/desk/server/adjuntos/rellenoAdjuntos.ts:115` | línea insertada antes del `429`: todo lo que no sea `404` es `fallido:http` (el `429` queda tras `!res.ok`) | 2: 429 dos veces y luego 200; 429 agotado | sí |
+| P3b | `apps/desk/server/adjuntos/rellenoAdjuntos.ts:119` | línea insertada antes del `404`: `fallido:http` | 1: 404 es ausente | sí |
+| P5 | `apps/desk/server/adjuntos/rellenoAdjuntos.ts:171` y `:134` | `enMarcha: true` pasa a `false` y `estado.enMarcha = true` tras el primer `await` | 2: dos lanzar seguidos lanzan UNO; el estado durante y después | sí |
+
+Nota de método: M6 hace caer cinco pruebas porque `fallidos` entra en el JSON de las dos comprobaciones y en los `toEqual` de las demás; sólo las dos del resumen ejercen la defensa de fondo (el `name` serializado).
+
+### TDD Cycle Evidence
+| Tarea | Fichero de prueba | Capa | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| L3.2 orden, desde, limite, recuento, `dir` nulo | `apps/desk/server/adjuntos/rellenoAdjuntos.test.ts` | Integración (pg-mem + fs real + `zohoFetch` falsa) | N/A (nuevo); `almacen.ts` intacto | medido, 9 rojas | 9/9 tras `copiaActual` | `desde` con y sin; `limite` con presentes; recuento con y sin tamaño | sin cambios |
+| L3.3 404, 429, 500, red, disco | ídem (`setTimeout` falso, sólo ése) | Integración | N/A (nuevo) | medido, 8 rojas | 8/8 | 429 dos veces frente a agotado; 500 frente a red; disco frente a directorio inexistente | sin cambios |
+| L3.4 un lanzamiento, resumen, log | ídem | Integración | N/A (nuevo) | medido, 5 rojas | 5/5 | `registrar` inyectado frente a `logger.info`; `registrar` que lanza | sin cambios |
+
+### Work Unit Evidence
+| Evidencia | Valor |
+|---|---|
+| Prueba focal | la de arriba, 96 pruebas, código 0 |
+| Arnés real | pg-mem + `fs.mkdtemp` + `zohoFetch` falsa; `setTimeout` falso sólo en las pruebas de espera |
+| Frontera de vuelta atrás | borrar `apps/desk/server/adjuntos/rellenoAdjuntos.ts` y su prueba; nadie más los importa todavía (rutas en L5, gancho en L4) |
+
+### L3.9 · casilla de la regla 13
+`git diff --name-only` → sólo `openspec/changes/persistencia-adjuntos/tasks.md` y este fichero; `git ls-files --others --exclude-standard` → los dos ficheros nuevos. Cero bajo `apps/desk/src`. El cliente no toma decisión alguna en este lote.
+
+### Supuestos
+1. `limite` corta al llegar al primer adjunto pendiente más allá del tope; los clasificados antes (sin ruta, ya presentes, `fallido:id`) cuentan siempre.
+2. Un `stat` fallido del directorio deja `cortadoEn` en el número del primer ticket pendiente, `motivoCorte: 'disco'` y `motivoPrimerFallo` con el `code` de Node (probado con `ENOENT`).
+3. `recuento` no cuenta los ids no numéricos (ni pendientes ni sin ruta): la pasada los lista como `fallido:id`. Si `estadoCopia` lanza `ErrorDisco` en `recuento`, la promesa rechaza (la ruta de L5 decide la respuesta).
+4. `motivoPrimerFallo` de `fallido:base` y de `fallido:id` es un texto fijo, para no volcar un id que no es numérico.
+5. Con `dir` nulo, `lanzar` sustituye el estado por uno nuevo con sólo `error`; no deja `terminado`.
+6. `lanzar({ limite: 0 })` no pide nada y termina; el contar sin Zoho es de `recuento` (L5), como dice el encargo.
