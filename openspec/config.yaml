@@ -5683,6 +5683,41 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (F1F-02, en curso)"
+  - clave: "decision/e123-foto-entrada-siempre-obligatoria"
+    fecha: "2026-10-01"
+    origen: "panel, apartado 07 (ideas), tipo `correccion`, 01/10/2026 16:58 UTC (docs/sdd/ENTRADA.md → E-123); registrada por Supervisión el 2026-11-03 para cerrar E-168, que la pedía"
+    pregunta: |
+      Sin pregunta previa: es una corrección de Gerencia anotada en el panel. Esta clave registra su mitad de ENTRADA,
+      que construyó `recepcion-rotulacion-foto-entrada` (F1B-04, 03/10/2026) apoyándose en el maestro y no en una
+      decisión cargada en cada sesión (E-168).
+    respuesta_textual: |
+      «Corrección a la regla «foto solo con novedad» (F1B-04 y decision/f1b04-desplegables). En la remisión de entrada,
+      el registro fotográfico es siempre obligatorio, haya o no novedad: al menos una foto del equipo, una de los
+      accesorios y una del embalaje con el que llegó. Si se marca una novedad, se añade su foto como hasta ahora. En la
+      remisión de salida también es obligatorio, como soporte de entrega ante el cliente: equipo, accesorios y embalaje.
+      Esas fotos de salida son las mismas que exige C6 («no se entrega sin foto del equipo embalado»), sin pedirlas dos
+      veces. La regla «foto solo con novedad» se mantiene únicamente en la inspección visual del diagnóstico (antes de
+      energizar) y en los checklists del catálogo. Antes del corte del 14/12: se ajusta la remisión de entrada ya
+      construida y se añaden las fotos a la remisión de salida. Actualizar en el maestro el apartado de la inspección
+      visual previa para distinguir los dos momentos.» — Gerencia, 01/10/2026, panel, apartado 07 (literal en
+      docs/sdd/ENTRADA.md → E-123).
+    consecuencias: |
+      (1) Esta clave cubre sólo la mitad de ENTRADA: en la remisión de entrada la foto es siempre obligatoria (equipo,
+      accesorios y embalaje), más la de cada novedad. Supera, para la entrada, la regla «foto solo con novedad» del cambio
+      archivado `foto-solo-con-novedad` (25/09/2026), que se conserva como histórico.
+      (2) La mitad de SALIDA no se registra aquí: tiene su destino en `decision/trabajo-del-01-10-antes-del-corte-sin-fila`
+      (E-143), fila condicionada F1B-17 (2027).
+      (3) Construida en `recepcion-rotulacion-foto-entrada` (F1B-04, `cierra: no`, 03/10/2026). Las dos excepciones que
+      la respuesta del 06/10 abrió en la entrada (`decision/accesorios-desde-el-catalogo`, confirmada por
+      `decision/f1b04-remanente-confirmacion-12-10`) se construyeron en `recepcion-exencion-foto-y-casilla` (12/10/2026)
+      y siguen vigentes: esta clave no las anula.
+      (4) F1B-04 se cerró por archivo el 03/11/2026 (`cierre-f1b04-con-lo-construido`, fusión `ca6a450f`).
+      (5) La parte del maestro (inspección visual previa) va por el expediente R08.x; no se escribe aquí.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e123-foto-entrada-siempre-obligatoria) · docs/sdd/ENTRADA.md → E-123 y E-168"
+    engram: "decision/e123-foto-entrada-siempre-obligatoria — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1241 («Fotos de entrada y de salida»)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna (F1B-04, cerrada por archivo el 03/11/2026)"
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
