@@ -62,7 +62,7 @@ Mutaciones y posiciones: M1, M3 (servir sin comparar tamaño; la ruta que escrib
 - [x] L2.8 Verde: ficheros de la prueba focal, `npm run typecheck` (el `dir` de `deps` en `index.ts` si hace falta) y suite entera con su log.
 - [x] L2.9 Mutaciones L2 con su rojo: M1 (`!== 'false'`, un interruptor cada vez), M3, M6 (`name` en la línea de caída), P1 (buscar la copia antes de `requireAuth`; aparte, antes de la guarda). Tabla en `apply-progress.md`.
 - [x] L2.10 Casilla de la regla 13 y regla de mutación 3: `git diff --name-only` sin `apps/desk/src`; cabeceras, rol y copia los decide el servidor.
-- [ ] L2.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
+- [x] L2.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
 
 ## Lote L3 — motor del relleno (intento i4)
 Escenarios: RQ-ZS-32 `limite=0` sólo cuenta (módulo), reanudable e idempotente, `404` es ausente, `429`/disco/otro fallo, resumen y log sin datos de cliente, un segundo `POST` (módulo).
