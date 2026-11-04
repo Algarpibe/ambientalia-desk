@@ -230,3 +230,10 @@ Nota de método: M6 hace caer cinco pruebas porque `fallidos` entra en el JSON d
 4. `motivoPrimerFallo` de `fallido:base` y de `fallido:id` es un texto fijo, para no volcar un id que no es numérico.
 5. Con `dir` nulo, `lanzar` sustituye el estado por uno nuevo con sólo `error`; no deja `terminado`.
 6. `lanzar({ limite: 0 })` no pide nada y termina; el contar sin Zoho es de `recuento` (L5), como dice el encargo.
+
+### Contraste y cierre del lote L3 (L3.7 suite entera y L3.10, orquestador, sobre `3daa344e`)
+- Contraste: la focal da 96 pruebas (23 + 37 + 36), código 0, con el recuento del informe. El motor se leyó contra D4 y D8: tipo `EstadoRellenoAdjuntos` y `Motivo` iguales a D8; el `429` se repite llamando otra vez a `guardarAdjunto` hasta `REINTENTOS_429` y después corta; el `404` y el `429` van antes del caso general; `enMarcha` se fija en `lanzar` antes de `void pasada(...)`. Mutación reproducida: **M5** (`return 'corte'` → `return` en `apps/desk/server/adjuntos/rellenoAdjuntos.ts:117`) tumba la misma prueba («429 agotado corta con cortadoEn tras 3 reintentos y NO pide el siguiente»); restaurada con `git checkout` sobre el commit y `git status` vacío.
+- `npm run typecheck` 0; `npm run lint -- --max-warnings 165` 0, **165 avisos contra 165**; detector de citas 0; `npm run build` 0 (el mismo bundle).
+- `npm test`, pasada 1: memoria libre al arrancar **9.810 MB**, duración **437 s**, código **0**; 342 ficheros pasan y 4 omitidos; 5.977 pruebas pasan y 26 omitidas (5.954 + 23 nuevas).
+- Barrido B.1: L3 sólo crea ficheros nuevos, no edita ninguno muy citado. Las seis citas a `rellenoAdjuntos.ts` de esta sección (69, 80, 115, 117, 119 y 171) se leyeron contra el fichero y dicen lo que afirman.
+- Regla 13: nada bajo `apps/desk/src`.

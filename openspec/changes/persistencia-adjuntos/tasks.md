@@ -76,7 +76,7 @@ Mutaciones y posiciones: M5 (relleno), M6 (resumen), P3 (las dos), P5 (`enMarcha
 - [x] L3.7 Verde: el fichero de L3, `npm run typecheck` y suite entera con su log.
 - [x] L3.8 Mutaciones L3 con su rojo: M5 (sin corte ante `429` agotado), M6 (`name` en el resumen), P3 (`429` tras `!res.ok`; aparte, el `404`), P5 (`enMarcha` tras el primer `await`). Tabla en `apply-progress.md`.
 - [x] L3.9 Casilla de la regla 13: `git diff --name-only` sin `apps/desk/src`.
-- [ ] L3.10 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
+- [x] L3.10 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
 
 ## Lote L4 — gancho al sincronizar (intento i5)
 Escenarios: RQ-ZS-33 la pasada trae los pendientes hasta el tope, interruptor cerrado o sin periódica, el worker y la apertura no descargan, un `404` o un tamaño distinto no se repite; RQ-ZS-30 directorio ausente (pasada).
