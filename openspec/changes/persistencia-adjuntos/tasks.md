@@ -113,8 +113,8 @@ Mutaciones y posiciones: M1 (§22), M7 (fichero vigilado), P2.
 - [x] B.1 `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` sobre TODO el repositorio, incluidos `openspec/changes/archive/` y `docs/`, para cada fichero muy citado editado en el lote (lista de D14) y para `attachment.ts`; leer cada hallazgo contra lo que AFIRMA (casos A/B/C de `CLAUDE.md`); comprobar que `conversaciones.ts:163` sigue siendo la llamada a `guardarYReflejar` y `config.ts:125` la lectura `=== 'true'`; segundo pase para las abreviadas en los ficheros que ya citan el módulo. Resultado en `apply-progress.md`.
 
 ## Verificación (intento i7)
-- [ ] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-30 a RQ-ZS-33 contra su prueba.
-- [ ] V.2 Reproducir M1-M9 y P1-P5 del `apply-progress.md` con `perl`, restauración comprobada (`git diff` vacío, `file` aún CRLF).
+- [x] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-30 a RQ-ZS-33 contra su prueba.
+- [x] V.2 Reproducir M1-M9 y P1-P5 del `apply-progress.md` con `perl`, restauración comprobada (`git diff` vacío, `file` aún CRLF).
 - [ ] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
 
 ## Archivo (intento i8)
