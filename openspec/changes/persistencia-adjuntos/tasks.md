@@ -115,7 +115,7 @@ Mutaciones y posiciones: M1 (§22), M7 (fichero vigilado), P2.
 ## Verificación (intento i7)
 - [x] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-30 a RQ-ZS-33 contra su prueba.
 - [x] V.2 Reproducir M1-M9 y P1-P5 del `apply-progress.md` con `perl`, restauración comprobada (`git diff` vacío, `file` aún CRLF).
-- [ ] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
+- [x] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
 
 ## Archivo (intento i8)
 - [ ] A.1 Techo del intento = 2 × `wc -l` de la carpeta + 800. Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.

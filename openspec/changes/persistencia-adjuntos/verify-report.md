@@ -13,7 +13,13 @@ evidence_revision: sha256:cd479922cca8af9a0493be3480f1f9e06bb5004d72fad7f869345d
 
 ## V.3 · Las cinco comprobaciones
 
-Pendiente del orquestador: las corre en serie sobre el commit del verify y escribe aquí sus códigos.
+Corridas por el orquestador, en serie, sobre `1e2198c7` (el commit de este informe; el código es el de `25328436`):
+
+- `npm run typecheck` 0.
+- `npm run lint -- --max-warnings 165` 0, **165 avisos contra 165**.
+- Detector `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` 0.
+- `npm test`, pasada 1: memoria libre al arrancar **16.692 MB**, duración **323 s**, código **0**; 346 ficheros pasan y 4 omitidos; 6.037 pruebas pasan y 26 omitidas.
+- `npm run build` 0 (`index-F1jDYjEU.js`, el mismo bundle: la tanda no toca el cliente).
 
 ## V.1 · Escenarios contra pruebas (22/22)
 
