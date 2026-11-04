@@ -31,7 +31,7 @@ export const PAUSA_ENTRE_TICKETS_MS = 150
  * `pausa429Ms` existen para que las pruebas pasen 0; la App no los pasa.
  */
 export interface ConversacionesDeps {
-  conversaciones?: { periodica?: boolean; marcarAusentes?: boolean; pausaMs?: number; pausa429Ms?: number }
+  conversaciones?: { periodica?: boolean; marcarAusentes?: boolean; pausaMs?: number; pausa429Ms?: number; trasGuardar?: (ticketIds: string[]) => Promise<void> }
 }
 
 export interface ListaConversaciones { items: ZohoRecord[]; error: string | null; por429: boolean }
@@ -146,12 +146,12 @@ export async function guardarYReflejar(
  * NUNCA rechaza: cada ticket va en su `try`, y un 429 que agota los reintentos corta la pasada ENTERA (S-5) nombrando los
  * ids que se quedan sin pedir. Los recuentos son los del detalle que se acaba de leer (`t`), no los de `tickets.raw` (S-4).
  */
-export function crearPasadaConversaciones({ zohoFetch, db, marcar, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS }: {
-  zohoFetch: ZohoFetch; db: Queryable; marcar: boolean; pausaMs?: number; pausa429Ms?: number
+export function crearPasadaConversaciones({ zohoFetch, db, marcar, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS, trasGuardar }: {
+  zohoFetch: ZohoFetch; db: Queryable; marcar: boolean; pausaMs?: number; pausa429Ms?: number; trasGuardar?: (ticketIds: string[]) => Promise<void>
 }): (tickets: ZohoRecord[]) => Promise<void> {
   const pedidos = new Map<string, string>()
   return async (tickets) => {
-    let pedidoAlguno = false
+    let pedidoAlguno = false; const guardados: string[] = []
     for (const [i, t] of tickets.entries()) {
       const id = String(t.id)
       if (pedidos.has(id) && pedidos.get(id) === String(t.modifiedTime)) continue
@@ -160,7 +160,7 @@ export function crearPasadaConversaciones({ zohoFetch, db, marcar, pausaMs = PAU
         pedidoAlguno = true
         const inicio = await instanteBase(db)
         const lista = await leerConversaciones(zohoFetch, id, { reintentos429: REINTENTOS_429, pausa429Ms })
-        await guardarYReflejar(db, id, lista, { esperado: esperadoDeZoho(t), marcar, inicio })
+        await guardarYReflejar(db, id, lista, { esperado: esperadoDeZoho(t), marcar, inicio }); guardados.push(id)
         if (lista.por429) {
           console.error(`conversaciones: pasada cortada por 429 en el ticket ${id}; sin pedir: ${tickets.slice(i).map((x) => String(x.id)).join(', ')}`)
           return
@@ -170,6 +170,6 @@ export function crearPasadaConversaciones({ zohoFetch, db, marcar, pausaMs = PAU
       } catch (e) {
         console.error(`conversaciones: ticket ${id} falló al guardar:`, e instanceof Error ? e.message : String(e))
       }
-    }
+    } if (guardados.length > 0) await trasGuardar?.(guardados)?.catch((e) => console.error('conversaciones: el gancho trasGuardar falló:', e instanceof Error ? e.message : String(e)))
   }
 }

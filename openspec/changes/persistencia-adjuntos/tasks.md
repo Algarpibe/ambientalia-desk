@@ -81,16 +81,16 @@ Mutaciones y posiciones: M5 (relleno), M6 (resumen), P3 (las dos), P5 (`enMarcha
 ## Lote L4 — gancho al sincronizar (intento i5)
 Escenarios: RQ-ZS-33 la pasada trae los pendientes hasta el tope, interruptor cerrado o sin periódica, el worker y la apertura no descargan, un `404` o un tamaño distinto no se repite; RQ-ZS-30 directorio ausente (pasada).
 Mutaciones y posiciones: M4 (las dos), M5 (gancho), M8 (las tres), M9, P5 (`guardados.push`).
-- [ ] L4.1 M0 del lote: `npm test` en el commit de L3 con su log.
-- [ ] L4.2 ROJO `packages/zoho-sync/src/conversacionesTrasGuardar.test.ts` (nuevo): `trasGuardar` al final con los ids guardados; si guardar lanza, el id no entra; un gancho que lanza no rompe el ciclo; la apertura (`syncConversations`) no lo llama.
-- [ ] L4.3 ROJO `apps/desk/server/adjuntos/guardadoAlSincronizar.test.ts` (nuevo, `createSync` real): tope; ticket no tocado; `TRUE`, `1`, vacío y sin periódica; sin directorio; memoria de `404`/`fallido:tamano`; corte por `429`; el worker no descarga.
-- [ ] L4.4 ROJO en sitio, mismo número de líneas: `apps/desk/server/opcionesConversaciones.test.ts:25` pasa a exigir `conversaciones: conGuardadoDeAdjuntos(opcionesConversaciones(config), config,` en la línea de `createSync({` de `index.ts` (fichero vigilado; M9 la ejerce).
-- [ ] L4.5 Anotar el rojo medido de L4.2-L4.4 en `apply-progress.md`.
-- [ ] L4.6 En sitio, inserciones = borrados (`git diff --numstat`): `packages/zoho-sync/src/conversaciones.ts:34`, `:149`, `:150`, `:154`, `:163`, `:173` (6/6); `packages/zoho-sync/src/sync.ts:66` (1/1); `apps/desk/server/index.ts:15` y `:23` (2/2).
-- [ ] L4.7 `apps/desk/server/adjuntos/guardadoAlSincronizar.ts` (nuevo): `conGuardadoDeAdjuntos`, tope `TOPE_ADJUNTOS_POR_CICLO = 20`, `Set` en el cierre, nunca rechaza.
-- [ ] L4.8 Verde: la prueba focal (incluye `hubSyncSinConversaciones.test.ts` y `opcionesConversaciones.test.ts`), `npm run typecheck` y suite entera con su log.
-- [ ] L4.9 Mutaciones L4 con su rojo: M4 (`syncConversations` llama a `trasGuardar`; aparte, `hub-sync.ts:21` pasa `conversaciones`), M5 (gancho), M8 (sin tope; sin memoria; `sync.ts:66` sin `trasGuardar`), M9 (`index.ts:23` sin el gancho), P5 (`guardados.push` antes de `guardarYReflejar`). Tabla en `apply-progress.md`.
-- [ ] L4.10 Casilla de la regla 13: `git diff --name-only` sin `apps/desk/src`.
+- [x] L4.1 M0 del lote: `npm test` en el commit de L3 con su log.
+- [x] L4.2 ROJO `packages/zoho-sync/src/conversacionesTrasGuardar.test.ts` (nuevo): `trasGuardar` al final con los ids guardados; si guardar lanza, el id no entra; un gancho que lanza no rompe el ciclo; la apertura (`syncConversations`) no lo llama.
+- [x] L4.3 ROJO `apps/desk/server/adjuntos/guardadoAlSincronizar.test.ts` (nuevo, `createSync` real): tope; ticket no tocado; `TRUE`, `1`, vacío y sin periódica; sin directorio; memoria de `404`/`fallido:tamano`; corte por `429`; el worker no descarga.
+- [x] L4.4 ROJO en sitio, mismo número de líneas: `apps/desk/server/opcionesConversaciones.test.ts:25` pasa a exigir `conversaciones: conGuardadoDeAdjuntos(opcionesConversaciones(config), config,` en la línea de `createSync({` de `index.ts` (fichero vigilado; M9 la ejerce).
+- [x] L4.5 Anotar el rojo medido de L4.2-L4.4 en `apply-progress.md`.
+- [x] L4.6 En sitio, inserciones = borrados (`git diff --numstat`): `packages/zoho-sync/src/conversaciones.ts:34`, `:149`, `:150`, `:154`, `:163`, `:173` (6/6); `packages/zoho-sync/src/sync.ts:66` (1/1); `apps/desk/server/index.ts:15` y `:23` (2/2).
+- [x] L4.7 `apps/desk/server/adjuntos/guardadoAlSincronizar.ts` (nuevo): `conGuardadoDeAdjuntos`, tope `TOPE_ADJUNTOS_POR_CICLO = 20`, `Set` en el cierre, nunca rechaza.
+- [x] L4.8 Verde: la prueba focal (incluye `hubSyncSinConversaciones.test.ts` y `opcionesConversaciones.test.ts`), `npm run typecheck` y suite entera con su log.
+- [x] L4.9 Mutaciones L4 con su rojo: M4 (`syncConversations` llama a `trasGuardar`; aparte, `hub-sync.ts:21` pasa `conversaciones`), M5 (gancho), M8 (sin tope; sin memoria; `sync.ts:66` sin `trasGuardar`), M9 (`index.ts:23` sin el gancho), P5 (`guardados.push` antes de `guardarYReflejar`). Tabla en `apply-progress.md`.
+- [x] L4.10 Casilla de la regla 13: `git diff --name-only` sin `apps/desk/src`.
 - [ ] L4.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
 
 ## Lote L5 — rutas de administración, §22 y `debt.md` (intento i6)

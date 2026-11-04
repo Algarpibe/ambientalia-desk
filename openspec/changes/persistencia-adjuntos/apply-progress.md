@@ -237,3 +237,75 @@ Nota de método: M6 hace caer cinco pruebas porque `fallidos` entra en el JSON d
 - `npm test`, pasada 1: memoria libre al arrancar **9.810 MB**, duración **437 s**, código **0**; 342 ficheros pasan y 4 omitidos; 5.977 pruebas pasan y 26 omitidas (5.954 + 23 nuevas).
 - Barrido B.1: L3 sólo crea ficheros nuevos, no edita ninguno muy citado. Las seis citas a `rellenoAdjuntos.ts` de esta sección (69, 80, 115, 117, 119 y 171) se leyeron contra el fichero y dicen lo que afirman.
 - Regla 13: nada bajo `apps/desk/src`.
+
+## Lote L4 — intento i5 (gancho al sincronizar)
+
+Modo: Strict TDD. Partida: `9a5f1890` (código de L3 en `3daa344e`). Ficheros nuevos, los tres en LF como `apps/desk/server/adjuntos/almacen.ts`: `apps/desk/server/adjuntos/guardadoAlSincronizar.ts` (78 líneas), `apps/desk/server/adjuntos/guardadoAlSincronizar.test.ts` (281) y `packages/zoho-sync/src/conversacionesTrasGuardar.test.ts` (129). Editados en sitio, CRLF conservado (`file`) e inserciones = borrados (`git diff --numstat`): `packages/zoho-sync/src/conversaciones.ts` 6 6 (`:34`, `:149`, `:150`, `:154`, `:163`, `:173`), `packages/zoho-sync/src/sync.ts` 1 1 (`:66`), `apps/desk/server/index.ts` 2 2 (`:15`, `:23`), `apps/desk/server/opcionesConversaciones.test.ts` 1 1 (`:25`). Más las casillas L4.1 a L4.10 de `tasks.md`. `apps/hub-sync/src/hub-sync.ts` sólo se mutó y se restauró (`git diff` vacío); `almacen.ts` y `rellenoAdjuntos.ts` no se tocaron.
+
+### L4.1 · M0 (hecha por el orquestador)
+`npm test` entero en `3daa344e` (código de L3; `9a5f1890` sólo documentos): memoria libre al arrancar 9.810 MB, 437 s, código 0; 342 ficheros pasan y 4 omitidos; 5.977 pruebas pasan y 26 omitidas.
+
+### Red de seguridad (antes de tocar nada)
+La focal ampliada (los ficheros del encargo más los que leen el texto de `index.ts`, `sync.ts` o `conversaciones.ts`, `apps/desk/server/adjuntos/`, `apps/hub-sync/src/`, `packages/zoho-sync/src/` y `registro.test.ts`): 71 ficheros pasan y 2 omitidos; 960 pruebas pasan y 7 omitidas, código 0.
+
+### Rojo medido (L4.5), por la razón correcta: el gancho no existe, no un import roto
+- `conversacionesTrasGuardar.test.ts` (nuevo): 4 rojas de 9. Antes de producción la pasada no llamaba a nada: «una sola llamada, con los tres ids…» › `expected [] to deeply equal [ { …(2) } ]`; «el segundo ciclo…», «el 102 falla al guardar…» y «rechaza: syncRecent devuelve su cuenta…» › `expected "spy" to be called 1 times, but got 0 times`. Las 5 verdes (apertura no llama, 429 salta el gancho, periódica apagada, sin gancho, los tres fallan) son de caracterización y las ejercen P5, M4a y M8c.
+- `guardadoAlSincronizar.test.ts` (nuevo), contra un esqueleto que sólo exporta `TOPE_ADJUNTOS_POR_CICLO` y `conGuardadoDeAdjuntos` devolviendo `op`: 11 rojas de 21. «un ticket recién guardado con 25 pendientes…», «el tope cuenta peticiones…» y «un adjunto que falla con 500…» › `expected [] to deeply equal [ '5001', '5002', '5003', …(17) ]`; «con ambos abiertos…» y «abrir el ticket (syncConversations)…» › `expected undefined to be type of 'function'`; «el 4007 (404)…», «la memoria vive en el gancho…», «un 429 en el adjunto…» y «un disco que falla…» › `expected [] to deeply equal [ … ]`; «trasGuardar no rechaza…» › `TypeError: conBaseCaida.trasGuardar is not a function`; «la línea de log…» › `expected "noop" to be called 1 times, but got 0 times`. Las 10 verdes («nada se descarga»: interruptor cerrado, directorio inválido, worker) las ejercen M8c, M9 y los controles.
+- `apps/desk/server/opcionesConversaciones.test.ts:25` (en sitio): 1 roja de 4 antes de tocar `index.ts` › `expected 'const sync = createSync({ zohoFetch, …' to contain 'conversaciones: conGuardadoDeAdjuntos…'`.
+
+### Verde
+Primera pasada de `conversacionesTrasGuardar.test.ts` tras editar `conversaciones.ts`: 5 de 9, porque `sync.ts:66` aún no reenviaba; con esa línea: 9 de 9. `guardadoAlSincronizar.test.ts`: 17 de 21 en la primera pasada; las 4 caídas eran de la PRUEBA y no de producción (la lista `peticiones` se acumulaba entre ciclos y faltaba el ticket `101` en una prueba que llamaba al gancho directo); corregidas en la prueba, 21 de 21. Después de editar `index.ts`, `opcionesConversaciones.test.ts` 4 de 4.
+
+Pruebas de `conversacionesTrasGuardar.test.ts` (9): una sola llamada con los ids en orden y tras las tres listas; segundo ciclo sin cambios no llama; sin `trasGuardar` guarda igual; el 102 falla y llegan el 101 y el 103; fallan los tres y no se llama; gancho que rechaza no rompe el ciclo (mensaje propio del gancho); corte por 429 salta el gancho; la apertura no lo llama; periódica apagada.
+Pruebas de `guardadoAlSincronizar.test.ts` (21): tope = 20 (1); 25 pendientes y ticket no tocado, con ciclo siguiente (1); el tope cuenta peticiones y no pendientes (1); un 500 cuenta para el tope (1); `TRUE`, `1` y vacío (3); periódica cerrada (1); control abierto (1); opciones conservadas (1); directorio ausente, relativo y dentro de `dist/` (3); 404 y tamaño no se repiten, el 500 sí (1); la memoria es del gancho (1); 429 corta y se reintenta (1); disco corta (1); no rechaza (1); log sin `name` (1); worker sin gancho (1); apertura sin descarga (1).
+
+Producción: `apps/desk/server/adjuntos/guardadoAlSincronizar.ts`. `conGuardadoDeAdjuntos` devuelve `op` tal cual si el interruptor no es `true` o `dirAdjuntos` da `null` (`apps/desk/server/adjuntos/guardadoAlSincronizar.ts:33`, `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:34`); el `Set` se crea una vez (`apps/desk/server/adjuntos/guardadoAlSincronizar.ts:35`); `estadoCopia` descarta lo presente antes de pedir (`apps/desk/server/adjuntos/guardadoAlSincronizar.ts:52`); el tope en `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:53`; el `429` en `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:58`; el `404` en `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:59` y el tamaño en `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:62`; `ErrorDisco` corta en `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:68`; una línea de log (`apps/desk/server/adjuntos/guardadoAlSincronizar.ts:71`) con ids y cuentas, sin `name`.
+
+Focal final: `npx vitest run` sobre los ficheros del encargo, los que leen el texto, `apps/desk/server/adjuntos/`, `apps/hub-sync/src/`, `packages/zoho-sync/src/` y `registro.test.ts` → 73 ficheros pasan y 2 omitidos; 990 pruebas pasan y 7 omitidas (960 + 21 + 9), código 0. Mínima del encargo: `guardadoAlSincronizar.test.ts` 21, `conversacionesTrasGuardar.test.ts` 9, `conversaciones.test.ts` 33, `hubSyncSinConversaciones.test.ts` 2, `opcionesConversaciones.test.ts` 4. `npm run typecheck` 0; `npm run lint -- --max-warnings 165` 0, **165 avisos contra 165** (ninguno nuevo).
+
+### Mutaciones (L4.9)
+Cada una con perl por número de línea; la línea mutada se imprimió con `sed -n` antes de correr la suite (5 ficheros, 69 pruebas). Restauradas copiando un respaldo del fichero ya editado (sin `git checkout`) y comprobando `cmp` igual al respaldo y su `sha256sum`.
+
+| Id | Fichero:línea | Mutación | Pruebas que caen | Restaurado |
+|---|---|---|---|---|
+| M4a | `packages/zoho-sync/src/sync.ts:189` | `syncConversations` llama a `conversaciones?.trasGuardar?.([id])` | 2: «la apertura (syncConversations) guarda la lista y nunca llama a trasGuardar» y «abrir el ticket (syncConversations) guarda la lista y no pide ningún adjunto…» | sí |
+| M4b | `apps/hub-sync/src/hub-sync.ts:21` | `createSync` recibe `conversaciones: { periodica: true }` | 1: `hub-sync.ts no pasa conversaciones a createSync (fichero vigilado)` (`hubSyncSinConversaciones.test.ts`) | sí |
+| M5 | `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:58` | el `429` no hace `break` | 1: «un 429 en el adjunto corta sólo ese guardado…» | sí |
+| M8a | `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:53` | el tope pasa a `1e9` | 3: 25 pendientes, el tope cuenta peticiones y el 500 cuenta para el tope | sí |
+| M8b-1 | `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:59` | el `404` no entra en el `Set` | 1: «el 4007 (404) y el 4008 (tamaño) se piden una vez…» | sí |
+| M8b-2 | `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:62` | el tamaño no entra en el `Set` | 1: la misma | sí |
+| M8c | `packages/zoho-sync/src/sync.ts:66` | sin `, trasGuardar: conversaciones.trasGuardar` | 13: 4 de `conversacionesTrasGuardar.test.ts` y 9 de `guardadoAlSincronizar.test.ts` | sí |
+| M9 | `apps/desk/server/index.ts:23` | vuelve a `conversaciones: opcionesConversaciones(config)` | 1: `index.ts pasa esas opciones a createSync y no lee los interruptores por su cuenta` | sí |
+| P5 | `packages/zoho-sync/src/conversaciones.ts:163` | `guardados.push(id)` antes de `guardarYReflejar` | 2: «el 102 falla al guardar…» y «si fallan los tres…» | sí |
+| Mx-catch | `packages/zoho-sync/src/conversaciones.ts:173` | sin el `?.catch(...)` del gancho | 1: «rechaza: syncRecent devuelve su cuenta…» (ver la nota) | sí |
+| Mx-disco | `apps/desk/server/adjuntos/guardadoAlSincronizar.ts:68` | `ErrorDisco` no hace `break` | 1: «un disco que falla corta el guardado…» | sí |
+
+Nota de método: la primera versión de «rechaza…» sólo comprobaba el texto `volumen lleno`, y Mx-catch la dejaba en verde porque `sincronizarModificados` ya recoge el rechazo de la pasada con su propio `catch` (`trasLeer`, en `packages/zoho-sync/src/sync.ts`). Se afinó para exigir el mensaje propio del gancho (`el gancho trasGuardar falló: volumen lleno`) y entonces Mx-catch cae. El `catch` de `packages/zoho-sync/src/conversaciones.ts:173` no cambia el resultado del ciclo, sólo QUIÉN lo anota.
+
+### TDD Cycle Evidence
+| Tarea | Fichero de prueba | Capa | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| L4.2 gancho de la pasada | `packages/zoho-sync/src/conversacionesTrasGuardar.test.ts` | Integración (`createSync` real + pg-mem) | focal 71 ficheros, 960 pruebas | medido, 4 rojas | 9/9 | llamada y no llamada (tres tickets, fallo de uno, de tres, 429, apertura, periódica apagada, ciclo repetido) | sin cambios |
+| L4.3 + L4.7 guardado al sincronizar | `apps/desk/server/adjuntos/guardadoAlSincronizar.test.ts` | Integración (`createSync` real + pg-mem + `fs.mkdtemp`) | N/A (nuevo) | medido, 11 rojas | 21/21 | tope con y sin ya presentes; `TRUE`/`1`/vacío; tres directorios inválidos; 404/tamaño frente a 500; 429 frente a disco | sin cambios |
+| L4.4 + L4.6 fichero vigilado | `apps/desk/server/opcionesConversaciones.test.ts` | Estática sobre `index.ts` | 4/4 | medido, 1 roja | 4/4 | M9 lo ejerce | sin cambios |
+
+### Work Unit Evidence
+| Evidencia | Valor |
+|---|---|
+| Prueba focal | la de arriba, 73 ficheros y 990 pruebas, código 0 |
+| Arnés real | `createSync` real con `zohoFetch` enrutada, pg-mem y `fs.mkdtemp` |
+| Frontera de vuelta atrás | `apps/desk/server/adjuntos/guardadoAlSincronizar.ts` y sus dos pruebas; las seis líneas de `conversaciones.ts`, `sync.ts:66`, las dos de `index.ts` y `opcionesConversaciones.test.ts:25` |
+
+### L4.10 · casilla de la regla 13
+`git diff --name-only` → `apps/desk/server/index.ts`, `apps/desk/server/opcionesConversaciones.test.ts`, `packages/zoho-sync/src/conversaciones.ts`, `packages/zoho-sync/src/sync.ts` y `tasks.md`; cero bajo `apps/desk/src`. El cliente no toma decisión alguna: interruptores, directorio, tope y cortes los decide el servidor.
+
+### Supuestos
+1. Un `429` en un adjunto corta el guardado de ese ciclo SIN reintentar la misma petición (a diferencia del relleno, que repite `REINTENTOS_429` veces): el ciclo siguiente lo reintenta y no entra en la memoria de descartados. D5 dice que `429` y `ErrorDisco` «cortan sólo ese guardado».
+2. La pausa entre peticiones de adjuntos es `op.pausaMs ?? PAUSA_ENTRE_TICKETS_MS` (150 ms en producción; 0 en las pruebas): una sola perilla para las dos pasadas.
+3. Sólo se consideran pendientes las filas con id numérico y `zoho_href` que casa con la ruta permitida; las demás no gastan petición ni se anotan (es asunto del relleno, que las cuenta).
+4. `trasGuardar` consulta con `IN ($1, …)` y no con `= ANY($1)`, para no depender de cómo pg-mem trata el arreglo; el número de ids es el de los tickets recién guardados en el ciclo.
+5. El `catch` de `packages/zoho-sync/src/conversaciones.ts:173` va en la forma del encargo (`trasGuardar?.(guardados)?.catch(...)`): protege de un rechazo, no de un gancho que lance de forma síncrona; el de `conGuardadoDeAdjuntos` es `async` y no puede.
+6. La línea de log es `logger.info` y sólo sale si hubo alguna petición; lleva `tickets`, `peticiones`, `guardados`, `ausentes`, `fallidos` (id y motivo) y `corte`.
+
+### Pendiente del cierre (orquestador)
+L4.8 suite entera (`npm test` con log), `npm run build`, el detector de citas sobre el commit, la medida del intento y el barrido B.1 (`packages/zoho-sync/src/conversaciones.ts:163` sigue siendo la llamada a `guardarYReflejar` seguida de `guardados.push(id)` y `packages/zoho-sync/src/conversaciones.ts:166` el `return` del corte por `429`; `packages/zoho-sync/src/sync.ts:66`, `apps/desk/server/index.ts:15` y `apps/desk/server/index.ts:23` en su sitio) — casilla L4.11.
