@@ -5621,7 +5621,7 @@ decisiones_de_gerencia_adenda:
     engram: "decision/f1b04-recuento-no-retiene — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
-    tanda_que_abre: "ninguna (el cierre de F1B-04 va en un cambio de cierre, sin código: es openspec/changes/archive/2026-11-03-cierre-f1b04-con-lo-construido, fusionado en ca6a450f el 03/11/2026 — precisado por Supervisión el 2026-11-04)"
+    tanda_que_abre: "ninguna (el cierre de F1B-04 va en un cambio de cierre, sin código: es openspec/changes/archive/2026-11-03-cierre-f1b04-con-lo-construido, fusionado en ca6a450f el 03/11/2026 — precisado por Supervisión el 2026-11-03)"
   - clave: "decision/f1f01-fecha-pasada-en-seco"
     fecha: "2026-11-03"
     origen: "conversación del analista, 03/11/2026, actividad 12 de docs/validacion/Plan_hasta_2026-11-09.docx; clave propuesta por el analista; escrita por Supervisión al levantarse la pausa del encargo 1b"
