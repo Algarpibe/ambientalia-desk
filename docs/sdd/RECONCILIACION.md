@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `ca6a450f` · **Fecha del commit:** 2026-11-03
+**Commit medido:** `5549833d` · **Fecha del commit:** 2026-11-04
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -16,11 +16,11 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 
 ## 2 · Numerador del avance (§C de la R01.4) — cifras separadas, nunca una suma
 
-  30 cerradas por archivo ....................... 1G-01, F0-04, F0-05, F1A-03, F1A-06, F1A-07, F1A-08, F1B-02, F1B-03, F1B-04, F1B-05, F1B-06, F1B-07, F1B-08, F1B-10, F1B-11, F1B-12, F1B-14, F1B-15, F1B-18, F1B-19, F1C-01, F1C-02, F1C-03, F1C-04, F1C-06, F1C-08, F1C-09, F1C-10, F1C-11
+  31 cerradas por archivo ....................... 1G-01, 1G-02, F0-04, F0-05, F1A-03, F1A-06, F1A-07, F1A-08, F1B-02, F1B-03, F1B-04, F1B-05, F1B-06, F1B-07, F1B-08, F1B-10, F1B-11, F1B-12, F1B-14, F1B-15, F1B-18, F1B-19, F1C-01, F1C-02, F1C-03, F1C-04, F1C-06, F1C-08, F1C-09, F1C-10, F1C-11
   9 cerradas por commit declarado ............... F0-00, F0-01, F0-02, F0-03, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01
   8 en curso, aparte y sin sumar ................ F1B-09, F1B-13, F1C-05, F1C-07, F1F-01, F1F-02, F1F-03, F1F-05
   denominador ................................... 78 tandas del §C de la R01.4
-  9 cerradas sin fuente declarada en la R01.1 ... 1G-01, F1B-12, F1B-14, F1B-15, F1B-18, F1B-19, F1C-09, F1C-10, F1C-11
+  10 cerradas sin fuente declarada en la R01.1 .. 1G-01, 1G-02, F1B-12, F1B-14, F1B-15, F1B-18, F1B-19, F1C-09, F1C-10, F1C-11
   9 marcadas sin verificar
 
 Hallazgos (informativos, no bloquean):
@@ -61,7 +61,7 @@ Hallazgos (informativos, no bloquean):
 
 ## 6 · Ficheros de docs/sdd sin trackear
 
-  21 sin trackear
+  22 sin trackear
 
 Hallazgos (informativos, no bloquean):
   - `docs/sdd/Evidencia_Transporte_Tarea_Programada_2026-09-18.txt` — en disco y fuera del índice
@@ -83,6 +83,7 @@ Hallazgos (informativos, no bloquean):
   - `docs/sdd/Parte_2026-10-27.md` — en disco y fuera del índice
   - `docs/sdd/Parte_2026-10-30.md` — en disco y fuera del índice
   - `docs/sdd/Parte_2026-11-03.md` — en disco y fuera del índice
+  - `docs/sdd/Parte_2026-11-04.md` — en disco y fuera del índice
   - `docs/sdd/Pendiente_de_pegar_tras_1b.md` — en disco y fuera del índice
   - `docs/sdd/comparacion-sept-2026-10-24.json` — en disco y fuera del índice
 
