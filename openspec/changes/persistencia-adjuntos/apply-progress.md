@@ -316,3 +316,92 @@ L4.8 suite entera (`npm test` con log), `npm run build`, el detector de citas so
 - `npm test`, pasada 1: memoria libre al arrancar **7.721 MB**, duración **438 s**, código **0**; 344 ficheros pasan y 4 omitidos; 6.007 pruebas pasan y 26 omitidas (5.977 + 30 nuevas: 21 + 9).
 - Barrido B.1 sobre todo el repositorio (archivos y `docs/` incluidos): `conversaciones.ts`, `sync.ts` e `index.ts` se editaron en sitio. Las citas a las líneas tocadas siguen diciendo lo que afirman (caso A): `conversaciones.ts:163` (`esperadoDeZoho(t)`) y `conversaciones.ts:149` (parámetros con valor por omisión) en el `verify-report.md` y el `design.md` archivados; `sync.ts:66` (la pasada se crea sólo con `periodica === true`) en los paquetes de despliegue del 30/10 y del 02/11 y en el archivo de `sync-conversaciones-zoho`; `index.ts:23` (el cableado de `createSync` que sólo hace la App) en `DEPLOY.md:839` y en los paquetes; `index.ts:15` (importaciones). La de `index.ts:23-24` del paquete del 27/09 va anclada en `dcb5c99` (caso B).
 - Regla 13: nada bajo `apps/desk/src`.
+
+## Lote L5 — intento i6 (rutas de administración, §22 y `debt.md`)
+
+Modo: Strict TDD. Partida: `c9354e12` (código de L4 en `9f5f3512`). Ficheros nuevos, los tres en LF como los de L1-L4: `apps/desk/server/routes/rellenoAdjuntos.ts` (56 líneas), `apps/desk/server/adjuntos/rellenoAdjuntosRutas.test.ts` (251) y `apps/desk/server/deployRellenoAdjuntos.test.ts` (75). Editados, todos CRLF conservado (`file` dice sólo «with CRLF line terminators» y los `\r` igualan las líneas): `apps/desk/server/app.ts` (`:22`, `:50`, `:57`; 96 líneas), `DEPLOY.md` (añadida la §22 al final; 987 líneas), `apps/desk/server/deployRellenoConversaciones.test.ts` (`:10`, `:19`, `:22`, `:25`; 47 líneas) y `debt.md` (`:572`, `:582`, `:585`, `:597`, `:598`; 911 líneas). `.env.example`, `apps/desk/src` y los seis de Supervisión, intactos.
+
+### L5.1 · M0 (hecha por el orquestador)
+`npm test` entero en `9f5f3512` (código de L4; `c9354e12` sólo documentos): memoria libre al arrancar 7.721 MB, 438 s, código 0; 344 ficheros pasan y 4 omitidos; 6.007 pruebas pasan y 26 omitidas.
+
+### Red de seguridad (antes de tocar nada)
+Focal sobre lo que se iba a editar o rodea a lo editado (`deployRellenoConversaciones.test.ts`, `deployConversaciones.test.ts`, `opcionesConversaciones.test.ts` y `apps/desk/server/adjuntos/`): 8 ficheros y 168 pruebas pasan, código 0 (`almacen` 37, `rellenoAdjuntos` 23, `guardadoAlSincronizar` 21, `rutaAdjunto` 36, `servirLocal` 39, `deployConversaciones` 4, `opcionesConversaciones` 4, `deployRellenoConversaciones` 4).
+
+### Rojo medido (L5.4), por la razón correcta
+No hizo falta esqueleto: las dos pruebas nuevas no importan el módulo de producción. La de rutas entra por `createApp` del arnés (`appHarness.ts`), así que antes de `routes/rellenoAdjuntos.ts` y del cableado la ruta no existe y el manejador de API responde `404` con `{ error: 'Ruta de API no encontrada' }`: rojo por aserción, no por import roto. La de `DEPLOY.md` lee el fichero y la §22 no existe.
+- `rellenoAdjuntosRutas.test.ts` (nuevo): 22 rojas de 22. «sin sesión, 401…» › `expected 404 to be 401`; los `403` de rol, de interruptor cerrado y de directorio (7 pruebas) › `expected 404 to be 403`; el `GET` cerrado, el `limite=0` (4 pruebas, incluido el recuento de `desde=20` › `expected { error: 'Ruta de API no encontrada' } to deeply equal { pendientes: 2, bytes: 2097152, …(4) }`) y el resto de `200` › `expected 404 to be 200`; validación › `limite=abc: expected 404 to be 400` y `expected 404 to be 400`; los `POST` que debían lanzar › `expected undefined to be true`.
+- `deployRellenoAdjuntos.test.ts` (nuevo): 8 rojas de 8. «la sección existe, tras la §21…» › `expected -1 to be greater than -1`; los tres apartados › `expected '' not to be ''`; «nace cerrado…» (2) › `expected '' to contain '**Nace cerrado**'`; «ADJUNTOS_DIR: no tiene valor por defecto…» › `expected '' to contain '**Sin valor por defecto**'`; «pide el espacio libre…» › `expected '' to contain 'df -h'`. El log del rojo (30 rojas) quedó en el scratchpad (`rojo-l5.log`).
+- `deployRellenoConversaciones.test.ts:25` (L5.8): con la §22 ya añadida a `DEPLOY.md` y ANTES de editarlo, 1 roja de 4 › «la sección existe, tras la §20, y es la última» › `expected [ '## 21.', '## 22.' ] to have a length of 1 but got 2`. Después de editarlo, 4 de 4.
+
+### Verde y triangulación
+- Orden de ejecución: ruta (`routes/rellenoAdjuntos.ts`) y cableado (`app.ts`) → `rellenoAdjuntosRutas.test.ts` 22 de 22 a la primera (con `opcionesConversaciones.test.ts` 4 de 4); luego la §22 → `deployRellenoAdjuntos.test.ts` 8 de 8, y entonces el rojo medido de `:25` y su edición.
+- `rellenoAdjuntosRutas.test.ts` (22): sin sesión (1); rol en `POST` y `GET` con el interruptor abierto (1); rol antes que interruptor, sin oír ni la variable ni el directorio (1); cerrado: `POST` sin parámetros, `limite=abc`, `desde=abc&limite=5` y el `GET` libre (4); abierto sin directorio vacío, relativo y dentro de `dist/` con `limite=abc` (3) y con `limite=0` (1); validación `limite` y `desde` (2); `limite=0` con el interruptor cerrado y abierto, con `desde=20` y de un no superadministrador (4); `GET` sin pasada (1), `POST` que responde sin esperar (1), que pasa `desde` y `limite` (1), segundo `POST` en marcha (1) y la pasada completa que guarda un fichero y fija `storage_path` (1, el cableado llega al motor).
+- `deployRellenoAdjuntos.test.ts` (8): orden y tres apartados (1); las dos frases y la línea de entorno vacía de CADA apartado, por separado (3); nace cerrado y el código lo lee (2); directorio sin valor por defecto y `dist/` (1); `df -h`, copia previa, ruta, `limite=0`, `limite=20` y `desde=` (1).
+- Focal final (L5.10): `npx vitest run` sobre `rellenoAdjuntosRutas.test.ts`, `deployRellenoAdjuntos.test.ts`, `deployRellenoConversaciones.test.ts`, `deployConversaciones.test.ts`, `opcionesConversaciones.test.ts` y `apps/desk/server/adjuntos/` → 10 ficheros y 198 pruebas pasan (168 + 22 + 8), código 0. `npx vitest run apps/desk/server/deploy` → 5 ficheros y 31 pruebas, código 0. `npm run typecheck` 0. `npm run lint -- --max-warnings 165` 0, **165 avisos contra 165** (ninguno nuevo).
+
+Producción: `apps/desk/server/routes/rellenoAdjuntos.ts`, molde de `apps/desk/server/routes/rellenoConversaciones.ts`. `interruptorAdjuntos(habilitado, hayDir)` (`apps/desk/server/routes/rellenoAdjuntos.ts:17`) deja pasar `limite=0` (`:19`), responde `403` nombrando `RELLENO_ADJUNTOS_HABILITADO` con el interruptor cerrado (`:20`) y `403` nombrando `ADJUNTOS_DIR` sin directorio (`:24`); la cadena `requireAuth` → `requireSuperAdmin` → `interruptorAdjuntos` → manejador está en `:43`, la validación `400` en `:45`, el recuento en `:46`, el lanzamiento en `:47` y el `GET` (rol y `estado()`, sin interruptor) en `:53`.
+
+### Ediciones en sitio (`git diff --numstat`), `wc -l` y finales de línea
+| Fichero | numstat | `wc -l` | CRLF |
+|---|---|---|---|
+| `apps/desk/server/app.ts` (`:22`, `:50`, `:57`) | 3 3 | 96 (antes 96) | sólo CRLF; 96 `\r` |
+| `apps/desk/server/deployRellenoConversaciones.test.ts` (`:10`, `:19`, `:22`, `:25`) | 4 4 | 47 (antes 47) | sólo CRLF |
+| `debt.md` (`:572`, `:582`, `:585`, `:597`, `:598`) | 5 5 | 911 (antes 911) | sólo CRLF |
+| `DEPLOY.md` (al final, tras `:912`) | 75 0 | 987 (antes 912) | sólo CRLF; 987 `\r` |
+
+`app.ts` cumple la condición de `apps/desk/server/opcionesConversaciones.test.ts` (4 de 4): la línea de `crearRellenoConversaciones({` sigue con `marcar: opcionesConversaciones(config).marcarAusentes === true`, la importación de `opcionesConversaciones` sigue y la de `registerRellenoConversacionesRoutes(app` sigue con `habilitado: config.rellenoConversacionesHabilitado === true`. Las tres líneas de `app.ts` siguen siendo UNA línea: `:22` añade las dos importaciones al final, `:50` la creación `const rellenoAdj = crearRellenoAdjuntos({ zohoFetch, db, dir: dirAdj })` tras `dirAdj` y `:57` el registro con `habilitado: config.rellenoAdjuntosHabilitado === true, hayDir: dirAdj !== null`. En `deployRellenoConversaciones.test.ts`, `:19` acota `seccion` hasta `## 22. ` en una línea (molde `apps/desk/server/deployConversaciones.test.ts:20`), `:22` y `:10` dejan de decir «es la última» y `:25` conserva el recuento de una sola cabecera `## N.` y añade que la §22 va tras la §21.
+
+### Mutaciones (L5.11)
+Cada una con perl por número de línea (nunca `sed -i`); la línea mutada se imprimió con `sed -n` antes de correr la prueba; respaldo en el scratchpad (`bk/`), restaurado con `cp`, y `cmp` igual y `sha256sum` igual en todas; `file` sigue diciendo CRLF en `config.ts` y `DEPLOY.md`; `git diff --numstat` idéntico al de antes de mutar.
+
+| Id | Fichero:línea | Mutación | Pruebas que caen | Restaurado |
+|---|---|---|---|---|
+| M1a | `packages/zoho-sync/src/config.ts:125` | `RELLENO_ADJUNTOS_HABILITADO === 'true'` → `!== 'false'` | 4: en `deployRellenoAdjuntos.test.ts`, «RELLENO_ADJUNTOS_HABILITADO: nace cerrado con `=== 'true'` y el código lo lee así»; en `config.test.ts`, «nace cerrado: sin la variable, o vacía», «sólo el literal "true" lo abre…» y «los dos interruptores son independientes…» | sí |
+| M1b | `packages/zoho-sync/src/config.ts:125` | ídem con `GUARDAR_ADJUNTOS_AL_SINCRONIZAR` | 4: la misma terna de `config.test.ts` con su variable y «GUARDAR_ADJUNTOS_AL_SINCRONIZAR: nace cerrado…» de `deployRellenoAdjuntos.test.ts` | sí |
+| M7a-1 | `DEPLOY.md:925` | quita «**Qué se rompe si se pone mal:**» del apartado `ADJUNTOS_DIR` | 1: «ADJUNTOS_DIR: tiene su apartado, dice qué enciende y qué se rompe…» | sí |
+| M7a-2 | `DEPLOY.md:944` | ídem en `RELLENO_ADJUNTOS_HABILITADO` | 1: la de `RELLENO_ADJUNTOS_HABILITADO` (sólo esa) | sí |
+| M7a-3 | `DEPLOY.md:962` | ídem en `GUARDAR_ADJUNTOS_AL_SINCRONIZAR` | 1: la de `GUARDAR_ADJUNTOS_AL_SINCRONIZAR` (sólo esa) | sí |
+| M7b | `DEPLOY.md:904` | «Copia previa de `desk-db`» → «Hacer copia de desk-db» en la §21 (la §22 sigue llevando la frase en `:978`) | 1: «pide la copia previa de desk-db y nombra la ruta…» de `deployRellenoConversaciones.test.ts` | sí |
+| P2a | `apps/desk/server/routes/rellenoAdjuntos.ts:43` y `:45` | el interruptor de la variable pasa a `true` en la cadena y se comprueba DESPUÉS de la validación `400` (línea insertada tras `:45`) | 3: cerrado sin parámetros, cerrado y `limite=abc`, cerrado y `desde=abc&limite=5` (las dos últimas dan `400` en vez de `403`; la primera cae por el texto reducido del mutante, que ya no ofrece `limite=0`) | sí |
+| P2b | `apps/desk/server/routes/rellenoAdjuntos.ts:43` y `:45` | el de directorio pasa a `true` en la cadena y se comprueba DESPUÉS de validar | 3: abierto con `ADJUNTOS_DIR` vacío, relativo y dentro de `dist/`, con `limite=abc` (`400` en vez de `403`) | sí |
+
+M7b prueba el cambio de L5.8: antes de editar `:19`, quitar la frase de la §21 habría seguido en verde porque la §22 la lleva; ahora el tramo de la §21 se para en `## 22. ` y cae. P2a/P2b son dos mutaciones de PAR de líneas (cadena y manejador) porque la guarda está en la cadena de middleware, no en una sola línea; el fichero es nuevo y sin trackear, así que el `numstat` no las ve y se comprobó por `cmp` y `sha256sum`.
+
+### TDD Cycle Evidence
+| Tarea | Fichero de prueba | Capa | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| L5.2 + L5.5 + L5.6 rutas | `apps/desk/server/adjuntos/rellenoAdjuntosRutas.test.ts` | Integración (`createApp` real + pg-mem + `fs.mkdtemp`) | N/A (nuevo); focal 168/168 antes de tocar | medido, 22 rojas de 22 | 22/22 | cerrado y abierto, tres directorios inválidos, `desde`, rol, pasada completa | sin cambios |
+| L5.3 + L5.7 §22 | `apps/desk/server/deployRellenoAdjuntos.test.ts` | Estática sobre `DEPLOY.md` y `config.ts` | N/A (nuevo) | medido, 8 rojas de 8 | 8/8 | un apartado por prueba, M7a-1/2/3 | sin cambios |
+| L5.8 guarda que cuenta el árbol | `apps/desk/server/deployRellenoConversaciones.test.ts` | Estática sobre `DEPLOY.md` | 4/4 | medido, 1 roja de 4 al añadir la §22 | 4/4 | M7b lo ejerce | sin cambios |
+| L5.9 `debt.md` | (sin prueba propia: documento) | N/A | N/A | N/A | N/A | N/A | N/A |
+
+### Work Unit Evidence
+| Evidencia | Valor |
+|---|---|
+| Prueba focal | la de arriba, 10 ficheros y 198 pruebas, código 0 |
+| Arnés real | `createApp` real (`appHarness.ts`) con `zohoFetch` falsa, pg-mem y un directorio `fs.mkdtemp` en `os.tmpdir()` |
+| Frontera de vuelta atrás | `apps/desk/server/routes/rellenoAdjuntos.ts` y sus dos pruebas; las tres líneas de `app.ts`; la §22 de `DEPLOY.md`; las cuatro líneas de `deployRellenoConversaciones.test.ts`; las cinco de `debt.md` |
+
+### L5.12 · casilla de la regla 13 y regla de mutación 3 (decisión a decisión)
+`git diff --name-only` → `DEPLOY.md`, `apps/desk/server/app.ts`, `apps/desk/server/deployRellenoConversaciones.test.ts`, `debt.md` (más `tasks.md` y este fichero); cero bajo `apps/desk/src`. El cliente no toma decisión alguna en este lote. Cada decisión y la línea del servidor que la impone:
+- Rol de superadministrador: `requireSuperAdmin` en el `POST` (`apps/desk/server/routes/rellenoAdjuntos.ts:43`) y en el `GET` (`:53`), sobre `requireAdmin` (`apps/desk/server/auth/middleware.ts:27` responde el `403`). Probado en las dos rutas, también con `limite=0`.
+- Sesión: `requireAuth(db)` en `:43` y `:53`. Probado `401` en las dos.
+- Interruptor `RELLENO_ADJUNTOS_HABILITADO`: `apps/desk/server/routes/rellenoAdjuntos.ts:20`, con `habilitado` leído en `apps/desk/server/app.ts:57` como `config.rellenoAdjuntosHabilitado === true`, que sale de `packages/zoho-sync/src/config.ts:125` con `=== 'true'`. Va antes de la validación (cadena en `:43`, validación en `:45`): P2a.
+- Directorio: `apps/desk/server/routes/rellenoAdjuntos.ts:24`, con `hayDir` de `apps/desk/server/app.ts:57` (`dirAdj !== null`), que sale de `dirAdjuntos` (`apps/desk/server/adjuntos/almacen.ts:125`, llamada en `apps/desk/server/app.ts:50`). Además, defensa bajo la ruta: el motor no lanza sin directorio (`apps/desk/server/adjuntos/rellenoAdjuntos.ts:167`). P2b.
+- `limite=0`: se decide en el servidor (`apps/desk/server/routes/rellenoAdjuntos.ts:19` salta las dos guardas y `:46` llama a `recuento`, que no llama a Zoho ni escribe, `apps/desk/server/adjuntos/rellenoAdjuntos.ts:176`).
+- Contenido: `entero` (`apps/desk/server/routes/rellenoAdjuntos.ts:33`) y el `400` en `:45`, después de las guardas.
+- Una pasada a la vez: `lanzar` (`apps/desk/server/adjuntos/rellenoAdjuntos.ts:165`) devuelve el estado sin lanzar otra; probado con un segundo `POST`.
+La comparación se hizo por escrito, decisión a decisión, como pide la regla de mutación 3; ninguna queda sin línea de servidor.
+
+### Supuestos
+1. La §22 es la última sección de `DEPLOY.md` (molde `apps/desk/server/deployRellenoConversaciones.test.ts:22-25` en `c9354e12`), y la prueba nueva lo fija; una §23 futura tendrá que editar la guarda de la §22 en sitio, como hace L5 con la de la §21.
+2. Con el interruptor cerrado y sin directorio a la vez, el `403` nombra la variable (se comprueba primero); sobra hablar del directorio si no se va a lanzar nada. Es una elección mía, sin prueba que la fije aparte de las dos que usan un solo fallo.
+3. `limite=0` salta las dos guardas, no sólo la del interruptor: sin directorio el recuento tiene sentido (todo es pendiente, `recuento` lo documenta) y no escribe. Prueba propia: «abierto sin directorio, limite=0 sigue contando…».
+4. Los tres apartados de la §22 van en el orden `ADJUNTOS_DIR`, `RELLENO_ADJUNTOS_HABILITADO`, `GUARDAR_ADJUNTOS_AL_SINCRONIZAR`, y los pasos cuelgan de un cuarto `###` sin variable (`### Pasos…`), para que el recuento de apartados con variable sea 3 y el tramo del último no arrastre los pasos.
+5. Los pasos P-1, P-2 y P-3 de D10 llevan su etiqueta dentro de una lista de diez; el orden de la lista es mío: abrir `GUARDAR_ADJUNTOS_AL_SINCRONIZAR` DESPUÉS del relleno completo y con la §18 encendida. Que sea después del relleno es recomendación reversible, no regla del código.
+6. «Ampliar el volumen cuesta dinero y lo decide Gerencia» (paso P-2): redacción mía a partir de «si no alcanza, se para: cuesta dinero».
+7. Añadí una prueba fuera de la lista del encargo (la pasada completa por HTTP que guarda un fichero y fija `storage_path`) para que quitar `dir: dirAdj` del cableado de `app.ts:50` se note; hipótesis: sin ella, esa línea sólo la vigilaría el tipado.
+8. La prueba de «dentro de `dist/`» usa `path.resolve(process.cwd(), 'dist', 'adjuntos')`, que coincide con la `dist` de `dirAdjuntos` (`apps/desk/server/adjuntos/almacen.ts:125`) mientras vitest corra con la raíz del repositorio como cwd (hipótesis: así lo hace `npm test` desde la raíz).
+
+### Pendiente del cierre (orquestador)
+L5.12: `npm test` entero con log, `npm run build`, el detector de citas sobre el commit, la medida del intento (con `git diff --shortstat --no-renames` contra `c9354e12` más `wc -l` de los tres ficheros nuevos y de este fichero) y el barrido B.1 de las líneas tocadas (`apps/desk/server/app.ts:22`, `:50`, `:57` y `debt.md:572`, `:582`, `:585`, `:597`, `:598`, más las citas a `DEPLOY.md` posteriores a `:912`, que no se movieron porque se añadió al final).

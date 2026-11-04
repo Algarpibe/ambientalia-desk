@@ -96,17 +96,17 @@ Mutaciones y posiciones: M4 (las dos), M5 (gancho), M8 (las tres), M9, P5 (`guar
 ## Lote L5 — rutas de administración, §22 y `debt.md` (intento i6)
 Escenarios: RQ-ZS-32 cerrado `403` antes de validar, sólo superadministrador, `GET` no lanza, `limite=0` sólo cuenta, el interruptor sólo abre con `'true'` (§22); RQ-ZS-30 directorio ausente (ruta).
 Mutaciones y posiciones: M1 (§22), M7 (fichero vigilado), P2.
-- [ ] L5.1 M0 del lote: `npm test` en el commit de L4 con su log.
-- [ ] L5.2 ROJO `apps/desk/server/adjuntos/rellenoAdjuntosRutas.test.ts` (nuevo): `401`/`403` de rol en `POST` y `GET`; los dos `403` (interruptor y directorio) con `limite=abc`; `limite=0` libre y sin Zoho; `400`; el `GET` no lanza; segundo `POST`.
-- [ ] L5.3 ROJO `apps/desk/server/deployRellenoAdjuntos.test.ts` (nuevo, molde `deployConversaciones.test.ts`): orden y tras la §21, tres apartados con las dos frases, nace cerrado, líneas de entorno vacías, `df -h`, copia previa, `limite=0`, `desde=`, `=== 'true'` en `config.ts`.
-- [ ] L5.4 Anotar el rojo medido de L5.2-L5.3 en `apply-progress.md`.
-- [ ] L5.5 `apps/desk/server/routes/rellenoAdjuntos.ts` (nuevo): molde de `routes/rellenoConversaciones.ts`, `interruptorAdjuntos` antes de validar (B antes que C).
-- [ ] L5.6 `apps/desk/server/app.ts:22`, `:50` y `:57` en sitio (5/5 con L2). Condición: conservar las subcadenas de `opcionesConversaciones.test.ts:39-40` y `:46-47` (`habilitado: config.rellenoConversacionesHabilitado === true` en la línea de `registerRellenoConversacionesRoutes(app`).
-- [ ] L5.7 `DEPLOY.md`, tras `:912`: §22 con tres apartados `###` (D10). `.env.example` no se toca.
-- [ ] L5.8 Guarda que cuenta el árbol, en sitio y con el mismo número de líneas: `apps/desk/server/deployRellenoConversaciones.test.ts:10`, `:19`, `:22`, `:25` (la §21 deja de ser la última; molde `apps/desk/server/deployConversaciones.test.ts:20`); medir el rojo de `:25` al añadir la §22 y antes de editar.
-- [ ] L5.9 `debt.md:572`, `:582`, `:585`, `:597`, `:598` en sitio (D11), 5/5.
-- [ ] L5.10 Verde: la prueba focal, `npm run typecheck` y suite entera con su log.
-- [ ] L5.11 Mutaciones L5 con su rojo: M1 (`config.ts:125`, un interruptor cada vez), M7 (quitar «**Qué se rompe si se pone mal:**» de la §22; aparte, «Copia previa de `desk-db`» de la §21), P2 (interruptor tras validar; aparte, el de directorio). Tabla en `apply-progress.md`.
+- [x] L5.1 M0 del lote: `npm test` en el commit de L4 con su log.
+- [x] L5.2 ROJO `apps/desk/server/adjuntos/rellenoAdjuntosRutas.test.ts` (nuevo): `401`/`403` de rol en `POST` y `GET`; los dos `403` (interruptor y directorio) con `limite=abc`; `limite=0` libre y sin Zoho; `400`; el `GET` no lanza; segundo `POST`.
+- [x] L5.3 ROJO `apps/desk/server/deployRellenoAdjuntos.test.ts` (nuevo, molde `deployConversaciones.test.ts`): orden y tras la §21, tres apartados con las dos frases, nace cerrado, líneas de entorno vacías, `df -h`, copia previa, `limite=0`, `desde=`, `=== 'true'` en `config.ts`.
+- [x] L5.4 Anotar el rojo medido de L5.2-L5.3 en `apply-progress.md`.
+- [x] L5.5 `apps/desk/server/routes/rellenoAdjuntos.ts` (nuevo): molde de `routes/rellenoConversaciones.ts`, `interruptorAdjuntos` antes de validar (B antes que C).
+- [x] L5.6 `apps/desk/server/app.ts:22`, `:50` y `:57` en sitio (5/5 con L2). Condición: conservar las subcadenas de `opcionesConversaciones.test.ts:39-40` y `:46-47` (`habilitado: config.rellenoConversacionesHabilitado === true` en la línea de `registerRellenoConversacionesRoutes(app`).
+- [x] L5.7 `DEPLOY.md`, tras `:912`: §22 con tres apartados `###` (D10). `.env.example` no se toca.
+- [x] L5.8 Guarda que cuenta el árbol, en sitio y con el mismo número de líneas: `apps/desk/server/deployRellenoConversaciones.test.ts:10`, `:19`, `:22`, `:25` (la §21 deja de ser la última; molde `apps/desk/server/deployConversaciones.test.ts:20`); medir el rojo de `:25` al añadir la §22 y antes de editar.
+- [x] L5.9 `debt.md:572`, `:582`, `:585`, `:597`, `:598` en sitio (D11), 5/5.
+- [x] L5.10 Verde: la prueba focal, `npm run typecheck` y suite entera con su log.
+- [x] L5.11 Mutaciones L5 con su rojo: M1 (`config.ts:125`, un interruptor cada vez), M7 (quitar «**Qué se rompe si se pone mal:**» de la §22; aparte, «Copia previa de `desk-db`» de la §21), P2 (interruptor tras validar; aparte, el de directorio). Tabla en `apply-progress.md`.
 - [ ] L5.12 Regla 13 y regla de mutación 3 (nada bajo `apps/desk/src`; rol e interruptores los impone el servidor) y cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`.
 
 ## Barrido de la regla de mutación 4 (tarea de cierre de cada lote)
