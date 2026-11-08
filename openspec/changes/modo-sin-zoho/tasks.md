@@ -108,13 +108,13 @@ Escenarios: RQ-ZS-46 los tres.
 
 ## Lote L7 — `DEPLOY.md` §24 (intento i9)
 Escenarios: RQ-ZS-47 los dos.
-- [ ] L7.1 ROJO `apps/desk/server/deployModoSinZoho.test.ts` (nuevo, molde `apps/desk/server/deployVerificacionCompletitud.test.ts`): `faltasSeccion24` con la lista de D-9; sobre el real, `[]`; sobre copias en memoria sin el worker o sin «Qué se rompe», no vacío; `config.ts` contiene `env.MODO_SIN_ZOHO_DESK === 'true'`.
-- [ ] L7.2 Anotar el rojo medido en `apply-progress.md`.
-- [ ] L7.3 `DEPLOY.md`, tras `:1028`: la §24 de D-9. Antes de tocar la guarda, **medir el rojo** que causa en `apps/desk/server/deployVerificacionCompletitud.test.ts:36` y `:37` (`seccion` llega al final) y anotarlo.
-- [ ] L7.4 Guarda que cuenta el árbol, en sitio, 4/4, molde `apps/desk/server/deployRellenoAdjuntos.test.ts:22` y `:37`: `deployVerificacionCompletitud.test.ts:20` acota hasta `## 24. `; `:36` añade que la §24 va detrás; `:10` y `:33` dejan de decir «es la última».
-- [ ] L7.5 Verde: la focal, typecheck y suite con log.
-- [ ] L7.6 Mutaciones: en el real, borrar con `perl` la línea que nombra el worker en la §24 (rojo) y restaurar.
-- [ ] L7.7 Regla 13 y cierre del lote.
+- [x] L7.1 ROJO `apps/desk/server/deployModoSinZoho.test.ts` (nuevo, molde `apps/desk/server/deployVerificacionCompletitud.test.ts`): `faltasSeccion24` con la lista de D-9; sobre el real, `[]`; sobre copias en memoria sin el worker o sin «Qué se rompe», no vacío; `config.ts` contiene `env.MODO_SIN_ZOHO_DESK === 'true'`.
+- [x] L7.2 Anotar el rojo medido en `apply-progress.md`.
+- [x] L7.3 `DEPLOY.md`, tras `:1028`: la §24 de D-9. Antes de tocar la guarda, **medir el rojo** que causa en `apps/desk/server/deployVerificacionCompletitud.test.ts:36` y `:37` (`seccion` llega al final) y anotarlo.
+- [x] L7.4 Guarda que cuenta el árbol, en sitio, 4/4, molde `apps/desk/server/deployRellenoAdjuntos.test.ts:22` y `:37`: `deployVerificacionCompletitud.test.ts:20` acota hasta `## 24. `; `:36` añade que la §24 va detrás; `:10` y `:33` dejan de decir «es la última».
+- [x] L7.5 Verde: la focal, typecheck y suite con log.
+- [x] L7.6 Mutaciones: en el real, borrar con `perl` la línea que nombra el worker en la §24 (rojo) y restaurar.
+- [x] L7.7 Regla 13 y cierre del lote.
 
 ## Barrido de la regla de mutación 4 (tarea de cierre de cada lote)
 - [ ] B.1 `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` sobre TODO el repositorio, incluidos `openspec/changes/archive/` y `docs/`, para cada fichero muy citado editado en el lote: `packages/zoho-sync/src/config.ts`, `zohoClient.ts`, `apps/desk/server/index.ts`, `app.ts`, `routes/admin.ts`, `routes/tickets.ts`, `routes/attachment.ts`, los tres de rutas de L3, `apps/hub-sync/src/hubSync.ts`, `hub-sync.ts`, `testing/appHarness.ts`, `deployVerificacionCompletitud.test.ts` y `DEPLOY.md`. Leer cada hallazgo contra lo que AFIRMA (casos A/B/C de `CLAUDE.md`), con atención a las de D-12 (`index.ts:88`, `:89-90`, `:85-93`; `zohoClient.ts:29-37`, `:30`, `:33`; `attachment.ts:21-22`, `:24`; `app.ts:57`, `:78-93`; `hubSync.ts:15-20`, `:90-100`; `config.ts:66`, `:125`); segundo pase para las abreviadas en los ficheros que ya citan el módulo. Resultado en `apply-progress.md`.

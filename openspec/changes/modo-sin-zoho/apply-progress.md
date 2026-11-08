@@ -275,3 +275,33 @@ Medida: `git diff --shortstat --no-renames HEAD` 67 inserciones y 5 borrados (72
 
 ### Contraste del orquestador y cierre (L6.6)
 Informe contrastado: sólo dos ficheros nuevos (`wc -l` 243 + 322) y ningún fichero de producción tocado; las 14 señales de `apps/desk/server/testing/barridoZohoDesk.ts:39-61` son las de la tabla de D-8 (la fila «instancias» partida en dos, sin cambiar sitios) y `PERMITIDOS` coincide con el grep del orquestador al contrastar el diseño. Los 273 ficheros recorridos cuadran con los 270 medidos entonces más los tres de producción nuevos de L1 a L3. Fichero vigilado reproducido por el orquestador con una forma distinta a la del lote: un fichero nuevo `apps/hub-sync/src/llamadaOlvidada.ts` con un `GET` implícito a `https://desk.zoho.com/api/v1/tickets/count` pone rojo el barrido real y lo nombra en su línea 2 (transporte, dominio y base); borrado, verde. Sin barrido B.1: el lote no edita ningún fichero existente.
+
+## Lote L7 — `DEPLOY.md` §24 (intento i9)
+
+### Safety net
+`npx vitest run apps/desk/server/deploy`: 6 ficheros, 37 pruebas verdes, antes de tocar nada. `DEPLOY.md` CRLF, 1028 líneas, 1028 con `\r`, sha256 `94a821d3…`.
+
+### Rojo (L7.1, L7.2)
+`apps/desk/server/deployModoSinZoho.test.ts` (nuevo, 73 líneas, CRLF; `faltasSeccion24` exportada). Contra el `DEPLOY.md` de hoy, sin §24: `npx vitest run apps/desk/server/deployModoSinZoho.test.ts` salió 1 con 4 rojas y 1 verde (la de `config.ts`): `expected -1 to be greater than 75435` (el real), y las tres de copias devolvían `['la sección `## 24. `']` en vez de lo que cada una debía nombrar.
+
+### Verde de la prueba nueva y rojo de la guarda de la §23 (L7.3)
+Con la §24 escrita (38 líneas, tras `:1028`, 0 borrados, 38 `\r` añadidos: 1066 líneas y 1066 con `\r`), la prueba nueva pasó 5/5. Antes de tocar la guarda, medido: `npx vitest run apps/desk/server/deployModoSinZoho.test.ts apps/desk/server/deployVerificacionCompletitud.test.ts` → 1 roja, `deployVerificacionCompletitud.test.ts:36` (`expected [ '## 23.', '## 24.' ] to have a length of 1 but got 2`); `:37` (tres `###` en vez de dos) quedaba detrás de `:36` en la misma prueba y se habría puesto roja igual.
+
+### Guarda en sitio (L7.4)
+`deployVerificacionCompletitud.test.ts` 4 inserciones y 4 borrados, 4/4: `:20` acota `seccion` hasta `## 24. ` en la misma línea (molde `deployRellenoAdjuntos.test.ts:22`), `:36` añade `expect(deploy.indexOf('## 24. ')).toBeGreaterThan(s23)`, `:10` y `:33` dejan de decir «es la última». `:37` intacta. CRLF conservado.
+
+### Verde (L7.5)
+Focal (`deployModoSinZoho`, `deployVerificacionCompletitud`, `deployRellenoAdjuntos`): 3 ficheros, 19 pruebas, salida 0. `npx vitest run apps/desk/server/deploy`: 7 ficheros, 42 pruebas, salida 0. `npm run typecheck` salida 0. `npm run lint -- --max-warnings 165`: 165 avisos, 0 errores, salida 0.
+
+### Mutación (L7.6)
+Copia previa `…/scratchpad/DEPLOY.md.bak.s24` (sha256 `de21ffc0…`).
+| # | Mutación | Rojo observado |
+|---|---|---|
+| a | `perl -i -ne 'print unless $. == 1044' DEPLOY.md` (la línea de la §24 con `ambientalia-desk` y el worker `hub-sync`) | 3 rojas en `deployModoSinZoho.test.ts`; la del real: `expected [ 'worker `hub-sync`' ] to deeply equal []` |
+Restaurado con `cp`: sha256 `de21ffc0…` igual al de antes, `file` con CRLF, `git diff --numstat DEPLOY.md` 38/0, prueba 5/5 verde.
+
+### Regla 13 y medida
+`git diff --name-only` sin nada bajo `apps/desk/src`. Citas de la §24 comprobadas con `sed -n`: `DEPLOY.md:31` y `:333` (worker, pestaña Environment), `packages/zoho-sync/src/config.ts:125`, `docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md:100`.
+
+### Contraste del orquestador y cierre (L7.7)
+Informe contrastado: `DEPLOY.md` 38/0 (1028 → 1066, CRLF), guarda 4/4 (cada línea sólo cambia lo dicho), prueba nueva 73. La §24 leída entera contra el código y los documentos: el paso 4 del plan es literal (`docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md:100`, «por si acaso» incluido), `DEPLOY.md:31` y `:333` nombran el worker y `zoho-hub-sync`, `packages/zoho-sync/src/config.ts:125` lee `=== 'true'`, las rutas que responden `503` son las de L3 y L4, la línea del log del worker es la de `packages/zoho-sync/src/modoSinZoho.ts:120`, y las §21 a §23 usan, en efecto, el valor vacío; sin mención a reuniones. Mutación reproducida por el orquestador, distinta de la del lote: la línea de entorno `> MODO_SIN_ZOHO_DESK=false` vaciada en `DEPLOY.md:1052` pone rojas 4 de las 5 pruebas de la §24; sha256 restaurado `de21ffc04f8deaf4`, CRLF. Barrido B.1: `DEPLOY.md` sólo crece por el final (ninguna línea citada se mueve) y no hay citas vivas a las líneas editadas de `deployVerificacionCompletitud.test.ts`.
