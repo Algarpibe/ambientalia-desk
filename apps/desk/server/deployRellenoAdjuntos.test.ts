@@ -8,7 +8,7 @@ import path from 'node:path'
  * directorio no es un interruptor, pero la ruta donde se escribe se documenta igual). Molde: `deployConversaciones.test.ts` y
  * `deployRellenoConversaciones.test.ts`.
  *
- * QUÉ COMPRUEBA: que la §22 existe tras la §21 y es la última; que CADA uno de sus tres apartados `###` (comprobados por separado, de un
+ * QUÉ COMPRUEBA: que la §22 existe tras la §21 y la §23 va detrás; que CADA uno de sus tres apartados `###` (comprobados por separado, de un
  * `###` al siguiente) dice las dos frases y lleva su línea de entorno vacía; que los dos interruptores nacen cerrados con `=== 'true'` y el
  * código los lee así; que el directorio no tiene valor por defecto y se rechaza dentro de `dist/`; y que los pasos piden el espacio libre
  * (`df -h`), la copia previa de `desk-db` y nombran la ruta, el recuento, la pasada corta y la reanudación.
@@ -19,7 +19,7 @@ const deploy = readFileSync(path.join(RAIZ, 'DEPLOY.md'), 'utf8')
 const config = readFileSync(path.join(RAIZ, 'packages/zoho-sync/src/config.ts'), 'utf8')
 const s21 = deploy.indexOf('## 21. `RELLENO_CONVERSACIONES_HABILITADO`')
 const s22 = deploy.indexOf('## 22. Adjuntos en el volumen propio')
-const seccion = s22 === -1 ? '' : deploy.slice(s22)
+const seccion = s22 === -1 ? '' : deploy.slice(s22, deploy.indexOf('## 23. ') >= 0 ? deploy.indexOf('## 23. ') : undefined) // 1G-03 añadió la §23: la §22 se para en ella; en una línea para no desplazar citas
 
 /** El tramo de un apartado `###` hasta el siguiente `###` o `##` (o el final): cada apartado se prueba por separado. */
 const apartado = (nombre: string): string => {
@@ -31,10 +31,10 @@ const apartado = (nombre: string): string => {
 }
 
 describe('DEPLOY.md §22 · adjuntos en el volumen propio (1G-02)', () => {
-  it('la sección existe, tras la §21, es la última y tiene sus tres apartados', () => {
+  it('la sección existe, tras la §21, la §23 va detrás y tiene sus tres apartados', () => {
     expect(s22).toBeGreaterThan(-1)
     expect(s22).toBeGreaterThan(s21)
-    expect(seccion.match(/^## \d+\./gm)).toHaveLength(1)
+    expect(seccion.match(/^## \d+\./gm)).toHaveLength(1); expect(deploy.indexOf('## 23. ')).toBeGreaterThan(s22)
     expect(seccion.match(/^### `/gm)).toHaveLength(3)
   })
 
