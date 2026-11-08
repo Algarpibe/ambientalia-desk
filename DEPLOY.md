@@ -985,3 +985,44 @@ quitarla. La línea de entorno que corresponde, tal cual:
 8. Si se corta por un `429` o por el disco, el estado trae `cortadoEn`: relanzar con `?desde=<cortadoEn>`.
 9. Cuando el relleno esté completo, abrir `GUARDAR_ADJUNTOS_AL_SINCRONIZAR` (con la §18 ya encendida) para que lo nuevo se guarde solo.
 10. El resumen del `GET` final se pasa al analista.
+
+## 23. Verificación de completitud contra Zoho Desk (1G-03, `decision/adelanto-09-11-empezar-1g`)
+
+Una pasada que compara lo que hay en Zoho Desk con lo que hay en Desk: tickets, conversaciones, adjuntos (también contra el volumen de la §22),
+historia, contactos y cuentas, por ids y en las dos direcciones. **Sólo lee**: toda petición a Zoho es un `GET` y ninguna sentencia escribe en las
+tablas de negocio. El informe vive en memoria y se pierde al redesplegar; no hay tabla ni migración. Una diferencia sale **conocida** si la explica
+una entrada de la lista versionada `apps/desk/server/completitud/conocidas.json` (por ids concretos, o por una de las dos reglas del código:
+`nacidoEnLaApp` y `conversacionAusenteEnZoho`) y **sin explicar** si no. La lista se cambia con commit y despliegue, nunca en caliente. El veredicto
+es por entidad y global; verde exige cero «sin explicar» y cobertura completa, y una pasada cortada, parcial o con errores es «incompleto».
+
+### `VERIFICACION_COMPLETITUD_HABILITADA`: la pasada completa
+
+**Qué enciende:** que `POST /api/admin/verificacion-completitud` pueda lanzar la pasada en segundo plano. La lanza sólo un superadministrador y
+responde sin esperarla; el `GET` de la misma ruta sólo devuelve el estado, nunca lanza y tampoco lo gobierna esta variable. Con `limite=0` el
+`POST` sólo cuenta y estima las peticiones mínimas, sin llamar a Zoho, y funciona con la variable cerrada.
+
+**Qué se rompe si se pone mal:** abierta por descuido, un superadministrador puede gastar la cuota diaria de Zoho Desk, que comparte con la
+sincronización (varias peticiones por ticket); un `429` agotado corta la pasada y deja dónde seguir. No
+escribe nada ni en Desk ni en Zoho. Cerrada, el `POST` responde `403` nombrando la variable y no se lanza nada; no se pierde ningún dato.
+Escribir `TRUE`, `1`, `yes` o dejarla vacía la deja cerrada.
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). Cada cambio de la variable pide un redespliegue; la vuelta atrás es
+quitarla. La línea de entorno que corresponde, tal cual:
+
+> ```
+> VERIFICACION_COMPLETITUD_HABILITADA=
+> ```
+
+### Pasos (paso de persona; el `.env.example` lo completa Alfonso, P-5)
+
+1. **P-1 · Abrir.** Poner `VERIFICACION_COMPLETITUD_HABILITADA` en `true` en la App y redesplegar. No hace falta copia previa de `desk-db`: la pasada no escribe.
+2. **P-2 · Contar.** Como superadministrador, `POST /api/admin/verificacion-completitud?limite=0`: recuentos de Desk, bytes de adjuntos, versión de la lista y
+   peticiones mínimas a Zoho, sin llamar a Zoho.
+3. Pasada corta: `POST /api/admin/verificacion-completitud?limite=20` y `GET /api/admin/verificacion-completitud` hasta `terminado: true`.
+4. La completa: `POST /api/admin/verificacion-completitud` sin parámetros y el mismo `GET` hasta `terminado: true`. El `GET` trae el veredicto global y por
+   entidad, las diferencias con sus ids y números de ticket, y los errores con su motivo (sólo ids, números de ticket y recuentos).
+5. Si se corta por un `429`, el estado trae `cortadoEn`: relanzar con `?desde=<cortadoEn>` **sin redesplegar entre medias**, que un redespliegue vacía la
+   memoria y la pasada siguiente sale parcial e «incompleto». Un corte en la primera fase (`fase: 'A'`) se relanza sin `desde`, que rehace esa fase entera.
+6. **P-3 · Cerrar.** El resumen del `GET` final se pasa al analista, se vuelve a cerrar `VERIFICACION_COMPLETITUD_HABILITADA` (quitarla) y se redespliega.
+7. **P-4 · Repetir** la pasada el día del corte, tras congelar Zoho y la sincronización final (`docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md:97-98`),
+   con los mismos pasos desde el 1.

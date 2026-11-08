@@ -192,3 +192,13 @@ describe('loadConfig · adjuntos en el volumen propio (1G-02, RQ-ZS-32 y RQ-ZS-3
     expect(loadConfig({ ...base, ADJUNTOS_DIR: '/data/adjuntos' }).adjuntosDir).toBe('/data/adjuntos')
   })
 })
+
+describe('loadConfig · verificacionCompletitudHabilitada (1G-03, RQ-ZS-39)', () => {
+  it("nace cerrada: ausente, vacía, `TRUE` y `1` la dejan en false; sólo 'true' la abre", () => {
+    expect(loadConfig(base).verificacionCompletitudHabilitada).toBe(false)
+    expect(loadConfig({ ...base, VERIFICACION_COMPLETITUD_HABILITADA: '' }).verificacionCompletitudHabilitada).toBe(false)
+    expect(loadConfig({ ...base, VERIFICACION_COMPLETITUD_HABILITADA: 'TRUE' }).verificacionCompletitudHabilitada).toBe(false)
+    expect(loadConfig({ ...base, VERIFICACION_COMPLETITUD_HABILITADA: '1' }).verificacionCompletitudHabilitada).toBe(false)
+    expect(loadConfig({ ...base, VERIFICACION_COMPLETITUD_HABILITADA: 'true' }).verificacionCompletitudHabilitada).toBe(true)
+  })
+})

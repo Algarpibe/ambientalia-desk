@@ -1,6 +1,6 @@
 # Tareas — `verificacion-completitud` (1G-03, `cierra: si`)
 
-Entradas: `proposal.md` (S-a a S-n, CA-1 a CA-13), `specs/zoho-sync/spec.md` (RQ-ZS-34 a RQ-ZS-39; 29 escenarios) y `design.md` (D1-D17, M1-M12, P1-P8; ante un
+Entradas: `proposal.md` (S-a a S-n, CA-1 a CA-13), `specs/zoho-sync/spec.md` (RQ-ZS-34 a RQ-ZS-39; 32 escenarios) y `design.md` (D1-D17, M1-M12, P1-P8; ante un
 conflicto de nombres manda la spec). `strict_tdd`: cada prueba nace **roja por la razón correcta** (nunca por el arnés) antes de la línea de producción que la pone
 verde; las pruebas nuevas van en ficheros nuevos o **al final** de uno existente, nunca en medio. Comprobaciones de CADA intento, **en serie** y sobre el árbol
 commiteado: `npm run typecheck`; `npm run lint -- --max-warnings 165` (informar N avisos contra 165; la base es exactamente 165, así que un aviso nuevo falla);
@@ -43,16 +43,16 @@ Chain strategy: pending
 ## Lote L1 — comparación, veredicto, interruptor y §23 (intento i3)
 Escenarios: RQ-ZS-36 igual cantidad con ids distintos, recuento declarado no decide, adjunto por las dos vías cuenta una vez y `size` distinto; RQ-ZS-38 precedencia (a nivel de `veredicto.ts`); RQ-ZS-39 sólo `'true'` abre y `DEPLOY.md` documenta la variable.
 Mutaciones y posiciones: M1 (`config.ts:125`), M5 (línea del «incompleto» global; se ejerce de nuevo en L6).
-- [ ] L1.1 M0: `npm test` entero en el commit de partida (`e9941944`) con su log; anotar ficheros, pruebas y duración.
-- [ ] L1.2 ROJO `apps/desk/server/completitud/comparar.test.ts` y `veredicto.test.ts` (nuevos): `compararIds` (CA-2: mismo número, ids distintos ⇒ diferencia; ordenado por longitud y luego texto), `unirPorId` (`4001` cuenta una vez; tamaño del lado de la conversación primero; `distintoTamano`, CA-3); precedencia **sin comparar > incompleto > rojo > verde** y global sin «sin comparar»; `cortadoEn`, `completa` falsa o `escriturasRechazadas.total > 0` ⇒ «incompleto» (M5).
-- [ ] L1.3 ROJO `apps/desk/server/deployVerificacionCompletitud.test.ts` (nuevo, molde `apps/desk/server/deployRellenoConversaciones.test.ts`): §23 tras la §22, un apartado `###` con las dos frases, nace cerrada, línea de entorno vacía, `=== 'true'` en `packages/zoho-sync/src/config.ts`, los pasos (`limite=0`, `?limite=20`, `?desde=`). Y `packages/zoho-sync/src/config.test.ts`, **al final**: sólo `'true'` abre (`TRUE`, `1`, vacío, ausente cierran).
-- [ ] L1.4 Anotar el rojo medido de L1.2-L1.3 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
-- [ ] L1.5 `apps/desk/server/completitud/comparar.ts` y `veredicto.ts` (nuevos; el «incompleto» global en UNA línea). En sitio, inserciones = borrados (`git diff --numstat`): `packages/zoho-sync/src/config.ts:66` y `:125`; `apps/desk/server/testing/appHarness.ts:46` y `:49` (2/2 cada uno).
-- [ ] L1.6 `DEPLOY.md`, tras `:987`: §23 (D13). Antes de tocar la guarda, **medir el rojo** que la §23 causa en `apps/desk/server/deployRellenoAdjuntos.test.ts:37` y `:38` (`seccion` llega al final: dos `##` y cuatro `###`); anotarlo. La §23 aterriza antes de que exista la ruta: la prueba de despliegue sólo comprueba texto. `.env.example` no se toca (P-5); `packages/zoho-sync/src/db/migrate.test.ts` tampoco: no hay tabla, el informe va en memoria.
-- [ ] L1.7 Guarda que cuenta el árbol, en sitio, 4/4 y con el molde de `apps/desk/server/deployRellenoConversaciones.test.ts:19` y `:25`: `apps/desk/server/deployRellenoAdjuntos.test.ts:22` acota hasta `## 23. `; `:37` añade que la §23 va detrás; `:11` y `:34` dejan de decir «es la última».
-- [ ] L1.8 Verde: la prueba focal, `npm run typecheck` y suite entera con su log.
-- [ ] L1.9 Mutaciones L1 con su rojo: M1 (`s/_HABILITADA === 'true'/_HABILITADA !== 'false'/` sólo en el campo nuevo de `config.ts:125`), M5 (vaciar la línea del «incompleto» global). Tabla en `apply-progress.md`.
-- [ ] L1.10 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
+- [x] L1.1 M0: `npm test` entero en el commit de partida (`e9941944`) con su log; anotar ficheros, pruebas y duración.
+- [x] L1.2 ROJO `apps/desk/server/completitud/comparar.test.ts` y `veredicto.test.ts` (nuevos): `compararIds` (CA-2: mismo número, ids distintos ⇒ diferencia; ordenado por longitud y luego texto), `unirPorId` (`4001` cuenta una vez; tamaño del lado de la conversación primero; `distintoTamano`, CA-3); precedencia **sin comparar > incompleto > rojo > verde** y global sin «sin comparar»; `cortadoEn`, `completa` falsa o `escriturasRechazadas.total > 0` ⇒ «incompleto» (M5).
+- [x] L1.3 ROJO `apps/desk/server/deployVerificacionCompletitud.test.ts` (nuevo, molde `apps/desk/server/deployRellenoConversaciones.test.ts`): §23 tras la §22, un apartado `###` con las dos frases, nace cerrada, línea de entorno vacía, `=== 'true'` en `packages/zoho-sync/src/config.ts`, los pasos (`limite=0`, `?limite=20`, `?desde=`). Y `packages/zoho-sync/src/config.test.ts`, **al final**: sólo `'true'` abre (`TRUE`, `1`, vacío, ausente cierran).
+- [x] L1.4 Anotar el rojo medido de L1.2-L1.3 (fichero › prueba › aserción) en `apply-progress.md`; ninguna roja por el arnés.
+- [x] L1.5 `apps/desk/server/completitud/comparar.ts` y `veredicto.ts` (nuevos; el «incompleto» global en UNA línea). En sitio, inserciones = borrados (`git diff --numstat`): `packages/zoho-sync/src/config.ts:66` y `:125`; `apps/desk/server/testing/appHarness.ts:46` y `:49` (2/2 cada uno).
+- [x] L1.6 `DEPLOY.md`, tras `:987`: §23 (D13). Antes de tocar la guarda, **medir el rojo** que la §23 causa en `apps/desk/server/deployRellenoAdjuntos.test.ts:37` y `:38` (`seccion` llega al final: dos `##` y cuatro `###`); anotarlo. La §23 aterriza antes de que exista la ruta: la prueba de despliegue sólo comprueba texto. `.env.example` no se toca (P-5); `packages/zoho-sync/src/db/migrate.test.ts` tampoco: no hay tabla, el informe va en memoria.
+- [x] L1.7 Guarda que cuenta el árbol, en sitio, 4/4 y con el molde de `apps/desk/server/deployRellenoConversaciones.test.ts:19` y `:25`: `apps/desk/server/deployRellenoAdjuntos.test.ts:22` acota hasta `## 23. `; `:37` añade que la §23 va detrás; `:11` y `:34` dejan de decir «es la última».
+- [x] L1.8 Verde: la prueba focal, `npm run typecheck` y suite entera con su log.
+- [x] L1.9 Mutaciones L1 con su rojo: M1 (`s/_HABILITADA === 'true'/_HABILITADA !== 'false'/` sólo en el campo nuevo de `config.ts:125`), M5 (vaciar la línea del «incompleto» global). Tabla en `apply-progress.md`.
+- [x] L1.10 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
 - [ ] L1.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido (B.1) y `apply-progress.md`.
 
 ## Lote L2 — lista de conocidas y clasificación (intento i4)
