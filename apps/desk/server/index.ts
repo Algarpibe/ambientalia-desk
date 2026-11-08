@@ -12,12 +12,12 @@ import { logger } from './util/logger'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
-import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'; import { cargarConfigDrive, tocaHoy } from './respaldo/configDrive'; import { crearCopiadorDrive, dependenciasRealesDrive } from './respaldo/copiaDrive'; import { pasadaReclamaciones } from './services/avisoReclamacionProveedor'; import { pasadaFacturacionVencida } from './services/avisoFacturacionVencida'; import { pasadaProvisionalesEnBooks } from './services/avisoProvisionalEnBooks'; import { pasadaSalidasEsperas } from './services/avisoSalidasEsperas'; import { opcionesConversaciones } from './opcionesConversaciones'; import { conGuardadoDeAdjuntos } from './adjuntos/guardadoAlSincronizar'
+import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'; import { cargarConfigDrive, tocaHoy } from './respaldo/configDrive'; import { crearCopiadorDrive, dependenciasRealesDrive } from './respaldo/copiaDrive'; import { pasadaReclamaciones } from './services/avisoReclamacionProveedor'; import { pasadaFacturacionVencida } from './services/avisoFacturacionVencida'; import { pasadaProvisionalesEnBooks } from './services/avisoProvisionalEnBooks'; import { pasadaSalidasEsperas } from './services/avisoSalidasEsperas'; import { opcionesConversaciones } from './opcionesConversaciones'; import { conGuardadoDeAdjuntos } from './adjuntos/guardadoAlSincronizar'; import { cadenaDelCiclo } from './cicloPeriodico'; import { crearRegistroModoSinZoho } from '@ambientalia/zoho-sync/modoSinZoho'
 
 const config = loadConfig()
 const pool = createPool(config)
 const tokenManager = createTokenManager({ config })
-const { zohoFetch } = createZohoClient({ config, tokenManager })
+const registroModo = crearRegistroModoSinZoho({ avisar: (linea) => logger.warn(linea) }); const { zohoFetch } = createZohoClient({ config, tokenManager, registro: registroModo })
 // parche-iv11-orden-venta (D5, RQ-AV-13): sólo este proceso cablea el aviso de discrepancia de orden
 // de venta; el worker `apps/hub-sync` no lo pasa y por tanto nunca lo crea.
 const sync = createSync({ zohoFetch, db: pool, config, alDiscrepanciaOV: (d) => avisarDiscrepanciaOV(pool, d), conversaciones: conGuardadoDeAdjuntos(opcionesConversaciones(config), config, { zohoFetch, db: pool }) })
@@ -58,7 +58,7 @@ async function main() {
     logger.info(`API en http://localhost:${config.port} (writes=${config.enableWrites})`)
   })
 
-  countTickets(pool)
+  if (!config.modoSinZohoDesk) countTickets(pool)
     .then(async (n) => {
       if (n === 0) {
         logger.info('DB vacía: iniciando backfill de tickets…')
@@ -69,13 +69,13 @@ async function main() {
     })
     .catch((err) => logger.error({ err }, 'Backfill falló'))
 
-  if (config.syncActivities) {
+  if (config.syncActivities && !config.modoSinZohoDesk) {
     sync.syncActivities()
       .then((n) => logger.info(`Actividades: sync inicial (${n})`))
       .catch((err) => logger.error({ err }, 'Sync actividades falló'))
   }
 
-  if (config.syncContacts) {
+  if (config.syncContacts && !config.modoSinZohoDesk) {
     sync.syncContacts()
       .then((n) => logger.info(`Contactos: sync inicial (${n})`))
       .catch((err) => logger.error({ err }, 'Sync contactos falló'))
@@ -85,9 +85,9 @@ async function main() {
   setInterval(() => {
     if (syncing) return // evita solapar sincronizaciones si una tarda más que el intervalo
     syncing = true
-    let p: Promise<unknown> = pasadaAlarmas(pool, config).then(() => pasadaReclamaciones(pool)).then(() => pasadaFacturacionVencida(pool)).then(() => pasadaSalidasEsperas(pool, config)).then(() => pasadaProvisionalesEnBooks(pool)).then(() => pasadaRitmoContratos(pool).then(() => sync.syncRecent()))
-    if (config.syncActivities) p = p.then(() => sync.syncActivities())
-    if (config.syncContacts) p = p.then(() => sync.syncContacts())
+    const p = cadenaDelCiclo({ alarmas: () => pasadaAlarmas(pool, config), reclamaciones: () => pasadaReclamaciones(pool), facturacionVencida: () => pasadaFacturacionVencida(pool), salidasEsperas: () => pasadaSalidasEsperas(pool, config), provisionalesEnBooks: () => pasadaProvisionalesEnBooks(pool), ritmoContratos: () => pasadaRitmoContratos(pool), ritmoYSincronizacion: () => pasadaRitmoContratos(pool).then(() => sync.syncRecent()) }, { syncActivities: () => sync.syncActivities(), syncContacts: () => sync.syncContacts() }, config)
+    // actividades y contactos los encadena `cadenaDelCiclo` (`cicloPeriodico.ts`) tras la sincronización reciente;
+    // con el modo sin Zoho Desk abierto se saltan, y las seis evaluaciones siguen corriendo (1G-04, RQ-ZS-44).
     p.catch((err) => logger.error({ err }, 'Sync incremental falló'))
       .finally(() => { syncing = false })
   }, config.syncIntervalMs)

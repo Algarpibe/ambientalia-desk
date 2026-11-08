@@ -45,3 +45,43 @@ Desviación: ninguna del diseño. `recursoDeRuta` conserva las barras y deja `{x
 
 ### Contraste del orquestador y cierre (L1.10)
 Informe contrastado dato a dato: `git diff --numstat` 4/4, 2/2, +16, 9/9; `wc -l` 146 + 344 + 132 + 44; CRLF en los `.ts`; focal repetida, 83 verdes. M3 reproducida por el orquestador (quitar el corte de `zohoClient.ts:29`: 5 rojas de 12, sha256 restaurado `a9ff91203d137c41`, CRLF). Barrido B.1: 15 citas a `zohoClient.ts` (`:2`, `:18`, `:29`, `:29-37`, `:30`, `:33`) y 111 a `config.ts:66`/`:125`, en todo el repositorio con `archive/` y `docs/`; ninguna queda falseada (la edición sólo añade al final de la línea; las de `archive/` son registros fechados, caso B). Las cinco comprobaciones y la medida del intento, en `msz-i3-codes.txt`.
+
+## Lote L2 — ciclo periódico y arranque de la App (intento i4) · L2.1 a L2.6 hechas; L2.7 es del orquestador
+Partida `1c386a5d` (trae L1).
+
+### Rojo medido (L2.3)
+`cicloPeriodico.ts` creado primero como esqueleto (firma final, cuerpo `Promise.resolve()`); `index.ts` sin tocar. Corrida de las dos pruebas nuevas: 10 rojas y 2 verdes de 12 (las verdes son guardas de lo existente: `let syncing = false` seguida de `setInterval(() => {`, y migración/resiembra sin el salto).
+| Fichero › prueba | Aserción que falla |
+|---|---|
+| `cicloPeriodico.test.ts` › abierto · corre las cinco y ritmoContratos (2 pruebas) | `expected [] to deeply equal [ 'alarmas', 'reclamaciones', …(4) ]` |
+| › cerrado · las seis, actividades y contactos; con actividades apagado; con contactos apagado; con los dos apagados (4) | `expected [] to deeply equal [ 'alarmas', 'reclamaciones', …(6) ]` y análogas |
+| › la promesa devuelta · rechaza si un paso falla | `promise resolved "undefined" instead of rejecting` |
+| `modoSinZohoIndice.test.ts` › la línea de `cadenaDelCiclo(` lleva las seis pasadas… | `se esperaba UNA línea con «cadenaDelCiclo({»: expected [] to have a length of 1 but got +0` |
+| › el backfill, las actividades y los contactos iniciales llevan `!config.modoSinZohoDesk` | `expected '  countTickets(pool)' to contain '!config.modoSinZohoDesk'` |
+| › `const registroModo =` UNA vez, con `avisar:`, y `createZohoClient(` pasa `registroModo` | `se esperaba UNA línea con «const registroModo =»: expected [] to have a length of 1 but got +0` |
+
+### Verde (L2.4, L2.5)
+`cicloPeriodico.ts` (40 líneas): cinco primeras encadenadas; la sexta es `ritmoContratos` (abierto) o `ritmoYSincronizacion` (cerrado); cerrado, después actividades y contactos según flags.
+`index.ts` 8/8 en sitio (`:15`, `:20`, `:61`, `:72`, `:78`, `:88`, `:89`, `:90`); `:49`, `:23`, `:85`, `:93` intactas. `:89` y `:90` son comentarios sin `sync.syncRecent()`. CRLF conservado.
+Focal (`cicloPeriodico`, `modoSinZohoIndice`, `services`, `opcionesConversaciones`, `citas/guardianes`): 23 ficheros, 527 pruebas verdes, salida 0; las cuatro de servicios que leen `index.ts` verdes SIN tocarlas. `npm run typecheck` salida 0. `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)».
+
+### Mutaciones (L2.6), `perl -i -pe '… if $. == N'`, restauración con la sustitución inversa
+| # | Mutación | Orden | Pruebas rojas | Restaurado (sha256) |
+|---|---|---|---|---|
+| M1 | `cicloPeriodico.ts:34` condición → `true` (cerrado también `ritmoContratos`) | focal | cicloPeriodico › cerrado (4: las seis; actividades apagado; contactos apagado; los dos apagados) | sí, `adf99feabb441403` |
+| M2 | `cicloPeriodico.ts:34` condición → `false` (abierto también `ritmoYSincronizacion`) | focal | cicloPeriodico › abierto (2) | sí, `adf99feabb441403` |
+| M3 | `cicloPeriodico.ts:33` `provisionalesEnBooks` → `undefined` (quitar una evaluación) | focal | cicloPeriodico › abierto (2) y cerrado (4) | sí, `adf99feabb441403` |
+| M4 | `index.ts:89` comentario con `sync.syncRecent()` | focal | las cuatro de servicios: `alarmasSla` (orden), `avisoProvisionalEnBooks` (l), `avisoReclamacionProveedor` (línea de la pasada), `avisoRitmoContrato` (encadena antes) | sí, `e03fe6c24d84b67f` |
+| M5 | `index.ts:61` sin `if (!config.modoSinZohoDesk) ` | focal | modoSinZohoIndice › el backfill, las actividades y los contactos iniciales llevan… | sí, `e03fe6c24d84b67f` |
+| M6 | `index.ts:72` sin `&& !config.modoSinZohoDesk` | focal | ídem (1) | sí, `e03fe6c24d84b67f` |
+| M7 | `index.ts:78` sin `&& !config.modoSinZohoDesk` | focal | ídem (1) | sí, `e03fe6c24d84b67f` |
+| M8 | `index.ts:85` `setInterval(` envuelto en `if (true) ` | focal | modoSinZohoIndice › `let syncing = false` va seguida de `setInterval(() => {` (1) | sí, `e03fe6c24d84b67f` |
+Focal = las cinco rutas del L2.5 salvo `citas/guardianes` (que no depende de estas líneas). Tras cada una, `file` conserva «CRLF line terminators». Los ficheros nuevos se escribieron y se pasaron a CRLF como el resto de los `.ts` del árbol.
+
+### Regla 13 (L2.7, parte del agente) y medida
+`git diff --name-only` sólo contiene `apps/desk/server/index.ts`: nada bajo `apps/desk/src`. El código nuevo no tiene `method:` literal ni `{ method,`; `MODO_SIN_ZOHO_DESK` no aparece en producción de este lote.
+Medida antes de este fichero: `git diff --shortstat --no-renames HEAD` 8 inserciones y 8 borrados (16) + `wc -l` de lo nuevo 166 (40 + 74 + 52) = 182.
+Desviación: ninguna del diseño. `cadenaDelCiclo` usa `Pick<AppConfig, 'modoSinZohoDesk' | 'syncActivities' | 'syncContacts'>`, como se pidió. Dos pruebas de vigilancia (`let syncing` y migración/resiembra) nacen verdes por ser guardas de lo existente; las muta M8.
+
+### Contraste del orquestador y cierre (L2.7)
+Informe contrastado: `index.ts` 8/8 con el prefijo de `:15` intacto (sólo crece por el final) y `:88` literal; `wc -l` 40 + 74 + 52; CRLF. Una afirmación del informe era errónea y sin efecto: `apply-progress.md` y `tasks.md` SÍ salen en `git status`. Mutación M4 reproducida por el orquestador (`sync.syncRecent()` en el comentario de `index.ts:89`: rojas las cuatro de servicios; sha256 restaurado `e03fe6c24d84b67f`, CRLF). Barrido B.1 de `index.ts` (citas a `:15`, `:20`, `:61`, `:72`, `:78`, `:88`, `:89`, `:90` y a los rangos que las cubren, con `archive/` y `docs/`): las vivas —seis comentarios de servicios, `avisoRitmoContrato.test.ts:15` y `:177`, `derivacion-avisos/spec.md:816`, `:997`, `:1205`, `:1318`, `transitions-st/spec.md:1410`, `:1452`, `zoho-sync/spec.md:48`, `:264`, `:753`, `ENTRADA.md:1231`, `:1271`— siguen ciertas; las de `archive/`, los paquetes de despliegue y el baseline son registros fechados (caso B). Para Supervisión: `docs/sdd/ENTRADA.md:2059` («no existe interruptor para ello: la aplicación sincroniza siempre») deja de ser cierta con esta tanda; la rama no toca ese fichero.
