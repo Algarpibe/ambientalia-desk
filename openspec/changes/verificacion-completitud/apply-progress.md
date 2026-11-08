@@ -273,3 +273,6 @@ Retenida = `{ numero, ctx }` (contexto de la A, `paraB`, `distintos`, `clases`, 
 
 ### Medida
 `git diff --shortstat --no-renames 7a8bba7c` (rastreado, antes de este texto): 3 ficheros, 71 inserciones y 21 borrados (92: `verificacion.ts` 67/17, `app.ts` 3/3, `verificacionPorTicket.test.ts` 1/1). `wc -l` de lo nuevo sin trackear: `routes/verificacionCompletitud.ts` 47, `verificacionContinuacion.test.ts` 223, `verificacionRutas.test.ts` 163 (433). Binarios: ninguno. La cifra final con este fichero y `tasks.md`, en el informe del lote.
+
+### Cierre del orquestador (i8)
+Commit `b8495fc5` sobre `7a8bba7c`: medida 8 ficheros, 558 inserciones y 30 borrados (588), 0 sin trackear; igual al informe del lote. `apps/desk/server/app.ts` sigue CRLF (96 de 96 líneas). Cinco comprobaciones en serie: typecheck 0; lint 0 (165 contra 165); detector 0 (8.136 comprobadas, 13 abreviadas rotas = base); `npm test` 0 (357 ficheros + 4 omitidos, 6.197 pruebas + 26 omitidas; 288 s; 11.692 MB libres al arrancar; log `npmtest-vco-i8-213757.log`); build 0.
