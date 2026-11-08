@@ -65,7 +65,7 @@ Mutaciones y posiciones: M6, M7, M9, P5, P6.
 - [x] L2.5 `apps/desk/server/completitud/conocidas.json` (siete entradas, disposición fija de D2, el #1017 en medio), `conocidas.ts` (`cargarConocidas`, `ErrorLista`, `REGLAS` una pareja por línea, `leerLista` síncrona) y `clasificar.ts` (`return porId(f) ?? porHerencia(f) ?? porRegla(f) ?? SIN_EXPLICAR` en UNA línea).
 - [x] L2.6 Verde: la prueba focal, `npm run typecheck` y suite entera con su log.
 - [x] L2.7 Mutaciones L2 con su rojo: M6 (`s/"causa": "[^"]*", //` en la línea del #1017; aparte, `s/nacidoEnLaApp/nacidoEnApp/` en una regla), M7 (borrar la línea del #1017 con `$_ = '' if $. == N`, que no es la última; aparte, vaciar en `REGLAS` la de `conversacionAusenteEnZoho`), M9 (quitar `porHerencia(f) ?? `), P5 (`porRegla(f) ?? porId(f) ?? porHerencia(f) ?? SIN_EXPLICAR`), P6 (`porId(f) ?? porRegla(f) ?? porHerencia(f) ?? SIN_EXPLICAR`). Tabla en `apply-progress.md`.
-- [ ] L2.8 Casilla de la regla 13 (`git diff --name-only` sin `apps/desk/src`) y cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`. **Hecho en el lote:** regla 13, medida y barrido (B.1); PENDIENTE DEL ORQUESTADOR: las cinco comprobaciones sobre el árbol commiteado.
+- [x] L2.8 Casilla de la regla 13 (`git diff --name-only` sin `apps/desk/src`) y cierre del lote: las cinco comprobaciones en 0, la medida, el barrido y `apply-progress.md`. **Hecho en el lote:** regla 13, medida y barrido (B.1); PENDIENTE DEL ORQUESTADOR: las cinco comprobaciones sobre el árbol commiteado.
 
 ## Lote L3 — sólo lectura y lectores de Zoho (intento i5)
 Escenarios: RQ-ZS-37 sólo `GET` y ninguna escritura de negocio, `429` se reintenta antes del `404` y del `!res.ok`; RQ-ZS-36 la historia casa por el id derivado (CA-4).

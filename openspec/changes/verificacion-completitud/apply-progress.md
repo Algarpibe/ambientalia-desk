@@ -91,3 +91,6 @@ Posiciones: la clasificación es UNA línea (`clasificar.ts:40`); las tres varia
 
 ### Medida
 `git diff --shortstat --no-renames 52175178` (tracked): 3 ficheros, 75 inserciones y 8 borrados (83; `deployVerificacionCompletitud.test.ts` +26, `tasks.md` 8/8, este fichero +41 en el momento de medir, ahora 93 líneas en total y +41 contra la partida más esta línea). `wc -l` de lo nuevo sin trackear: `conocidas.json` 12, `conocidas.ts` 69, `clasificar.ts` 47, `conocidas.test.ts` 121, `clasificar.test.ts` 139 (388). Total 471 contra 800. Binarios: ninguno.
+
+### Cierre del orquestador (i4)
+Commit `d5443ef1` sobre `52175178`: medida `git diff --shortstat --no-renames 52175178` = 8 ficheros, 463 inserciones y 8 borrados (471), 0 sin trackear; igual a la suma del informe del lote. Cinco comprobaciones en serie sobre el árbol commiteado: typecheck 0; lint 0 (165 avisos contra 165); detector 0 (8.114 comprobadas, 13 abreviadas rotas informativas, las de la base); `npm test` 0 (351 ficheros + 4 omitidos, 6.104 pruebas + 26 omitidas; 354 s; 11.752 MB libres al arrancar; log `npmtest-vco-i4-195127.log` del scratchpad); build 0.
