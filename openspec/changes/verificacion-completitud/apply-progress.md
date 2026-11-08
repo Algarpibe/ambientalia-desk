@@ -139,3 +139,41 @@ Un primer intento de P3 dio falsos verdes por mi `perl` (faltaba el `;` tras el 
 
 ### Cierre del orquestador (i5)
 Commit `9cec0871` sobre `c67bef09`: medida 8 ficheros, 416 inserciones y 10 borrados (426), 0 sin trackear; igual al informe del lote. Cinco comprobaciones en serie: typecheck 0; lint 0 (165 contra 165); `npm test` 0 (353 ficheros + 4 omitidos, 6.128 pruebas + 26 omitidas; 351 s; 11.818 MB libres al arrancar; log `npmtest-vco-i5-202013.log`), que es el verde completo que faltaba en L3.6 tras corregir el comentario; build 0; **detector 1**: la línea 125 de este fichero citaba una ruta abreviada inexistente (la propuesta archivada de `reloj-sla-esperas`) y una abreviada mal atribuida. Corregida en sitio (1/1, prosa o ruta completa) en el commit de cierre; el detector se repite sobre él.
+
+## Lote L4 — intento i6 (partida `36f7ca51`)
+
+Estado: L4.1-L4.6 hechas; L4.7 (las cinco comprobaciones sobre el árbol commiteado) pendiente del orquestador.
+
+### L4.1 · M0 (orquestador, cierre de i5 sobre `9cec0871`; `36f7ca51` sólo añadió documentos)
+`npm test`: 353 ficheros pasan, 4 omitidos; 6.128 pruebas pasan, 26 omitidas; 351 s; 11.818 MB libres; código 0. Log `npmtest-vco-i5-202013.log`.
+
+### Rojo medido (L4.2-L4.3); ninguna roja por el arnés
+`verificacionGlobal.test.ts` (nuevo, 25 pruebas): ROJA como suite, `Failed to load url ./verificacion (Does the file exist?)` (la causa es que el motor no existe). Con `verificacion.ts` escrito, las 25 pasaron a la primera: la triangulación ya estaba escrita (cada escenario con su contraejemplo) y las mutaciones de L4.6 son la prueba de que cada una discrimina.
+
+### Verde
+Focal (`completitud/` entera, 7 ficheros): 109 pasan; con `superficieSaliente.test.ts`, 27 de 27 en los dos. `npm run typecheck` 0. `npm run lint -- --max-warnings 165`: 165 contra 165, 0 errores, 0 nuevos.
+L4.5 suite entera, primer plano, `npm test`, 20:39:51 a 20:45:19, 11.848 MB libres al arrancar, 329 s (325,12 s de vitest), código 0: 354 ficheros pasan, 4 omitidos; 6.153 pruebas pasan, 26 omitidas (+1 fichero y +25 pruebas sobre M0). Log `npmtest-vco-L4-verde.log`. Una sola pasada, sin tocar nada mientras corría.
+
+### L4.6 · Mutaciones (`perl -i -pe '… if $. == N'`; `verificacion.ts` es nuevo y sin trackear: restaurado con copia y `cmp` idéntico, LF sin cambio)
+| Id | Fichero:línea y edición | Rojo (fichero › prueba › aserción) |
+|---|---|---|
+| M3 (a) | `apps/desk/server/completitud/verificacion.ts:127` (la lista de la A), anteponer `const { createSync } = await import('@ambientalia/zoho-sync/sync'); await createSync({ zohoFetch: f, db: lee, config: { departmentId } as never }).backfillTickets(); ` (importación dinámica en la misma línea, un solo N) | › sólo lectura… › una pasada completa no escribe nada… › `expected 8 to be +0` (`escriturasRechazadas.total`, tipos `INSERT`; la excepción se la traga `persistEach`). Las otras 5 rojas son peticiones de más |
+| M11 | `apps/desk/server/completitud/verificacion.ts:194` (primera de `recuento`), anteponer `await faseA(estadoInicial()); ` | › limite=0… › 3 tickets en Desk… › `expected [ …(9) ] to deeply equal []` (9 rutas pedidas a Zoho); la segunda roja es la lista inválida que la fase A carga por omisión |
+| P4 | `apps/desk/server/completitud/verificacion.ts:138` (el bucle por id, UNA línea), `await leerPorId(…)` → `({ estado: 'noEsta' })` | › S-l… › `expected [ 'c1', 'c2' ] to deeply equal [ 'c1' ]` (el vivo sale «falta en Zoho»); › un error por id… ; › un contacto con managed_by_app sí se pide por id… › `expected +0 to be 1` (3 rojas) |
+| P7 | `apps/desk/server/completitud/verificacion.ts:188` (`enMarcha: true` → `false`) y su línea 166 (primera de `pasada`), anteponer `await Promise.resolve(); estado.enMarcha = true; ` | › una pasada a la vez › dos lanzar seguidos… › `expected [ true, true, false ] to deeply equal [ true, false, true ]` (1 roja) |
+Posiciones: el bucle de re-verificación es UNA línea (su línea 138); en `lanzar` la línea de `estado` con `enMarcha: true` (su línea 188) va seguida de `void pasada(lista)` (su línea 189) y ambas antes de todo `await`. El texto del bucle es `await leerPorId(f, \`${s.porId}${id}\`, { pausa429Ms })`: el `perl` de P4 usa `s/await leerPorId\([^)]*\)/…/`.
+
+### Regla 13 y barrido (B.1)
+`git diff --name-only`: sólo `tasks.md` y este fichero; nada bajo `apps/desk/src`. Ningún fichero muy citado se editó en sitio, así que no hay desplazamiento que barrer; `grep -rnoE "verificacion\.ts:[0-9]+"` sobre el repositorio no cita el módulo nuevo fuera de este fichero.
+
+### API de `verificacion.ts` para L5 y L6
+`crearVerificacionCompletitud({ zohoFetch, db, departmentId, dir, leerLista?, pausaMs?, pausa429Ms?, registrar? })` ⇒ `{ lanzar({ desde?, limite? }), recuento({ desde? }), estado() }`. Exporta los tipos `Fila`, `InformeEntidad`, `Informe`, `EstadoVerificacion`, `RecuentoVerificacion` y `DepsVerificacion` (L6 añade `fs`). Internos: `abrirContexto(estado, lista)` ⇒ `Contexto { f, lee, lista, informe, entidad, pedidas, clases }` (`f` cuenta peticiones y `429` por `ctx.entidad` y pone la pausa salvo en la primera; `lee` y `f` registran en `informe.escriturasRechazadas`); `entidadA(ctx, s)` por entidad global; `faseA(estado, ctx?)`; `pasada(lista)`; `listaValida()`. Corte en la A: `informe.cortadoEn = { fase: 'A', numero: null }`, `motivoCorte: '429'`, las entidades no alcanzadas siguen «sin comparar» con motivo `no alcanzada`. Las tres por ticket quedan «sin comparar» (`no alcanzada`, o `sin lista de tickets`), `cobertura.completa` es `false` fija y `aComparar` ya viene de la A. Faltan para L5: ordenar `errores` por entidad, número e id, el bucle de la B y `comparados`; para L6: la línea `completa:`, la C y la continuación (hoy no se guarda nada de la A cortada: se relanza sin `desde`).
+
+### TDD Cycle Evidence
+| Tarea | Fichero de prueba | Capa | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| L4.2/L4.4 fase A | `completitud/verificacionGlobal.test.ts` | pg-mem + Zoho falsa | N/A (nuevo) | medido (módulo ausente) | 25/25 | ids ordenados, idénticos, 3 entidades, archivados, hueco, 404/vivo/borrado/500, `app-` con y sin regla, lista y `429` | sin cambios |
+| L4.2/L4.4 `lanzar`, `recuento`, `estado` | ídem | ídem | N/A (nuevo) | ídem | ídem | dos `lanzar`, tercera tras terminar, lista inválida y corregida, `desde`, copia del estado | sin cambios |
+
+### Medida
+`git diff --shortstat --no-renames 36f7ca51` (rastreado): 2 ficheros, 45 inserciones y 7 borrados (52: este fichero +38, `tasks.md` 7/7). `wc -l` de lo nuevo sin trackear: `verificacion.ts` 209, `verificacionGlobal.test.ts` 277 (486). Total 538 contra 800. Binarios: ninguno.
