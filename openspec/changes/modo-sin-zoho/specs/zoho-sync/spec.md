@@ -147,7 +147,8 @@ Con el modo abierto, la App **SHALL** seguir sirviendo lo que tiene en PostgreSQ
 4. **Respuesta y rutas de administración.** `POST /api/tickets/:id/reply`, `GET /api/admin/measure-attachments`, `GET /api/admin/backfill-details`,
    `POST /api/admin/backfill-history`, `POST /api/admin/backfill-archived`, los dos rellenos y la verificación de completitud **SHALL** responder `503` con un
    mensaje que nombra el modo sin Zoho Desk (S-k). Los recuentos con `limite=0` que no llaman a Zoho **SHALL** seguir libres. El `503` **SHALL** ir **después** de la
-   sesión y el rol, y **antes** del interruptor propio de cada ruta y de validar el cuerpo; las guardas que ya existen **MUST NOT** reordenarse.
+   sesión y el rol, y **antes** del interruptor propio de cada ruta y de validar el cuerpo; las guardas que ya existen **MUST NOT** reordenarse. Única excepción:
+   en `POST /api/tickets/:id/reply` el interruptor propio (`ENABLE_WRITES`) precede hoy al rol (`apps/desk/server/routes/tickets.ts:196`); como no se reordena, el `503` va tras los dos.
 5. **Adjunto.** Con copia válida, **SHALL** servirse igual. Sin ella, `503` con el mensaje «no está en el almacenamiento propio y la app está en modo sin
    Zoho Desk», una línea de log con ese motivo y **sin** nombre de fichero, y sin llamar a Zoho (S-l).
 6. **Manejador central.** El error tipado de RQ-ZS-41 que escape de cualquier ruta (`apps/desk/server/app.ts:78-93`) **SHALL** dar `503` con la misma respuesta, no `500`.
@@ -229,7 +230,7 @@ programar las tres pasadas como hoy.
 ### RQ-ZS-46 · Un barrido del repositorio prohíbe llamadas a Zoho Desk fuera de la puerta
 
 Una prueba **SHALL** recorrer `apps/desk/server`, `apps/hub-sync`, `packages` y `scripts`, sin los comentarios, y buscar las señales de una salida a Zoho Desk:
-verbos HTTP literales y `GET` implícitos, `fetch`, `fetchImpl`, dominios y rutas de Desk, el token, y toda instancia de `createZohoClient` y de `createTokenManager`.
+todo transporte HTTP (`fetch`, `fetchImpl` y los clientes de `node:http`/`https`), con cualquier verbo y también con el `GET` implícito; dominios y rutas de Desk, el token, y toda instancia de `createZohoClient` y de `createTokenManager`.
 Cada señal **SHALL** valer sólo en su sitio dentro de una **lista cerrada** de sitios permitidos. Una señal fuera de la lista **SHALL** poner la prueba en rojo y nombrar
 el fichero. El barrido **MUST NOT** depender de los límites de `apps/desk/server/testing/superficieSaliente.ts` (`:55`, `:84`, `:91`, `:46`). El código nuevo **MUST NOT**
 escribir un `method:` literal que clasifique el barrido viejo.
@@ -251,7 +252,7 @@ escribir un `method:` literal que clasifique el barrido viejo.
 
 ### RQ-ZS-47 · `DEPLOY.md` §24 documenta el interruptor, que va en los dos servicios
 
-`DEPLOY.md` **SHALL** terminar con una sección `### 24` sobre `MODO_SIN_ZOHO_DESK` con dos apartados: «Qué enciende» y «Qué se rompe si se pone mal» (regla de secretos,
+`DEPLOY.md` **SHALL** terminar con una sección `## 24.` sobre `MODO_SIN_ZOHO_DESK` con dos apartados: «Qué enciende» y «Qué se rompe si se pone mal» (regla de secretos,
 `CLAUDE.md`). **SHALL** decir que la variable va en los **DOS** servicios, la App y el worker `hub-sync`, y que con uno solo el otro sigue llamando a Zoho y la semana no
 prueba nada; que abrir o cerrar pide redesplegar los dos (S-f); y cómo leer el registro durante la semana del paso 4 del corte: el `GET /api/admin/modo-sin-zoho-desk`
 para la App y el log para el worker, distinguiendo cortes de rechazos (S-j). Una prueba **SHALL** fijar el contenido de la sección.

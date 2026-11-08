@@ -180,10 +180,10 @@ evaluaciones corren o se quiere una pasada propia (S-p), si la app debe avisar e
 
 ## 8 · Riesgos
 
-- **Guardas que se rompen por construcción, y una ya está roja.** `apps/desk/server/reconciliacion/registro.test.ts:218` y `:220`: con este
+- **Guardas que se rompen por construcción.** `apps/desk/server/reconciliacion/registro.test.ts:218` y `:220`: con este
   fichero fuera de `archive/`, «en curso» pasa de OCHO a NUEVE, con `1G-04` el primero (`ordenar` es `.sort()`,
-  `apps/desk/server/reconciliacion/comprobaciones.ts:59`, `:222-224`). **La suite está roja desde esta fase** hasta el lote que lo corrige:
-  `tasks.md` lo pone el primero. Al archivar se rompe otra vez (sale de «en curso», entra en «cerradas por archivo»). La §24 rompe
+  `apps/desk/server/reconciliacion/comprobaciones.ts:59`, `:222-224`). **Se corrigió en sitio en el mismo intento i1** (`6417fa9b`), así
+  que la suite no llega a estar roja y `tasks.md` no lo repite. Al archivar se rompe otra vez (sale de «en curso», entra en «cerradas por archivo»). La §24 rompe
   `apps/desk/server/deployVerificacionCompletitud.test.ts:20` (`slice(s23)` hasta el final), `:36` (un solo `## `) y `:37` (dos `### `).
 - **Ficheros muy citados** (regla de mutación 4): `routes/tickets.ts`, `index.ts:88`, `config.ts:66` y `:125`, `app.ts:57` y `:78-93`,
   `attachment.ts:17` y `:24` (los citan RQ-ZS-31 y `almacen.ts:15`), `zohoClient.ts`. Se edita en la misma línea o al final, y se barre al cerrar.
@@ -227,4 +227,4 @@ cerrar; cada intento ≤ 800 con `git diff --shortstat --no-renames` más `wc -l
 | L6 | `DEPLOY.md` §24, su prueba y `deployVerificacionCompletitud.test.ts:20`, `:36`, `:37` | 110 | 198 |
 | | **Código y pruebas** | **1.090** | **1.962** |
 
-Aparte, los artefactos: spec ≈150, diseño ≈150, tareas ≈120, `verify-report.md` ≈350 (sumando obligatorio) y `archive-report.md` ≈200 más la mudanza.
+Aparte, los artefactos: spec ≈150, diseño ≈150, tareas ≈120, `verify-report.md` ≈350 (sumando obligatorio) y `archive-report.md` ≈200 más la mudanza. *La tabla de lotes la sustituye `design.md` D-13* (siete lotes, unas 1.885 líneas estimadas, 3.395 con ×1,8).
