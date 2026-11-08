@@ -118,8 +118,8 @@ Mutaciones y posiciones: M5 (de nuevo), M8, M10, M12 (`estadoCopia`), P1, P2.
 - [ ] B.1 `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` (y `DEPLOY.md:`) sobre TODO el repositorio, incluidos `openspec/changes/archive/` y `docs/`, para cada fichero muy citado editado en el lote (lista de D16): `packages/zoho-sync/src/config.ts`, `apps/desk/server/app.ts`, `packages/zoho-sync/src/db/history.ts`, `apps/desk/server/testing/appHarness.ts`, `DEPLOY.md`, `apps/desk/server/deployRellenoAdjuntos.test.ts`. Leer cada hallazgo contra lo que AFIRMA (casos A/B/C de `CLAUDE.md`); comprobar que `config.ts:125` sigue siendo la lectura `=== 'true'`, `app.ts:57` el `habilitado` y `history.ts:8-11` el id de la historia; segundo pase para las abreviadas en los ficheros que ya citan el módulo. En L3, anotar en sitio el caso B de `proposal.md:47`. Resultado en `apply-progress.md`.
 
 ## Verificación (intento i9)
-- [ ] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-34 a RQ-ZS-39 contra su prueba.
-- [ ] V.2 Reproducir todas las M* y P* del `apply-progress.md` con `perl`, restauración comprobada (`git diff` vacío, `file` aún CRLF).
+- [x] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-34 a RQ-ZS-39 contra su prueba.
+- [x] V.2 Reproducir todas las M* y P* del `apply-progress.md` con `perl`, restauración comprobada (`git diff` vacío, `file` aún CRLF).
 - [ ] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
 
 ## Archivo (intento i10)

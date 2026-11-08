@@ -275,3 +275,18 @@ describe('el log por omisión', () => {
     expect(JSON.stringify(datos) + linea).not.toMatch(/c9|c1|marcador-secreto/)
   })
 })
+
+describe('verify W-1 y W-2 · el departamento de las listas y la cobertura sin fase B', () => {
+  it('W-1 · las dos listas de tickets salen con el departmentId de la sincronización (S-k)', async () => {
+    const m = montar({ '/tickets': [zt(1)] })
+    await correr(m)
+    const listas = m.z.rutas.filter((r) => /^\/tickets(\/archivedTickets)?\?/.test(r))
+    expect(listas.map((r) => r.split('?')[0]).sort()).toEqual(['/tickets', '/tickets/archivedTickets'])
+    expect(listas.map((r) => new URLSearchParams(r.split('?')[1]).get('departmentId'))).toEqual(['77', '77'])
+  })
+
+  it('W-2 · con la lista de tickets en 500 y ADJUNTOS_DIR válida la fase B no corre y la cobertura no es completa', async () => {
+    const i = await correr(montar({ '/tickets': 500 }, { dir: '/volumen-no-usado' }))
+    expect([i.cobertura.completa, i.veredicto]).toEqual([false, 'incompleto'])
+  })
+})
