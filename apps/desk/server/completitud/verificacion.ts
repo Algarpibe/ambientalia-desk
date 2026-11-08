@@ -1,20 +1,21 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { PAUSA_429_MS, PAUSA_ENTRE_TICKETS_MS } from '@ambientalia/zoho-sync/conversaciones'
 import { logger } from '../util/logger'
+import { ErrorDisco, estadoCopia } from '../adjuntos/almacen'
 import { cargarConocidas, ENTIDADES, ErrorLista, leerLista as leerListaReal, type Entidad, type ListaConocidas } from './conocidas'
 import { clasificar, conocidasSinUso, type Clasificacion, type FilaDiferencia, type Lado, type Padre } from './clasificar'
 import { compararIds } from './comparar'
 import { leerPaginas, leerPorId } from './lectores'
 import { ErrorBase, filas, hijosSoloDesk, porTicket, type DiferenciaHijo, type ResultadoPorTicket } from './porTicket'
 import { crearRegistroEscrituras, soloGet, soloSelect, type RegistroEscrituras } from './soloLectura'
-import { veredictoEntidad, veredictoGlobal, type CorteVerificacion, type Estado } from './veredicto'
+import { peorEstado, veredictoEntidad, veredictoGlobal, type CorteVerificacion, type Estado } from './veredicto'
 
 /**
  * verificacion-completitud (1G-03, D7, D10, D11, RQ-ZS-35, RQ-ZS-37) · el motor: estado en memoria, fase A (listas globales con re-verificación
  * por id), `lanzar`, `recuento` (`limite=0`) y `estado`. Molde: `apps/desk/server/adjuntos/rellenoAdjuntos.ts` (`enMarcha` antes del primer `await`,
  * `structuredClone`, una línea de log). Zoho, sólo por `soloGet`; PostgreSQL, sólo por `soloSelect`; el motor NO recibe `sync`, cuyas listas escriben
  * mientras leen. El estado, el informe y el log llevan sólo ids, números de ticket y recuentos (CA-11): nunca nombres, correos, asuntos ni `raw`.
- * La fase B (por ticket, `porTicket.ts`) la añade L5; la C (volumen) y la continuación, L6: hasta entonces la cobertura no es completa.
+ * Fase B (por ticket, `porTicket.ts`), fase C (el volumen, con `estadoCopia`, sin descargar) y continuación del corte de la B (D9, D10, RQ-ZS-36, RQ-ZS-38).
  */
 type ZohoFetch = (path: string, init?: RequestInit) => Promise<Response>
 export interface Fila { id: string; numero?: number; clase: 'conocida' | 'sin explicar'; causa?: string; entrada?: string; heredadaDe?: string; tamano?: { zoho: number | null; desk: number | null } }
@@ -24,6 +25,8 @@ export interface InformeEntidad {
   peticiones: number; vistos429: number
   /** Sólo en adjuntos (fase B): los de otro `size` y los bytes por lado de lo comparado. */
   distintoTamano?: Fila[]; bytes?: { zoho: number; desk: number }
+  /** Sólo en adjuntos (fase C): `desk.attachments` frente al volumen. */
+  volumen?: { estado: Estado; motivo?: string; filas: number; sinCopia: Fila[]; ausente: Fila[]; otroTamano: Fila[] }
 }
 export interface Informe {
   esquema: 1; versionLista: number; departamento: string; veredicto: Exclude<Estado, 'sin comparar'>
@@ -42,8 +45,8 @@ export interface RecuentoVerificacion {
 }
 export interface DepsVerificacion {
   zohoFetch: ZohoFetch; db: Queryable; departmentId: string
-  /** `dirAdjuntos(...)`: lo usa la fase C (L6). */
-  dir: string | null
+  /** `dirAdjuntos(...)`: lo usa la fase C; nulo ⇒ el volumen queda «sin comparar». `fs`, sólo para las pruebas. */
+  dir: string | null; fs?: Parameters<typeof estadoCopia>[2]
   leerLista?: () => string; pausaMs?: number; pausa429Ms?: number
   registrar?: (r: EstadoVerificacion) => void
 }
@@ -58,7 +61,11 @@ interface FilaDesk { id: string; numero?: number; fuente?: string | null; manage
 interface Contexto {
   f: ZohoFetch; lee: Queryable; lista: ListaConocidas; informe: Informe; entidad: Entidad; pedidas: number; clases: Clasificacion[]
   paraB: { id: string; numero: number }[]; distintos: { id: string; numero?: number; lado: Lado; k: Clasificacion }[]
+  /** El `desde` con que ARRANCÓ la pasada (una continuación hereda el de la original) y si los tickets de un solo lado ya se procesaron. */
+  desdeInicial: number | null; sinParHecho: boolean
 }
+/** Lo que se guarda de la última pasada cortada en la B: su contexto (listas de la A, tickets por comparar, informe parcial) y el ticket por el que seguir. */
+interface Retenida { numero: number; ctx: Contexto }
 
 const estadoInicial = (): EstadoVerificacion => ({ enMarcha: false, terminado: false, fase: null, desde: null, limite: null, informe: null })
 const entidadInicial = (): InformeEntidad => ({
@@ -87,9 +94,10 @@ const registrarEnLog = (r: EstadoVerificacion) => {
 }
 
 export function crearVerificacionCompletitud({
-  zohoFetch, db, departmentId, leerLista = leerListaReal, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS, registrar = registrarEnLog,
+  zohoFetch, db, departmentId, dir, fs, leerLista = leerListaReal, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS, registrar = registrarEnLog,
 }: DepsVerificacion) {
   let estado = estadoInicial()
+  let retenida: Retenida | null = null
   const ESPECS: Espec[] = [
     { entidad: 'tickets', rutas: ['/tickets', '/tickets/archivedTickets'], params: { departmentId }, porId: '/tickets/', sql: 'SELECT id, number FROM tickets' },
     { entidad: 'contactos', rutas: ['/contacts'], params: {}, porId: '/contacts/', sql: 'SELECT id, source, managed_by_app FROM contacts' },
@@ -106,7 +114,7 @@ export function crearVerificacionCompletitud({
     const informe = (e.informe = informeInicial(lista, departmentId))
     const get = soloGet(zohoFetch, informe.escriturasRechazadas)
     const ctx: Contexto = {
-      lista, informe, entidad: 'tickets', pedidas: 0, clases: [], lee: soloSelect(db, informe.escriturasRechazadas), paraB: [], distintos: [],
+      lista, informe, entidad: 'tickets', pedidas: 0, clases: [], lee: soloSelect(db, informe.escriturasRechazadas), paraB: [], distintos: [], desdeInicial: e.desde, sinParHecho: false,
       f: async (path, init) => {
         if (ctx.pedidas++ > 0) await dormir(pausaMs)
         const en = informe.entidades[ctx.entidad]
@@ -214,12 +222,12 @@ export function crearVerificacionCompletitud({
   /** Fase B (D8): por cada ticket de los dos lados desde `desde`, hasta `limite` tickets; un `429` agotado corta y deja ese ticket entero sin publicar. */
   async function faseB(e: EstadoVerificacion, ctx: Contexto): Promise<void> {
     const i = ctx.informe
-    i.cobertura.desde = e.desde
-    Object.assign(i.entidades.adjuntos, { bytes: { zoho: 0, desk: 0 }, distintoTamano: [] })
-    await sinPar(ctx)
+    i.cobertura.desde = ctx.desdeInicial; i.cortadoEn = null; delete i.motivoCorte
+    if (!ctx.sinParHecho) { Object.assign(i.entidades.adjuntos, { bytes: { zoho: 0, desk: 0 }, distintoTamano: [] }); await sinPar(ctx); ctx.sinParHecho = true }
+    const antes = i.cobertura.comparados
     const acceso = { f: ctx.f, lee: ctx.lee, pausa429Ms, entidad: (x: Entidad) => { ctx.entidad = x } }
     for (const t of ctx.paraB.filter((x) => x.numero >= (e.desde ?? 0))) {
-      if (e.limite !== null && i.cobertura.comparados >= e.limite) { i.cortadoEn = { fase: 'B', numero: t.numero }; i.motivoCorte = 'limite'; break }
+      if (e.limite !== null && i.cobertura.comparados - antes >= e.limite) { i.cortadoEn = { fase: 'B', numero: t.numero }; i.motivoCorte = 'limite'; break }
       const r = await porTicket(acceso, t)
       if (r.tipo === 'corte') { i.cortadoEn = { fase: 'B', numero: t.numero }; i.motivoCorte = '429'; break }
       i.cobertura.comparados++
@@ -228,9 +236,41 @@ export function crearVerificacionCompletitud({
     }
     for (const x of POR_TICKET) {
       const en = i.entidades[x]
-      en.estado = veredictoEntidad({ sinComparar: false, errores: i.errores.filter((y) => y.entidad === x).length, completa: i.cortadoEn === null && e.desde === null, sinExplicar: en.sinExplicar })
+      en.estado = veredictoEntidad({ sinComparar: false, errores: i.errores.filter((y) => y.entidad === x).length, completa: i.cortadoEn === null && ctx.desdeInicial === null, sinExplicar: en.sinExplicar })
       delete en.motivo
     }
+  }
+
+  /** Fase C (D9): cada fila de `desk.attachments` frente al volumen con `estadoCopia` (sólo `stat`, nada se descarga). Sin `dir` o con un fallo de disco, «sin comparar». */
+  async function faseC(ctx: Contexto): Promise<boolean> {
+    const a = ctx.informe.entidades.adjuntos
+    const v = (a.volumen = { estado: 'sin comparar' as Estado, filas: 0, sinCopia: [], ausente: [], otroTamano: [] } as NonNullable<InformeEntidad['volumen']>)
+    try {
+      if (dir === null) v.motivo = 'ADJUNTOS_DIR'
+      else await volumen(ctx, dir, v)
+    } catch (e) {
+      if (!(e instanceof ErrorDisco)) throw e
+      Object.assign(v, { motivo: `disco ${e.code}`, filas: 0, sinCopia: [], ausente: [], otroTamano: [] })
+    }
+    a.estado = peorEstado([a.estado, v.estado])
+    return v.estado !== 'sin comparar'
+  }
+
+  /** Sólo publica si TODAS las filas se pudieron mirar: un `ErrorDisco` a mitad deja el volumen sin filas parciales y sin sus clases. */
+  async function volumen(ctx: Contexto, dir: string, v: NonNullable<InformeEntidad['volumen']>): Promise<void> {
+    const clases: Clasificacion[] = []
+    const lista = await filas(ctx.lee, 'SELECT a.id, a.size, a.storage_path, t.number FROM attachments a JOIN tickets t ON t.id = a.ticket_id ORDER BY t.number, a.id')
+    for (const r of lista) {
+      const fila = { id: String(r.id), size: r.size as number | string | null, storage_path: r.storage_path as string | null }
+      const e = await estadoCopia(dir, fila, fs)
+      if (e === 'presente') continue
+      const k = clasificar(ctx.lista, { entidad: 'adjuntos', lado: 'volumen', id: fila.id, numero: entero(r.number) }) as Clasificacion
+      clases.push(k)
+      v[e].push({ id: fila.id, numero: entero(r.number), clase: k.clase, causa: k.causa, entrada: k.entrada, heredadaDe: k.heredadaDe })
+    }
+    ctx.clases.push(...clases)
+    Object.assign(v, { filas: lista.length, estado: veredictoEntidad({ sinComparar: false, errores: 0, completa: true, sinExplicar: clases.filter((k) => k.clase === 'sin explicar').length }) })
+    delete v.motivo
   }
 
   /** Orden fijo (D11): errores por entidad, número e id; hijos por id (longitud y luego texto); `noEvaluados` por número. */
@@ -241,23 +281,32 @@ export function crearVerificacionCompletitud({
       for (const l of [en.faltaEnDesk, en.faltaEnZoho, en.distintoTamano ?? []]) l.sort((a, b) => porId(a.id, b.id))
       en.noEvaluados.sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0))
     }
+    const vol = i.entidades.adjuntos.volumen
+    if (vol) for (const l of [vol.sinCopia, vol.ausente, vol.otroTamano]) l.sort((a, b) => porId(a.id, b.id))
   }
 
-  async function pasada(lista: ListaConocidas): Promise<void> {
+  /** Con `previa` (D10) CONTINÚA la pasada cortada en la B: sin repetir la A, sigue por el ticket del corte, corre la C y funde las filas en el mismo informe. */
+  async function pasada(lista: ListaConocidas, previa: Retenida | null): Promise<void> {
     estado.inicio = new Date().toISOString(); estado.fase = 'A'
+    let ctx = previa?.ctx; let hechaA = false; let hechaB = false; let hechaC = false
     try {
-      const ctx = abrirContexto(estado, lista)
-      await faseA(estado, ctx)
-      if (ctx.informe.cortadoEn === null && ctx.informe.entidades.tickets.estado !== 'sin comparar') { estado.fase = 'B'; await faseB(estado, ctx) }
-      if (ctx.informe.cortadoEn === null && estado.desde === null) ctx.informe.conocidasSinUso = conocidasSinUso(ctx.lista, ctx.clases)
+      if (ctx) estado.informe = ctx.informe
+      else { ctx = abrirContexto(estado, lista); await faseA(estado, ctx) }
+      hechaA = previa !== null || ctx.informe.cortadoEn === null
+      if (hechaA && ctx.informe.entidades.tickets.estado !== 'sin comparar') { estado.fase = 'B'; await faseB(estado, ctx); hechaB = ctx.informe.cortadoEn === null }
+      if (ctx.informe.cortadoEn === null) { estado.fase = 'C'; hechaC = await faseC(ctx) }
+      if (ctx.informe.cortadoEn === null && ctx.desdeInicial === null) ctx.informe.conocidasSinUso = conocidasSinUso(ctx.lista, ctx.clases)
     } catch (e) {
       estado.error = e instanceof ErrorBase ? 'base' : 'interno'
     } finally {
       const i = estado.informe
       if (i) {
         ordenar(i)
+        const desdeInicial = ctx ? ctx.desdeInicial : estado.desde
+        Object.assign(i.cobertura, { completa: hechaA && desdeInicial === null && hechaB && hechaC })
         i.veredicto = veredictoGlobal(ENTIDADES.map((x) => i.entidades[x].estado), { completa: i.cobertura.completa, cortadoEn: i.cortadoEn, escriturasRechazadas: i.escriturasRechazadas.total })
         if (i.escriturasRechazadas.total > 0) estado.error ??= 'escritura'
+        if (ctx && !estado.error && i.cortadoEn?.fase === 'B' && i.cortadoEn.numero !== null) retenida = { numero: i.cortadoEn.numero, ctx }
       }
       estado.fase = null; estado.enMarcha = false; estado.terminado = true; estado.fin = new Date().toISOString()
       try { registrar(structuredClone(estado)) } catch { /* el resumen no puede tumbar la pasada */ }
@@ -270,8 +319,9 @@ export function crearVerificacionCompletitud({
       if (estado.enMarcha) return { lanzada: false, estado: structuredClone(estado) }
       const lista = listaValida()
       if (typeof lista === 'string') { estado = { ...estadoInicial(), error: lista }; return { lanzada: false, estado: structuredClone(estado) } }
+      const previa = desde !== undefined && retenida?.numero === desde ? retenida : null; retenida = null /* sin `desde` o con otro, la parte guardada se descarta */
       estado = { ...estadoInicial(), enMarcha: true, desde: desde ?? null, limite: limite ?? null }
-      void pasada(lista)
+      void pasada(lista, previa)
       return { lanzada: true, estado: structuredClone(estado) }
     },
     /** `limite=0`: lo que hay en Desk y las peticiones mínimas, sin Zoho ni escritura. No da veredictos. */

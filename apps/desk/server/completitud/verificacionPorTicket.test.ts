@@ -46,7 +46,7 @@ const EV2 = { eventTime: '2026-01-02T00:00:00Z', eventName: 'TicketUpdated', eve
 
 function montar(tabla: Record<string, Salida> = {}, extra: Partial<Parameters<typeof crearVerificacionCompletitud>[0]> = {}) {
   const z = zoho({ ...VACIAS, ...tabla }); const registrado: EstadoVerificacion[] = []
-  const v = crearVerificacionCompletitud({ zohoFetch: z.f, db, departmentId: '77', dir: null, pausaMs: 0, pausa429Ms: 0, registrar: (r) => registrado.push(r), ...extra })
+  const v = crearVerificacionCompletitud({ zohoFetch: z.f, db, departmentId: '77', dir: '/volumen-no-usado', pausaMs: 0, pausa429Ms: 0, registrar: (r) => registrado.push(r), ...extra })
   return { v, z, registrado }
 }
 async function esperar(v: { estado(): EstadoVerificacion }): Promise<EstadoVerificacion> {
