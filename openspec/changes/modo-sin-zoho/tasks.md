@@ -81,12 +81,12 @@ Escenarios: RQ-ZS-43 los tres; RQ-ZS-44 `503` que nombra el modo en las seis rut
 
 ## Lote L4 — aperturas, respuesta y adjunto (intento i6)
 Escenarios: RQ-ZS-40 el adjunto que caía a Zoho; RQ-ZS-44 las aperturas sirven lo local, la respuesta da `503` con su posición, el adjunto con copia se sirve y sin ella responde claro.
-- [ ] L4.1 ROJO `apps/desk/server/modoSinZohoAperturas.test.ts` (nuevo): detalle, conversaciones e historia con y sin ticket local (lo local sin llamar a `sync`; sin datos, `404`); respuesta con `ENABLE_WRITES` cerrado ⇒ su `403`, sin área ⇒ `403`, con área ⇒ `503` sin `zohoFetch`; adjunto con copia válida servido igual, sin ella `503` con el texto de D-6 y una línea de `logger.warn` (espiada) sin el `name` marcado; H-2: cerrado y `zohoFetch` que lanza `ErrorModoSinZohoDesk`, el adjunto sin copia da `503` por el manejador central con rechazo `GET /api/attachment`.
-- [ ] L4.2 Anotar el rojo medido en `apply-progress.md`.
-- [ ] L4.3 En sitio: `apps/desk/server/routes/tickets.ts:13`, `:23`, `:25`, `:132`, `:136`, `:149`, `:169`, `:196` (8/8) y `servirLocal` al final; `apps/desk/server/routes/attachment.ts:4`, `:8`, `:10`, `:22` (4/4) y `adjuntoSinCopiaEnModo` al final; `apps/desk/server/app.ts:52`, `:58` (2/2).
-- [ ] L4.4 Verde: la focal (incluye `adjuntos/rutaAdjunto.test.ts:8-13`, intacta), typecheck y suite con log.
-- [ ] L4.5 Mutaciones: quitar `if (!modo.activo) ` de `tickets.ts:132` o `:136`, o el añadido de `:149` o `:169`; en `:196`, la guarda antes de `guardWrites` o antes de `requireArea`; quitar el añadido de `attachment.ts:22`; meter `name` en la línea de log.
-- [ ] L4.6 Regla 13 y cierre del lote.
+- [x] L4.1 ROJO `apps/desk/server/modoSinZohoAperturas.test.ts` (nuevo): detalle, conversaciones e historia con y sin ticket local (lo local sin llamar a `sync`; sin datos, `404`); respuesta con `ENABLE_WRITES` cerrado ⇒ su `403`, sin área ⇒ `403`, con área ⇒ `503` sin `zohoFetch`; adjunto con copia válida servido igual, sin ella `503` con el texto de D-6 y una línea de `logger.warn` (espiada) sin el `name` marcado; H-2: cerrado y `zohoFetch` que lanza `ErrorModoSinZohoDesk`, el adjunto sin copia da `503` por el manejador central con rechazo `GET /api/attachment`.
+- [x] L4.2 Anotar el rojo medido en `apply-progress.md`.
+- [x] L4.3 En sitio: `apps/desk/server/routes/tickets.ts:13`, `:23`, `:25`, `:132`, `:136`, `:149`, `:169`, `:196` (8/8) y `servirLocal` al final; `apps/desk/server/routes/attachment.ts:4`, `:8`, `:10`, `:22` (4/4) y `adjuntoSinCopiaEnModo` al final; `apps/desk/server/app.ts:52`, `:58` (2/2).
+- [x] L4.4 Verde: la focal (incluye `adjuntos/rutaAdjunto.test.ts:8-13`, intacta), typecheck y suite con log.
+- [x] L4.5 Mutaciones: quitar `if (!modo.activo) ` de `tickets.ts:132` o `:136`, o el añadido de `:149` o `:169`; en `:196`, la guarda antes de `guardWrites` o antes de `requireArea`; quitar el añadido de `attachment.ts:22`; meter `name` en la línea de log.
+- [x] L4.6 Regla 13 y cierre del lote.
 
 ## Lote L5 — el worker (intento i7)
 Escenarios: RQ-ZS-45 los tres; RQ-ZS-42 el worker deja una línea por origen nuevo (cableado).

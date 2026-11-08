@@ -137,3 +137,42 @@ Medida antes de este bloque: `git diff --shortstat --no-renames HEAD` 35 inserci
 
 ### Contraste del orquestador y cierre (L3.7)
 Informe contrastado: `git diff --numstat` (6/6, 1/1, +8, 7/7, 3/3 ×3, 4/4), `wc -l` 331 + 55, CRLF; cada línea editada en sitio comparada por prefijo y sufijo con la de `a0660bb7`: sólo añade (y en `app.ts:57` conserva literales los cuatro `habilitado: … === true`), sin cambiar el número de líneas de ningún fichero. Posición reproducida por el orquestador (guarda tras `interruptorVerificacion` en `routes/verificacionCompletitud.ts:37`: la prueba de posición recibe `403` en vez de `503`; sha256 restaurado `55c9a03243ac7e42`, CRLF). Barrido B.1 de `app.ts`, `routes/admin.ts`, las tres rutas, `testing/appHarness.ts` e `index.ts:49`: las citas vivas que caen en líneas editadas son `DEPLOY.md:874` (`admin.ts:53-58`, cierto con el modo cerrado; abierto lo documenta la §24), `openspec/specs/zoho-sync/spec.md:2271` (`rellenoAdjuntos.ts:17-55`) y `:665` (`appHarness.ts:46`), ciertas; las de `archive/`, los paquetes de despliegue y el plan del 19/06 son registros fechados (caso B). Aviso para L6: `MENSAJE_MODO_SIN_ZOHO_DESK` contiene la variable como subcadena; la señal del barrido va con `\b`.
+
+## Lote L4 (intento i6) — aperturas, respuesta y adjunto · L4.1 a L4.5 hechas; L4.6 es del orquestador
+
+### Rojo medido (L4.1, L4.2)
+Cableado previo SÓLO de tipos (`modo: ModoSinZoho` en los `deps` de `tickets.ts:23` y `attachment.ts:8`, import de tipo y `, modo` en `app.ts:52`, `:58`), sin lógica; `npm run typecheck` salida 0. `npx vitest run apps/desk/server/modoSinZohoAperturas.test.ts` salida 1: 4 rojas por aserción, 7 verdes (las verdes son las que fijan el comportamiento de hoy o ya cubierto: cerrado sigue a `sync`, `403` de `ENABLE_WRITES`, `403` de área, copia válida, `401`/`400`, H-2 por el manejador de L3).
+| Prueba | Aserción |
+|---|---|
+| aperturas › detalle, conversaciones e historia del ticket con datos locales | `expected "spy" to not be called at all, but actually been called 1 times` |
+| aperturas › el ticket sin datos locales: 404 en las tres aperturas | `expected [ '/conversations', 200, [] ] to deeply equal [ '/conversations', 404, … ]` |
+| reply › con ENABLE_WRITES y área: 503 | `expected [ 200, { ok: true } ] to deeply equal [ 503, { … } ]` |
+| attachment › sin copia: 503 con el texto de D-6 | `expected [ 200, {} ] to deeply equal [ 503, { … } ]` |
+
+### Verde (L4.3, L4.4)
+En sitio, misma línea física: `tickets.ts` 14/8 (8 líneas editadas `:13`, `:23`, `:25`, `:132`, `:136`, `:149`, `:169`, `:196` + 6 al final: línea en blanco, comentario y `servirLocal`), `attachment.ts` 11/5 (editadas `:1`, `:4`, `:8`, `:10`, `:22` + 6 al final con `adjuntoSinCopiaEnModo`), `app.ts` 2/2 (`:52`, `:58`). `wc -l`: `tickets.ts` 223→229, `attachment.ts` 36→42. Prueba nueva `modoSinZohoAperturas.test.ts` (173 líneas, 11 pruebas, CRLF).
+**Desviación (ruta:línea):** `attachment.ts:1` también se edita (`import type { Express }` → `{ Express, Request, Response }`): `adjuntoSinCopiaEnModo` necesita los dos tipos y la tarea no listaba esa línea. Misma línea física, sin cambiar el número de líneas.
+Focal (`modoSinZohoAperturas`, `modoSinZohoRutas`, `modoSinZohoIndice`, `adjuntos/` entero —incluye `rutaAdjunto.test.ts:8-13` intacta—, `tickets`, `busquedaTickets`, `busquedaTicketsHuecos`, `misTickets`, `ordenVentaUnTicket`, `opcionesConversaciones`, `rellenoConversacionesRutas`, `migracionTicketsAbiertosRuta`, `superficieSaliente`): 18 ficheros, 376 pruebas verdes, salida 0. `npm run typecheck` salida 0. `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)». Ninguna prueba existente tocada. No hay pruebas de historia ni de respuesta con nombre propio: se cubrieron las de `tickets.test.ts` (historia y conversaciones).
+**H-2, observada:** con el modo CERRADO y `zohoFetch` rechazando `new ErrorModoSinZohoDesk()`, el adjunto sin copia sale por `attachment.ts:24` (rama `throw e`) al manejador central: `503` con el cuerpo de D-6 y `registro.leer().rechazos` = `[{ ruta: 'GET /api/attachment', cuenta: 1, … }]` (patrón, no `(ruta desconocida)`). Pasa desde el rojo porque lo da el manejador de L3.
+**Hallazgo en la prueba del log:** la aserción del marcador del `name` sola no cazaría una fuga del `path` de Zoho; se añadió `not.toContain(HREF('5002'))` (M9).
+
+### Mutaciones (L4.5), `perl -i -pe '… if $. == N'`, restauración con la sustitución inversa
+Orden de cada una: `modoSinZohoAperturas.test.ts`. `sha256sum` idéntico antes y después en todas (`tickets.ts` `657d37d6b972…`, `attachment.ts` `5e448f3a71a9…`) y `file` con CRLF.
+| # | Mutación | Pruebas rojas |
+|---|---|---|
+| M1 | `tickets.ts:132` sin `if (!modo.activo) ` | aperturas › sin datos locales (1) |
+| M2 | `tickets.ts:136` sin `if (!modo.activo) ` | aperturas › con datos locales (1) |
+| M3 | `tickets.ts:149` sin el añadido | aperturas › con datos locales; sin datos locales (2) |
+| M4 | `tickets.ts:169` sin el añadido | aperturas › con datos locales; sin datos locales (2) |
+| M5 | `tickets.ts:196` guarda ANTES de `guardWrites` | reply › `ENABLE_WRITES` cerrado; abierto y sin área (2; dan `503`) |
+| M6 | `tickets.ts:196` guarda entre `guardWrites` y `requireArea` | reply › abierto y sin área (1; da `503`) |
+| M7 | `attachment.ts:22` sin el añadido | attachment › sin copia (1; llama a `zohoFetch`) |
+| M8 | línea de `logger.warn` (`attachment.ts:40`) con `name` | attachment › sin copia (1; el marcador aparece) |
+| M9 | ídem con `path` | attachment › sin copia (1; aparece el href) |
+
+### Regla 13 y medida
+`git diff --name-only` sin nada bajo `apps/desk/src`. Código nuevo de producción sin `method:` ni `{ method,` nuevos (el `method: 'POST'` de `tickets.ts:204` es preexistente) y sin `MODO_SIN_ZOHO_DESK`.
+Medida: `git diff --shortstat --no-renames HEAD` 27 inserciones y 15 borrados (42) + `wc -l` de lo nuevo sin trackear 173 = 215 (estimado ~415).
+
+### Contraste del orquestador y cierre (L4.6)
+Informe contrastado: `git diff --numstat` 2/2, 11/5, 14/8; `wc -l` del nuevo 173; CRLF; cada línea editada en sitio comparada con la de `c5b6cd2d`: sólo añade, y lo nuevo (`servirLocal`, `adjuntoSinCopiaEnModo`) va al final. Desviación declarada y aceptada: `routes/attachment.ts:1` también en sitio (añade los tipos `Request` y `Response`). La medida del informe (215) no contaba `apply-progress.md` ni `tasks.md`; la del intento la da el commit. Posición reproducida por el orquestador (guarda entre `guardWrites` y `requireArea` en `routes/tickets.ts:196`: sin área se recibe `503` en vez del `403` del área; sha256 restaurado `657d37d6b972eda4`, CRLF). Barrido B.1 de `routes/tickets.ts` y `routes/attachment.ts`: las citas vivas a líneas editadas son cuatro a `tickets.ts:196` (`openspec/specs/permissions/spec.md:658`, `openspec/specs/zoho-sync/spec.md:244`, `:604`, `:755`) y siguen ciertas; las de `attachment.ts` apuntan sólo a `:17`, que no cambia.
