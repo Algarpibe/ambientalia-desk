@@ -202,3 +202,19 @@ describe('loadConfig · verificacionCompletitudHabilitada (1G-03, RQ-ZS-39)', ()
     expect(loadConfig({ ...base, VERIFICACION_COMPLETITUD_HABILITADA: 'true' }).verificacionCompletitudHabilitada).toBe(true)
   })
 })
+
+describe('loadConfig · modoSinZohoDesk (1G-04, RQ-ZS-40)', () => {
+  it("nace cerrado: ausente, vacío, `TRUE`, `1` y `false` lo dejan en false; sólo 'true' lo abre", () => {
+    expect(loadConfig(base).modoSinZohoDesk).toBe(false)
+    expect(loadConfig({ ...base, MODO_SIN_ZOHO_DESK: '' }).modoSinZohoDesk).toBe(false)
+    expect(loadConfig({ ...base, MODO_SIN_ZOHO_DESK: 'TRUE' }).modoSinZohoDesk).toBe(false)
+    expect(loadConfig({ ...base, MODO_SIN_ZOHO_DESK: '1' }).modoSinZohoDesk).toBe(false)
+    expect(loadConfig({ ...base, MODO_SIN_ZOHO_DESK: 'false' }).modoSinZohoDesk).toBe(false)
+    expect(loadConfig({ ...base, MODO_SIN_ZOHO_DESK: 'true' }).modoSinZohoDesk).toBe(true)
+  })
+
+  it('abierto, loadConfig sigue exigiendo las credenciales de Desk (S-g)', () => {
+    expect(() => loadConfig({ ...base, MODO_SIN_ZOHO_DESK: 'true', ZOHO_CLIENT_ID: undefined })).toThrow(/ZOHO_CLIENT_ID/)
+    expect(() => loadConfig({ ...base, MODO_SIN_ZOHO_DESK: 'true', ZOHO_REFRESH_TOKEN: undefined })).toThrow(/ZOHO_REFRESH_TOKEN/)
+  })
+})
