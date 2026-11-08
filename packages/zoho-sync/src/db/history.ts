@@ -5,7 +5,7 @@ import { mapHistoryEvent } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
-function eventId(ticketId: string, raw: any): string {
+export function eventId(ticketId: string, raw: any): string {
   const key = `${ticketId}|${raw.eventTime ?? ''}|${raw.eventName ?? ''}|${JSON.stringify(raw.eventInfo ?? [])}`
   return 'h-' + createHash('sha1').update(key).digest('hex').slice(0, 24)
 }

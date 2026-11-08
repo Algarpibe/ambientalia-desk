@@ -94,3 +94,45 @@ Posiciones: la clasificación es UNA línea (`clasificar.ts:40`); las tres varia
 
 ### Cierre del orquestador (i4)
 Commit `d5443ef1` sobre `52175178`: medida `git diff --shortstat --no-renames 52175178` = 8 ficheros, 463 inserciones y 8 borrados (471), 0 sin trackear; igual a la suma del informe del lote. Cinco comprobaciones en serie sobre el árbol commiteado: typecheck 0; lint 0 (165 avisos contra 165); detector 0 (8.114 comprobadas, 13 abreviadas rotas informativas, las de la base); `npm test` 0 (351 ficheros + 4 omitidos, 6.104 pruebas + 26 omitidas; 354 s; 11.752 MB libres al arrancar; log `npmtest-vco-i4-195127.log` del scratchpad); build 0.
+
+## Lote L3 — intento i5 (partida `c67bef09`)
+
+Estado: L3.1-L3.7 hechas; L3.8 (las cinco comprobaciones sobre el árbol commiteado) pendiente del orquestador.
+
+### L3.1 · M0 (orquestador, cierre de i4 sobre `d5443ef1`; `c67bef09` sólo añadió documentos)
+`npm test`: 351 ficheros pasan, 4 omitidos; 6.104 pruebas pasan, 26 omitidas; 354 s; 11.752 MB libres; código 0. Log `npmtest-vco-i4-195127.log`.
+
+### Rojo medido (L3.2-L3.4); ninguna roja por el arnés
+Safety net de lo existente que se toca: `packages/zoho-sync/src/db/history.test.ts` 1/1.
+- `soloLectura.test.ts` y `lectores.test.ts` (nuevos): ROJAS como suite, `Cannot find module './soloLectura'` y `'./lectores'` (la causa es que el código no existe).
+- CA-4 (con `lectores.ts` ya escrito, antes de exportar `eventId`): `lectores.test.ts` › historia › el evento guardado casa por el id derivado… › `TypeError: (0 , eventId) is not a function`; 1 roja de 16, las otras 15 verdes.
+
+### Verde
+Focal (`soloLectura.test.ts` 8, `lectores.test.ts` 16, `history.test.ts` 1): 25 pasan. `npm run typecheck` 0. `npm run lint -- --max-warnings 165`: 165 contra 165, 0 errores, 0 nuevos.
+L3.6 suite entera, primer plano, `npm test`, 20:10:57 a 20:16:51, 11.816 MB libres al arrancar, 354 s, log `npmtest-vco-L3-verde.log`. **Código 1, y real**: 352 ficheros pasan, 1 falla, 4 omitidos; 6.127 pruebas pasan, 1 falla, 26 omitidas. La roja: `superficieSaliente.test.ts` › las llamadas no-GET… doce › `expected [ 'apps/desk/server/completitud/soloLectura.ts' ] to deeply equal []` (`verboDinamico`). Causa mía: el COMENTARIO de cabecera de `soloLectura.ts` escribía la subcadena `{ method,` que el barrido clasifica (`superficieSaliente.ts:57`); el código no la tenía. Arreglado reescribiendo el comentario sin ella. NO repetí la suite entera (una sola vez, por encargo): tras el arreglo, focal `superficieSaliente.test.ts` + `completitud/` = 7 ficheros, 86 pruebas verdes; typecheck 0; lint 165 contra 165. Esperado de la suite entera ahora: 353 ficheros + 4 omitidos, 6.128 pruebas (+2 ficheros y +24 sobre M0).
+
+### L3.7 · Mutaciones (`perl -i -pe '… if $. == N'`; ficheros nuevos y sin trackear: restaurados con copia y `cmp` idéntico, LF sin cambio)
+| Id | Fichero:línea y edición | Rojo (fichero › prueba › aserción) |
+|---|---|---|
+| M3 (c) | `soloLectura.ts:36`, línea de la comprobación de `soloGet` vaciada | `soloLectura.test.ts` › soloGet › un init con POST se rechaza y se cuenta… › `expected { total: +0, tipos: [] } to deeply equal { total: 2, …(1) }`; › el mismo registro suma… (2 rojas) |
+| M4 (b) | `lectores.ts:56` (`leerPaginas`) y, aparte, `:73` (`leerPorId`): `catch (e) { return … motivo: String(e) }` | `lectores.test.ts` › leerPaginas › motivos cerrados… y › leerPorId › motivos cerrados… › `expected { estado: 'error', …(1) } to deeply equal { estado: 'error', motivo: 'red' }` (1 roja cada una) |
+| P3 | `lectores.ts:44` (`leerPaginas`, copia de `!res.ok` antes de la del `429`) | › 429 se reintenta la MISMA petición… › `expected { estado: 'error', …(1) } to match object { estado: 'ok' }`; › en una lista, 404 y 500… (2 rojas) |
+| P3 | `lectores.ts:66` (`leerPorId`, ídem antes de la del `429`) | › 429, 429, 404 ⇒ «no está» tras DOS pausas… › `expected [ '/tickets/1' ] to have a length of 2 but got 1`; › 429, 500…; › 404 a la primera…; › 429 agotado… (4 rojas) |
+| P3 | `lectores.ts:67` (`leerPorId`, ídem antes de la del `404`) | › 429, 429, 404… y › 404 a la primera… › `expected { estado: 'error', …(1) } to deeply equal { estado: 'noEsta' }` (2 rojas) |
+Un primer intento de P3 dio falsos verdes por mi `perl` (faltaba el `;` tras el `return` y el fichero no cargaba): rehecho con `; ` y el rojo salió de la guarda. `leerConversacionesDe` no tiene guardas propias (el orden vive en `leerConversaciones`, intacto), así que P3 son tres, una por lector.
+
+### Regla 13 y barrido (B.1)
+`git diff --name-only`: `proposal.md`, `history.ts`, `tasks.md`, este fichero; nada bajo `apps/desk/src`. En sitio, 1/1: `history.ts:8` (`export function eventId(`, CRLF intacto) y `proposal.md:47` (caso B: «en `03ab82c2`»). Ninguna línea se movió, así que ninguna cita `history.ts:N` cambia de número. `grep -rnoE "history\.ts:[0-9]+(-[0-9]+)?"` sobre todo el repositorio (archive y docs incluidos): 16 grupos. Leídas contra lo que afirman: `:8`, `:8-11` (4 ficheros de este cambio) y `:17` siguen siendo `eventId` y su uso en el `upsert` (A); `proposal.md:132`, `spec.md:90`, `:114` igual; `openspec/specs/trazas/spec.md:126` (`:13-19` upsert) y `:131` (`:16` `ON CONFLICT`) aciertan; `reloj-sla-esperas/proposal.md:67` (`:15`, el `INSERT`) y `Paquete_de_Despliegue_2026-09-10.md:456` (`:14-18`) acertan; `F0-00_Baseline_as-built.md:429` (`:22-30`, el comentario de `getZohoHistoryEvents`) acierta. Con revisión escrita y fuera de alcance (no se editan): `Triaje_Linea_Base_Citas_2026-09-15.md:74` y `2026-08-05-historia-unificada-ticket.md:290` (`:21-36 en 9cea347`, caso B). Caducas de antes, sin relación con este cambio y NO editadas: `docs/superpowers/specs/2026-08-05-historia-unificada-ticket-design.md:20` (`:24` por `getTicketHistory`, hoy comentario) y `openspec/specs/trazas/spec.md:499` (`:24`, histórica con «hoy están en :412»). Segundo pase de abreviadas: sin desplazamiento no hay nada que reapuntar.
+
+### TDD Cycle Evidence
+| Tarea | Fichero de prueba | Capa | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| L3.2/L3.5 soloLectura | `completitud/soloLectura.test.ts` | Unidad | N/A (nuevo) | medido (módulo ausente) | 8/8 | SELECT, INSERT, UPDATE/DELETE, VARIAS, `;` final, GET/POST/DELETE/PUT, registro compartido | guardas separadas en líneas propias (M3 c) |
+| L3.3/L3.5 lectores | `completitud/lectores.test.ts` | Unidad, reloj falso | N/A (nuevo) | medido (módulo ausente) | 15/15 | por id y por lista, cada guarda con su contraejemplo | sin cambios |
+| L3.3/L3.5 CA-4 | `completitud/lectores.test.ts` | pg-mem, `upsertHistoryEvent` real | 1/1 | medido (`eventId is not a function`) | 16/16 | guardado, nuevo y repetido | sin cambios |
+
+### Decisiones de forma (el diseño no las fija)
+`soloSelect(db, registro?)` y `soloGet(f, registro?)` reciben el registro (`crearRegistroEscrituras()`, `{ total, tipos }` con tipos únicos y ordenados); sin él crean uno propio. Los lectores devuelven `{ estado: 'ok' | 'error' | 'corte' | 'vivo' | 'noEsta' }` (P4 de L4 usa `estado`). `leerPaginas` admite `clave` para deduplicar (la historia no trae `id`: se pasa `eventId`). Motivos: `red`, `json`, `tope`, `forma` (ítem sin clave), `<recurso> http <n>` y `conversaciones http <n>|tope|red`; el `<recurso>` sale de la ruta sólo con segmentos de un conjunto cerrado (un id nunca entra). La pausa `PAUSA_ENTRE_TICKETS_MS` entre peticiones NO está en los lectores: la pone el motor (L4) al envolver `zohoFetch`.
+
+### Medida
+`git diff --shortstat --no-renames c67bef09` (rastreado): 4 ficheros, 52 inserciones y 10 borrados (62: este fichero +42, `tasks.md` 8/8, `proposal.md` 1/1, `history.ts` 1/1). `wc -l` de lo nuevo sin trackear: `soloLectura.ts` 39, `lectores.ts` 90, `soloLectura.test.ts` 81, `lectores.test.ts` 154 (364). Total 426 contra 800. Binarios: ninguno.

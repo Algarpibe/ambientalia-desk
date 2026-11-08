@@ -44,7 +44,7 @@ cuentas de Zoho —sólo la lectura por id de `packages/zoho-sync/src/sync.ts:86
 
 **2.2 · Lo que Desk guarda.** Los adjuntos salen sólo del cuerpo de cada conversación, con `size`
 (`packages/zoho-sync/src/db/mappers.ts:113-120`). La historia lleva un id derivado, `h-` y un sha1 de ticket, instante, evento y detalle,
-en una función no exportada (`packages/zoho-sync/src/db/history.ts:8-11`). Lo que Zoho ya no devuelve queda con `ausente_en_zoho_at`
+en una función no exportada (`packages/zoho-sync/src/db/history.ts:8-11` en `03ab82c2`). Lo que Zoho ya no devuelve queda con `ausente_en_zoho_at`
 (`packages/zoho-sync/src/db/schema.sql:852`; `DEPLOY.md:854-858`). Un ticket de la app lleva el prefijo `app-`
 (`apps/desk/server/db/ticketFuentes.ts:40-42`); `accounts` y `contacts` tienen `source` y `managed_by_app`
 (`packages/zoho-sync/src/db/schema.sql:4`, `packages/zoho-sync/src/db/schema.sql:10`) y sólo los escribe el upsert desde Zoho
