@@ -90,12 +90,12 @@ Escenarios: RQ-ZS-40 el adjunto que caía a Zoho; RQ-ZS-44 las aperturas sirven 
 
 ## Lote L5 — el worker (intento i7)
 Escenarios: RQ-ZS-45 los tres; RQ-ZS-42 el worker deja una línea por origen nuevo (cableado).
-- [ ] L5.1 ROJO `apps/hub-sync/src/hubSyncModoSinZoho.test.ts` (nuevo, molde `apps/hub-sync/src/hubSync.test.ts:128-131`): abierto, ni `backfillTickets`, ni `backfillArchivedTickets`, ni `syncActivities`, ni `syncContacts`, ni `syncRecent` tras avanzar el reloj, y Books y CRM sí, con su periodo; `migrate` corre; cerrado, las tres pasadas. Fichero vigilado (molde `apps/hub-sync/src/hub-sync.guardian.test.ts:17-19`): las líneas de `hubBootstrap(` y `scheduleHubSync(` llevan `modoSinZohoDesk: config.modoSinZohoDesk` y la de `createZohoClient(`, `registro:` y `avisar:`.
-- [ ] L5.2 Anotar el rojo medido en `apply-progress.md`.
-- [ ] L5.3 En sitio: `apps/hub-sync/src/hubSync.ts:11`, `:12`, `:15`, `:21`, `:22`, `:86`, `:87`, `:90` (8/8) y `apps/hub-sync/src/hub-sync.ts:4`, `:20`, `:48`, `:49` (4/4).
-- [ ] L5.4 Verde: la focal (incluye `hub-sync.guardian.test.ts` y `hubSyncSinConversaciones.test.ts:43-45`, intactas), typecheck y suite con log.
-- [ ] L5.5 Mutaciones: quitar el prefijo de `hubSync.ts:90`, de `:15`, `:21` o `:22`; quitar el campo de `hub-sync.ts:48` o `:49`, o el `avisar:` de `:20`.
-- [ ] L5.6 Regla 13 y cierre del lote.
+- [x] L5.1 ROJO `apps/hub-sync/src/hubSyncModoSinZoho.test.ts` (nuevo, molde `apps/hub-sync/src/hubSync.test.ts:128-131`): abierto, ni `backfillTickets`, ni `backfillArchivedTickets`, ni `syncActivities`, ni `syncContacts`, ni `syncRecent` tras avanzar el reloj, y Books y CRM sí, con su periodo; `migrate` corre; cerrado, las tres pasadas. Fichero vigilado (molde `apps/hub-sync/src/hub-sync.guardian.test.ts:17-19`): las líneas de `hubBootstrap(` y `scheduleHubSync(` llevan `modoSinZohoDesk: config.modoSinZohoDesk` y la de `createZohoClient(`, `registro:` y `avisar:`.
+- [x] L5.2 Anotar el rojo medido en `apply-progress.md`.
+- [x] L5.3 En sitio: `apps/hub-sync/src/hubSync.ts:11`, `:12`, `:15`, `:21`, `:22`, `:86`, `:87`, `:90` (8/8) y `apps/hub-sync/src/hub-sync.ts:4`, `:20`, `:48`, `:49` (4/4).
+- [x] L5.4 Verde: la focal (incluye `hub-sync.guardian.test.ts` y `hubSyncSinConversaciones.test.ts:43-45`, intactas), typecheck y suite con log.
+- [x] L5.5 Mutaciones: quitar el prefijo de `hubSync.ts:90`, de `:15`, `:21` o `:22`; quitar el campo de `hub-sync.ts:48` o `:49`, o el `avisar:` de `:20`.
+- [x] L5.6 Regla 13 y cierre del lote.
 
 ## Lote L6 — barrido del repositorio (intento i8)
 Escenarios: RQ-ZS-46 los tres.

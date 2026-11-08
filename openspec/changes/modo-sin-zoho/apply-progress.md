@@ -176,3 +176,37 @@ Medida: `git diff --shortstat --no-renames HEAD` 27 inserciones y 15 borrados (4
 
 ### Contraste del orquestador y cierre (L4.6)
 Informe contrastado: `git diff --numstat` 2/2, 11/5, 14/8; `wc -l` del nuevo 173; CRLF; cada línea editada en sitio comparada con la de `c5b6cd2d`: sólo añade, y lo nuevo (`servirLocal`, `adjuntoSinCopiaEnModo`) va al final. Desviación declarada y aceptada: `routes/attachment.ts:1` también en sitio (añade los tipos `Request` y `Response`). La medida del informe (215) no contaba `apply-progress.md` ni `tasks.md`; la del intento la da el commit. Posición reproducida por el orquestador (guarda entre `guardWrites` y `requireArea` en `routes/tickets.ts:196`: sin área se recibe `503` en vez del `403` del área; sha256 restaurado `657d37d6b972eda4`, CRLF). Barrido B.1 de `routes/tickets.ts` y `routes/attachment.ts`: las citas vivas a líneas editadas son cuatro a `tickets.ts:196` (`openspec/specs/permissions/spec.md:658`, `openspec/specs/zoho-sync/spec.md:244`, `:604`, `:755`) y siguen ciertas; las de `attachment.ts` apuntan sólo a `:17`, que no cambia.
+
+## Lote L5 (intento i7) — el worker · L5.1 a L5.5 hechas; L5.6 es del orquestador
+
+### Rojo medido (L5.1, L5.2)
+Antes de medir se añadió sólo `modoSinZohoDesk?: boolean` a los dos tipos (`hubSync.ts:11`, `:86`), para que la prueba compile. `npx vitest run apps/hub-sync/src/hubSyncModoSinZoho.test.ts`: 9 pruebas, 5 rojas por aserción, 4 verdes (las de cerrado y sin campo, que fijan el comportamiento de hoy).
+| Fichero › prueba | Aserción |
+|---|---|
+| hubSyncModoSinZoho › hubBootstrap › abierto y con el hub vacío | `expected "spy" to not be called at all, but actually been called 1 times` (`backfillTickets`) |
+| hubSyncModoSinZoho › scheduleHubSync › abierto: no programa la pasada de Desk | `expected "spy" to not be called at all, but actually been called 3 times` (`syncRecent`) |
+| hubSyncModoSinZoho › hub-sync.ts › hubBootstrap lleva el modo | `expected '  await hubBootstrap({ db: pool, sync…' to contain 'modoSinZohoDesk: config.modoSinZohoDesk'` |
+| hubSyncModoSinZoho › hub-sync.ts › scheduleHubSync lleva el modo | ídem con `scheduleHubSync({ sync, booksHubSyn…` |
+| hubSyncModoSinZoho › hub-sync.ts › createZohoClient recibe registro y aviso | `expected 'const { zohoFetch } = createZohoClien…' to contain 'registro:'` |
+
+### Verde (L5.3, L5.4)
+En sitio, misma línea física: `hubSync.ts` 8/8 (`:11`, `:12`, `:15`, `:21`, `:22`, `:86`, `:87`, `:90`), `hub-sync.ts` 4/4 (`:4`, `:20`, `:48`, `:49`); `createSync(` (`:21`) intacta. Books y CRM sin cambio; `migrate` y la resiembra siguen corriendo. Focal `npx vitest run apps/hub-sync/src`: 4 ficheros, 26 pruebas verdes (`hub-sync.guardian.test.ts`, `hubSyncSinConversaciones.test.ts` y `hubSync.test.ts` intactas). `npm run typecheck` salida 0. Lint `--max-warnings 165`: salida 0, «165 problems (0 errors, 165 warnings)».
+
+### Mutaciones (L5.5), `perl -i -pe '… if $. == N'`, restauración con la sustitución inversa
+`sha256sum` idéntico antes y después en todas (`hubSync.ts` `66fd1bf72a03…`, `hub-sync.ts` `647152a1f51a…`) y `file` con CRLF. Cada una pone rojas EXACTAMENTE 1 prueba de las 26.
+| # | Mutación | Prueba roja |
+|---|---|---|
+| M1 | `hubSync.ts:90` sin `if (!modoSinZohoDesk) ` | scheduleHubSync › abierto: no programa la pasada de Desk |
+| M2 | `hubSync.ts:15` sin `!modoSinZohoDesk && ` | hubBootstrap › abierto y con el hub vacío |
+| M3 | `hubSync.ts:21` sin el prefijo | hubBootstrap › abierto y con el hub vacío |
+| M4 | `hubSync.ts:22` sin el prefijo | hubBootstrap › abierto y con el hub vacío |
+| M5 | `hub-sync.ts:48` sin el campo | hub-sync.ts › hubBootstrap lleva el modo |
+| M6 | `hub-sync.ts:49` sin el campo | hub-sync.ts › scheduleHubSync lleva el modo |
+| M7 | `hub-sync.ts:20` sin `avisar:` | hub-sync.ts › createZohoClient recibe registro y aviso |
+
+### Regla 13 y medida
+`git diff --name-only` sin nada bajo `apps/desk/src`. Código nuevo sin `method:` ni `MODO_SIN_ZOHO_DESK`.
+Medida: `git diff --shortstat --no-renames HEAD` 47 inserciones y 17 borrados (64, con `apply-progress.md` y `tasks.md`) + `wc -l` de lo nuevo sin trackear 135 = 199 (estimado ~335).
+
+### Contraste del orquestador y cierre (L5.6)
+Informe contrastado: `git diff --numstat` 8/8 y 4/4 (cada línea sólo añade, comparada con la de `7c081f63`), `wc -l` 135, CRLF. Mutación M1 reproducida por el orquestador (sin el prefijo de `apps/hub-sync/src/hubSync.ts:90` se programa Desk: 1 roja de 26; sha256 restaurado `66fd1bf72a03529f`, CRLF). Barrido B.1 de `hubSync.ts` y `hub-sync.ts`: siguen ciertas `openspec/specs/zoho-sync/spec.md:272` (`hub-sync.ts:49`), `:376` (`hubSync.ts:10-20`) y `DEPLOY.md:199` (`hubSync.ts:11-72`); el `hubSync.ts:90` de `packages/zoho-sync/src/modoSinZoho.test.ts:127` es una pila sintética. Preexistente y NO causado por esta tanda (no mueve líneas): `openspec/specs/zoho-sync/spec.md:48` y `:753` (`hubSync.ts:79-95`), `:266` (`:87-89`, Books) y `:270` (`:88-95`) apuntan a posiciones anteriores a `244c237c` y siguientes; hoy Desk está en `:90-100` y Books en `:101-105`. Nota para Supervisión.
