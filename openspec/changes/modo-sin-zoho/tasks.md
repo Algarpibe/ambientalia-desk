@@ -43,7 +43,7 @@ Chain strategy: pending
 
 ## Planificación (i1, i2)
 - [x] P.1 `proposal.md`, delta `specs/zoho-sync/spec.md` y la guarda que cuenta el árbol en sitio (`apps/desk/server/reconciliacion/registro.test.ts:218` y `:220`, NUEVE con 1G-04), commit `6417fa9b` (i1).
-- [x] P.2 `design.md`, contrastado dato a dato con el código de `6417fa9b`; los tres retoques de la delta (`specs/zoho-sync/spec.md:150-151`, excepción de `ENABLE_WRITES` en la respuesta por `apps/desk/server/routes/tickets.ts:196`; `:233`, todo transporte HTTP; `:255`, `## 24.`); `proposal.md:183-186` en sitio (la guarda la corrigió i1) y la nota de D-13 al final de `proposal.md` (i2).
+- [x] P.2 `design.md`, contrastado dato a dato con el código de `6417fa9b`; los tres retoques de la delta (`openspec/changes/modo-sin-zoho/specs/zoho-sync/spec.md:150-151`, excepción de `ENABLE_WRITES` en la respuesta por `apps/desk/server/routes/tickets.ts:196`; `openspec/changes/modo-sin-zoho/specs/zoho-sync/spec.md:233`, todo transporte HTTP; `openspec/changes/modo-sin-zoho/specs/zoho-sync/spec.md:255`, `## 24.`); `proposal.md:183-186` en sitio (la guarda la corrigió i1) y la nota de D-13 al final de `proposal.md` (i2).
 - [x] P.3 Este `tasks.md` (i2).
 
 ## Lote L1 — puerta, error, registro y configuración (intento i3)

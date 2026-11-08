@@ -264,7 +264,7 @@ Orden usada, desde la raíz del worktree, para cada señal (la expresión es la 
 | # | Mutación | Rojo observado |
 |---|---|---|
 | a | `fetch('https://desk.zoho.com/api/v1/tickets')` al final de `measure.ts` | 1 roja (barrido real › ninguna señal fuera de su lista): `"transporte en apps/desk/server/measure.ts:83"`, `dominio-desk` y `base-api` en la misma línea; el mensaje trae «ficheros recorridos: 273» |
-| b | quitar de `PERMITIDOS` (`:73`) `books/booksClient.ts` en `transporte` | 1 roja (ninguna señal fuera de su lista): `transporte en packages/zoho-sync/src/books/booksClient.ts:32` y `:45` |
+| b | quitar de `PERMITIDOS` (`:73`) `books/booksClient.ts` en `transporte` | 1 roja (ninguna señal fuera de su lista): señal `transporte` en `packages/zoho-sync/src/books/booksClient.ts:32` y `:45` |
 | c | `'cliente-http': []` (`:82`) → `['apps/desk/server/measure.ts']` | 1 roja (la lista no contiene un sitio sin señal): `cliente-http sin uso en apps/desk/server/measure.ts` |
 | d | `sinComentarios` sin quitar los `//` (`:210`, `if (false && …)`) | 8 rojas, las de `sinComentarios` y las formas en comentario (p. ej. «quita el comentario de línea»: `const a = 1 // fetch(x)` sigue ahí) |
 | e | señal de transporte sin `fetchImpl` (`:40`, `(?:fetch)`) | 3 rojas: «cada forma fuera de la lista» (la forma `fetchImpl(url)`), «la línea del hallazgo es la del código» y, en el real, «la lista cerrada no contiene un sitio sin señal real» (los sitios que sólo llamaban por `fetchImpl(` quedan en `sinUso`); la de hallazgos del real sigue verde |
