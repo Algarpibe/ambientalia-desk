@@ -153,3 +153,5 @@ Líneas redactadas para `.env.example` (P-5):
 - **Reconciliación:** tras fusionar, 1G-03 cuenta como cerrada por archivo; la reconciliación de `main` se regenera como tras 1G-02.
 
 ## 9. Cierre del intento de archivo (i10)
+
+Commit `76264a1a` sobre `36cb0035`, con sólo este cambio (`git show --numstat`): la carpeta movida (5 ficheros 0/0 y `tasks.md` 4/4), este informe (155), la spec viva (218/0) y `apps/desk/server/reconciliacion/registro.test.ts` (2/2). Medida `git diff --shortstat --no-renames 36cb0035`: 15 ficheros, 1.626 inserciones y 1.253 borrados (2.879), frente al techo de 3.302; la parte revisable fue 373 (218 + 155). Cinco comprobaciones en serie sobre el árbol commiteado: typecheck 0; lint 0 (165 contra 165); detector 0 (7.913 comprobadas: baja porque el detector excluye `archive/`; 13 abreviadas rotas, las de la base); `npm test` 0 (357 ficheros + 4 omitidos, 6.199 pruebas + 26 omitidas; 247 s; 12.500 MB libres al arrancar; log `npmtest-vco-i10-221919.log`); build 0. Las citas de este informe, que el detector no lee, se comprobaron con el script propio del worktree hermano: 23 completas, ninguna rota.
