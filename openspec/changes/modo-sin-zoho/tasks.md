@@ -99,12 +99,12 @@ Escenarios: RQ-ZS-45 los tres; RQ-ZS-42 el worker deja una línea por origen nue
 
 ## Lote L6 — barrido del repositorio (intento i8)
 Escenarios: RQ-ZS-46 los tres.
-- [ ] L6.1 ROJO `apps/desk/server/barridoZohoDesk.test.ts` (nuevo): `sinComentarios` (cadenas, plantillas, regex, `//` y `/* */`, saltos conservados, `https://` en cadena intacto); árbol sintético en memoria con un fichero por forma —`fetch('https://desk.zoho.com/api/v1/tickets')`, `fetchImpl(url)`, dominio de Desk, `oauth/v2/token`, `createZohoClient` nuevo, `http.request` de `node:http`—, cada uno rojo y nombrado; las mismas formas sólo en comentarios, verde; el árbol real del disco, verde, con `sinUso` vacío y más de cero ficheros recorridos (el número en el mensaje).
-- [ ] L6.2 Anotar el rojo medido en `apply-progress.md`.
-- [ ] L6.3 `apps/desk/server/testing/barridoZohoDesk.ts` (nuevo): `sinComentarios`, `barrer`, `leerArbol` y la lista cerrada de D-8, medida otra vez sobre el árbol de este lote (incluye los ficheros nuevos de L1-L5).
-- [ ] L6.4 Verde: la focal (incluye `superficieSaliente.test.ts`, intacta), typecheck y suite con log.
-- [ ] L6.5 Mutaciones, **fichero vigilado (regla 2)**: añadir al final de `apps/desk/server/measure.ts` `fetch('https://desk.zoho.com/api/v1/tickets')` (rojo y nombra el fichero) y restaurar; quitar un sitio de la lista (rojo en el real); añadir uno sin señal (`sinUso` no vacío). Si el árbol real da un falso rojo, se afina `sinComentarios`, nunca la lista (H-3).
-- [ ] L6.6 Regla 13 y cierre del lote.
+- [x] L6.1 ROJO `apps/desk/server/barridoZohoDesk.test.ts` (nuevo): `sinComentarios` (cadenas, plantillas, regex, `//` y `/* */`, saltos conservados, `https://` en cadena intacto); árbol sintético en memoria con un fichero por forma —`fetch('https://desk.zoho.com/api/v1/tickets')`, `fetchImpl(url)`, dominio de Desk, `oauth/v2/token`, `createZohoClient` nuevo, `http.request` de `node:http`—, cada uno rojo y nombrado; las mismas formas sólo en comentarios, verde; el árbol real del disco, verde, con `sinUso` vacío y más de cero ficheros recorridos (el número en el mensaje).
+- [x] L6.2 Anotar el rojo medido en `apply-progress.md`.
+- [x] L6.3 `apps/desk/server/testing/barridoZohoDesk.ts` (nuevo): `sinComentarios`, `barrer`, `leerArbol` y la lista cerrada de D-8, medida otra vez sobre el árbol de este lote (incluye los ficheros nuevos de L1-L5).
+- [x] L6.4 Verde: la focal (incluye `superficieSaliente.test.ts`, intacta), typecheck y suite con log.
+- [x] L6.5 Mutaciones, **fichero vigilado (regla 2)**: añadir al final de `apps/desk/server/measure.ts` `fetch('https://desk.zoho.com/api/v1/tickets')` (rojo y nombra el fichero) y restaurar; quitar un sitio de la lista (rojo en el real); añadir uno sin señal (`sinUso` no vacío). Si el árbol real da un falso rojo, se afina `sinComentarios`, nunca la lista (H-3).
+- [x] L6.6 Regla 13 y cierre del lote.
 
 ## Lote L7 — `DEPLOY.md` §24 (intento i9)
 Escenarios: RQ-ZS-47 los dos.

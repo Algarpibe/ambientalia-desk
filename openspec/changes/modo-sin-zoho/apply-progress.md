@@ -210,3 +210,68 @@ Medida: `git diff --shortstat --no-renames HEAD` 47 inserciones y 17 borrados (6
 
 ### Contraste del orquestador y cierre (L5.6)
 Informe contrastado: `git diff --numstat` 8/8 y 4/4 (cada línea sólo añade, comparada con la de `7c081f63`), `wc -l` 135, CRLF. Mutación M1 reproducida por el orquestador (sin el prefijo de `apps/hub-sync/src/hubSync.ts:90` se programa Desk: 1 roja de 26; sha256 restaurado `66fd1bf72a03529f`, CRLF). Barrido B.1 de `hubSync.ts` y `hub-sync.ts`: siguen ciertas `openspec/specs/zoho-sync/spec.md:272` (`hub-sync.ts:49`), `:376` (`hubSync.ts:10-20`) y `DEPLOY.md:199` (`hubSync.ts:11-72`); el `hubSync.ts:90` de `packages/zoho-sync/src/modoSinZoho.test.ts:127` es una pila sintética. Preexistente y NO causado por esta tanda (no mueve líneas): `openspec/specs/zoho-sync/spec.md:48` y `:753` (`hubSync.ts:79-95`), `:266` (`:87-89`, Books) y `:270` (`:88-95`) apuntan a posiciones anteriores a `244c237c` y siguientes; hoy Desk está en `:90-100` y Books en `:101-105`. Nota para Supervisión.
+
+## Lote L6 (intento i8) — barrido del repositorio · L6.1 a L6.5 hechas; L6.6 es del orquestador
+
+### Rojo medido (L6.1, L6.2)
+Antes de medir se creó `apps/desk/server/testing/barridoZohoDesk.ts` con las firmas finales y cuerpos que no cumplen (`sinComentarios` devolvía el texto tal cual, `barrer` `{ hallazgos: [], sinUso: [] }`, `leerArbol` `[]`, `PERMITIDOS` `{}`). `npx vitest run apps/desk/server/barridoZohoDesk.test.ts`: 23 pruebas, 17 rojas por aserción, 6 verdes (las que un cuerpo vacío cumple por casualidad: «sólo en comentarios no cuenta», «no casa lo vecino», raíz inexistente y tres del árbol real que dependen de que haya hallazgos).
+| Fichero › prueba | Aserción |
+|---|---|
+| barridoZohoDesk › sinComentarios › quita el comentario de línea | `expected 'const a = 1 // fetch(x)\nconst b = 2' not to contain 'fetch'` |
+| › quita el comentario de bloque | `expected 'a\n/* desk.zoho.com…' not to contain 'desk.zoho'` |
+| › no rompe un https:// dentro de una cadena | `expected "const u = 'https://x.test' // nota" not to contain 'nota'` |
+| › respeta las comillas escapadas | `… not to contain 'sí lo es'` |
+| › conserva las plantillas anidadas | `… not to contain 'nota'` |
+| › quita un comentario dentro de `${…}` | `… not to contain 'fetch'` |
+| › un literal regex con // y comillas | `… not to contain 'nota'` |
+| › una regex tras ( , : ! & … | `f(: expected 'f( /\'/ // nota' not to contain 'nota'` |
+| barrer › cada forma fuera de la lista pone el barrido en rojo | `sint/get-implicito.ts: expected [] to include 'transporte'` |
+| barrer › la línea del hallazgo es la del código | `expected [] to deeply equal [ { senal: 'transporte', …(2) } ]` |
+| barrer › una señal vale sólo en los ficheros de su lista | `expected [] to deeply equal [ { senal: 'transporte', …(2) } ]` |
+| barrer › sinUso lista la pareja permitida sin coincidencia | `expected [] to deeply equal [ { senal: 'transporte', …(1) }, …(1) ]` |
+| barrer › la lectura del modo va con límites de palabra | `expected [] to include 'lectura-modo'` |
+| barrer › las señales de destino se ven dentro de cadenas | `expected [] to deeply equal ArrayContaining{…}` |
+| leerArbol › lee las cuatro raíces… | `expected [] to deeply equal [ 'apps/desk/server/a.ts', …(4) ]` |
+| leerArbol › los .ts pasan por sinComentarios… | `the given combination of arguments (undefined and string) is invalid for this assertion` (el fichero no se lee) |
+| barrido real › recorre ficheros de verdad | `ficheros recorridos: 0: expected 0 to be greater than 0` |
+
+### Verde (L6.3, L6.4)
+`testing/barridoZohoDesk.ts` (nuevo): `sinComentarios`, `barrer`, `leerArbol`, `SENALES` (14, no exportada), `RAICES` y `PERMITIDOS`. `npx vitest run apps/desk/server/barridoZohoDesk.test.ts apps/desk/server/superficieSaliente.test.ts`: 2 ficheros, 25 pruebas verdes, salida 0 (`superficieSaliente.test.ts` intacta). Sobre el árbol real: **273 ficheros recorridos**, 0 hallazgos, `sinUso` vacío; sin lista (`barrer(arbol, {})`) hay 57 coincidencias en 32 parejas señal-fichero, y la lista tiene esas 32. Sin falso rojo: `sinComentarios` no se afinó. `npm run typecheck` salida 0. `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)». La suite entera la corre el orquestador.
+
+### La lista `PERMITIDOS`, medida otra vez (L6.3)
+Orden usada, desde la raíz del worktree, para cada señal (la expresión es la de D-8; salida ordenada, antes de quitar comentarios, que luego deja el barrido):
+`grep -rlE --include=*.ts --include=*.tsx --include=*.js --include=*.mjs --include=*.cjs --include=*.sh --exclude=*.test.ts --exclude=*.test.tsx --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build --exclude-dir=coverage --exclude-dir=testing --exclude-dir=.codegraph "<expresión>" apps/desk/server apps/hub-sync packages scripts`
+| Señal | Ficheros (grep) | Lista |
+|---|---|---|
+| transporte `\b(fetch\|fetchImpl)\s*\(` | `avisosWebhook.ts`, `remisionWebhook.ts`, `respaldo/{dependencias,driveApi,driveAuth,multiparte}.ts`, `books/booksClient.ts`, `crmHub/crmClient.ts`, `tokenManager.ts`, `zohoClient.ts` (10) | los 10 |
+| cliente-http (`http(s).request/get`, importación de `http`, `https`, `undici`, `axios`, `node-fetch`, `got`) | ninguno | `[]` |
+| dominio-desk `desk\.zoho\.` | `config.ts` | `config.ts` |
+| base-api `/api/v1\b` | `zohoClient.ts` | `zohoClient.ts` |
+| ruta-desk-zohoapis `/desk/v\d` | ninguno | `[]` |
+| campo-dominio `\b(apiDomain\|accountsDomain)\b` | `config.ts`, `tokenManager.ts`, `zohoClient.ts` | los 3 |
+| dominio-cuentas `accounts\.zoho\.` | `config.ts` | `config.ts` |
+| token-peticion `oauth/v2/token` | `books/booksClient.ts`, `crmHub/crmClient.ts`, `tokenManager.ts` | los 3 |
+| token-cabecera `Zoho-oauthtoken` | `books/booksClient.ts`, `crmHub/crmClient.ts`, `zohoClient.ts` | los 3 |
+| variables-desk `\bZOHO_(…)\b` | `config.ts` | `config.ts` |
+| lectura-modo `\bMODO_SIN_ZOHO_DESK\b` | `config.ts` | `config.ts` |
+| instancia-cliente `\bcreateZohoClient\s*\(` | `apps/desk/server/index.ts`, `apps/hub-sync/src/hub-sync.ts`, `zohoClient.ts` | los 3 |
+| instancia-token `\bcreateTokenManager\s*\(` | `apps/desk/server/index.ts`, `apps/hub-sync/src/hub-sync.ts`, `tokenManager.ts` | los 3 |
+| token `\bgetAccessToken\s*\(` | `tokenManager.ts`, `zohoClient.ts` | los 2 |
+(Todas las rutas sin prefijo son de `packages/zoho-sync/src/`.) **Idéntica a la tabla de D-8**, con una sola diferencia de forma: la fila «instancias» de D-8 se parte en dos señales (`instancia-cliente` e `instancia-token`) porque `createTokenManager` no se llama en `zohoClient.ts` y `createZohoClient` no se llama en `tokenManager.ts`: con una sola señal, una de las dos parejas saldría en `sinUso`. Los tres ficheros nuevos de L1 a L5 (`modoSinZoho.ts`, `cicloPeriodico.ts`, `routes/modoSinZohoDesk.ts`) no tienen ninguna señal y no figuran; `MENSAJE_MODO_SIN_ZOHO_DESK` (`routes/modoSinZohoDesk.ts:12`) no casa por el límite de palabra. Fijado por la prueba «los ficheros nuevos de 1G-04 no figuran en ninguna lista».
+
+### Mutaciones (L6.5), `perl -i -pe '… if $. == N'`, restauración con la sustitución inversa
+(a) sobre el fichero vigilado `apps/desk/server/measure.ts` (copia en el scratchpad, línea añadida con `printf "…\r\n" >>`, restaurado con `cp`): `sha256sum` antes y después `4b082e9996…`, `git diff --stat` vacío, `file` con CRLF. (b)-(e) sobre `testing/barridoZohoDesk.ts`: `sha256sum` antes y después `c7aeafaf729b2e71`, `file` sin cambios (LF).
+| # | Mutación | Rojo observado |
+|---|---|---|
+| a | `fetch('https://desk.zoho.com/api/v1/tickets')` al final de `measure.ts` | 1 roja (barrido real › ninguna señal fuera de su lista): `"transporte en apps/desk/server/measure.ts:83"`, `dominio-desk` y `base-api` en la misma línea; el mensaje trae «ficheros recorridos: 273» |
+| b | quitar de `PERMITIDOS` (`:73`) `books/booksClient.ts` en `transporte` | 1 roja (ninguna señal fuera de su lista): `transporte en packages/zoho-sync/src/books/booksClient.ts:32` y `:45` |
+| c | `'cliente-http': []` (`:82`) → `['apps/desk/server/measure.ts']` | 1 roja (la lista no contiene un sitio sin señal): `cliente-http sin uso en apps/desk/server/measure.ts` |
+| d | `sinComentarios` sin quitar los `//` (`:210`, `if (false && …)`) | 8 rojas, las de `sinComentarios` y las formas en comentario (p. ej. «quita el comentario de línea»: `const a = 1 // fetch(x)` sigue ahí) |
+| e | señal de transporte sin `fetchImpl` (`:40`, `(?:fetch)`) | 3 rojas: «cada forma fuera de la lista» (la forma `fetchImpl(url)`), «la línea del hallazgo es la del código» y, en el real, «la lista cerrada no contiene un sitio sin señal real» (los sitios que sólo llamaban por `fetchImpl(` quedan en `sinUso`); la de hallazgos del real sigue verde |
+
+### Regla 13 y medida
+`git diff --name-only` sin nada bajo `apps/desk/src`; ningún fichero de producción modificado (sólo `measure.ts`, restaurado). Código nuevo sin `method:` literal ni `{ method,`. 
+Medida: `git diff --shortstat --no-renames HEAD` 67 inserciones y 5 borrados (72, `apply-progress.md` y `tasks.md`) + `wc -l` de lo nuevo sin trackear 565 (243 la prueba, 322 el arnés) = 637 (estimado ~560; techo de parada 720).
+
+### Contraste del orquestador y cierre (L6.6)
+Informe contrastado: sólo dos ficheros nuevos (`wc -l` 243 + 322) y ningún fichero de producción tocado; las 14 señales de `apps/desk/server/testing/barridoZohoDesk.ts:39-61` son las de la tabla de D-8 (la fila «instancias» partida en dos, sin cambiar sitios) y `PERMITIDOS` coincide con el grep del orquestador al contrastar el diseño. Los 273 ficheros recorridos cuadran con los 270 medidos entonces más los tres de producción nuevos de L1 a L3. Fichero vigilado reproducido por el orquestador con una forma distinta a la del lote: un fichero nuevo `apps/hub-sync/src/llamadaOlvidada.ts` con un `GET` implícito a `https://desk.zoho.com/api/v1/tickets/count` pone rojo el barrido real y lo nombra en su línea 2 (transporte, dominio y base); borrado, verde. Sin barrido B.1: el lote no edita ningún fichero existente.
