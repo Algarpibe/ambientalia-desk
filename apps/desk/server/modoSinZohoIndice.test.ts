@@ -50,3 +50,11 @@ describe('index.ts · el registro del modo', () => {
     expect(una('createZohoClient(')).toMatch(/registro:\s*registroModo/)
   })
 })
+
+describe('index.ts · el registro llega a la App (L3, RQ-ZS-43)', () => {
+  it('createApp( pasa registroModo, la MISMA instancia que createZohoClient(; y const registroModo = sigue UNA vez', () => {
+    expect(una('createApp(')).toMatch(/,\s*registroModo\s*\}\)/)
+    expect(con('const registroModo =')).toHaveLength(1)
+    expect(con('crearRegistroModoSinZoho(')).toHaveLength(1)
+  })
+})

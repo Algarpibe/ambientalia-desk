@@ -16,7 +16,7 @@ import { importarRemisionesHistoricas } from '../db/remisionesHistoricas'
 import { backfillFechaOrdenVenta } from '../db/backfillFechaOrdenVenta'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
-import { logger } from '../util/logger'
+import { logger } from '../util/logger'; import { guardaModoSinZoho, esConteoHistoria, type ModoSinZoho } from './modoSinZohoDesk'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -34,13 +34,13 @@ export function registerAdminRoutes(
     sync: Sync
     measurer: ReturnType<typeof createMeasurer>
     detailBackfiller: ReturnType<typeof createDetailBackfiller>
-    migracionTicketsHabilitada: boolean   // `MIGRACION_TICKETS_HABILITADA` (E-231)
+    migracionTicketsHabilitada: boolean; modo: ModoSinZoho   // `MIGRACION_TICKETS_HABILITADA` (E-231)
   },
 ): void {
-  const { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada } = deps
+  const { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada, modo } = deps
   // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Solo superadmin (sesión).
   // Llamar repetidamente para ver el progreso; ?restart=1 reinicia la medición.
-  app.get('/api/admin/measure-attachments', requireAuth(db), requireSuperAdmin, (req, res) => {
+  app.get('/api/admin/measure-attachments', requireAuth(db), requireSuperAdmin, guardaModoSinZoho(modo), (req, res) => {
     if (req.query.restart === '1' || (!measurer.state().running && !measurer.state().done)) {
       measurer.start()
     }
@@ -50,7 +50,7 @@ export function registerAdminRoutes(
 
   // Pre-puebla detalle (customFields) + conversaciones de TODOS los tickets en la BD.
   // Token-protegido, segundo plano, throttled. ?restart=1 reinicia.
-  app.get('/api/admin/backfill-details', requireAuth(db), requireSuperAdmin, (req, res) => {
+  app.get('/api/admin/backfill-details', requireAuth(db), requireSuperAdmin, guardaModoSinZoho(modo), (req, res) => {
     if (req.query.restart === '1' || (!detailBackfiller.state().running && !detailBackfiller.state().done)) {
       detailBackfiller.start()
     }
@@ -193,7 +193,7 @@ export function registerAdminRoutes(
    *
    * Reanudable por construcción: relanzarlo sigue por donde iba. SOLO super administrador.
    */
-  app.post('/api/admin/backfill-history', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+  app.post('/api/admin/backfill-history', requireAuth(db), requireSuperAdmin, guardaModoSinZoho(modo, esConteoHistoria), asyncHandler(async (req, res) => {
     const limite = req.query.limite != null ? Number(req.query.limite) : undefined
     const pausaMs = req.query.pausaMs != null ? Number(req.query.pausaMs) : undefined
     if (limite === 0) { res.json(await sync.backfillTicketHistory({ limite: 0 })); return }
@@ -204,7 +204,7 @@ export function registerAdminRoutes(
   }))
 
   // Backfill de tickets archivados en segundo plano (fire-and-forget). SOLO super administrador.
-  app.post('/api/admin/backfill-archived', requireAuth(db), requireSuperAdmin, (_req, res) => {
+  app.post('/api/admin/backfill-archived', requireAuth(db), requireSuperAdmin, guardaModoSinZoho(modo), (_req, res) => {
     sync.backfillArchivedTickets()
       .then((n) => logger.info(`Backfill archivados: ${n} tickets`))
       .catch((err) => logger.error({ err }, 'Backfill archivados falló'))

@@ -46,7 +46,7 @@ async function main() {
     }
   }
 
-  const app = createApp({ db: pool, zohoFetch, sync, config, respaldador })
+  const app = createApp({ db: pool, zohoFetch, sync, config, respaldador, registroModo })
 
   if (process.env.NODE_ENV === 'production') {
     const dist = path.resolve(process.cwd(), 'dist')

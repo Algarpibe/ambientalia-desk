@@ -1,7 +1,7 @@
 import type { Express, RequestHandler } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
-import { asyncHandler } from '../util/asyncHandler'
+import { asyncHandler } from '../util/asyncHandler'; import { guardaModoSinZoho, esRecuento, type ModoSinZoho } from './modoSinZohoDesk'
 import type { crearVerificacionCompletitud } from '../completitud/verificacion'
 
 type Verificacion = ReturnType<typeof crearVerificacionCompletitud>
@@ -33,8 +33,8 @@ const validarParametros: RequestHandler = (req, res, next) => {
  * otra. `GET` devuelve sólo el estado y NUNCA lanza ni depende del interruptor. La decisión (rol, interruptor y contenido) es del servidor; el cliente
  * no participa (regla invariable 13). SOLO super administrador.
  */
-export function registerVerificacionCompletitudRoutes(app: Express, { db, verificacion, habilitado }: { db: Queryable; verificacion: Verificacion; habilitado: boolean }): void {
-  app.post(RUTA, requireAuth(db), requireSuperAdmin, interruptorVerificacion(habilitado), validarParametros, asyncHandler(async (req, res) => {
+export function registerVerificacionCompletitudRoutes(app: Express, { db, verificacion, habilitado, modo }: { db: Queryable; verificacion: Verificacion; habilitado: boolean; modo: ModoSinZoho }): void {
+  app.post(RUTA, requireAuth(db), requireSuperAdmin, guardaModoSinZoho(modo, esRecuento), interruptorVerificacion(habilitado), validarParametros, asyncHandler(async (req, res) => {
     const { desde, limite } = req.query
     const d = desde === undefined ? undefined : Number(desde)
     if (limite === '0') { res.json(await verificacion.recuento({ desde: d })); return }

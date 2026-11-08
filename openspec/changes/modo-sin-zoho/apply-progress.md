@@ -85,3 +85,55 @@ Desviación: ninguna del diseño. `cadenaDelCiclo` usa `Pick<AppConfig, 'modoSin
 
 ### Contraste del orquestador y cierre (L2.7)
 Informe contrastado: `index.ts` 8/8 con el prefijo de `:15` intacto (sólo crece por el final) y `:88` literal; `wc -l` 40 + 74 + 52; CRLF. Una afirmación del informe era errónea y sin efecto: `apply-progress.md` y `tasks.md` SÍ salen en `git status`. Mutación M4 reproducida por el orquestador (`sync.syncRecent()` en el comentario de `index.ts:89`: rojas las cuatro de servicios; sha256 restaurado `e03fe6c24d84b67f`, CRLF). Barrido B.1 de `index.ts` (citas a `:15`, `:20`, `:61`, `:72`, `:78`, `:88`, `:89`, `:90` y a los rangos que las cubren, con `archive/` y `docs/`): las vivas —seis comentarios de servicios, `avisoRitmoContrato.test.ts:15` y `:177`, `derivacion-avisos/spec.md:816`, `:997`, `:1205`, `:1318`, `transitions-st/spec.md:1410`, `:1452`, `zoho-sync/spec.md:48`, `:264`, `:753`, `ENTRADA.md:1231`, `:1271`— siguen ciertas; las de `archive/`, los paquetes de despliegue y el baseline son registros fechados (caso B). Para Supervisión: `docs/sdd/ENTRADA.md:2059` («no existe interruptor para ello: la aplicación sincroniza siempre») deja de ser cierta con esta tanda; la rama no toca ese fichero.
+
+## Lote L3 (intento i5) — guarda común, administración, manejador central y `GET`
+
+### Rojo medido (L3.1, L3.2)
+Estado de partida del rojo: `routes/modoSinZohoDesk.ts` con las firmas exportadas y cuerpos que no cumplen (`activo: false`, `responderModoSinZoho` vacío, `guardaModoSinZoho` siempre `next()`, `esRecuento` y `esConteoHistoria` en `false`, mensajes `''`, `registerModoSinZohoRoutes` vacío), el arnés (`appHarness.ts` 4/4) y ninguna ruta cableada. `npx vitest run modoSinZohoRutas.test.ts modoSinZohoIndice.test.ts`: salida 1, **25 rojas y 25 verdes de 50**. Las verdes son las que ya cumplen el comportamiento de hoy (sin sesión `401`, sin rol `403`, modo cerrado, `GET` de estado de los rellenos).
+Rojo por aserción, ninguno por import ni por arnés (fichero › prueba › aserción):
+| Prueba | Aserción que cae |
+|---|---|
+| `modoSinZohoIndice` › `createApp(` pasa `registroModo` | `expected '…createApp({ db: pool, zohoFetch, sync, config, respaldador })' to match /registroModo/` |
+| `crearModoSinZoho` › activo exactamente con `true` | `expected false to be true` |
+| `esRecuento` y `esConteoHistoria` (2) | `expected [false,…] to deeply equal [true,…]` |
+| `responderModoSinZoho` (4: patrón, ruta desconocida, cabeceras enviadas, textos) | `expected [] to deeply equal [ 503, { error: '', … } ]`; `expected [] to deeply equal [ [ 'GET /a', 1 ] ]`; textos `''` frente a los de D-6 |
+| `guardaModoSinZoho` › abierto y no libre | `expected 1 to be +0` (siguió) |
+| `verificacion-completitud` › con rol, interruptor cerrado y `limite=abc` / interruptor abierto y `limite=abc` | `expected 403 to be 503` / `expected 400 to be 503` |
+| `relleno-conversaciones` › interruptor cerrado y `limite=abc` | `expected 403 to be 503` |
+| `relleno-adjuntos` › abierto y con rol | `expected 200 to be 503` (la ruta sigue) |
+| `admin` › `measure-attachments`, `backfill-details`, `backfill-archived` (3) | `expected [200, undefined, …] to deeply equal [503, 'modo-sin-zoho-desk', …]` |
+| `backfill-history` › `limite="abc"`; sin `limite` | `expected 200 to be 503` |
+| rechazo patrón / segundo `503` suma (2) | `expected [] to deeply equal [ [ 'GET /api/admin/…', 1 ] ]` |
+| manejador central (2) | `expected 500 to be 503` |
+| `GET modo-sin-zoho-desk` (3) | `expected 404 to be 401`; `expected 404 to be 200` |
+
+### Verde (L3.3 a L3.5)
+`routes/modoSinZohoDesk.ts` (55 líneas). En sitio, misma línea física, `git diff --numstat` con inserciones = borrados: `app.ts` 6/6 (`:22`, `:31`, `:34`, `:50`, `:57`, `:79`; `:52` y `:58` intactas), `admin.ts` 7/7, `rellenoConversaciones.ts` 3/3, `rellenoAdjuntos.ts` 3/3, `verificacionCompletitud.ts` 3/3, `appHarness.ts` 4/4, `index.ts:49` 1/1. Pruebas de L3: `modoSinZohoRutas.test.ts` (nuevo, 44) y 8 líneas **al final** de `modoSinZohoIndice.test.ts` (+1 prueba, 6 en total).
+Focal (`modoSinZohoRutas`, `modoSinZohoIndice`, `completitud/verificacionRutas`, `opcionesConversaciones`, `admin`, `auth/routes`, `rellenoConversacionesRutas`, `adjuntos/rellenoAdjuntosRutas`, más `superficieSaliente`): 9 ficheros, 161 pruebas verdes, salida 0; ninguna prueba existente tocada. `npm run typecheck` salida 0. `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)».
+**H-2, observada:** con Express 5 el error que escapa de un manejador asíncrono llega al manejador central CON `req.route`: el rechazo es `POST /api/admin/backfill-history` (patrón, sin query), no `(ruta desconocida)`. La prueba de L3 lo fija con `sync.backfillTicketHistory` rechazando `ErrorModoSinZohoDesk`; la de `GET /api/attachment` es L4.
+
+### Mutaciones y posiciones (L3.6), `perl -i -pe '… if $. == N'`, restauración con la sustitución inversa
+Orden de cada una: `modoSinZohoRutas.test.ts` + `modoSinZohoIndice.test.ts` (50). `sha256sum` (12 primeros) idéntico antes y después en todas, y `file` con «CRLF line terminators».
+| # | Mutación | Pruebas rojas | sha256 |
+|---|---|---|---|
+| M1 | `verificacionCompletitud.ts:37` guarda ANTES de `requireAuth(db)` | verificación › sin sesión 401 y sin rol 403 (1) | `55c9a03243ac` |
+| M2 | ídem, guarda TRAS `interruptorVerificacion` | verificación › interruptor cerrado y `limite=abc` (1; da `403`) | `55c9a03243ac` |
+| M3 | ídem, guarda TRAS `validarParametros` | verificación › interruptor cerrado y `limite=abc`; interruptor abierto y `limite=abc` (2; dan `403` y `400`) | `55c9a03243ac` |
+| M4 | `rellenoConversaciones.ts:36` guarda ANTES de `requireAuth(db)` | relleno-conversaciones › sin sesión 401 y sin rol 403 (1) | `462e8df1eca6` |
+| M5 | ídem, guarda TRAS `interruptorRelleno` | relleno-conversaciones › interruptor cerrado y `limite=abc` (1; da `403`) | `462e8df1eca6` |
+| M6 | `verificacionCompletitud.ts:37` sin `esRecuento` | verificación › `limite=0` da su recuento (1; da `503`) | `55c9a03243ac` |
+| M7 | `rellenoConversaciones.ts:36` sin `esRecuento` | relleno-conversaciones › `limite=0` (1) | `462e8df1eca6` |
+| M8 | `admin.ts:196` sin `esConteoHistoria` | backfill-history › `"0"`, `"00"`, `""` (3) | `290df3011ca6` |
+| M9 | `app.ts:79` sin el prefijo `if (esCorteModoSinZoho(err)) …` | manejador central (2; dan `500`) | `23f8f4f6a063` |
+| M10 | `modoSinZohoDesk.ts:27` `req.originalUrl` en lugar de `baseUrl + route.path` | responder › patrón; cabeceras enviadas; guarda abierta; verificación 503; rechazo patrón con marcadores en `rechazos`; manejador central (6) | `a6df289d46c7` |
+| M11 | `modoSinZohoDesk.ts:28` sin `rechazar(ruta)` | `rechazos` vacío: 13 rojas (responder, guarda, verificación, admin, rechazo patrón, manejador central, `GET` de estado) | `a6df289d46c7` |
+| M12 | `index.ts:49` `registroModo: crearRegistroModoSinZoho()` (segunda instancia) | modoSinZohoIndice › `createApp(` pasa `registroModo` (1). **Hallazgo:** la primera redacción de la prueba (`\bregistroModo\b`) NO la cazaba (la clave `registroModo:` la satisface); se afinó a `,\s*registroModo\s*\}\)` y `crearRegistroModoSinZoho(` en UNA línea | `d3d58c5ea78b` |
+| M13 | `rellenoAdjuntos.ts:43` guarda TRAS `interruptorAdjuntos` | relleno-adjuntos › abierto y con rol (1; da `403`) | `d39869623860` |
+| M14 | `modoSinZohoDesk.ts:39` sin `!modo.activo` | cerrado: guarda, verificación, relleno-conversaciones, relleno-adjuntos, admin (3), backfill-history (8 rojas en total) | `a6df289d46c7` |
+
+### Regla 13 y medida
+`git diff --name-only` sin nada bajo `apps/desk/src`. Código nuevo de producción sin `method:` literal ni `{ method,`; `MODO_SIN_ZOHO_DESK` aparece SÓLO dentro de `MENSAJE_MODO_SIN_ZOHO_DESK` (identificador pedido por D-6; con `\b` el barrido de L6 no lo casa, a vigilar allí).
+Medida antes de este bloque: `git diff --shortstat --no-renames HEAD` 35 inserciones y 27 borrados (62) + `wc -l` de lo nuevo 386 (331 + 55) = 448.
+
+### Contraste del orquestador y cierre (L3.7)
+Informe contrastado: `git diff --numstat` (6/6, 1/1, +8, 7/7, 3/3 ×3, 4/4), `wc -l` 331 + 55, CRLF; cada línea editada en sitio comparada por prefijo y sufijo con la de `a0660bb7`: sólo añade (y en `app.ts:57` conserva literales los cuatro `habilitado: … === true`), sin cambiar el número de líneas de ningún fichero. Posición reproducida por el orquestador (guarda tras `interruptorVerificacion` en `routes/verificacionCompletitud.ts:37`: la prueba de posición recibe `403` en vez de `503`; sha256 restaurado `55c9a03243ac7e42`, CRLF). Barrido B.1 de `app.ts`, `routes/admin.ts`, las tres rutas, `testing/appHarness.ts` e `index.ts:49`: las citas vivas que caen en líneas editadas son `DEPLOY.md:874` (`admin.ts:53-58`, cierto con el modo cerrado; abierto lo documenta la §24), `openspec/specs/zoho-sync/spec.md:2271` (`rellenoAdjuntos.ts:17-55`) y `:665` (`appHarness.ts:46`), ciertas; las de `archive/`, los paquetes de despliegue y el plan del 19/06 son registros fechados (caso B). Aviso para L6: `MENSAJE_MODO_SIN_ZOHO_DESK` contiene la variable como subcadena; la señal del barrido va con `\b`.
