@@ -120,7 +120,7 @@ Mutaciones y posiciones: M5 (de nuevo), M8, M10, M12 (`estadoCopia`), P1, P2.
 ## Verificación (intento i9)
 - [x] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-34 a RQ-ZS-39 contra su prueba.
 - [x] V.2 Reproducir todas las M* y P* del `apply-progress.md` con `perl`, restauración comprobada (`git diff` vacío, `file` aún CRLF).
-- [ ] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
+- [x] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
 
 ## Archivo (intento i10)
 - [ ] A.1 Techo del intento = 2 × `wc -l` de la carpeta del cambio + 800. Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.

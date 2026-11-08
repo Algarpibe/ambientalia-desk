@@ -13,7 +13,7 @@ evidence_revision: sha256:fda39705c8f00a9749d5c9e10aec5751e98916d4b0428f9820d9ff
 
 ## V.3 · Las cinco comprobaciones
 
-PENDIENTES del orquestador (sobre el árbol commiteado): `npm run typecheck`, `npm run lint -- --max-warnings 165`, detector `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`, `npm test` (con log, memoria libre al arrancar y duración) y `npm run build`. Aquí no se corrió la suite entera. Sin herramienta de cobertura en las capacidades: cobertura por fichero omitida (no es fallo).
+Hechas por el orquestador sobre el árbol commiteado `8ccae97a`, en serie: `npm run typecheck` 0; `npm run lint -- --max-warnings 165` 0 (165 avisos contra 165); detector `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` 0 (8.202 comprobadas, 13 abreviadas rotas informativas, las de la base); `npm test` 0 (357 ficheros + 4 omitidos, 6.199 pruebas + 26 omitidas; 244 s; 12.277 MB libres al arrancar; log `npmtest-vco-i9-220951.log` del scratchpad); `npm run build` 0. Sin herramienta de cobertura en las capacidades: cobertura por fichero omitida (no es fallo).
 
 ## V.1 · Escenarios contra pruebas (32/32)
 
