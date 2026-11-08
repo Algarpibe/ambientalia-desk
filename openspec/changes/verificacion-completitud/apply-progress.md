@@ -225,3 +225,6 @@ La fase C (`estadoCopia` y el volumen, con `dir`), `completa: faseA && desdeInic
 
 ### Medida
 `git diff --shortstat --no-renames 7553c098` (rastreado): 3 ficheros, 150 inserciones y 20 borrados (170: `verificacion.ts` 98/13, este fichero +45, `tasks.md` 7/7). `wc -l` de lo nuevo sin trackear: `porTicket.ts` 99, `verificacionPorTicket.test.ts` 234 (333). Total 503 contra 800. Binarios: ninguno.
+
+### Cierre del orquestador (i7)
+Commit `cdbee075` sobre `7553c098`: medida 5 ficheros, 483 inserciones y 20 borrados (503), 0 sin trackear; igual al informe del lote. Cinco comprobaciones en serie: typecheck 0; lint 0 (165 contra 165); detector 0 (8.136 comprobadas, 13 abreviadas rotas = base); `npm test` 0 (355 ficheros + 4 omitidos, 6.169 pruebas + 26 omitidas; 243 s; 11.777 MB libres al arrancar; log `npmtest-vco-i7-211214.log`); build 0.
