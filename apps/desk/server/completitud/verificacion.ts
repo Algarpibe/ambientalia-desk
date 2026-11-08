@@ -2,9 +2,10 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { PAUSA_429_MS, PAUSA_ENTRE_TICKETS_MS } from '@ambientalia/zoho-sync/conversaciones'
 import { logger } from '../util/logger'
 import { cargarConocidas, ENTIDADES, ErrorLista, leerLista as leerListaReal, type Entidad, type ListaConocidas } from './conocidas'
-import { clasificar, conocidasSinUso, type Clasificacion, type FilaDiferencia } from './clasificar'
+import { clasificar, conocidasSinUso, type Clasificacion, type FilaDiferencia, type Lado, type Padre } from './clasificar'
 import { compararIds } from './comparar'
 import { leerPaginas, leerPorId } from './lectores'
+import { ErrorBase, filas, hijosSoloDesk, porTicket, type DiferenciaHijo, type ResultadoPorTicket } from './porTicket'
 import { crearRegistroEscrituras, soloGet, soloSelect, type RegistroEscrituras } from './soloLectura'
 import { veredictoEntidad, veredictoGlobal, type CorteVerificacion, type Estado } from './veredicto'
 
@@ -13,7 +14,7 @@ import { veredictoEntidad, veredictoGlobal, type CorteVerificacion, type Estado 
  * por id), `lanzar`, `recuento` (`limite=0`) y `estado`. Molde: `apps/desk/server/adjuntos/rellenoAdjuntos.ts` (`enMarcha` antes del primer `await`,
  * `structuredClone`, una línea de log). Zoho, sólo por `soloGet`; PostgreSQL, sólo por `soloSelect`; el motor NO recibe `sync`, cuyas listas escriben
  * mientras leen. El estado, el informe y el log llevan sólo ids, números de ticket y recuentos (CA-11): nunca nombres, correos, asuntos ni `raw`.
- * Las fases B (por ticket) y C (volumen) las añaden L5 y L6: hasta entonces las tres entidades por ticket quedan «sin comparar» y la cobertura no es completa.
+ * La fase B (por ticket, `porTicket.ts`) la añade L5; la C (volumen) y la continuación, L6: hasta entonces la cobertura no es completa.
  */
 type ZohoFetch = (path: string, init?: RequestInit) => Promise<Response>
 export interface Fila { id: string; numero?: number; clase: 'conocida' | 'sin explicar'; causa?: string; entrada?: string; heredadaDe?: string; tamano?: { zoho: number | null; desk: number | null } }
@@ -21,6 +22,8 @@ export interface InformeEntidad {
   estado: Estado; motivo?: string; enZoho: number; enDesk: number; casan: number; sinExplicar: number; conocidas: number
   faltaEnDesk: Fila[]; faltaEnZoho: Fila[]; huecosDeLista: { id: string; numero?: number }[]; noEvaluados: Omit<Fila, 'id'>[]
   peticiones: number; vistos429: number
+  /** Sólo en adjuntos (fase B): los de otro `size` y los bytes por lado de lo comparado. */
+  distintoTamano?: Fila[]; bytes?: { zoho: number; desk: number }
 }
 export interface Informe {
   esquema: 1; versionLista: number; departamento: string; veredicto: Exclude<Estado, 'sin comparar'>
@@ -51,9 +54,11 @@ const TABLAS = { tickets: 'tickets', conversaciones: 'conversations', adjuntos: 
 /** Una entidad global: sus listas de Zoho, su consulta de Desk y la ruta para pedir un id suelto. */
 interface Espec { entidad: Entidad; rutas: string[]; params: Record<string, string>; porId: string; sql: string }
 interface FilaDesk { id: string; numero?: number; fuente?: string | null; managedByApp?: boolean }
-interface Contexto { f: ZohoFetch; lee: Queryable; lista: ListaConocidas; informe: Informe; entidad: Entidad; pedidas: number; clases: Clasificacion[] }
-
-class ErrorBase extends Error {}
+/** `paraB`: los tickets de los dos lados por número; `distintos`: los de un solo lado, con su clase (los pasa la A a la B). */
+interface Contexto {
+  f: ZohoFetch; lee: Queryable; lista: ListaConocidas; informe: Informe; entidad: Entidad; pedidas: number; clases: Clasificacion[]
+  paraB: { id: string; numero: number }[]; distintos: { id: string; numero?: number; lado: Lado; k: Clasificacion }[]
+}
 
 const estadoInicial = (): EstadoVerificacion => ({ enMarcha: false, terminado: false, fase: null, desde: null, limite: null, informe: null })
 const entidadInicial = (): InformeEntidad => ({
@@ -70,10 +75,7 @@ const informeInicial = (lista: ListaConocidas, departamento: string): Informe =>
 const dormir = (ms: number) => (ms > 0 ? new Promise<void>((r) => setTimeout(r, ms)) : Promise.resolve())
 const entero = (v: unknown): number | undefined => (Number.isInteger(Number(v)) && v !== null && v !== '' ? Number(v) : undefined)
 
-/** Las lecturas de Desk: un fallo de la base se traduce a un código cerrado, sin el mensaje del driver. */
-async function filas(lee: Queryable, sql: string, params?: unknown[]): Promise<Record<string, unknown>[]> {
-  try { return (await lee.query(sql, params)).rows as Record<string, unknown>[] } catch { throw new ErrorBase() }
-}
+const porId = (a: string, b: string): number => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)
 const aFilaDesk = (r: Record<string, unknown>): FilaDesk => ({ id: String(r.id), numero: entero(r.number), fuente: r.source as string | null | undefined, managedByApp: r.managed_by_app === true })
 
 /** El resumen de la pasada va al logger como UNA línea: estados, recuentos, corte y veredicto; ningún id. */
@@ -104,7 +106,7 @@ export function crearVerificacionCompletitud({
     const informe = (e.informe = informeInicial(lista, departmentId))
     const get = soloGet(zohoFetch, informe.escriturasRechazadas)
     const ctx: Contexto = {
-      lista, informe, entidad: 'tickets', pedidas: 0, clases: [], lee: soloSelect(db, informe.escriturasRechazadas),
+      lista, informe, entidad: 'tickets', pedidas: 0, clases: [], lee: soloSelect(db, informe.escriturasRechazadas), paraB: [], distintos: [],
       f: async (path, init) => {
         if (ctx.pedidas++ > 0) await dormir(pausaMs)
         const en = informe.entidades[ctx.entidad]
@@ -139,6 +141,7 @@ export function crearVerificacionCompletitud({
     const filaDe = (d: FilaDiferencia): Fila => {
       const k = clasificar(lista, d) as Clasificacion
       ctx.clases.push(k)
+      if (s.entidad === 'tickets') ctx.distintos.push({ id: d.id, numero: d.numero, lado: d.lado, k })
       if (k.clase === 'conocida') en.conocidas++; else en.sinExplicar++
       return { id: d.id, numero: d.numero, clase: k.clase, causa: k.causa, entrada: k.entrada, heredadaDe: k.heredadaDe }
     }
@@ -151,7 +154,10 @@ export function crearVerificacionCompletitud({
     Object.assign(en, { enZoho: zoho.size, enDesk: desk.length, casan: c.casan })
     en.estado = veredictoEntidad({ sinComparar: false, errores: informe.errores.filter((x) => x.entidad === s.entidad).length, completa: true, sinExplicar: en.sinExplicar })
     delete en.motivo
-    if (s.entidad === 'tickets') informe.cobertura.aComparar = c.casan + huecos.length
+    if (s.entidad !== 'tickets') return
+    informe.cobertura.aComparar = c.casan + huecos.length
+    const presentes = new Set([...zoho.keys()].concat(huecos))
+    ctx.paraB = desk.filter((d) => presentes.has(d.id)).map((d) => ({ id: d.id, numero: d.numero ?? 0 })).sort((a, b) => a.numero - b.numero || porId(a.id, b.id))
   }
 
   /** Fase A (D7): tickets (departamento y archivados), contactos y cuentas. Un `429` agotado corta; se reanuda relanzando sin `desde`, que la rehace entera. */
@@ -159,18 +165,97 @@ export function crearVerificacionCompletitud({
     for (const s of ESPECS) {
       if (await entidadA(ctx, s) === 'corte') { ctx.informe.cortadoEn = { fase: 'A', numero: null }; ctx.informe.motivoCorte = '429'; return }
     }
-    ctx.informe.conocidasSinUso = conocidasSinUso(ctx.lista, ctx.clases)
+  }
+
+  /** Clasifica los hijos de un ticket (D3): la conversación «falta en Zoho» pasa su clase a sus adjuntos y el ticket de un solo lado, la suya a todos. */
+  function clasificarHijos(ctx: Contexto, numero: number | undefined, difs: DiferenciaHijo[], padreTicket?: Padre): void {
+    const convs = new Map<string, Padre>()
+    for (const d of difs) {
+      const padres = [convs.get(d.conversacionId ?? ''), padreTicket].filter((p): p is Padre => p !== undefined)
+      const k = clasificar(ctx.lista, { entidad: d.entidad, lado: d.lado, id: d.id, numero, fuente: d.fuente, ausenteEnZoho: d.ausenteEnZoho, padres }) as Clasificacion
+      ctx.clases.push(k)
+      const en = ctx.informe.entidades[d.entidad]
+      if (k.clase === 'conocida') en.conocidas++; else en.sinExplicar++
+      const fila: Fila = { id: d.id, numero, clase: k.clase, causa: k.causa, entrada: k.entrada, heredadaDe: k.heredadaDe, tamano: d.tamano }
+      if (d.lado === 'faltaEnDesk') en.faltaEnDesk.push(fila); else if (d.lado === 'faltaEnZoho') en.faltaEnZoho.push(fila); else en.distintoTamano?.push(fila)
+      if (d.entidad === 'conversaciones' && d.lado === 'faltaEnZoho') convs.set(d.id, { etiqueta: `conversaciones:${d.id}`, lado: 'faltaEnZoho', clasificacion: k })
+    }
+  }
+
+  /** Los tickets de un solo lado, sin pedir nada a Zoho: los hijos del que sólo está en Desk heredan su clase; del que sólo está en Zoho, `noEvaluados`. */
+  async function sinPar(ctx: Contexto): Promise<void> {
+    for (const d of ctx.distintos) {
+      if (d.lado === 'faltaEnDesk') {
+        for (const x of POR_TICKET) {
+          const en = ctx.informe.entidades[x]
+          en.noEvaluados.push({ numero: d.numero, clase: d.k.clase, causa: d.k.causa, entrada: d.k.entrada, heredadaDe: `tickets:${d.numero ?? d.id}` })
+          if (d.k.clase === 'conocida') en.conocidas++; else en.sinExplicar++
+        }
+        continue
+      }
+      const difs = await hijosSoloDesk(ctx.lee, d.id)
+      for (const x of difs) ctx.informe.entidades[x.entidad].enDesk++
+      clasificarHijos(ctx, d.numero, difs, { etiqueta: `tickets:${d.numero ?? d.id}`, lado: 'faltaEnZoho', clasificacion: d.k })
+    }
+  }
+
+  /** Suma el resultado de un ticket terminado al informe: errores, recuentos, bytes y diferencias. Sólo se llama si `porTicket` no cortó. */
+  function volcar(ctx: Contexto, numero: number, r: Extract<ResultadoPorTicket, { tipo: 'ok' }>): void {
+    const { informe: i } = ctx
+    for (const x of r.errores) i.errores.push({ entidad: x.entidad, numero, motivo: x.motivo })
+    for (const x of POR_TICKET) {
+      const c = r.conteo[x as keyof typeof r.conteo]; const en = i.entidades[x]
+      if (c) Object.assign(en, { enZoho: en.enZoho + c.enZoho, enDesk: en.enDesk + c.enDesk, casan: en.casan + c.casan })
+    }
+    if (i.entidades.adjuntos.bytes) { i.entidades.adjuntos.bytes.zoho += r.bytes.zoho; i.entidades.adjuntos.bytes.desk += r.bytes.desk }
+    clasificarHijos(ctx, numero, r.difs)
+  }
+
+  /** Fase B (D8): por cada ticket de los dos lados desde `desde`, hasta `limite` tickets; un `429` agotado corta y deja ese ticket entero sin publicar. */
+  async function faseB(e: EstadoVerificacion, ctx: Contexto): Promise<void> {
+    const i = ctx.informe
+    i.cobertura.desde = e.desde
+    Object.assign(i.entidades.adjuntos, { bytes: { zoho: 0, desk: 0 }, distintoTamano: [] })
+    await sinPar(ctx)
+    const acceso = { f: ctx.f, lee: ctx.lee, pausa429Ms, entidad: (x: Entidad) => { ctx.entidad = x } }
+    for (const t of ctx.paraB.filter((x) => x.numero >= (e.desde ?? 0))) {
+      if (e.limite !== null && i.cobertura.comparados >= e.limite) { i.cortadoEn = { fase: 'B', numero: t.numero }; i.motivoCorte = 'limite'; break }
+      const r = await porTicket(acceso, t)
+      if (r.tipo === 'corte') { i.cortadoEn = { fase: 'B', numero: t.numero }; i.motivoCorte = '429'; break }
+      i.cobertura.comparados++
+      volcar(ctx, t.numero, r)
+      i.cobertura.hasta = t.numero
+    }
+    for (const x of POR_TICKET) {
+      const en = i.entidades[x]
+      en.estado = veredictoEntidad({ sinComparar: false, errores: i.errores.filter((y) => y.entidad === x).length, completa: i.cortadoEn === null && e.desde === null, sinExplicar: en.sinExplicar })
+      delete en.motivo
+    }
+  }
+
+  /** Orden fijo (D11): errores por entidad, número e id; hijos por id (longitud y luego texto); `noEvaluados` por número. */
+  function ordenar(i: Informe): void {
+    i.errores.sort((a, b) => ENTIDADES.indexOf(a.entidad) - ENTIDADES.indexOf(b.entidad) || (a.numero ?? Infinity) - (b.numero ?? Infinity) || porId(a.id ?? '', b.id ?? ''))
+    for (const x of POR_TICKET) {
+      const en = i.entidades[x]
+      for (const l of [en.faltaEnDesk, en.faltaEnZoho, en.distintoTamano ?? []]) l.sort((a, b) => porId(a.id, b.id))
+      en.noEvaluados.sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0))
+    }
   }
 
   async function pasada(lista: ListaConocidas): Promise<void> {
     estado.inicio = new Date().toISOString(); estado.fase = 'A'
     try {
-      await faseA(estado, abrirContexto(estado, lista))
+      const ctx = abrirContexto(estado, lista)
+      await faseA(estado, ctx)
+      if (ctx.informe.cortadoEn === null && ctx.informe.entidades.tickets.estado !== 'sin comparar') { estado.fase = 'B'; await faseB(estado, ctx) }
+      if (ctx.informe.cortadoEn === null && estado.desde === null) ctx.informe.conocidasSinUso = conocidasSinUso(ctx.lista, ctx.clases)
     } catch (e) {
       estado.error = e instanceof ErrorBase ? 'base' : 'interno'
     } finally {
       const i = estado.informe
       if (i) {
+        ordenar(i)
         i.veredicto = veredictoGlobal(ENTIDADES.map((x) => i.entidades[x].estado), { completa: i.cobertura.completa, cortadoEn: i.cortadoEn, escriturasRechazadas: i.escriturasRechazadas.total })
         if (i.escriturasRechazadas.total > 0) estado.error ??= 'escritura'
       }
