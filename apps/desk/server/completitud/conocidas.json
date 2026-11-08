@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "entradas": [
+    { "entidad": "tickets", "regla": "nacidoEnLaApp", "causa": "Ticket creado en la aplicación (id con prefijo app-): no existe en Zoho Desk.", "entrada": "DEPLOY.md §23" },
+    { "entidad": "conversaciones", "regla": "nacidoEnLaApp", "causa": "Conversación creada en la aplicación (source distinto de zoho): no existe en Zoho Desk.", "entrada": "DEPLOY.md §23" },
+    { "entidad": "tickets", "numeros": [1017], "causa": "Está en Desk y Zoho no lo devuelve: el relleno del 03/11 lo clasificó como no está en Zoho; pendiente de decisión de Gerencia.", "entrada": "E-267" },
+    { "entidad": "adjuntos", "ids": ["495552000061185001", "495552000057838002"], "causa": "Zoho responde 404 al pedir su contenido en el relleno de 1G-02: el fichero no se pudo guardar.", "entrada": "DEPLOY.md §22" },
+    { "entidad": "contactos", "regla": "nacidoEnLaApp", "causa": "Contacto creado en la aplicación (managed_by_app o source distinto de zoho): no existe en Zoho Desk.", "entrada": "DEPLOY.md §23" },
+    { "entidad": "cuentas", "regla": "nacidoEnLaApp", "causa": "Cuenta creada en la aplicación (managed_by_app o source distinto de zoho): no existe en Zoho Desk.", "entrada": "DEPLOY.md §23" },
+    { "entidad": "conversaciones", "regla": "conversacionAusenteEnZoho", "causa": "Conversación marcada con ausente_en_zoho_at: Zoho dejó de devolverla; sus adjuntos la heredan.", "entrada": "DEPLOY.md §19" }
+  ]
+}

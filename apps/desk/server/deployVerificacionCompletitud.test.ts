@@ -64,3 +64,29 @@ describe('DEPLOY.md §23 · VERIFICACION_COMPLETITUD_HABILITADA (1G-03)', () => 
     expect(seccion).toContain('día del corte')
   })
 })
+
+/**
+ * L2 (RQ-ZS-34, D13) · cada `entrada` de la lista REAL de conocidas existe: `E-<n>` como `## E-<n> · ` en `docs/sdd/ENTRADA.md` (sólo lectura) o
+ * `DEPLOY.md §<n>` como `## <n>. ` en `DEPLOY.md`. QUÉ NO COMPRUEBA: que la entrada diga lo que la causa afirma (lectura humana).
+ */
+const entradas = readFileSync(path.join(RAIZ, 'docs/sdd/ENTRADA.md'), 'utf8')
+const existe = (entrada: string): boolean => {
+  const e = /^E-(\d+)$/.exec(entrada)
+  if (e) return new RegExp(`^## E-${e[1]} · `, 'm').test(entradas)
+  const d = /^DEPLOY\.md §(\d+)$/.exec(entrada)
+  return d !== null && new RegExp(`^## ${d[1]}[.] `, 'm').test(deploy)
+}
+
+describe('conocidas.json · las entradas citadas existen (RQ-ZS-34)', () => {
+  it('el comprobador discrimina: existentes sí; ausentes y mal formadas, no', () => {
+    expect([existe('E-267'), existe('DEPLOY.md §19'), existe('DEPLOY.md §23')]).toEqual([true, true, true])
+    expect([existe('E-999999'), existe('DEPLOY.md §99'), existe('E-267 '), existe('ENTRADA')]).toEqual([false, false, false, false])
+  })
+
+  it('cada entrada del fichero real existe en la bandeja o en DEPLOY.md', async () => {
+    const { cargarConocidas, leerLista } = await import('./completitud/conocidas')
+    const lista = cargarConocidas(leerLista())
+    expect(lista.entradas.length).toBeGreaterThan(0)
+    expect(lista.entradas.filter((e) => !existe(e.entrada)).map((e) => e.entrada)).toEqual([])
+  })
+})
