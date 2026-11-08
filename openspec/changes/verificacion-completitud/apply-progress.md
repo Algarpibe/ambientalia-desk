@@ -177,3 +177,6 @@ Posiciones: el bucle de re-verificación es UNA línea (su línea 138); en `lanz
 
 ### Medida
 `git diff --shortstat --no-renames 36f7ca51` (rastreado): 2 ficheros, 45 inserciones y 7 borrados (52: este fichero +38, `tasks.md` 7/7). `wc -l` de lo nuevo sin trackear: `verificacion.ts` 209, `verificacionGlobal.test.ts` 277 (486). Total 538 contra 800. Binarios: ninguno.
+
+### Cierre del orquestador (i6)
+Commit `79665e0a` sobre `36f7ca51`: medida 4 ficheros, 531 inserciones y 7 borrados (538), 0 sin trackear; igual al informe del lote. Cinco comprobaciones en serie: typecheck 0; lint 0 (165 contra 165); detector 0 (8.136 comprobadas, 13 abreviadas rotas = base); `npm test` 0 (354 ficheros + 4 omitidos, 6.153 pruebas + 26 omitidas; 242 s; 10.928 MB libres al arrancar; log `npmtest-vco-i6-204738.log`); build 0.
