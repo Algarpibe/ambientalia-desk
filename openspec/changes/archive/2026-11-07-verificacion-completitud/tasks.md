@@ -123,10 +123,10 @@ Mutaciones y posiciones: M5 (de nuevo), M8, M10, M12 (`estadoCopia`), P1, P2.
 - [x] V.3 Las cinco comprobaciones en 0 y la medida del intento (el `verify-report.md` suma).
 
 ## Archivo (intento i10)
-- [ ] A.1 Techo del intento = 2 × `wc -l` de la carpeta del cambio + 800. Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.
-- [ ] A.2 Fusión por script de los seis ADDED (RQ-ZS-34 a RQ-ZS-39) al **final** de `openspec/specs/zoho-sync/spec.md`; identidad bloque a bloque y CRLF conservado (la spec viva es CRLF en la copia de trabajo y la delta se escribió en LF; comprobar con `file`).
-- [ ] A.3 `archive-report.md` con la línea de R-1 (qué parte de 1G-03 cubrió y qué dejó fuera); tareas de persona declaradas aparte.
-- [ ] A.4 `apps/desk/server/reconciliacion/registro.test.ts:218` («NUEVE» → «OCHO», 1G-03 cerrada por archivo por `verificacion-completitud`, `cierra: si`) y `:220` (quitar '1G-03' de «en curso» y `toContain('1G-03')` en «cerradas por archivo»), en sitio, mismo número de líneas, con su rojo medido al mover la carpeta.
+- [x] A.1 Techo del intento = 2 × `wc -l` de la carpeta del cambio + 800. Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.
+- [x] A.2 Fusión por script de los seis ADDED (RQ-ZS-34 a RQ-ZS-39) al **final** de `openspec/specs/zoho-sync/spec.md`; identidad bloque a bloque y CRLF conservado (la spec viva es CRLF en la copia de trabajo y la delta se escribió en LF; comprobar con `file`).
+- [x] A.3 `archive-report.md` con la línea de R-1 (qué parte de 1G-03 cubrió y qué dejó fuera); tareas de persona declaradas aparte.
+- [x] A.4 `apps/desk/server/reconciliacion/registro.test.ts:218` («NUEVE» → «OCHO», 1G-03 cerrada por archivo por `verificacion-completitud`, `cierra: si`) y `:220` (quitar '1G-03' de «en curso» y `toContain('1G-03')` en «cerradas por archivo»), en sitio, mismo número de líneas, con su rojo medido al mover la carpeta.
 - [ ] A.5 Cinco comprobaciones en 0 y commit que contiene sólo este cambio: `git show --numstat`.
 
 ## Tareas de persona — fuera del recuento; archivar NO las da por hechas
