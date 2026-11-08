@@ -51,7 +51,7 @@ informe declara; S-k), **contactos** y **cuentas** (S-f) de Zoho frente a sus ta
 falta en Zoho, con los ids **ordenados**. Leer las listas **MUST NOT** escribir en PostgreSQL: **MUST NOT** reutilizarse las listas de la
 sincronización, que escriben mientras leen. Un id de Desk ausente de la lista de Zoho **SHALL** pedirse por id **antes** de clasificarlo:
 `404`, borrado o en papelera ⇒ «falta en Zoho»; vivo ⇒ «hueco de lista», que no es ausencia (S-l). Las filas nacidas en la app
-**SHALL** excluirse de «falta en Zoho» sólo por la regla escrita en la lista editable (S-g). Si una lista de Zoho falla, esa entidad
+**SHALL** excluirse de «falta en Zoho» sólo por la regla escrita en la lista editable (S-g). Excepción a la re-verificación: un id de Desk que no es un id de Zoho (prefijo `app-`, `apps/desk/server/db/ticketFuentes.ts:30`) **MUST NOT** pedirse por id; se clasifica sólo por la regla «nacido en la app», y sin ella sale «sin explicar». Si una lista de Zoho falla, esa entidad
 **SHALL** quedar «sin comparar».
 
 #### Scenario: un id que falta en cada lado sale en su lado y ordenado
@@ -124,7 +124,7 @@ guardado casa, uno no guardado falta. Sin `ADJUNTOS_DIR` válida, la parte del v
 
 Toda petición a Zoho **SHALL** ser `GET` y ninguna sentencia **SHALL** escribir en tablas de negocio. Ante `429`, **SHALL** reintentarse
 tres veces con pausa de 2.000 ms **antes** de tratar un `404` o un `!res.ok`; agotados, **SHALL** cortarse con `cortadoEn` y `desde`
-**SHALL** reanudar desde ahí. **SHALL** ejecutarse una pasada a la vez. Las peticiones y los `429` **SHALL** contarse por entidad y
+**SHALL** reanudar desde ahí la fase por ticket (B); un corte en la fase de listas globales (A) **SHALL** reanudarse relanzando sin `desde`, que rehace esa fase entera. **SHALL** ejecutarse una pasada a la vez. Las peticiones y los `429` **SHALL** contarse por entidad y
 constar en el informe (S-i). Con `limite=0` **SHALL** contar y estimar el mínimo de peticiones sin llamar a Zoho. Informe, `GET` y log
 **MUST NOT** llevar nombres, correos, asuntos, contenido ni secretos: sólo ids, números de ticket y recuentos.
 
