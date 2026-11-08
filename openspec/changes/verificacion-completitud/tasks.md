@@ -53,7 +53,7 @@ Mutaciones y posiciones: M1 (`config.ts:125`), M5 (línea del «incompleto» glo
 - [x] L1.8 Verde: la prueba focal, `npm run typecheck` y suite entera con su log.
 - [x] L1.9 Mutaciones L1 con su rojo: M1 (`s/_HABILITADA === 'true'/_HABILITADA !== 'false'/` sólo en el campo nuevo de `config.ts:125`), M5 (vaciar la línea del «incompleto» global). Tabla en `apply-progress.md`.
 - [x] L1.10 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`.
-- [ ] L1.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido (B.1) y `apply-progress.md`.
+- [x] L1.11 Cierre del lote: las cinco comprobaciones en 0, la medida, el barrido (B.1) y `apply-progress.md`.
 
 ## Lote L2 — lista de conocidas y clasificación (intento i4)
 Escenarios: RQ-ZS-34 los cinco (conocida con causa y entrada, quitar la entrada ⇒ «sin explicar», ticket ausente transmite su clase, copia ensuciada no carga, entrada sin efecto).

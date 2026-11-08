@@ -47,3 +47,6 @@ Ninguna línea existente se movió: `git diff -U0` da hunks `-N +N` en `config.t
 
 ### Medida
 `git diff --shortstat --no-renames 3de383da`: 6 ficheros, 70 inserciones y 19 borrados (89; incluye 11/11 de `tasks.md`, de ellas 1/1 del orquestador). `wc -l` de lo nuevo sin trackear: `comparar.ts` 32, `veredicto.ts` 20, `comparar.test.ts` 54, `veredicto.test.ts` 67, `deployVerificacionCompletitud.test.ts` 66, este fichero 49 (288). Total 377 contra 800. Binarios: ninguno.
+
+### Cierre del orquestador (i3)
+Commit `37aa6dff` sobre `3de383da`: medida `git diff --shortstat --no-renames 3de383da` = 12 ficheros, 358 inserciones y 19 borrados (377), 0 sin trackear; igual a la suma del informe del lote. Cinco comprobaciones en serie sobre el árbol commiteado: typecheck 0; lint 0 (165 avisos contra 165); detector 0 (8.104 comprobadas, 13 abreviadas rotas informativas, las mismas de la base); `npm test` 0 (349 ficheros + 4 omitidos, 6.061 pruebas + 26 omitidas; 256 s; 10.516 MB libres al arrancar; log `npmtest-vco-i3-192344.log` del scratchpad); build 0.
