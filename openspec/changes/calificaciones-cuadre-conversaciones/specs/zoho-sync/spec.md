@@ -6,8 +6,8 @@ son RQ-ZS-48 a RQ-ZS-51. Nombres de tabla, columnas, módulos y funciones los fi
 **hipótesis** hasta que la persona lo compruebe contra producción (P-1 de la propuesta); falla seguro (RQ-ZS-48).
 
 **Nota de fusión.** Dos bloques de `## MODIFIED Requirements` (RQ-ZS-26 y RQ-ZS-28) sustituyen **entero** el bloque vivo con la misma cabecera, **con el mismo número de
-líneas y los mismos títulos de escenario en el mismo orden** (RQ-ZS-26: 55 líneas, `openspec/specs/zoho-sync/spec.md:1705-1759`, 8 escenarios; RQ-ZS-28: 65 líneas,
-`openspec/specs/zoho-sync/spec.md:1822-1886`, 10 escenarios), de modo que ninguna línea viva posterior se mueve: `openspec/specs/zoho-sync/spec.md:2314` sigue citando
+líneas y los mismos títulos de escenario en el mismo orden** (RQ-ZS-26: 55 líneas con la blanca final, `openspec/specs/zoho-sync/spec.md:1705-1758`, 8 escenarios; RQ-ZS-28: 65,
+`openspec/specs/zoho-sync/spec.md:1822-1885` y su blanca, 10 escenarios), de modo que ninguna línea viva posterior se mueve: `openspec/specs/zoho-sync/spec.md:2314` sigue citando
 `openspec/specs/zoho-sync/spec.md:1982` con razón (S-9). Sólo cambian las frases que dejan de ser ciertas: el criterio de `:1710-1711` (RQ-ZS-26) y la verificación de
 `:1830` (RQ-ZS-28); en RQ-ZS-26 son las dos líneas físicas `:1710` y `:1711`, y en RQ-ZS-28 sólo `:1830`. Los escenarios nuevos van todos en los ADDED. **RQ-ZS-29 no se
 modifica** (empieza en `openspec/specs/zoho-sync/spec.md:1887`): su frase «`GET` **SHALL** devolver sólo el estado» deja de ser exacta con S-5, y RQ-ZS-49 la
