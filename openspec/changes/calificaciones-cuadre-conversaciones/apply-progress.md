@@ -119,3 +119,32 @@ Ninguna sobrevivió. Los cinco `400` que caen en P-1 caen también por el cuerpo
 `git diff --shortstat --no-renames 41d9883d` = 34 inserciones + 24 borrados (2 ficheros) + `wc -l` de lo nuevo sin trackear: 78 + 219 = 297, más este bloque (~45) y `tasks.md` 8/8. Total ≈ 58 + 297 + 45 + 16 = ~416, por debajo de 800 (estimado ~640). Sin binarios.
 
 Informe de L3 contrastado por el orquestador: `git diff --numstat` 16/16 (`apps/desk/server/rellenoConversaciones.ts`, 154 → 154) y 18/8 (`apps/desk/server/routes/rellenoConversaciones.ts`, 49 → 59, las líneas 1 a 49 en su sitio); `wc -l` 78 + 219; 154, 59, 78 y 219 líneas con CRLF y ningún retorno de carro suelto (contado con perl). P-1a reproducida por el orquestador (el `400` de `numeros` como middleware delante de `guardaModoSinZoho` en la línea 36 de `apps/desk/server/routes/rellenoConversaciones.ts`): 7 rojas de 21 —las dos de posición, `503` del modo y `403` del interruptor, y los cinco `400`, porque el mutante responde sin el texto—; sha256 restaurado `2f9c3a6233ba2cbb`, CRLF. Un primer intento del orquestador con el sustituto escrito en línea perdió las barras de la expresión y no medía la posición; se descartó.
+
+# apply-progress — lote L4 (partida `761ab3b1`, `DEPLOY.md` §25 y sus pruebas)
+
+## Hecho, por fichero
+- `apps/desk/server/deployCalificacionesConversaciones.test.ts` (nuevo, 71 líneas): `faltasSeccion25` pura, sobre el real y sobre copias en memoria; seis pruebas.
+- `DEPLOY.md`: §25 añadida al final (`DEPLOY.md:1067` a `DEPLOY.md:1110`, 44 inserciones, 0 borrados); las §21 a §24 no se mueven y la frase de `DEPLOY.md:888` no se edita. CRLF conservado (`file` y perl: 0 `\n` ni `\r` sueltos). Sin `.env.example`.
+- `apps/desk/server/deployModoSinZoho.test.ts`, en sitio y con las mismas 73 líneas: `:9` («va antes de la §25»), `:24` (acota la §24 hasta la `## 25. ` si existe), `:25` y `:66` (falta «la §24 sola hasta la §25»), `:50` (añade que la §25 va tras la §24), `:65` (título) y `:66` (mete una `## 99. Otra` antes de la §25).
+
+## Rojo → verde (strict TDD)
+- Rojo inicial por aserción, 5 de 5 en `apps/desk/server/deployCalificacionesConversaciones.test.ts` (el real no tiene §25: «expected -1 to be greater than 79126» y `la sección ## 25.` donde se esperaba la falta concreta).
+- La §25 puso rojas 3 de 5 en `apps/desk/server/deployModoSinZoho.test.ts` (la §24 ya no era última): se corrigieron en sitio; hoy 5 de 5 en verde. `npx vitest run` de todas las `deploy*` (8 ficheros): 48 pruebas en verde. `npm run typecheck` salida 0; `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)».
+- Hallazgo propio: la mutación D (quitar `numeros` sólo del apartado «Qué se rompe») sobrevivía porque `numeros` salía en otros apartados; se añadió a la prueba el tramo del apartado (`numeros`, `noEncontrados`, `400`, `503`) y una prueba que lo fija.
+
+## Mutaciones R-2 sobre el `DEPLOY.md` real (sha256 `67b5a40a1e83fac0` antes y después, CRLF)
+| Id | Línea de `DEPLOY.md` | Rojas |
+|---|---|---|
+| A | 1083: encabezado «Qué se rompe» renombrado | 5 de 6 |
+| B | 1072: «No hay interruptor nuevo» cambiado | 5 de 6 |
+| C | 1100: «contacto y cuenta» (la 1099 lo repite) | 0 (sobrevive por diseño, la frase está dos veces) |
+| D | 1083: `numeros` por `otros` solo en ese apartado | 3 de 6 con la prueba reforzada (0 antes del refuerzo) |
+
+## Barrido de citas (L4.6)
+- Citas a `DEPLOY.md:NNNN` en todo el árbol: ninguna pasa de la 1066; `DEPLOY.md` sólo creció por el final. Las de `docs/sdd/ENTRADA.md` y `openspec/config.yaml` (los seis de Supervisión), sólo listadas, no se tocan.
+- Citas a `apps/desk/server/deployModoSinZoho.test.ts` con línea editada: sólo las de este cambio (`design.md`, `proposal.md`, `tasks.md`), que pasan a B al archivar; las del `verify-report.md` archivado (líneas 49, 54 y 70) apuntan a líneas no editadas.
+
+## Medida (L4.7)
+`git diff --shortstat --no-renames 761ab3b1` = 84 inserciones y 13 borrados (4 ficheros, con este bloque y las casillas) + `wc -l` sin trackear 71 = 168 líneas, por debajo de 800 (estimado ~165). Sin binarios.
+
+Informe de L4 contrastado por el orquestador: `git diff --numstat` 44/0 (`DEPLOY.md`, 1066 → 1110, sólo crece por el final) y 6/6 (`apps/desk/server/deployModoSinZoho.test.ts`, 73 → 73); `wc -l` 71; las 1110 líneas de `DEPLOY.md` con CRLF y ningún retorno de carro suelto. Corregido por el orquestador en sitio, sin cambiar líneas: los pasos P-1 y P-3 de la §25 citaban por línea la `proposal.md` de la carpeta del cambio, que se muda al archivar; ahora nombran el §8 de la propuesta en prosa. R-2 (B) reproducida por el orquestador (quitar «No hay interruptor nuevo» de la línea 1072 de `DEPLOY.md`): 5 rojas de 6; sha256 restaurado `065d944f6f252c38`, CRLF. El mutante C (contacto y cuenta) sobrevive por la doble mención y queda declarado.
