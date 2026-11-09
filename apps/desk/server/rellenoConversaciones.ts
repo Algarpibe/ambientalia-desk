@@ -1,7 +1,7 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import {
-  leerConversaciones, guardarYReflejar, esperadoDeZoho, instanteBase,
+  leerConversaciones, guardarYReflejar, esperadoDeZoho, instanteBase, esCalificacion,
   REINTENTOS_429, PAUSA_429_MS, PAUSA_ENTRE_TICKETS_MS,
 } from '@ambientalia/zoho-sync/conversaciones'
 import { nacidoEnLaApp } from './db/ticketFuentes'
@@ -71,10 +71,10 @@ export function crearRellenoConversaciones({
   /** Un fallo se cuenta y su texto, el primero, se guarda como `motivoPrimerFallo` (S-10; molde `packages/zoho-sync/src/sync.ts:228`, `:238`). */
   const aError = (numero: number, motivo: string) => { estado.conError.push(numero); estado.cuentas.conError++; estado.motivoPrimerFallo ??= motivo }
   const aNoEsta = (numero: number) => { estado.noEstaEnZoho.push(numero); estado.cuentas.noEstaEnZoho++ }
-  /** Lo guardado y VISIBLE de Zoho para el ticket, DESPUÉS de guardar y marcar (D3): `id` es clave primaria, así que son ids únicos. */
+  /** Lo guardado y VISIBLE de Zoho para el ticket, DESPUÉS de guardar y marcar (D3), sin calificaciones (RQ-ZS-48): `id` es clave primaria, así que son ids únicos. */
   const visibles = async (id: string): Promise<number> => {
-    const r = await db.query("SELECT count(*)::int AS n FROM conversations WHERE ticket_id=$1 AND source='zoho' AND ausente_en_zoho_at IS NULL", [id])
-    return Number((r.rows[0] as { n: unknown }).n)
+    const r = await db.query("SELECT raw FROM conversations WHERE ticket_id=$1 AND source='zoho' AND ausente_en_zoho_at IS NULL", [id])
+    return (r.rows as { raw: unknown }[]).filter((f) => !esCalificacion(f.raw)).length
   }
 
   /**
