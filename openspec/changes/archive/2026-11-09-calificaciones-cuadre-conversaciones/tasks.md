@@ -78,16 +78,16 @@ Escenarios: RQ-ZS-51 (sección completa, última, con sus dos apartados y las do
 - [x] L4.7 Medida del lote (≤ 800) y `apply-progress.md`.
 
 ## Verificación (intento por abrir)
-- [ ] V.1 Verify independiente: `verify-report.md` con CA-1 a CA-10 contra pruebas que existen (ruta y prueba) y cada escenario de RQ-ZS-26, 28 y 48 a 51.
-- [ ] V.2 Reproducir una muestra de mutaciones con PM: al menos M-1, M-4, P-1 (una posición), P-3 y R-1 (fichero vigilado), con restauración comprobada.
-- [ ] V.3 Regla 13 escrita decisión a decisión (D-11): `apps/desk/src` no cambia (`git diff --name-only` sin nada bajo esa ruta) y cada decisión nueva nombra su línea del servidor.
-- [ ] V.4 Barrido completo de la regla de mutación 4 sobre todos los ficheros editados; la cadena de comprobación en 0 y la medida del intento (el informe suma).
+- [x] V.1 Verify independiente: `verify-report.md` con CA-1 a CA-10 contra pruebas que existen (ruta y prueba) y cada escenario de RQ-ZS-26, 28 y 48 a 51.
+- [x] V.2 Reproducir una muestra de mutaciones con PM: al menos M-1, M-4, P-1 (una posición), P-3 y R-1 (fichero vigilado), con restauración comprobada.
+- [x] V.3 Regla 13 escrita decisión a decisión (D-11): `apps/desk/src` no cambia (`git diff --name-only` sin nada bajo esa ruta) y cada decisión nueva nombra su línea del servidor.
+- [x] V.4 Barrido completo de la regla de mutación 4 sobre todos los ficheros editados; la cadena de comprobación en 0 y la medida del intento (el informe suma).
 
 ## Archivo (intento por abrir)
-- [ ] A.1 Techo del intento = 2 × `wc -l` de la carpeta del cambio + 800. Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.
-- [ ] A.2 Fusión por script de los MODIFIED (RQ-ZS-26 y RQ-ZS-28, a igual longitud) y los ADDED (RQ-ZS-48 a RQ-ZS-51, al final) en `openspec/specs/zoho-sync/spec.md`, con ensayo `--dry`, identidad bloque a bloque y finales de línea conservados (`file`).
-- [ ] A.3 `archive-report.md` (lo escribe el orquestador) con la línea de R-1 (qué cubrió y qué dejó fuera) y las tareas de persona aparte.
-- [ ] A.4 Cadena de comprobación en 0 y commit que contiene sólo este cambio: `git show --numstat`.
+- [x] A.1 Techo del intento = 2 × `wc -l` de la carpeta del cambio + 800. Medir antes de aplicar la parte revisable (fusión del delta más `archive-report.md`) con `git diff --shortstat --no-renames`; si supera 800, parar y consultar.
+- [x] A.2 Fusión por script de los MODIFIED (RQ-ZS-26 y RQ-ZS-28, a igual longitud) y los ADDED (RQ-ZS-48 a RQ-ZS-51, al final) en `openspec/specs/zoho-sync/spec.md`, con ensayo `--dry`, identidad bloque a bloque y finales de línea conservados (`file`).
+- [x] A.3 `archive-report.md` (lo escribe el orquestador) con la línea de R-1 (qué cubrió y qué dejó fuera) y las tareas de persona aparte.
+- [x] A.4 Cadena de comprobación en 0 y commit que contiene sólo este cambio: `git show --numstat`.
 
 ## Tareas de persona — fuera del recuento; archivar NO las da por hechas
 | Id | Qué | Dueño | Dónde queda escrito |
