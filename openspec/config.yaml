@@ -6213,6 +6213,293 @@ decisiones_de_gerencia_panel:
     maestro_revision: "no aplica"
     tanda_que_abre: "sin asignar — propuesta: F1F-01 por contenido (cierra: no), antes del 12/12"
 
+  # Corte del 08/11/2026 — CLAVES ENGRAM QUE LA PRÓXIMA SESIÓN DE CONSTRUCCIÓN DEBE CARGAR:
+  # decision/adjuntos-en-el-disco-del-servidor · decision/copias-b2-cierran-la-fila · decision/arranque-bloqueado-por-consola
+  # decision/calificaciones-y-borrados-de-zoho · decision/ticket-1017-sin-zoho · decision/restos-del-historico-de-conversaciones
+  # decision/codigo-servicio-fuera-de-ingresado
+  - clave: "decision/adjuntos-en-el-disco-del-servidor"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `adjuntos-en-el-disco-del-servidor`; escrita el 08/11/2026; aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      La aplicación ya sabe guardar de nuestro lado los adjuntos de los tickets que hoy viven en Zoho; los guardará en el
+      disco del servidor (unos 2,6 GB, medición del 04/11). Para traer los que ya existen hay que lanzar un relleno.
+      ¿Confirmas ese sitio antes de lanzarlo?
+    respuesta_textual: |
+      «Sitio de los adjuntos (1G-02): sí, el disco del servidor, opción 1. Condiciones: (1) ADJUNTOS_DIR apunta a un volumen persistente de EasyPanel, no al disco del contenedor; antes del relleno se comprueban el volumen y el espacio libre, y se hace la copia previa. (2) Los adjuntos tienen que tener copia fuera del servidor en B2. Si las copias de EasyPanel a S3 sólo cubren las bases de datos, hace falta una copia propia de esa carpeta, y el relleno no se da por bueno hasta que exista. (3) Decidme qué pasa con los adjuntos de los unos 200 tickets que Zoho tiene y la aplicación no conoce: si los cubre algo o se pierden al dar de baja Zoho. Lanzo el relleno cuando estén resueltos (1) y (2).»
+    consecuencias: |
+      (1) PUERTA M1 DE 1G-02 CON DECISIÓN ESCRITA: el sitio que la tanda ya usa (regla de
+      `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:200` aplicada a la medición del 04/11) queda decidido por Gerencia.
+      Cierra lo que pedía `openspec/changes/archive/2026-11-04-persistencia-adjuntos/archive-report.md:136-137`. No reabre 1G-02.
+      (2) CONDICIÓN (1) = tareas de persona P-1 y P-2 de 1G-02 (`persistencia-adjuntos/archive-report.md:124-132`, `DEPLOY.md` §22).
+      (3) CONDICIÓN (2) SIN CUBRIR HOY: la copia nocturna de la App vuelca sólo la base (`pg_dump`,
+      `apps/desk/server/respaldo/dependencias.ts:43-45`) y la de Drive copia la carpeta de Drive; ninguna toca `ADJUNTOS_DIR`. Si las
+      copias de EasyPanel incluyen volúmenes: NO MEDIDO. `decision/copias-b2-cierran-la-fila` deja este mismo punto pendiente, así que
+      ninguna de las dos respuestas lo decide: devuelto como pregunta del panel (qid `copia-de-la-carpeta-de-adjuntos`).
+      (4) CONDICIÓN (3), LO QUE SE SABE: el relleno de adjuntos recorre sólo los tickets que Desk ya tiene (`attachments JOIN tickets`,
+      `apps/desk/server/adjuntos/rellenoAdjuntos.ts:69`): un ticket que Zoho tenga y Desk no, no lo cubre. Que esos ≈200 existan NO
+      ESTÁ MEDIDO: «≈986» es el número más alto, no un recuento (`openspec/changes/archive/2026-11-07-verificacion-completitud/proposal.md:66-67`).
+      Lo mide la primera pasada en producción de 1G-03, que compara tickets en las dos direcciones (fase A; tareas P-1 a P-3 de
+      Alfonso, `verificacion-completitud/archive-report.md:127-131`). Si salen, traerlos es trabajo sin fila: se decidirá con la cifra.
+      (5) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: la propuesta de 1G-03 cita como dato de persona de Alfonso «Adjuntos (1G-02, 05/11
+      a 07/11): 2.424 ficheros en `/data/adjuntos`» (`verificacion-completitud/proposal.md:64-65`), es decir, un relleno ya hecho;
+      esta respuesta dice «Lanzo el relleno cuando estén resueltos (1) y (2)». Cuál de las dos es la situación real: NO MEDIDO por
+      esta supervisión. Si ya está hecho, lo que queda de (1) es comprobar que `/data/adjuntos` es un volumen persistente. MEDIDO DESPUÉS, el 08/11, por el analista y Alfonso: hecho, 2.424 adjuntos en el volumen `/data/adjuntos` (`docs/sdd/ENTRADA.md` → E-280); el volumen sigue sin copia (E-281).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/adjuntos-en-el-disco-del-servidor) · docs/sdd/ENTRADA.md → E-264 (traza)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna — 1G-02 sigue cerrada; la copia de la carpeta, pendiente de la pregunta `copia-de-la-carpeta-de-adjuntos`"
+  - clave: "decision/copias-b2-cierran-la-fila"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `copias-b2-cierran-la-fila`; escrita el 08/11/2026; aterrizada en el corte del 08/11/2026"
+    precisa: "decision/f1f02-b2-destino-easypanel (03/11, decisiones_de_gerencia_adenda): completa su parte a medias (E-270)"
+    pregunta: |
+      Decidiste el 03/11 contratar Backblaze B2 para las copias de las dos bases que hace el panel del servidor. La aplicación
+      tiene además tres copias propias construidas y apagadas. ¿Con las del servidor en B2 basta para dar por terminada la pieza
+      de copias, o encendemos también las tres de la aplicación?
+    respuesta_textual: |
+      «Copias de seguridad (F1F-02): opción 2, las dos vías. Las copias del panel del servidor van a B2, en un almacenamiento con Object Lock activado al crearlo y con una clave sin permiso de borrado; el bloqueo lo impone B2, no el panel. Se encienden las tres copias de la aplicación (RESPALDO_HABILITADO y RESPALDO_DRIVE_HABILITADO) tal como están construidas, a disco y a Drive, sin cargar credenciales de B2 en la aplicación. La copia previa a cada cambio pasa a hacerla la aplicación y deja de hacerse a mano. Pendiente de decir en la respuesta: (1) qué copia cubre la carpeta de adjuntos de 1G-02, que ninguna de las dos vías incluye hoy; (2) calendario de la prueba de restauración de las dos vías, la primera antes del 12/12. La fila cierra con la primera copia en B2, las tres de la aplicación encendidas y los adjuntos con copia asignada.»
+    consecuencias: |
+      (1) CRITERIO DE CIERRE DE F1F-02, fijado: primera copia en B2, las tres copias de la App encendidas y los adjuntos con copia
+      asignada. El bloqueo contra borrado lo impone B2 (Object Lock al crear el almacenamiento y clave sin permiso de borrado).
+      (2) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE — MEDIDA en `3c427986`: la copia nocturna y la previa a cada cambio
+      (`RESPALDO_HABILITADO`) NO escriben a disco: cifran y SUBEN a un destino S3 (`openspec/changes/archive/2026-10-05-respaldo-nocturno-y-previo/archive-report.md:5`)
+      y exigen `RESPALDO_S3_ENDPOINT`, `_REGION`, `_BUCKET`, `_ACCESS_KEY_ID` y `_SECRET_ACCESS_KEY` (`apps/desk/server/respaldo/config.ts:45-56`).
+      Encendidas sin esas credenciales, cada copia sale con «configuración incompleta» y manda un correo de fallo
+      (`apps/desk/server/respaldo/respaldo.ts:48-52`). «A disco … sin cargar credenciales de B2» no es compatible con lo construido.
+      La semanal de Drive (`RESPALDO_DRIVE_HABILITADO`) sí funciona sin B2 y no escribe nada en el servidor
+      (`apps/desk/server/respaldo/sinDisco.test.ts:14`). Devuelto como pregunta del panel (qid `copias-de-la-app-sin-destino`).
+      (3) PENDIENTE (1) de la respuesta = el mismo punto que `decision/adjuntos-en-el-disco-del-servidor` (3): pregunta
+      `copia-de-la-carpeta-de-adjuntos`. PENDIENTE (2): la fecha de la primera prueba de restauración, antes del 12/12: pregunta
+      `primera-prueba-de-restauracion`.
+      (4) La copia previa a cada cambio la hace la App: hasta que (2) se resuelva, sigue siendo a mano (los paquetes de despliegue).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/copias-b2-cierran-la-fila) · docs/sdd/ENTRADA.md → E-270 (traza)"
+    maestro_pasaje: "Anexo D nº 55 (copias)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna nueva — F1F-02 sigue en curso con su criterio de cierre escrito"
+  - clave: "decision/arranque-bloqueado-por-consola"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `arranque-bloqueado-por-consola`; escrita el 08/11/2026; aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      El 03/11 la aplicación estuvo caída casi dos horas porque, al arrancar, esperó sin límite a una consola de consulta
+      abierta a medias. ¿Ponemos además una protección que no dependa de acordarse?
+    respuesta_textual: |
+      «Caída del 03/11 (E-268): opción 3, en dos pasos. (1) Ahora, configuración de la base de producción: límite de 15 minutos para transacciones ociosas (idle_in_transaction_session_timeout), con copia previa; antes, el analista confirma contra el código que la aplicación no mantiene transacciones abiertas tanto tiempo. (2) Después del 09/11, tanda corta con ficha: límite de espera en la puesta al día de la base, con rastro en el registro, y corrección de migrate.ts para que un cambio de base que falle detenga el arranque en vez de saltarse y seguir. Publicada antes del 12/12. El procedimiento de consultas y publicaciones se mantiene.»
+    consecuencias: |
+      (1) PASO 1, tarea de persona (Alfonso) con verificación previa del analista; no es código. Que la App no tenga transacciones
+      ociosas de 15 minutos: NO MEDIDO por esta supervisión. Una consola de persona que se deje a medias más de 15 minutos se corta sola.
+      (2) PASO 2, trabajo de código con ficha, después del 09/11 y publicado antes del 12/12. Tanda SIN ASIGNAR; destino PROPUESTO, no
+      decidido: `fuera-del-plan` con motivo esta decisión. Su ficha la escribe la construcción.
+      (3) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: la tolerancia por sentencia de `packages/zoho-sync/src/db/migrate.ts:25-34` es
+      deliberada —«un índice sobre una columna que aún no existe en un esquema viejo … se loguea y se continúa»—. Si hoy alguna
+      sentencia falla en cada arranque de producción, con el cambio la App dejaría de arrancar. Qué medir antes: las líneas
+      «migrate: sentencia omitida» del registro de la App en producción. NO MEDIDO.
+      (4) El procedimiento del analista (consultas `psql -c` y comprobación previa, E-268) se mantiene.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/arranque-bloqueado-por-consola) · docs/sdd/ENTRADA.md → E-268 (cerrada en sitio)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "sin asignar — propuesta: fuera-del-plan, después del 09/11, publicada antes del 12/12"
+  - clave: "decision/calificaciones-y-borrados-de-zoho"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `calificaciones-y-borrados-de-zoho`; escrita el 08/11/2026; aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      En 51 tickets con calificación de satisfacción, Zoho cuenta menos conversaciones de las que entrega y la aplicación, por
+      prudencia, no da nada por borrado: lo borrado en Zoho sigue viéndose. ¿Lo arreglamos, y cuándo?
+    respuesta_textual: |
+      «Conversaciones y calificaciones (E-266): sí se arregla, como tanda corta fuera del plan, lanzada a partir del 09/11 junto con E-247, sin excepción hoy. Alcance: corregir la comparación de conversaciones.ts para que la calificación de satisfacción no haga fallar el cuadre (contarla, o aceptar recibido ≥ contado; lo decide la construcción y lo anota como supuesto), y volver a lanzar la pasada sobre los 51 tickets de E-266. El resumen de esa pasada se guarda donde sobreviva a un redespliegue. No toca datos de producción más allá de marcar como borrado lo que Zoho ya no tiene.»
+    consecuencias: |
+      (1) QUÉ SE CONSTRUYE: el criterio de `packages/zoho-sync/src/conversaciones.ts:120` (`recibidos.size === esperado`, con
+      `esperado` en `:50-57`) deja de fallar por los hilos de calificación; lo usan las tres vías (E-266). Más la nueva pasada sobre
+      los 51 y un resumen que sobreviva a un redespliegue (hoy vive en memoria y se perdió el 03/11, E-266).
+      (2) Lleva también la medición de peticiones a Zoho por pasada (`decision/restos-del-historico-de-conversaciones`, excepción).
+      (3) TANDA: `fuera-del-plan`, motivo esta decisión, a partir del 09/11. Sin excepción a «ninguna tanda nueva antes del 09/11».
+      (4) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE — AMBIGÜEDAD: «junto con E-247». E-247 está RESUELTA desde el 27/10 (era la cifra
+      anclada de las esperas, `docs/sdd/ENTRADA.md:2282`, `5f5393bb`). La entrada vecina que encaja por contenido es E-257 (tickets
+      archivados con una conversación borrada en Zoho que sigue visible); es SUPUESTO de esta supervisión, no decidido. Registrada
+      como PARCIAL en ese punto y devuelta como pregunta del panel (qid `calificaciones-junto-con-que`).
+      (5) La comparación por ids de 1G-03 ya saca estos 51 de la prueba del corte (`verificacion-completitud/archive-report.md:147-148`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/calificaciones-y-borrados-de-zoho) · docs/sdd/ENTRADA.md → E-266 (traza)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "fuera-del-plan (corta), a partir del 09/11 — parcial: con qué otra entrada va"
+  - clave: "decision/ticket-1017-sin-zoho"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `ticket-1017-sin-zoho`; escrita el 08/11/2026; aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      El ticket #1017 está en la aplicación, pero Zoho ya no lo tiene. Es el único de 783. ¿Qué hacemos con él en la aplicación?
+    respuesta_textual: |
+      «icket #1017 (E-267): es un duplicado del #1016 (mismo asunto, Corola Ambiental, creado el 28/10 a las 12:25), borrado en Zoho a propósito por la Coordinadora Comercial el 28/10 a las 16:21, según la papelera de Zoho Desk. No se restaura ni se marca: se retira de la aplicación con el borrado de administrador para tickets sin actividad real, motivo «duplicado», con registro. Antes, el analista confirma que en la aplicación no tiene remisión, orden de venta asociada ni transiciones posteriores a la creación; si tiene asociación, se libera con motivo antes de borrar; si tiene transiciones, se para y se consulta. Lo ejecuto yo. La mudanza cuadra 782 con 782.»
+    consecuencias: |
+      (1) Medido por Gerencia en la papelera de Zoho Desk: duplicado del #1016, borrado a propósito el 28/10. Opción 3 de la pregunta.
+      (2) Tarea de persona (Alfonso), con comprobación previa del analista; nada que construir. El borrado de administrador existe
+      (`apps/desk/server/db/eliminarTicket.ts`, que recorre remisiones, adjuntos y transiciones, `:45-56`). Que registre un motivo: NO MEDIDO.
+      (3) Si el #1017 tuviera adjuntos guardados, el borrado deja sus ficheros en el volumen
+      (`openspec/changes/archive/2026-11-04-persistencia-adjuntos/archive-report.md:141`). NO MEDIDO si los tiene.
+      (4) Hecho, la mudanza cuadra 782 con 782 (F1F-01).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/ticket-1017-sin-zoho) · docs/sdd/ENTRADA.md → E-267 (cerrada en sitio)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (tarea de persona)"
+  - clave: "decision/restos-del-historico-de-conversaciones"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `restos-del-historico-de-conversaciones`; escrita el 08/11/2026; aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      Al traer de Zoho las conversaciones completas quedaron apuntados seis flecos menores con un destino que ya no existe.
+      ¿Dónde los apuntamos?
+    respuesta_textual: |
+      «Flecos de 1G-01 (E-250 a E-255): destino 1G-03, verificación de completitud. La verificación decide cuáles exigen código: un ticket que falló en la pasada automática y no se reintentó debe aparecer ahí como incompleto, y ésa es la prueba de si el reintento hace falta. 1G-03 anota en su alcance las seis entradas al abrirse. Excepción: la medición de peticiones a Zoho por pasada se hace en la tanda corta de E-266, al relanzar la pasada sobre los 51 tickets, y su resultado cierra esa entrada. No se abre fila nueva.»
+    consecuencias: |
+      (1) E-250 a E-255 pasan a destino 1G-03; no se abre fila (78 tandas, sin cambio).
+      (2) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: 1G-03 ya se abrió y se cerró: archivada el 07/11 con `cierra: si` y fusionada en
+      `6efe4cf0` el 08/11 a las 07:52, antes de esta respuesta (09:06). Su propuesta no anota las seis entradas; sólo E-254 (d), la
+      cuota (`openspec/changes/archive/2026-11-07-verificacion-completitud/proposal.md:167`). «Anota en su alcance … al abrirse» ya no
+      puede cumplirse a la letra. INTERPRETACIÓN de esta supervisión, escrita y no decidida: las seis se juzgan con la PRIMERA PASADA
+      DE 1G-03 EN PRODUCCIÓN (tareas P-1 a P-3 de Alfonso, `verificacion-completitud/archive-report.md:127-131`); lo que salga
+      incompleto decide si hace falta código, que sería trabajo sin fila. No reabre 1G-03. CONFIRMADA por Gerencia el 08/11/2026 en la conversación de supervisión: «El 4, la lectura de Supervisión.» Primera pasada del 08/11: conversaciones en verde, 6.222 casan (E-276).
+      (3) E-254 (d), la cuota: la cierra la tanda corta de `decision/calificaciones-y-borrados-de-zoho`; 1G-03 también la cuenta (S-i).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/restos-del-historico-de-conversaciones) · docs/sdd/ENTRADA.md → E-250 a E-255 (ruteadas en sitio)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna — 1G-03, ya cerrada; se juzgan con su primera pasada en producción"
+  - clave: "decision/codigo-servicio-fuera-de-ingresado"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `codigo-servicio-fuera-de-ingresado`; escrita el 08/11/2026; aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      Lo construido sólo deja poner o cambiar el código de servicio al salir de «Ingresado». Quedan sin camino los tickets que lleguen
+      de Zoho el 12/12 ya avanzados y sin código, y la corrección de un administrador pasado ese punto. ¿Abrimos ese camino, y para quién?
+    respuesta_textual: |
+      «Código de servicio fuera de «Ingresado» (P-2 y P-3 de codigo-servicio-bloqueado): medido en Zoho Desk el 08/11, 11 tickets sin código, 9 cerrados y 2 abiertos (#880 y #882), los dos en «Ingresado»; ningún ticket abierto pasado ese estado sin código. No se construye antes del corte ni se toca la mudanza. Queda como punto abierto con dueño Gerencia, y se vuelve a medir en la pasada en seco del 11/11 y el 12/12 antes de migrar. La corrección de administrador en cualquier estado, con el valor anterior en la traza, se construye después del corte, en la primera tanda que abra la épica del histórico o en enero. Si la remedición encuentra algún ticket avanzado sin código, se revisa esta decisión.»
+    consecuencias: |
+      (1) Medido por Gerencia en Zoho Desk el 08/11: 11 sin código (9 cerrados; abiertos #880 y #882, en «Ingresado», que sí tienen
+      camino). Nada que construir antes del corte; F1F-01 sin tocar.
+      (2) PUNTO ABIERTO, dueño Gerencia: remedir en la pasada en seco del 11/11 (`decision/f1f01-fecha-pasada-en-seco`) y el 12/12 antes
+      de migrar. Si aparece un ticket avanzado sin código, se revisa esta decisión.
+      (3) Corrección de administrador en cualquier estado, con valor anterior en la traza: DESPUÉS del corte; tanda SIN ASIGNAR, propuesta
+      no decidida: la primera que abra la épica del histórico, o enero. Cierra P-2 y P-3 de E-273; queda P-4 (expediente).
+      (4) Para el expediente R08.x: M1.1 y Anexo D nº 37 (`docs/sdd/R08.4_Expediente_de_cambios.md` §20).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/codigo-servicio-fuera-de-ingresado) · docs/sdd/ENTRADA.md → E-273 (traza) · docs/sdd/R08.4_Expediente_de_cambios.md §20"
+    maestro_pasaje: "M1.1 y Anexo D nº 37 (código de servicio)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "sin asignar — después del corte (épica del histórico o enero)"
+  # Corte del 08/11/2026 (segunda parte: panel 09:30–09:35 y conversación de supervisión, confirmadas con «si») — CLAVES ENGRAM:
+  # decision/copias-de-la-app-sin-destino · decision/copia-de-la-carpeta-de-adjuntos · decision/contactos-y-cuentas-que-faltan
+  # decision/calificaciones-junto-con-que · decision/primera-prueba-de-restauracion · decision/ficha-cliente-avisos-y-preventivo
+  # Cómo se fijaron: Gerencia respondió las seis en el panel (09:30–09:35 −05) y, a la vez, en la conversación de supervisión con
+  # textos que chocaban en cuatro. Supervisión le preguntó cuál valía; Gerencia pidió recomendación; Supervisión recomendó el
+  # panel en las cuatro más la fila nueva de 1G del chat; Gerencia respondió «si». Los textos del chat quedan como `texto_conversacion`.
+  - clave: "decision/copias-de-la-app-sin-destino"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `copias-de-la-app-sin-destino`, 09:30; y conversación de supervisión (punto 1); aterrizada en el corte del 08/11/2026"
+    precisa: "decision/copias-b2-cierran-la-fila (09:03): la mantiene y CORRIGE su frase «sin cargar credenciales de B2 en la aplicación» (la corrección es de Gerencia, con esas palabras). No adopta la recomendación del analista de dejarlas apagadas."
+    pregunta: |
+      La copia de cada noche y la de antes de cada cambio no escriben en disco: suben a un almacén externo y sin su clave no
+      copian nada. ¿Qué hacemos con esas dos?
+    respuesta_textual: |
+      «Copias nocturna y previa (F1F-02): opción 1. Se corrige lo dicho el 08/11: la aplicación sí lleva credenciales de B2, pero propias. Segundo almacenamiento en la misma cuenta de B2, con Object Lock al crearlo, y una clave de aplicación limitada a ese almacenamiento y sin permiso de borrado, distinta de la del panel del servidor. Las cinco variables RESPALDO_S3_* se cargan en el gestor de secretos del despliegue y se encienden RESPALDO_HABILITADO y RESPALDO_DRIVE_HABILITADO. Antes de encender, el analista confirma que la configuración S3 de la aplicación admite la dirección y región de B2; si no, se abre tanda corta sólo para eso. Lo hago yo antes del 13/11. La fila cierra con la primera copia de cada vía en B2 y la primera semanal en Drive.»
+    texto_conversacion: |
+      «se mantiene mi decisión de las 09:03 (las dos vías). Para que se pueda cumplir, la copia semanal a Drive se enciende ya, y la nocturna y la previa se encienden con una clave de B2 propia de la App, sin permiso de borrado, en el almacenamiento con Object Lock. F1F-02 cierra con el criterio que ya fijé: primera copia en B2, las tres copias de la App encendidas y los adjuntos con copia, que será la copia de volumen de EasyPanel hacia B2.»
+    consecuencias: |
+      (1) TAREAS DE PERSONA (Alfonso, antes del 13/11): segundo almacenamiento B2 con Object Lock y clave propia de la App, sin
+      borrado; `RESPALDO_S3_*` y `RESPALDO_CLAVE_CIFRADO` (`apps/desk/server/respaldo/config.ts:45-56`) en el gestor de secretos;
+      encender `RESPALDO_HABILITADO` y `RESPALDO_DRIVE_HABILITADO` (la de Drive, «ya», según la conversación).
+      (2) TAREA DEL ANALISTA, antes de encender: que la configuración S3 de la App admita dirección y región de B2; si no, tanda corta
+      sólo para eso (`fuera-del-plan`, propuesta).
+      (3) CIERRE DE F1F-02, unión de los dos textos: primera copia de cada vía en B2, primera semanal en Drive y los adjuntos con copia
+      (`decision/copia-de-la-carpeta-de-adjuntos`).
+      (4) CONSECUENCIA QUE SE SEÑALA: la retención 7/4/12 la hacen las reglas de ciclo de vida del almacenamiento
+      (`apps/desk/server/respaldo/respaldo.ts:28`), no la App; el plazo de Object Lock tiene que ser compatible con ellas (HIPÓTESIS).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/copias-de-la-app-sin-destino) · docs/sdd/ENTRADA.md → E-270 (traza)"
+    maestro_pasaje: "Anexo D nº 55 (copias)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna — tareas de persona de F1F-02; tanda corta sólo si B2 no encaja en la configuración S3"
+  - clave: "decision/copia-de-la-carpeta-de-adjuntos"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `copia-de-la-carpeta-de-adjuntos`, 09:32; aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      Los adjuntos guardados de nuestro lado no los copia ninguna copia. ¿Qué copia se encarga de esa carpeta?
+    respuesta_textual: |
+      «Copia de los adjuntos (1G-02): opción 1 ahora. El panel del servidor incluye el volumen /data/adjuntos en sus copias a B2; se comprueba al día siguiente que la copia ha subido el tamaño esperado (unos 2,6 GB), no sólo la base. Con esa copia verificada, el relleno se da por bueno. Si el panel no admite copiar volúmenes, la opción 2 pasa a tanda corta antes del 12/12. Opción 2 como segunda vía después del corte: la aplicación sube los adjuntos a B2 con su propia clave, de forma incremental (sólo lo nuevo, o cada adjunto al guardarse; lo decide la construcción). Descartada la copia a Drive. Los adjuntos de los tickets que Zoho tenga y la aplicación no conozca los dirá la primera pasada de la verificación de completitud en producción, que hago yo.»
+    consecuencias: |
+      (1) AHORA, sin código: el volumen `/data/adjuntos` (2.424 adjuntos, E-280) entra en las copias del panel a B2; se comprueba al día
+      siguiente por tamaño (≈2,6 GB). Con eso se cumple la condición (2) de `decision/adjuntos-en-el-disco-del-servidor` y E-281 se cierra.
+      (2) HIPÓTESIS, NO MEDIDA: que el panel copie volúmenes a B2. Si no: tanda corta antes del 12/12 (la App sube los adjuntos a B2).
+      (3) DESPUÉS DEL CORTE: segunda vía, la App sube los adjuntos a B2 de forma incremental. Tanda SIN ASIGNAR.
+      (4) Los adjuntos de tickets que Zoho tenga y Desk no: la primera pasada ya dio tickets 785/785 en verde (E-276); los 201 que faltan
+      son del propio ticket (E-277).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/copia-de-la-carpeta-de-adjuntos) · docs/sdd/ENTRADA.md → E-281 (decidida en sitio)"
+    maestro_pasaje: "Anexo D nº 55 (copias)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna ahora; tanda corta antes del 12/12 sólo si el panel no copia volúmenes; segunda vía después del corte, sin asignar"
+  - clave: "decision/contactos-y-cuentas-que-faltan"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `contactos-y-cuentas-que-faltan`, 09:34; conversación de supervisión (fila nueva de 1G); combinación recomendada por Supervisión y confirmada por Gerencia («si»); aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      La verificación encontró 392 contactos y 210 cuentas de Zoho que la aplicación nunca trajo. ¿Hace falta tenerlos antes del corte?
+    respuesta_textual: |
+      «Contactos y cuentas de Zoho no traídos (E-279): no antes del corte. Tanda corta en la semana del 14/12, inmediatamente después de la mudanza y antes de que Zoho pase a sólo lectura: pasada completa que traiga todos los contactos y cuentas de Zoho Desk, corrigiendo la parada en «no más nuevo que el último» de sync.ts, y en la misma tanda el mismo defecto de contabilidad (E-261). Condición para la baja de Zoho: la verificación de completitud en verde también en contactos y cuentas. Entre el 14/12 y la pasada, los clientes que falten se dan de alta a mano como provisionales y se enlazan cuando lleguen los reales. No se filtra por actividad: no se pierde ningún cliente.»
+    texto_conversacion: |
+      «El 3, sí: fila nueva en 1G para los adjuntos del ticket, la historia y los contactos y cuentas, aunque el total pase a 79.»
+    consecuencias: |
+      (1) CONTACTOS, CUENTAS Y E-261: tanda corta la semana del 14/12, tras la mudanza y antes de Zoho a sólo lectura; corrige la marca
+      de agua de `packages/zoho-sync/src/sync.ts:266-285` y el mismo defecto de contabilidad. Tanda SIN ASIGNAR (propuesta:
+      `fuera-del-plan` o F1F-01 por contenido; la declara la construcción). Sin filtro por actividad.
+      (2) CONDICIÓN PARA LA BAJA DE ZOHO: 1G-03 en verde también en contactos y cuentas.
+      (3) ADJUNTOS DEL TICKET (E-277) E HISTORIA (E-278): fila nueva en 1G después de 1G-04, con 1G-03 repetida como prueba (texto de la
+      conversación). ID PROPUESTO, no fijado: 1G-05. Talla: hipótesis del analista, S–M. Escribirla en el plan no es de esta supervisión.
+      (4) Mientras tanto, los clientes que falten se dan de alta a mano como provisionales (F1B-15, F1B-19) y se enlazan después.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/contactos-y-cuentas-que-faltan) · docs/sdd/ENTRADA.md → E-279 y E-261 (ruteadas), E-277 y E-278 (ruteadas)"
+    maestro_pasaje: "M11.3 (independencia)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "tanda corta la semana del 14/12 (contactos, cuentas, E-261) · fila nueva en 1G (ID propuesto 1G-05) para adjuntos e historia"
+  - clave: "decision/calificaciones-junto-con-que"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `calificaciones-junto-con-que`, 09:34; recomendada por Supervisión frente al texto del chat y confirmada («si»); aterrizada en el corte del 08/11/2026"
+    precisa: "decision/calificaciones-y-borrados-de-zoho, consecuencia (4): deja de ser parcial; la tanda va sola"
+    pregunta: |
+      Decidiste arreglar las calificaciones «junto con» otra pieza nombrada por su número, que ya estaba cerrada. ¿Con cuál querías?
+    respuesta_textual: |
+      «Tanda de las calificaciones (E-266): va sola; la referencia a E-247 fue un error, esa entrada estaba cerrada desde el 27/10. Alcance: sólo la corrección de la comparación y el relance de la pasada sobre los 51 tickets, con el resumen guardado donde sobreviva a un redespliegue. Al cerrar, la construcción comprueba si E-257 (conversaciones borradas que siguen viéndose en tickets archivados) ha desaparecido con el relance; si sí, E-257 se cierra por medición; si no, queda como entrada propia con su medición, sin ampliar esta tanda.»
+    texto_conversacion: |
+      «El 5 era E-257.»
+    consecuencias: |
+      (1) La tanda corta `fuera-del-plan` desde el 09/11 lleva sólo E-266. E-257 se mide al cerrarla: se cierra por medición o queda
+      abierta con su medición, sin ampliar la tanda.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/calificaciones-junto-con-que) · docs/sdd/ENTRADA.md → E-266 y E-257 (traza)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "fuera-del-plan (corta), la misma de decision/calificaciones-y-borrados-de-zoho"
+  - clave: "decision/primera-prueba-de-restauracion"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `primera-prueba-de-restauracion`, 09:33; recomendada por Supervisión frente al texto del chat y confirmada («si»); aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      ¿Qué día se hace la primera prueba de restaurar una copia, antes del 12/12, y cada cuánto después?
+    respuesta_textual: |
+      «Prueba de restauración (F1F-02): la primera el jueves 19/11, con las dos vías ya encendidas. Después, el tercer jueves de cada mes (17/12, 21/01, 18/02). Reglas: se restaura en una base aparte, nunca sobre producción; se restauran las dos vías, panel y aplicación, usando una copia que no sea la última; se comprueba con el recuento de tickets y de transiciones contra producción a la hora de la copia; cuando los adjuntos tengan copia en B2, se restauran también y se abre uno al azar. El resultado lo paso el mismo día y Supervisión lo anota en el parte. Que el analista prepare el paso a paso a partir de DEPLOY.md §12 antes del 18/11.»
+    texto_conversacion: |
+      «La primera prueba de restauración, la semana de la primera copia en B2, en una base aparte.»
+    consecuencias: |
+      (1) Fechas: 19/11, 17/12, 21/01, 18/02 (tercer jueves). Tarea de persona; el analista entrega el paso a paso antes del 18/11.
+      (2) Supervisión anota el resultado en el parte del corte siguiente a cada prueba.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/primera-prueba-de-restauracion) · docs/sdd/ENTRADA.md → E-270 (traza)"
+    maestro_pasaje: "Anexo D nº 55"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna (tarea de persona de F1F-02)"
+  - clave: "decision/ficha-cliente-avisos-y-preventivo"
+    fecha: "2026-11-08"
+    origen: "panel, apartado 06, qid `ficha-cliente-avisos-y-preventivo`, 09:35; recomendada por Supervisión frente al texto del chat y confirmada («si»); aterrizada en el corte del 08/11/2026"
+    pregunta: |
+      La ficha del cliente con contacto para avisos de calibración y frecuencia de preventivo: ¿cuándo lo construimos?
+    respuesta_textual: |
+      «Ficha de cliente para la trazabilidad (E-275): fila nueva después del corte, a construir tras la pasada de contactos de Zoho (E-279) y antes de dar de baja Zoho. Contenido: destinatarios de los avisos de calibración (una o varias personas del cliente, elegidas entre sus contactos), frecuencia del preventivo o «sin contrato» leída del contrato de F1B-11, las dos con historial de cambios; API de sólo lectura para el portal de Trazabilidad Mantenimientos. El cierre incluye la carga única de la pestaña editable que hoy tiene el portal y, desde ese día, el portal deja de editar esos datos. Regla del maestro (R08.4.md:2672): «sin contrato» no quita el aviso; se avisa con el intervalo del fabricante para ese modelo. Hasta entonces el portal sigue con su pestaña. Talla, la que mida la construcción.»
+    texto_conversacion: |
+      «La ficha del cliente, sin fecha por ahora.» (compatible: el panel da un orden, no una fecha)
+    consecuencias: |
+      (1) FILA NUEVA después del corte, tras la tanda de contactos (E-279) y antes de la baja de Zoho. ID sin proponer; talla sin medir.
+      (2) DENOMINADOR: con esta y la de 1G, 78 → 80 el día que se escriban en el plan.
+      (3) Hoy el portal tiene una pestaña editable (dato de Gerencia); el repositorio no lo menciona (`git grep -il "trazabilidad mantenimientos"` → 0).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/ficha-cliente-avisos-y-preventivo) · docs/sdd/ENTRADA.md → E-275 (ruteada)"
+    maestro_pasaje: "M4.5 (avisos de vencimiento)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "fila nueva después del corte, sin ID"
 mediciones_de_produccion:
   # Mediciones que Gerencia ejecuta contra producción y que la construcción registra (R-5, directo en main).
   # Bloque propio al FINAL del fichero para no desplazar ninguna línea citada. Se remiten SIEMPRE por su
