@@ -1026,3 +1026,41 @@ quitarla. La línea de entorno que corresponde, tal cual:
 6. **P-3 · Cerrar.** El resumen del `GET` final se pasa al analista, se vuelve a cerrar `VERIFICACION_COMPLETITUD_HABILITADA` (quitarla) y se redespliega.
 7. **P-4 · Repetir** la pasada el día del corte, tras congelar Zoho y la sincronización final (`docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md:97-98`),
    con los mismos pasos desde el 1.
+
+## 24. `MODO_SIN_ZOHO_DESK`: el modo sin Zoho Desk (1G-04, `decision/adelanto-09-11-empezar-1g`)
+
+Es el paso 4 del corte (`docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md:100`): una semana con Zoho todavía contratado por si acaso, pero sin que la
+app le hable. Con el modo abierto no sale ninguna petición hacia Zoho Desk, tampoco la renovación del token: la app sirve lo que ya tiene en PostgreSQL y lo
+que sólo Zoho puede dar responde `503` con un mensaje que nombra el modo. Books y CRM siguen como están (cliente y token propios) y n8n queda fuera. No se
+borra ni se desactiva código: cerrar la variable devuelve todo a como estaba.
+
+### `MODO_SIN_ZOHO_DESK`: el corte de todo lo que llama a Zoho Desk
+
+**Qué enciende:** el corte en la puerta de la App y del worker. Los temporizadores siguen y las seis evaluaciones corren; el arranque no sincroniza Desk; las
+aperturas de ticket se sirven desde lo local. La respuesta por correo, el adjunto sin copia propia, `measure-attachments`, `backfill-details`,
+`backfill-history`, `backfill-archived`, los dos rellenos y la verificación responden `503` nombrando el modo; los recuentos con `limite=0` siguen libres.
+
+**Qué se rompe si se pone mal:** puesta en un solo servicio, el otro sigue llamando a Zoho y la semana no prueba nada: va en los **DOS**, la App
+`ambientalia-desk` y el worker `hub-sync` (`zoho-hub-sync` en EasyPanel, `DEPLOY.md:31`, `DEPLOY.md:333`). Abierta, no se puede responder a un cliente por
+correo desde la app, y lo que entre a Zoho por correo no llega a Desk. Escribir `TRUE`, `1` o dejarla vacía la deja cerrada.
+
+**Nace cerrado** (`=== 'true'`, `packages/zoho-sync/src/config.ts:125`). Abrirla o cerrarla pide redesplegar los dos servicios. La línea de entorno que
+corresponde, tal cual; aquí va el valor explícito `false` y no vacío, a diferencia de las §21 a §23, para que la persona la VEA en la pestaña Environment de
+los dos servicios:
+
+> ```
+> MODO_SIN_ZOHO_DESK=false
+> ```
+
+### Cómo leer el registro
+
+En la App, `GET /api/admin/modo-sin-zoho-desk` (superadministrador) devuelve `activo`, `cortes` y `rechazos`. Los `cortes` van por recurso de Zoho y llamador,
+con cuenta, primera y última hora: son la llamada que nadie recordaba. Los `rechazos` van por ruta: lo que una persona necesitó y no tuvo. Los saltos de
+fondo (temporizadores, arranque, aperturas) no cuentan. No lleva ids, queries ni datos de clientes. Se vacía al redesplegar, y por eso la App deja además
+en su log una línea por origen o ruta nuevos. En el worker no hay HTTP: el log del worker lleva una línea `modo sin Zoho Desk: primer corte de …` por origen nuevo.
+
+### Pasos (paso de persona; el `.env.example` lo completa Alfonso, P-1)
+
+1. **P-2 · Desplegar cerrado.** Poner `MODO_SIN_ZOHO_DESK=false` en la App `ambientalia-desk` y en el worker `zoho-hub-sync` y redesplegar los dos. No cambia nada visible.
+2. **P-3 · La semana.** Con decisión de Gerencia, ponerla en `true` en los dos servicios y redesplegar los dos. Durante la semana, leer el `GET` de la App y el
+   log del worker. Al terminar, el resumen del `GET` y del log se pasa al analista, se vuelve a `false` en los dos y se redespliegan los dos.

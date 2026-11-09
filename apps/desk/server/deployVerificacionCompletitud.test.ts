@@ -7,7 +7,7 @@ import path from 'node:path'
  * CLAUDE.md: un interruptor que enciende un lector costoso nace cerrado y se documenta con dos frases, qué enciende y qué se rompe si se pone mal).
  * Molde: `deployRellenoConversaciones.test.ts`.
  *
- * QUÉ COMPRUEBA: que la §23 existe tras la §22 y es la última, con UN apartado `###` de la variable y los pasos; que dice las dos frases, que nace
+ * QUÉ COMPRUEBA: que la §23 existe tras la §22 y antes de la §24, con UN apartado `###` de la variable y los pasos; que dice las dos frases, que nace
  * cerrada con `=== 'true'` (y el código lo lee así), que lleva su línea de entorno vacía y que los pasos nombran la ruta, el recuento, la pasada
  * corta, la reanudación, cerrar y repetir el día del corte.
  * QUÉ NO COMPRUEBA: `.env.example` (lo añade una persona, P-5) ni que cada línea citada siga diciendo lo que la frase afirma.
@@ -17,7 +17,7 @@ const deploy = readFileSync(path.join(RAIZ, 'DEPLOY.md'), 'utf8')
 const config = readFileSync(path.join(RAIZ, 'packages/zoho-sync/src/config.ts'), 'utf8')
 const s22 = deploy.indexOf('## 22. Adjuntos en el volumen propio')
 const s23 = deploy.indexOf('## 23. Verificación de completitud')
-const seccion = s23 === -1 ? '' : deploy.slice(s23)
+const seccion = s23 === -1 ? '' : deploy.slice(s23, deploy.indexOf('## 24. ') >= 0 ? deploy.indexOf('## 24. ') : undefined) // 1G-04 añadió la §24: la §23 se para en ella; en una línea para no desplazar citas
 const VARIABLE = 'VERIFICACION_COMPLETITUD_HABILITADA'
 
 /** El tramo de un apartado `###` hasta el siguiente `###` o `##` (o el final). */
@@ -30,10 +30,10 @@ const apartado = (nombre: string): string => {
 }
 
 describe('DEPLOY.md §23 · VERIFICACION_COMPLETITUD_HABILITADA (1G-03)', () => {
-  it('la sección existe, tras la §22, es la última y tiene el apartado de la variable y los pasos', () => {
+  it('la sección existe, tras la §22, la §24 va detrás y tiene el apartado de la variable y los pasos', () => {
     expect(s23).toBeGreaterThan(-1)
     expect(s23).toBeGreaterThan(s22)
-    expect(seccion.match(/^## \d+\./gm)).toHaveLength(1)
+    expect(seccion.match(/^## \d+\./gm)).toHaveLength(1); expect(deploy.indexOf('## 24. ')).toBeGreaterThan(s23)
     expect(seccion.match(/^### /gm)).toHaveLength(2)
     expect(seccion).toContain('### Pasos')
   })

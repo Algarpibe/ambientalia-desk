@@ -1,7 +1,7 @@
 import type { Express, RequestHandler } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
-import { asyncHandler } from '../util/asyncHandler'
+import { asyncHandler } from '../util/asyncHandler'; import { guardaModoSinZoho, esRecuento, type ModoSinZoho } from './modoSinZohoDesk'
 import type { crearRellenoAdjuntos } from '../adjuntos/rellenoAdjuntos'
 
 type Relleno = ReturnType<typeof crearRellenoAdjuntos>
@@ -38,9 +38,9 @@ const entero = (v: unknown): boolean => v === undefined || (typeof v === 'string
  * contenido) es del servidor; el cliente no participa (regla invariable 13). SOLO super administrador.
  */
 export function registerRellenoAdjuntosRoutes(
-  app: Express, { db, relleno, habilitado, hayDir }: { db: Queryable; relleno: Relleno; habilitado: boolean; hayDir: boolean },
+  app: Express, { db, relleno, habilitado, hayDir, modo }: { db: Queryable; relleno: Relleno; habilitado: boolean; hayDir: boolean; modo: ModoSinZoho },
 ): void {
-  app.post('/api/admin/relleno-adjuntos', requireAuth(db), requireSuperAdmin, interruptorAdjuntos(habilitado, hayDir), asyncHandler(async (req, res) => {
+  app.post('/api/admin/relleno-adjuntos', requireAuth(db), requireSuperAdmin, guardaModoSinZoho(modo, esRecuento), interruptorAdjuntos(habilitado, hayDir), asyncHandler(async (req, res) => {
     const { desde, limite } = req.query
     if (!entero(desde) || !entero(limite)) { res.status(400).json({ error: '`desde` y `limite` sólo admiten enteros no negativos' }); return }
     if (limite === '0') { res.json(await relleno.recuento({ desde: desde === undefined ? undefined : Number(desde) })); return }

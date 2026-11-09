@@ -1,13 +1,13 @@
-import type { Express } from 'express'
+import type { Express, Request, Response } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { requireAuth } from '../auth/middleware'
-import { asyncHandler } from '../util/asyncHandler'; import { buscarCopia, servirCopia, registrarCaida } from '../adjuntos/servir'
+import { asyncHandler } from '../util/asyncHandler'; import { buscarCopia, servirCopia, registrarCaida } from '../adjuntos/servir'; import { responderModoSinZoho, MENSAJE_ADJUNTO_SIN_COPIA, type ModoSinZoho } from './modoSinZohoDesk'; import { logger } from '../util/logger'; import type { Copia } from '../adjuntos/servir'
 
 export function registerAttachmentRoutes(
   app: Express,
-  deps: { db: Queryable; zohoFetch: (path: string, init?: RequestInit) => Promise<globalThis.Response>; dir: string | null },
+  deps: { db: Queryable; zohoFetch: (path: string, init?: RequestInit) => Promise<globalThis.Response>; dir: string | null; modo: ModoSinZoho },
 ): void {
-  const { db, zohoFetch, dir } = deps
+  const { db, zohoFetch, dir, modo } = deps
 
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
   // Requiere sesión: son documentos de clientes (facturas, fotos, etc.).
@@ -19,7 +19,7 @@ export function registerAttachmentRoutes(
       return
     }
     const copia = await buscarCopia(db, dir, path)
-    if (copia.tipo === 'local') { await servirCopia(res, copia); return }
+    if (copia.tipo === 'local') { await servirCopia(res, copia); return }; if (modo.activo) { adjuntoSinCopiaEnModo(req, res, copia, modo); return }
     let zres: globalThis.Response
     try { zres = await zohoFetch(path) } catch (e) { registrarCaida(copia, 'sin respuesta'); throw e }
     registrarCaida(copia, zres.status)
@@ -33,4 +33,10 @@ export function registerAttachmentRoutes(
     if (cd) res.setHeader('Content-Disposition', cd)
     res.send(Buffer.from(await zres.arrayBuffer()))
   }))
+}
+
+/** Modo sin Zoho Desk (RQ-ZS-44.5, S-l): sin copia local no se llama a Zoho; una línea de log con el motivo, sin nombre ni ruta, y el 503. */
+function adjuntoSinCopiaEnModo(req: Request, res: Response, copia: Extract<Copia, { tipo: 'zoho' }>, modo: ModoSinZoho): void {
+  logger.warn({ adjunto: copia.adjunto, ticket: copia.ticket, motivo: copia.motivo }, 'Adjunto sin copia local en modo sin Zoho Desk: no se pide a Zoho')
+  responderModoSinZoho(req, res, modo, MENSAJE_ADJUNTO_SIN_COPIA)
 }

@@ -8,18 +8,18 @@ import type { BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
 import type { CrmSync, ResultadoFasesGanadas } from '@ambientalia/zoho-sync/crmHub/sync'
 
 /** Migra el hub y hace el backfill inicial solo si está vacío. Idempotente entre reinicios. */
-export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSync?: BooksHubSync | null; crmSync?: CrmSync | null; backfillContacts?: boolean }): Promise<void> {
-  const { db, sync, booksHubSync = null, crmSync = null, backfillContacts = false } = deps
+export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSync?: BooksHubSync | null; crmSync?: CrmSync | null; backfillContacts?: boolean; modoSinZohoDesk?: boolean }): Promise<void> {
+  const { db, sync, booksHubSync = null, crmSync = null, backfillContacts = false, modoSinZohoDesk = false } = deps
   await migrate(db)
   try { await reseedTicketNumber(db) } catch (e) { console.error('reseed inicial omitido:', e) }
-  if ((await countTickets(db)) === 0) {
+  if (!modoSinZohoDesk && (await countTickets(db)) === 0) {
     console.log('Hub vacío: backfill de tickets…')
     await sync.backfillTickets()
     await sync.backfillArchivedTickets()
     try { await reseedTicketNumber(db) } catch (e) { console.error('reseed tras backfill omitido:', e) }
   }
-  await sync.syncActivities().catch((e) => console.error('Sync actividades inicial falló:', e))
-  await sync.syncContacts().catch((e) => console.error('Sync contactos inicial falló:', e))
+  if (!modoSinZohoDesk) await sync.syncActivities().catch((e) => console.error('Sync actividades inicial falló:', e))
+  if (!modoSinZohoDesk) await sync.syncContacts().catch((e) => console.error('Sync contactos inicial falló:', e))
   if (booksHubSync) {
     await migrateBooks(db)
     if ((await maxZohoLastModified(db, 'items')) == null) {
@@ -83,11 +83,11 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSy
 }
 
 /** Programa los ciclos incrementales. Devuelve un stop() que limpia los timers. */
-export function scheduleHubSync(deps: { sync: Sync; booksHubSync?: BooksHubSync | null; crmSync?: CrmSync | null; intervalMs: number }): () => void {
-  const { sync, booksHubSync = null, crmSync = null, intervalMs } = deps
+export function scheduleHubSync(deps: { sync: Sync; booksHubSync?: BooksHubSync | null; crmSync?: CrmSync | null; intervalMs: number; modoSinZohoDesk?: boolean }): () => void {
+  const { sync, booksHubSync = null, crmSync = null, intervalMs, modoSinZohoDesk = false } = deps
   let syncing = false
   const timers: ReturnType<typeof setInterval>[] = []
-  timers.push(setInterval(() => {
+  if (!modoSinZohoDesk) timers.push(setInterval(() => {
     if (syncing) return
     syncing = true
     sync.syncRecent()

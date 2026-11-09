@@ -10,7 +10,7 @@ import { primerDerivado } from '../db/primerDerivado'; import { colaDelTaller } 
 import { getConversacionTicket } from '../db/conversacion'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
-import { asyncHandler } from '../util/asyncHandler'; import { leerBusqueda, busquedaDe } from '../util/busquedaTickets'
+import { asyncHandler } from '../util/asyncHandler'; import { leerBusqueda, busquedaDe } from '../util/busquedaTickets'; import { guardaModoSinZoho, type ModoSinZoho } from './modoSinZohoDesk'
 import { crearSubida } from '../util/subida'
 import { createManagedTicket, executeTransition } from '../services/ticketService'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from '../db/resolutions'
@@ -20,9 +20,9 @@ const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'im
 
 export function registerTicketRoutes(
   app: Express,
-  deps: { db: Queryable; sync: Sync; zohoFetch: (path: string, init?: RequestInit) => Promise<globalThis.Response>; config: AppConfig },
+  deps: { db: Queryable; sync: Sync; zohoFetch: (path: string, init?: RequestInit) => Promise<globalThis.Response>; config: AppConfig; modo: ModoSinZoho },
 ): void {
-  const { db, sync, zohoFetch, config } = deps
+  const { db, sync, zohoFetch, config, modo } = deps
 
   const guardWrites = (_req: Request, res: Response, next: () => void) => {
     if (!config.enableWrites) {
@@ -129,11 +129,11 @@ export function registerTicketRoutes(
     const id = String(req.params.id)
     let found = await getTicketWithRefs(db, id)
     if (!found) { // primera vez sin datos locales → poblar (lazy)
-      try { await sync.syncTicket(id) } catch (err) { req.log.warn({ err, ticketId: id }, 'syncTicket (lazy) falló') }
+      if (!modo.activo) try { await sync.syncTicket(id) } catch (err) { req.log.warn({ err, ticketId: id }, 'syncTicket (lazy) falló') }
       found = await getTicketWithRefs(db, id)
       if (!found) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
     } else {
-      void sync.syncTicket(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncTicket bg falló')) // refresco en background
+      if (!modo.activo) void sync.syncTicket(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncTicket bg falló')) // refresco en background
     }
     // Estos dos se añaden AQUÍ y no en `rowToTicketDetail`: el mapeador vive en el paquete de
     // sincronización y traduce una fila de `tickets`, mientras que esto sale de `ticket_transitions` y
@@ -146,7 +146,7 @@ export function registerTicketRoutes(
 
   app.get('/api/tickets/:id/conversations', asyncHandler(async (req, res) => {
     const id = String(req.params.id)
-    const primero = await getConversacionTicket(db, id)
+    const primero = await getConversacionTicket(db, id); if (modo.activo) { await servirLocal(res, db, id, primero.mensajes); return }
     // Antes se decidía el sync perezoso con `convs.length === 0`, y un ticket NACIDO en la app nunca
     // tiene conversaciones de Zoho: la condición se cumplía SIEMPRE y la ruta esperaba a una llamada a
     // Zoho en cada apertura, por un ticket que Zoho ni siquiera conoce. El compositor lo distingue por
@@ -166,7 +166,7 @@ export function registerTicketRoutes(
 
   app.get('/api/tickets/:id/history', asyncHandler(async (req, res) => {
     const id = String(req.params.id)
-    const primero = await getHistorialTicket(db, id)
+    const primero = await getHistorialTicket(db, id); if (modo.activo) { await servirLocal(res, db, id, primero.eventos); return }
     // Un ticket NACIDO en la app no existe en Zoho: preguntarle por su historia sería un 404 en cada
     // apertura. Ojo con el matiz, que ya se coló una vez: "nacido en la app" no es lo mismo que
     // "gestionado por la app" —un ticket de Zoho movido aquí queda `managed_by_app=true` y sigue
@@ -193,7 +193,7 @@ export function registerTicketRoutes(
     res.json(await executeTransition(db, String(req.params.id), req.body, req.user!, config))
   }))
 
-  app.post('/api/tickets/:id/reply', guardWrites, requireArea, asyncHandler(async (req, res) => {
+  app.post('/api/tickets/:id/reply', guardWrites, requireArea, guardaModoSinZoho(modo), asyncHandler(async (req, res) => {
       const id = String(req.params.id)
       // Direcciones de remitente válidas del departamento (Zoho: GET /mailReplyAddress).
       const addrRes = await zohoFetch(`/mailReplyAddress?departmentId=${config.departmentId}&isActive=true`)
@@ -220,4 +220,10 @@ export function registerTicketRoutes(
       }
       res.json({ ok: true })
   }))
+}
+
+/** Modo sin Zoho Desk (RQ-ZS-44.3): sirve lo local; sin ticket local, el 404 de siempre (la misma noción de «sin datos» que el detalle). */
+async function servirLocal(res: Response, db: Queryable, id: string, local: unknown): Promise<void> {
+  if (!(await getTicketWithRefs(db, id))) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
+  res.json(local)
 }

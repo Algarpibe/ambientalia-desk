@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { loadConfig } from '@ambientalia/zoho-sync/config'
 import { createTokenManager } from '@ambientalia/zoho-sync/tokenManager'
-import { createZohoClient } from '@ambientalia/zoho-sync/zohoClient'
+import { createZohoClient } from '@ambientalia/zoho-sync/zohoClient'; import { crearRegistroModoSinZoho } from '@ambientalia/zoho-sync/modoSinZoho'
 import { createPool, createPoolFromUrl } from '@ambientalia/zoho-sync/db/pool'
 import { reorgToDesk } from '@ambientalia/zoho-sync/db/migrate'
 import { createSync } from '@ambientalia/zoho-sync/sync'
@@ -17,7 +17,7 @@ import { hubBootstrap, scheduleHubSync } from './hubSync'
 const config = loadConfig()
 const pool = createPool(config)
 const tokenManager = createTokenManager({ config })
-const { zohoFetch } = createZohoClient({ config, tokenManager })
+const registroModo = crearRegistroModoSinZoho({ avisar: (linea) => console.warn(linea) }); const { zohoFetch } = createZohoClient({ config, tokenManager, registro: registroModo })
 const sync = createSync({ zohoFetch, db: pool, config })
 
 let booksHubSync: BooksHubSync | null = null
@@ -45,8 +45,8 @@ function logSweep(dominio: string, reports: SweepReport[]): void {
 
 async function main() {
   if (config.dbSchema === 'desk') await reorgToDesk(pool)
-  await hubBootstrap({ db: pool, sync, booksHubSync, crmSync, backfillContacts: config.backfillContacts })
-  scheduleHubSync({ sync, booksHubSync, crmSync, intervalMs: config.syncIntervalMs })
+  await hubBootstrap({ db: pool, sync, booksHubSync, crmSync, backfillContacts: config.backfillContacts, modoSinZohoDesk: config.modoSinZohoDesk })
+  scheduleHubSync({ sync, booksHubSync, crmSync, intervalMs: config.syncIntervalMs, modoSinZohoDesk: config.modoSinZohoDesk })
   console.log(`zoho-hub-sync en marcha (intervalo ${config.syncIntervalMs} ms)`)
 
   if (config.deriveSalesRecords && config.salesTrackerDatabaseUrl) {

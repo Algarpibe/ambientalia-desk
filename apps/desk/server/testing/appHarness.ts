@@ -1,7 +1,7 @@
 import { beforeEach, vi } from 'vitest'
 import { newDb } from 'pg-mem'; import { conFuncionesDeEstado } from './pgMemEstado'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { AppConfig } from '@ambientalia/zoho-sync/config'
+import type { AppConfig } from '@ambientalia/zoho-sync/config'; import type { RegistroModoSinZoho } from '@ambientalia/zoho-sync/modoSinZoho'
 import { CLAVE_CERTIFICADO_FABRICA, CLAVE_MOTIVO_FIRMA_ADMIN, type Transition, type Cargo } from '@ambientalia/shared'
 import type { EquipoRow } from '../db/equipos'
 import { createApp } from '../app'; import type { RespaldadorRuta } from '../routes/respaldo'
@@ -43,13 +43,13 @@ export function instalarArnes(): void {
 export const equipoRow = (id: string, serial: string, cliente = 'Gecelca S.A. E.S.P.'): EquipoRow =>
   ({ id, serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor PM10/PM2.5', cliente_nombre: cliente, source: 'seed', raw: null })
 
-export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string; avisosCopiaEmail: string; migracionTicketsHabilitada: boolean; decisionalesPorCargo: boolean; controlCalidadLiberacion: boolean; salidasEsperas: boolean; rellenoConversacionesHabilitado: boolean; rellenoAdjuntosHabilitado: boolean; guardarAdjuntosAlSincronizar: boolean; adjuntosDir: string; verificacionCompletitudHabilitada: boolean }> = {}, dbPropia?: Queryable, respaldador?: RespaldadorRuta) {
+export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string; avisosCopiaEmail: string; migracionTicketsHabilitada: boolean; decisionalesPorCargo: boolean; controlCalidadLiberacion: boolean; salidasEsperas: boolean; rellenoConversacionesHabilitado: boolean; rellenoAdjuntosHabilitado: boolean; guardarAdjuntosAlSincronizar: boolean; adjuntosDir: string; verificacionCompletitudHabilitada: boolean; modoSinZohoDesk: boolean }> = {}, dbPropia?: Queryable, respaldador?: RespaldadorRuta, registroModo?: RegistroModoSinZoho) {
   // Los vacíos son los que devuelve `loadConfig` cuando la variable no está: dejar alguno `undefined`
   // probaría un config que en producción no existe.
-  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', avisosCopiaEmail: '', migracionTicketsHabilitada: false, decisionalesPorCargo: false, controlCalidadLiberacion: false, salidasEsperas: false, rellenoConversacionesHabilitado: false, rellenoAdjuntosHabilitado: false, guardarAdjuntosAlSincronizar: false, adjuntosDir: '', verificacionCompletitudHabilitada: false, ...overrides } as AppConfig
+  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', avisosCopiaEmail: '', migracionTicketsHabilitada: false, decisionalesPorCargo: false, controlCalidadLiberacion: false, salidasEsperas: false, rellenoConversacionesHabilitado: false, rellenoAdjuntosHabilitado: false, guardarAdjuntosAlSincronizar: false, adjuntosDir: '', verificacionCompletitudHabilitada: false, modoSinZohoDesk: false, ...overrides } as AppConfig
   const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), backfillTicketHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0, restantes: 0 }), syncContacts: vi.fn(), syncPendingHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0 }) }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
-  const app = createApp({ db: dbPropia ?? db, zohoFetch, sync, config, respaldador })
+  const app = createApp({ db: dbPropia ?? db, zohoFetch, sync, config, respaldador, registroModo })
   return { app, sync, zohoFetch }
 }
 
