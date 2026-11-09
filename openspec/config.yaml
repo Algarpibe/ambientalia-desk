@@ -5718,6 +5718,102 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1241 («Fotos de entrada y de salida»)"
     maestro_revision: "pendiente"
     tanda_que_abre: "ninguna (F1B-04, cerrada por archivo el 03/11/2026)"
+  # ── Corte del 09/11/2026: decisiones de Gerencia en la conversación del analista, pegadas por Gerencia a Supervisión.
+  # Claves Engram para la próxima sesión de construcción: decision/e248-adelanto-f1c · decision/margen-corte-09-11 ·
+  # decision/filas-que-no-cierran-antes-del-corte · decision/1h00-transporte-correo · decision/supuestos-02-11-aceptados.
+  - clave: "decision/e248-adelanto-f1c"
+    fecha: "2026-11-09"
+    origen: "conversación del analista, 09/11/2026; prevista para el 09/11 en decision/excepcion-plazo-rq-kp-26, consecuencia (3); docs/sdd/ENTRADA.md → E-248"
+    pregunta: |
+      Siete filas F1C de «después del corte» se construyeron antes del corte sin una línea escrita que lo decidiera (E-248). ¿Se acepta el adelanto, cuentan las cerradas, siguen apagados sus interruptores y adónde va lo que falta de F1C-07?
+    respuesta_textual: |
+      «1 · E-248: sí a a), b) y c). El adelanto queda aceptado con fecha 09/11; las seis cerradas cuentan; los tres interruptores DECISIONALES_POR_CARGO, CONTROL_CALIDAD_LIBERACION y SALIDAS_ESPERAS siguen apagados hasta enero, SALIDAS_ESPERAS incluido aunque no dependa de los otros; lo que falta de F1C-07 va a F1B-17 (foto del embalado y guarda de salida) y a F1E-04 (firma con imagen), y F1C-07 cierra con lo construido.»
+    consecuencias: |
+      (1) E-248 se cierra. Cuentan como cerradas F1C-01, -02, -03, -04, -06 y -08. La población de antes del corte no se mueve.
+      (2) DECISIONALES_POR_CARGO (packages/zoho-sync/src/config.ts:124), CONTROL_CALIDAD_LIBERACION y SALIDAS_ESPERAS (:125) quedan apagados hasta enero de 2027. MEDIDO por el analista: la «Liberación sin factura» sólo para el Director Comercial no depende de ninguno de los tres y está en vigor (packages/shared/src/cargos.ts:32, aplicada en apps/desk/server/services/ticketService.ts:131); la paridad de R01.3 §C.1 no se pierde.
+      (3) F1C-07 cierra con lo construido, como cambio de cierre sin código. Pasan la foto del equipo embalado y la guarda de salida a F1B-17, y la firma con imagen a F1E-04.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e248-adelanto-f1c) · docs/sdd/ENTRADA.md → E-248 (cerrada)"
+    engram: "decision/e248-adelanto-f1c — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "cierre de F1C-07 con lo construido, sin código"
+
+  - clave: "decision/margen-corte-09-11"
+    fecha: "2026-11-09"
+    precisa: "decision/fecha-corte (corregida_por) · R01.4 §K.3 (recomprobación del 09/11)"
+    origen: "conversación del analista, 09/11/2026"
+    pregunta: |
+      R01.4 §K.3: el 09/11 se rehace el margen con el ritmo real desde el 01/10; si no queda al menos una semana, el corte pasa al 01/02/2027. ¿Se mantiene el 14/12?
+    respuesta_textual: |
+      «2 · Margen: se mantiene el 14/12. Queda escrito que la regla K.3 literal da 0,7 semanas y que no se aplica porque tres de las ocho filas cierran por fecha (04/12, 12/12, 14/12), no por ritmo, y el código pendiente es XS–M. Recomprobación con fecha: lunes 23/11. Si ese día la pasada en seco del 11/11 ha dejado estados sin equivalencia que exijan más que una tanda S, o B2 no está contratado, o la primera comparación semanal no se ha podido ejecutar, el corte pasa al 01/02/2027 ese mismo día.»
+    consecuencias: |
+      (1) El corte operativo sigue el 14/12/2026. El plan A no se activa hoy.
+      (2) La cuenta del analista (ESTIMACIÓN): 13 filas de antes del corte cerradas del 01/10 al 08/11 en 5,2 semanas de trabajo, 2,5 por semana. Quedan 8 de 39: F1B-09, F1B-13, F1C-05, F1F-01, F1F-02, F1F-03, F1F-04 y F1F-05. Hacen falta 3,2 semanas y hay 3,9 (del 09/11 al 09/12, sin el 16/11 ni el 08/12). Margen literal: 0,7.
+      (3) RECOMPROBACIÓN el lunes 23/11/2026. El corte pasa al 01/02/2027 ese mismo día si se da cualquiera de: (a) estados sin equivalencia de la pasada en seco que exijan más que una tanda S; (b) B2 sin contratar; (c) la primera comparación semanal de F1F-05 sin ejecutar.
+      (4) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: la primera comparación cae el lunes 16/11 (decision/f1f05-referencia-semanal-indicadores, consecuencia (1)), que es festivo y no se trabaja (R01.4 §K.2). Si se hace el 17/11, la condición (c) no salta por eso. No decidido.
+      (5) Pasar al 01/02 cuesta las 2 licencias mensuales de Zoho de más (decision/corte-licencias-plan-a).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/margen-corte-09-11) · precisa decision/fecha-corte"
+    engram: "decision/margen-corte-09-11 — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+
+  - clave: "decision/filas-que-no-cierran-antes-del-corte"
+    fecha: "2026-11-09"
+    origen: "conversación del analista, 09/11/2026"
+    pregunta: |
+      F1B-13, F1C-05 y F1F-05 tienen una pieza que depende de 2027 o de enero; sin decidirlo, el avance de antes del corte no pasa de 36 de 39. ¿Adónde va cada pieza?
+    respuesta_textual: |
+      «3 · F1B-13: la remisión sin ticket pasa a F1B-16 y la fila cierra con lo construido. F1C-05: se parte; el nivel cargo cierra antes del corte y el propietario del registro va a fila nueva después. F1F-05: la 55 se acepta medida a mano hasta que exista el correo propio. El total de filas pasa a 80 con esta y con E-275.»
+    consecuencias: |
+      (1) F1B-13: el envío físico de la pieza por remisión sin ticket pasa a F1B-16 (2027). F1B-13 cierra con lo construido, sin código.
+      (2) F1C-05 se parte. El nivel cargo cierra antes del corte, sin código. El propietario del registro va a una fila nueva de después del corte, sin ID.
+      (3) F1F-05: el indicador 55 se acepta medido a mano hasta que exista el correo propio (1H). La fila sigue cerrando con la medición del 14/12.
+      (4) Desaparece el tope de 36 de 39.
+      (5) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE — DENOMINADOR: la respuesta dice 80 «con esta y con E-275». El 08/11 se decidió además una fila en 1G para adjuntos, historia y contactos y cuentas (decision/contactos-y-cuentas-que-faltan, «aunque el total pase a 79»; ID propuesto 1G-05). Con las tres filas, 78 → 81. El analista se lo ha preguntado a Gerencia; pendiente de la respuesta.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/filas-que-no-cierran-antes-del-corte)"
+    engram: "decision/filas-que-no-cierran-antes-del-corte — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "dos cambios de cierre sin código (F1B-13 y el nivel cargo de F1C-05) · fila nueva después del corte para el propietario del registro, sin ID"
+
+  - clave: "decision/1h00-transporte-correo"
+    fecha: "2026-11-09"
+    origen: "conversación del analista, 09/11/2026; docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md:84"
+    pregunta: |
+      1H-00, decisiones de transporte del correo propio. Su puerta, M2, no está medida: ¿qué se decide ya y qué espera a M2?
+    respuesta_textual: |
+      «4 · 1H-00, lo que no depende de M2: Gmail API sobre un buzón de Workspace, sí. Dato medido el 09/11 en Zoho Desk: la única dirección de envío del departamento es support@ambientalia.zohodesk.com, «Ambientalia Soporte y Servicio Técnico», por SMTP de Zoho; no hay buzón de Workspace como remitente. El buzón será el alias de Workspace que hoy reenvíe a esa dirección, si existe; si no, soporte@ambientalia.com.co, que creo yo. Identidad: «Ambientalia Soporte y Servicio Técnico», con la firma corporativa. El proyecto de Google Cloud, con gmail.modify y gmail.send, lo creo yo esta semana; credenciales sólo en el gestor de secretos. DKIM, SPF y DMARC se comprueban sobre ese buzón. M2 esta semana: yo compruebo en Workspace cómo llega hoy el correo a Zoho; tú cuentas por SQL hilos frente a comentarios en los tickets de 2026. Que Gmail API no tenga coste añadido con Workspace lo confirmas tú en la documentación.»
+    consecuencias: |
+      (1) Decidido de 1H-00: Gmail API sobre un buzón de Workspace; identidad «Ambientalia Soporte y Servicio Técnico» con la firma corporativa; DKIM, SPF y DMARC sobre ese buzón.
+      (2) DATO DE GERENCIA (Zoho Desk, 09/11): la única dirección de envío es support@ambientalia.zohodesk.com, por SMTP de Zoho; no hay buzón de Workspace como remitente.
+      (3) BUZÓN: el alias de Workspace que hoy reenvíe a esa dirección o, si no existe, soporte@ambientalia.com.co, que crea Gerencia. Cuál de los dos lo dice la comprobación de Gerencia (M2, primera mitad).
+      (4) TAREAS DE PERSONA esta semana (Alfonso): crear el proyecto de Google Cloud con gmail.modify y gmail.send, con las credenciales sólo en el gestor de secretos; comprobar en Workspace cómo llega hoy el correo a Zoho. M2, segunda mitad: el analista entregó el 09/11 la consulta de hilos frente a comentarios en los tickets de 2026, y la ejecuta Alfonso porque el analista no tiene acceso a la base.
+      (5) COSTE, comprobado por el analista el 09/11 en developers.google.com/workspace/gmail/api/reference/quota: «All standard use of the Gmail API is available at no additional cost». La misma página anuncia cargos «later in 2026» por encima de 80.000.000 unidades de cuota al día por proyecto, con al menos 90 días de aviso. Estimación del analista, con tráfico supuesto: unas 14.000 unidades diarias, el 0,02 % del umbral.
+      (6) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: los clientes responden hoy a support@ambientalia.zohodesk.com, una dirección del dominio de Zoho. Al dar de baja Zoho, lo que llegue ahí deja de recibirse (HIPÓTESIS: depende de la licencia). Es materia del solape de 1H-03 y de 1H-02 (respuestas a hilos anteriores al corte).
+      (7) M2 sigue abierta y decide la talla de 1H-02: L, o M si sale favorable.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/1h00-transporte-correo) · docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md:84"
+    engram: "decision/1h00-transporte-correo — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna hoy; 1H-01 queda en condiciones de abrirse cuando esté elegido el buzón; 1H-02 espera a M2"
+
+  - clave: "decision/supuestos-02-11-aceptados"
+    fecha: "2026-11-09"
+    precisa: "decision/supuestos-semanales-aceptacion"
+    origen: "conversación del analista, 09/11/2026"
+    pregunta: |
+      Lista semanal del 02/11 (docs/sdd/Supuestos_semana_2026-11-02.md, 54 supuestos; plazo hasta el martes 10/11, fijado por Supervisión al publicarla). Cuatro llevan la marca «posible pregunta para el apartado 06».
+    respuesta_textual: |
+      «5 · Supuestos del 02/11: aceptados los 54, incluidos F1B-13 S-8 y S-10, código de servicio S-5 y 1G-01 S-9.»
+    consecuencias: |
+      (1) Los 54 quedan aceptados con fecha 09/11/2026. Las cuatro marcadas no suben al panel.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/supuestos-02-11-aceptados) · docs/sdd/Supuestos_semana_2026-11-02.md"
+    engram: "decision/supuestos-02-11-aceptados — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
