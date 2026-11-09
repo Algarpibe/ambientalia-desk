@@ -5828,7 +5828,7 @@ decisiones_de_gerencia_adenda:
     consecuencias: |
       (1) Orden: E-266 (en curso) → los tres cierres sin código (F1B-13; F1C-05, la paridad y el nivel cargo; F1C-07) y la puesta al día del plan R01.4, encargo de la terminal → E-268 paso 2 (antes del 12/12) → F1B-09 → 1H-01, con el buzón elegido → 1G-05 (enero) y la tanda corta de contactos y cuentas (semana del 14/12).
       (2) Las correcciones de la pasada en seco (11/11) y de la aceptación F1F-03 (16/11–04/12) van siempre delante.
-      (3) ENCARGO A SUPERVISIÓN para el corte del 23/11: revisar las 69 entradas abiertas de docs/sdd/ENTRADA.md, cerrar las resueltas por decisiones posteriores y subir a Gerencia sólo las que sigan vivas.
+      (3) ENCARGO A SUPERVISIÓN para el corte del 23/11: revisar las 69 entradas abiertas de docs/sdd/ENTRADA.md, cerrar las resueltas por decisiones posteriores y subir a Gerencia sólo las que sigan vivas. Registrado con clave propia el mismo día: decision/revision-bandeja-23-11; manda esa entrada.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-tandas-tras-e266)"
     engram: "decision/orden-tandas-tras-e266 — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "ninguno"
@@ -5886,6 +5886,23 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna; destino «después del corte» para los cuatro, sin tanda asignada"
+
+  - clave: "decision/revision-bandeja-23-11"
+    fecha: "2026-11-09"
+    origen: "conversación del analista, 09/11/2026; docs/sdd/ENTRADA.md"
+    pregunta: |
+      Sin pregunta previa: es un encargo de Gerencia a Supervisión, dado al dar por buenas las recomendaciones 1 a 4 del analista.
+    respuesta_textual: |
+      «Pásame el texto para Supervisión y el encargo de la terminal. Y pide a Supervisión una revisión de las 69 entradas abiertas de la bandeja para el corte del 23/11: cerrar las resueltas por decisiones posteriores y subirme sólo las que sigan vivas.»
+    consecuencias: |
+      (1) Para el corte del 23/11, Supervisión revisa las 69 entradas abiertas de docs/sdd/ENTRADA.md. Cierra las que ya resolvió una decisión posterior, nombrándola en la traza, y sube a Gerencia sólo las que sigan vivas, con el filtro del apartado 06 (decision/preguntas-de-detalle-sin-llegar).
+      (2) Señalado por el analista, sin comprobar entrada por entrada: E-171 a E-182 (preguntas de F1F-05) tienen respuestas posteriores en decision/e224-indicadores-como-zoho-y-por-flujo, decision/f1f05-variante-juzga-el-95, decision/f1f05-creacion-del-49-campo-manual y decision/f1f05-referencia-semanal-indicadores.
+      (3) Las 69 son las abiertas al dar el encargo; al registrarlo ya eran 67 (E-271 y E-274 ruteadas el mismo día en decision/e271-tras-el-corte y decision/e274-moneda-total-ov).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/revision-bandeja-23-11) · docs/sdd/ENTRADA.md (barrido del 23/11)"
+    engram: "decision/revision-bandeja-23-11 — la carga la sesión de supervisión del 23/11; la construcción no la necesita"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna; trabajo de Supervisión para el corte del 23/11"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
