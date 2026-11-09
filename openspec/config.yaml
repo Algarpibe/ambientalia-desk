@@ -5750,7 +5750,7 @@ decisiones_de_gerencia_adenda:
       (1) El corte operativo sigue el 14/12/2026. El plan A no se activa hoy.
       (2) La cuenta del analista (ESTIMACIÓN): 13 filas de antes del corte cerradas del 01/10 al 08/11 en 5,2 semanas de trabajo, 2,5 por semana. Quedan 8 de 39: F1B-09, F1B-13, F1C-05, F1F-01, F1F-02, F1F-03, F1F-04 y F1F-05. Hacen falta 3,2 semanas y hay 3,9 (del 09/11 al 09/12, sin el 16/11 ni el 08/12). Margen literal: 0,7.
       (3) RECOMPROBACIÓN el lunes 23/11/2026. El corte pasa al 01/02/2027 ese mismo día si se da cualquiera de: (a) estados sin equivalencia de la pasada en seco que exijan más que una tanda S; (b) B2 sin contratar; (c) la primera comparación semanal de F1F-05 sin ejecutar.
-      (4) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: la primera comparación cae el lunes 16/11 (decision/f1f05-referencia-semanal-indicadores, consecuencia (1)), que es festivo y no se trabaja (R01.4 §K.2). Si se hace el 17/11, la condición (c) no salta por eso. No decidido.
+      (4) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: la primera comparación cae el lunes 16/11 (decision/f1f05-referencia-semanal-indicadores, consecuencia (1)), que es festivo y no se trabaja (R01.4 §K.2). Si se hace el 17/11, la condición (c) no salta por eso. No decidido. RESUELTO 09/11/2026 (Gerencia, «si»): la primera comparación semanal se hace el martes 17/11; la condición (c) de la recomprobación del 23/11 se refiere a esa comparación.
       (5) Pasar al 01/02 cuesta las 2 licencias mensuales de Zoho de más (decision/corte-licencias-plan-a).
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/margen-corte-09-11) · precisa decision/fecha-corte"
     engram: "decision/margen-corte-09-11 — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
@@ -5770,7 +5770,7 @@ decisiones_de_gerencia_adenda:
       (2) F1C-05 se parte. El nivel cargo cierra antes del corte, sin código. El propietario del registro va a una fila nueva de después del corte, sin ID.
       (3) F1F-05: el indicador 55 se acepta medido a mano hasta que exista el correo propio (1H). La fila sigue cerrando con la medición del 14/12.
       (4) Desaparece el tope de 36 de 39.
-      (5) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE — DENOMINADOR: la respuesta dice 80 «con esta y con E-275». El 08/11 se decidió además una fila en 1G para adjuntos, historia y contactos y cuentas (decision/contactos-y-cuentas-que-faltan, «aunque el total pase a 79»; ID propuesto 1G-05). Con las tres filas, 78 → 81. El analista se lo ha preguntado a Gerencia; pendiente de la respuesta.
+      (5) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE — DENOMINADOR: la respuesta dice 80 «con esta y con E-275». El 08/11 se decidió además una fila en 1G para adjuntos, historia y contactos y cuentas (decision/contactos-y-cuentas-que-faltan, «aunque el total pase a 79»; ID propuesto 1G-05). Con las tres filas, 78 → 81. El analista se lo ha preguntado a Gerencia; pendiente de la respuesta. RESUELTO 09/11/2026 (Gerencia, «si» a la pregunta del analista): el denominador pasa a 81; cuentan las tres filas nuevas (1G-05, la de E-275 y la del propietario del registro de F1C-05).
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/filas-que-no-cierran-antes-del-corte)"
     engram: "decision/filas-que-no-cierran-antes-del-corte — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "ninguno"
