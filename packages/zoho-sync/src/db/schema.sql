@@ -850,3 +850,13 @@ ALTER TABLE tickets ADD COLUMN IF NOT EXISTS history_synced_status text;
 -- ticket llega completa contra su recuento, y la quita al volver a guardarse la fila. Ocultar no es borrar. Nace nula. AL FINAL para no desplazar citas.
 -- SIN calificar: conversations es de DESK_TABLES. Y sin el caracter de punto y coma en este comentario, que migrate parte el fichero por el
 ALTER TABLE conversations ADD COLUMN IF NOT EXISTS ausente_en_zoho_at timestamptz;
+-- calificaciones-cuadre-conversaciones (RQ-ZS-49): el resumen de cada pasada del relleno de conversaciones. Una fila al lanzar y completada al terminar,
+-- de modo que un redespliegue a mitad deje rastro. Es registro operativo de la App (no reflejo de Zoho): va en public y sin datos de cliente. AL FINAL para no desplazar citas.
+-- CALIFICADA con public.: la topologia de dos esquemas lo exige. Y sin el caracter de punto y coma en este comentario, que migrate parte el fichero por ese caracter.
+-- migrate.test.ts vigila que todo CREATE TABLE de este fichero quede clasificado y calificado.
+CREATE TABLE IF NOT EXISTS public.relleno_conversaciones_pasadas (
+  id bigserial PRIMARY KEY,
+  lanzada_at timestamptz NOT NULL DEFAULT now(),
+  terminada_at timestamptz,
+  resumen jsonb NOT NULL
+);

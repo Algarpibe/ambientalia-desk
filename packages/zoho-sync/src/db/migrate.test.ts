@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 47 tablas: 10 de Desk, 34 de la app en public (provisional_books_avisados y nit_exentos, F1B-19; encuesta_respuestas, F1F-05; contrato_ampliaciones, F1B-11; reasignaciones, F1B-05; garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 34, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(47)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(47)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(47)
+  it('son 48 tablas: 10 de Desk, 35 de la app en public (relleno_conversaciones_pasadas, calificaciones-cuadre-conversaciones; provisional_books_avisados y nit_exentos, F1B-19; encuesta_respuestas, F1F-05; contrato_ampliaciones, F1B-11; reasignaciones, F1B-05; garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 35, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(48)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(48)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(48)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo) y las dos de public.contrato_ampliaciones (F1B-11, ampliacion-contrato) y las dos de public.encuesta_respuestas (F1F-05, indicadores-51-55) y las dos de public.nit_exentos y la de public.provisional_books_avisados (F1B-19) y las seis de recepcion-exencion-foto-y-casilla (F1B-04: ALTER y UPDATE de catalogo_novedades y cuatro ALTER de public.remisiones) y las dos ALTER de public.remisiones de rotulado-tras-enviar (enviado_por_id y aviso_sin_etiqueta_at) y la ALTER de tickets de facturar-dos-ramas (facturacion_avisada_para) y la ALTER de ticket_transitions de control-calidad-liberacion (performed_by_id) y la ALTER de tickets de historial-tickets-por-cambio-de-fase (history_synced_status) y la ALTER de conversations de sync-conversaciones-zoho (ausente_en_zoho_at)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1 + 2 + 2 + 2 + 1 + 6 + 2 + 1 + 1 + 1 + 1)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo) y las dos de public.contrato_ampliaciones (F1B-11, ampliacion-contrato) y las dos de public.encuesta_respuestas (F1F-05, indicadores-51-55) y las dos de public.nit_exentos y la de public.provisional_books_avisados (F1B-19) y las seis de recepcion-exencion-foto-y-casilla (F1B-04: ALTER y UPDATE de catalogo_novedades y cuatro ALTER de public.remisiones) y las dos ALTER de public.remisiones de rotulado-tras-enviar (enviado_por_id y aviso_sin_etiqueta_at) y la ALTER de tickets de facturar-dos-ramas (facturacion_avisada_para) y la ALTER de ticket_transitions de control-calidad-liberacion (performed_by_id) y la ALTER de tickets de historial-tickets-por-cambio-de-fase (history_synced_status) y la ALTER de conversations de sync-conversaciones-zoho (ausente_en_zoho_at) y el CREATE de public.relleno_conversaciones_pasadas (calificaciones-cuadre-conversaciones)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1 + 2 + 2 + 2 + 1 + 6 + 2 + 1 + 1 + 1 + 1 + 1)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -791,11 +791,11 @@ describe('reasignacion-con-motivo · public.reasignaciones (F1B-05, RQ-TZ-20)', 
     expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la VIGÉSIMA SEGUNDA por el final; el índice, en una sola sentencia, la vigésima primera; la vigésima es la siembra de accesorio_fuera_de_lista (F1B-04); las siete siguientes son las de contrato_ampliaciones (F1B-11), encuesta_respuestas (F1F-05), nit_exentos y provisional_books_avisados (F1B-19), las dos siguientes, ALTER de public.remisiones, las de rotulado-tras-enviar, la cuarta por el final, la ALTER de tickets de facturar-dos-ramas, la antepenúltima, la ALTER de ticket_transitions de control-calidad-liberacion, la penúltima, la ALTER de tickets de historial-tickets-por-cambio-de-fase, y la última, la ALTER de conversations de sync-conversaciones-zoho', () => {
+  it('el CREATE va calificado con public. y es la VIGÉSIMA TERCERA por el final; el índice, en una sola sentencia, la vigésima segunda; la vigésima primera es la siembra de accesorio_fuera_de_lista (F1B-04); las siete siguientes son las de contrato_ampliaciones (F1B-11), encuesta_respuestas (F1F-05), nit_exentos y provisional_books_avisados (F1B-19), las dos siguientes, ALTER de public.remisiones, las de rotulado-tras-enviar, la quinta por el final, la ALTER de tickets de facturar-dos-ramas, la cuarta por el final, la ALTER de ticket_transitions de control-calidad-liberacion, la antepenúltima, la ALTER de tickets de historial-tickets-por-cambio-de-fase, la penúltima, la ALTER de conversations de sync-conversaciones-zoho, y la última, el CREATE de relleno_conversaciones_pasadas', () => {
     const l = limpias()
-    expect(l[l.length - 22]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
+    expect(l[l.length - 23]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
     expect(l.filter((s) => /idx_reasignaciones_ticket/.test(s))).toHaveLength(1)
-    expect(l[l.length - 21]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 20]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
+    expect(l[l.length - 22]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 21]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
     expect(l.filter((s) => /reasignaciones/.test(s)), 'sentencias que mencionan reasignaciones').toHaveLength(2)
   })
 
@@ -834,10 +834,10 @@ describe('ampliacion-contrato · public.contrato_ampliaciones (F1B-11, RQ-TC-54)
     expect((await db.query('SELECT * FROM public.contrato_ampliaciones')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la DECIMONOVENA por el final; el índice, la decimoctava; dos sentencias la mencionan', () => {
+  it('el CREATE va calificado con public. y es la VIGÉSIMA por el final; el índice, la decimonovena; dos sentencias la mencionan', () => {
     const l = limpias()
-    expect(l[l.length - 19]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.contrato_ampliaciones \(/)
-    expect(l[l.length - 18]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public\.contrato_ampliaciones \(contrato_id\)$/)
+    expect(l[l.length - 20]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.contrato_ampliaciones \(/)
+    expect(l[l.length - 19]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public\.contrato_ampliaciones \(contrato_id\)$/)
     expect(l.filter((s) => /contrato_ampliaciones/.test(s)), 'sentencias que mencionan contrato_ampliaciones').toHaveLength(2)
   })
 
@@ -874,12 +874,12 @@ describe('indicadores-51-55 · public.encuesta_respuestas ya no cierra el esquem
     expect((await db.query('SELECT * FROM public.encuesta_respuestas')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la DECIMOSÉPTIMA por el final; el índice, la decimosexta; dos sentencias la mencionan; trae las siete columnas y no trae canal', () => {
+  it('el CREATE va calificado con public. y es la DECIMOCTAVA por el final; el índice, la decimoséptima; dos sentencias la mencionan; trae las siete columnas y no trae canal', () => {
     const l = limpias()
-    expect(l[l.length - 17]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.encuesta_respuestas \(/)
-    expect(l[l.length - 16]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_encuesta_respuestas_ticket ON public\.encuesta_respuestas \(ticket_id\)$/)
+    expect(l[l.length - 18]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.encuesta_respuestas \(/)
+    expect(l[l.length - 17]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_encuesta_respuestas_ticket ON public\.encuesta_respuestas \(ticket_id\)$/)
     expect(l.filter((s) => /encuesta_respuestas/.test(s)), 'sentencias que mencionan encuesta_respuestas').toHaveLength(2)
-    const crear = l[l.length - 17]
+    const crear = l[l.length - 18]
     for (const col of ['id', 'ticket_id', 'calificacion', 'respondida_at', 'huella', 'cargado_por', 'cargado_at']) expect(crear, `columna ${col}`).toMatch(new RegExp(`\\b${col}\\b`))
     expect(crear).not.toMatch(/\bcanal\b/)
   })

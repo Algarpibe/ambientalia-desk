@@ -5,7 +5,7 @@ import {
   REINTENTOS_429, PAUSA_429_MS, PAUSA_ENTRE_TICKETS_MS,
 } from '@ambientalia/zoho-sync/conversaciones'
 import { nacidoEnLaApp } from './db/ticketFuentes'
-import { logger } from './util/logger'
+import { logger } from './util/logger'; import { guardaEnBase, conResumenGuardado, type GuardaResumen } from './rellenoConversacionesResumen'
 
 /**
  * relleno-completo-conversaciones (1G-01, RQ-ZS-28 y RQ-ZS-29). La pasada que una persona lanza a mano: recorre los ids de
@@ -30,7 +30,7 @@ export interface EstadoRelleno {
 
 export interface DepsRelleno {
   zohoFetch: ZohoFetch; db: Queryable; sync: Pick<Sync, 'syncTicket'>; marcar: boolean
-  pausaMs?: number; pausa429Ms?: number; registrar?: (r: EstadoRelleno) => void
+  pausaMs?: number; pausa429Ms?: number; registrar?: (r: EstadoRelleno) => void; guardar?: GuardaResumen
 }
 
 const estadoInicial = (): EstadoRelleno => ({
@@ -48,7 +48,7 @@ const verdadero = (v: unknown) => v === true || v === 'true'
 const registrarEnLog = (r: EstadoRelleno) => logger.info({ resumen: r }, `relleno-completo-conversaciones: ${r.cortadoEn === null ? 'terminada' : `cortada en el ticket ${r.cortadoEn}`}, ${r.recorridos} de ${r.aRecorrer} recorridos`)
 
 export function crearRellenoConversaciones({
-  zohoFetch, db, sync, marcar, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS, registrar = registrarEnLog,
+  zohoFetch, db, sync, marcar, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS, registrar = registrarEnLog, guardar = guardaEnBase(db),
 }: DepsRelleno) {
   let estado = estadoInicial()
 
@@ -141,7 +141,7 @@ export function crearRellenoConversaciones({
     lanzar({ desde, limite }: { desde?: number; limite?: number } = {}): { lanzada: boolean; estado: EstadoRelleno } {
       if (estado.enMarcha) return { lanzada: false, estado: structuredClone(estado) }
       estado = { ...estadoInicial(), enMarcha: true, desde: desde ?? null, limite: limite ?? null }
-      void pasada(estado.desde, estado.limite)
+      void conResumenGuardado({ guardar, estado, correr: () => pasada(estado.desde, estado.limite) })
       return { lanzada: true, estado: structuredClone(estado) }
     },
     /** Cuántos ids recorrería la pasada y cuántos `app-` salta, sin Zoho ni escritura (S-3). */
@@ -149,6 +149,6 @@ export function crearRellenoConversaciones({
       const t = await tramo(desde ?? null)
       return { aRecorrer: t.zoho.length, saltadosApp: t.saltadosApp }
     },
-    estado(): EstadoRelleno { return structuredClone(estado) },
+    estado(): EstadoRelleno { return structuredClone(estado) }, ultimaGuardada: () => guardar.ultima(),
   }
 }
