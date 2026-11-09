@@ -5814,6 +5814,79 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna"
 
+  # ── Corte del 09/11/2026, segunda parte: recomendaciones 1 a 4 del analista, dadas por buenas por Gerencia con dos precisiones.
+  # Claves Engram para la próxima sesión de construcción: decision/orden-tandas-tras-e266 · decision/e271-tras-el-corte ·
+  # decision/e274-moneda-total-ov · decision/iv-vivos-tras-el-corte.
+  - clave: "decision/orden-tandas-tras-e266"
+    fecha: "2026-11-09"
+    precisa: "decision/excepcion-plazo-rq-kp-26, consecuencia (3) («qué tanda se abre primero»)"
+    origen: "conversación del analista, 09/11/2026"
+    pregunta: |
+      Recomendación 1 del analista: «Orden de las tandas después de E-266: primero los tres cierres sin código (F1B-13, la parte de cargo de F1C-05 y F1C-07), junto con el encargo para poner al día el plan R01.4; después E-268 paso 2, antes del 12/12; luego F1B-09, y 1H-01 cuando se elija el buzón; 1G-05 y la tanda de contactos, en enero y en la semana del 14/12. Las correcciones de la pasada en seco y de la aceptación, siempre delante.» ¿Das por buenas las recomendaciones 1 a 4?
+    respuesta_textual: |
+      «Doy por buenas las recomendaciones 1 a 4 tal como están, con dos precisiones. [...] La 5 depende de lo que vea en Workspace esta semana y la 6 se decide el 23/11 con el resultado delante. Pásame el texto para Supervisión y el encargo de la terminal. Y pide a Supervisión una revisión de las 69 entradas abiertas de la bandeja para el corte del 23/11: cerrar las resueltas por decisiones posteriores y subirme sólo las que sigan vivas.»
+    consecuencias: |
+      (1) Orden: E-266 (en curso) → los tres cierres sin código (F1B-13; F1C-05, la paridad y el nivel cargo; F1C-07) y la puesta al día del plan R01.4, encargo de la terminal → E-268 paso 2 (antes del 12/12) → F1B-09 → 1H-01, con el buzón elegido → 1G-05 (enero) y la tanda corta de contactos y cuentas (semana del 14/12).
+      (2) Las correcciones de la pasada en seco (11/11) y de la aceptación F1F-03 (16/11–04/12) van siempre delante.
+      (3) ENCARGO A SUPERVISIÓN para el corte del 23/11: revisar las 69 entradas abiertas de docs/sdd/ENTRADA.md, cerrar las resueltas por decisiones posteriores y subir a Gerencia sólo las que sigan vivas.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-tandas-tras-e266)"
+    engram: "decision/orden-tandas-tras-e266 — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "los tres cierres sin código y la puesta al día del plan, tras la fusión de E-266"
+
+  - clave: "decision/e271-tras-el-corte"
+    fecha: "2026-11-09"
+    origen: "conversación del analista, 09/11/2026; docs/sdd/ENTRADA.md → E-271"
+    pregunta: |
+      Recomendación 2 del analista: «E-271, después del corte, como tanda corta.» ¿Das por buenas las recomendaciones 1 a 4?
+    respuesta_textual: |
+      «Doy por buenas las recomendaciones 1 a 4 tal como están, con dos precisiones. E-271: después del corte, salvo que durante F1F-03 aparezca un caso real; entonces pasa a corrección de la aceptación y va delante.»
+    consecuencias: |
+      (1) E-271 → tanda corta después del corte, sin asignar.
+      (2) EXCEPCIÓN: si durante F1F-03 aparece un caso real (dos transiciones simultáneas sobre el mismo ticket que parten del mismo estado), pasa a corrección de la aceptación y va delante.
+      (3) Dónde está, medido por Supervisión el 03/11: apps/desk/server/services/ticketService.ts:124 y :126.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e271-tras-el-corte) · docs/sdd/ENTRADA.md → E-271 (ruteada)"
+    engram: "decision/e271-tras-el-corte — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "tanda corta después del corte, sin asignar; delante si aparece un caso real en F1F-03"
+
+  - clave: "decision/e274-moneda-total-ov"
+    fecha: "2026-11-09"
+    precisa: "decision/f1b13-valor-reclamado-usd (la regla «todo importe lleva su moneda»)"
+    origen: "conversación del analista, 09/11/2026; docs/sdd/ENTRADA.md → E-274"
+    pregunta: |
+      Recomendación 3 del analista: «E-274: aplicar la regla sólo al total de la orden de venta que devuelve GET /api/sales-orders, en una tanda corta después del corte; los otros 32, copias de Books y CRM en el hub, se quedan como están.» ¿Das por buenas las recomendaciones 1 a 4?
+    respuesta_textual: |
+      «Doy por buenas las recomendaciones 1 a 4 tal como están, con dos precisiones.» (Ninguna de las dos precisiones toca esta recomendación.)
+    consecuencias: |
+      (1) La regla se aplica sólo al importe que Desk devuelve: el total de la orden de venta en GET /api/sales-orders. Tanda corta después del corte, sin asignar.
+      (2) Los otros 32 (15 columnas de books.* y 17 de CRM en el hub zoho-hub) se quedan como copia de Zoho, sin moneda añadida.
+      (3) La parte de F1B-13 ya la cerraron S-8 y S-10 (decision/supuestos-02-11-aceptados).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e274-moneda-total-ov) · docs/sdd/ENTRADA.md → E-274 (ruteada)"
+    engram: "decision/e274-moneda-total-ov — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "tanda corta después del corte, sin asignar"
+
+  - clave: "decision/iv-vivos-tras-el-corte"
+    fecha: "2026-11-09"
+    origen: "conversación del analista, 09/11/2026; CLAUDE.md → «Incumplimientos vivos» · openspec/config.yaml → incumplimientos_vivos"
+    pregunta: |
+      Recomendación 4 del analista: «IV-8, IV-9, IV-11 e IV-12, después del corte; IV-11 probablemente desaparece solo con Zoho congelado el 14/12 (hipótesis).» ¿Das por buenas las recomendaciones 1 a 4?
+    respuesta_textual: |
+      «Doy por buenas las recomendaciones 1 a 4 tal como están, con dos precisiones. [...] IV-11: su cierre en el corte se decide con dato, no con la hipótesis: cero tickets con la orden de venta pisada por la sincronización entre el 14/12 y la baja de Zoho; si no es cero, se le asigna destino.»
+    consecuencias: |
+      (1) IV-8 (clientId de la OV), IV-9 (color de las esperas), IV-11 (OV pisada por la sincronización) e IV-12 (orden de precedencia del alta de remisión): destino «después del corte», sin tanda asignada.
+      (2) IV-11 — PRECISIÓN DE GERENCIA: el cierre en el corte se decide con dato. Cero tickets con la orden de venta pisada por la sincronización entre el 14/12 y la baja de Zoho; si no es cero, se le asigna destino. Cómo se mide lo propone el analista antes del 14/12.
+      (3) CLAUDE.md, tabla «Incumplimientos vivos»: las cuatro filas llevan «Actualizado el 2026-11-09» al final de su celda «Destino», en la misma línea; IV-11, además, la condición de cierre con dato.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/iv-vivos-tras-el-corte) · CLAUDE.md → «Incumplimientos vivos», celda «Destino» de IV-8, IV-9, IV-11 e IV-12"
+    engram: "decision/iv-vivos-tras-el-corte — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna; destino «después del corte» para los cuatro, sin tanda asignada"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
