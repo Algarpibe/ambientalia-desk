@@ -6230,7 +6230,7 @@ decisiones_de_gerencia_panel:
       (1) PUERTA M1 DE 1G-02 CON DECISIÓN ESCRITA: el sitio que la tanda ya usa (regla de
       `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:200` aplicada a la medición del 04/11) queda decidido por Gerencia.
       Cierra lo que pedía `openspec/changes/archive/2026-11-04-persistencia-adjuntos/archive-report.md:136-137`. No reabre 1G-02.
-      (2) CONDICIÓN (1) = tareas de persona P-1 y P-2 de 1G-02 (`persistencia-adjuntos/archive-report.md:124-132`, `DEPLOY.md` §22).
+      (2) CONDICIÓN (1) = tareas de persona P-1 y P-2 de 1G-02 (`openspec/changes/archive/2026-11-04-persistencia-adjuntos/archive-report.md:124-132`, `DEPLOY.md` §22).
       (3) CONDICIÓN (2) SIN CUBRIR HOY: la copia nocturna de la App vuelca sólo la base (`pg_dump`,
       `apps/desk/server/respaldo/dependencias.ts:43-45`) y la de Drive copia la carpeta de Drive; ninguna toca `ADJUNTOS_DIR`. Si las
       copias de EasyPanel incluyen volúmenes: NO MEDIDO. `decision/copias-b2-cierran-la-fila` deja este mismo punto pendiente, así que
@@ -6239,9 +6239,9 @@ decisiones_de_gerencia_panel:
       `apps/desk/server/adjuntos/rellenoAdjuntos.ts:69`): un ticket que Zoho tenga y Desk no, no lo cubre. Que esos ≈200 existan NO
       ESTÁ MEDIDO: «≈986» es el número más alto, no un recuento (`openspec/changes/archive/2026-11-07-verificacion-completitud/proposal.md:66-67`).
       Lo mide la primera pasada en producción de 1G-03, que compara tickets en las dos direcciones (fase A; tareas P-1 a P-3 de
-      Alfonso, `verificacion-completitud/archive-report.md:127-131`). Si salen, traerlos es trabajo sin fila: se decidirá con la cifra.
+      Alfonso, `openspec/changes/archive/2026-11-07-verificacion-completitud/archive-report.md:127-131`). Si salen, traerlos es trabajo sin fila: se decidirá con la cifra.
       (5) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: la propuesta de 1G-03 cita como dato de persona de Alfonso «Adjuntos (1G-02, 05/11
-      a 07/11): 2.424 ficheros en `/data/adjuntos`» (`verificacion-completitud/proposal.md:64-65`), es decir, un relleno ya hecho;
+      a 07/11): 2.424 ficheros en `/data/adjuntos`» (`openspec/changes/archive/2026-11-07-verificacion-completitud/proposal.md:64-65`), es decir, un relleno ya hecho;
       esta respuesta dice «Lanzo el relleno cuando estén resueltos (1) y (2)». Cuál de las dos es la situación real: NO MEDIDO por
       esta supervisión. Si ya está hecho, lo que queda de (1) es comprobar que `/data/adjuntos` es un volumen persistente. MEDIDO DESPUÉS, el 08/11, por el analista y Alfonso: hecho, 2.424 adjuntos en el volumen `/data/adjuntos` (`docs/sdd/ENTRADA.md` → E-280); el volumen sigue sin copia (E-281).
     registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/adjuntos-en-el-disco-del-servidor) · docs/sdd/ENTRADA.md → E-264 (traza)"
@@ -6316,7 +6316,7 @@ decisiones_de_gerencia_panel:
       anclada de las esperas, `docs/sdd/ENTRADA.md:2282`, `5f5393bb`). La entrada vecina que encaja por contenido es E-257 (tickets
       archivados con una conversación borrada en Zoho que sigue visible); es SUPUESTO de esta supervisión, no decidido. Registrada
       como PARCIAL en ese punto y devuelta como pregunta del panel (qid `calificaciones-junto-con-que`).
-      (5) La comparación por ids de 1G-03 ya saca estos 51 de la prueba del corte (`verificacion-completitud/archive-report.md:147-148`).
+      (5) La comparación por ids de 1G-03 ya saca estos 51 de la prueba del corte (`openspec/changes/archive/2026-11-07-verificacion-completitud/archive-report.md:147-148`).
     registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/calificaciones-y-borrados-de-zoho) · docs/sdd/ENTRADA.md → E-266 (traza)"
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
@@ -6353,7 +6353,7 @@ decisiones_de_gerencia_panel:
       `6efe4cf0` el 08/11 a las 07:52, antes de esta respuesta (09:06). Su propuesta no anota las seis entradas; sólo E-254 (d), la
       cuota (`openspec/changes/archive/2026-11-07-verificacion-completitud/proposal.md:167`). «Anota en su alcance … al abrirse» ya no
       puede cumplirse a la letra. INTERPRETACIÓN de esta supervisión, escrita y no decidida: las seis se juzgan con la PRIMERA PASADA
-      DE 1G-03 EN PRODUCCIÓN (tareas P-1 a P-3 de Alfonso, `verificacion-completitud/archive-report.md:127-131`); lo que salga
+      DE 1G-03 EN PRODUCCIÓN (tareas P-1 a P-3 de Alfonso, `openspec/changes/archive/2026-11-07-verificacion-completitud/archive-report.md:127-131`); lo que salga
       incompleto decide si hace falta código, que sería trabajo sin fila. No reabre 1G-03. CONFIRMADA por Gerencia el 08/11/2026 en la conversación de supervisión: «El 4, la lectura de Supervisión.» Primera pasada del 08/11: conversaciones en verde, 6.222 casan (E-276).
       (3) E-254 (d), la cuota: la cierra la tanda corta de `decision/calificaciones-y-borrados-de-zoho`; 1G-03 también la cuenta (S-i).
     registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/restos-del-historico-de-conversaciones) · docs/sdd/ENTRADA.md → E-250 a E-255 (ruteadas en sitio)"
