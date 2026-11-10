@@ -250,7 +250,7 @@ tampoco los de `:598-600` y `:603-605`, ni los comentarios en línea de `:607`, 
 ### 2.2 · Dónde se aplican: al arrancar, idempotentes, y en silencio si algo falla
 
 - **App:** `main()` corre `reorgToDesk` si el esquema es `desk` y luego `await migrate(pool)`
-  (`apps/desk/server/index.ts:26-27`), **antes** de montar la API y de escuchar en el puerto
+  (`apps/desk/server/index.ts:26-27` en `97539c73`), **antes** de montar la API y de escuchar en el puerto
   (`apps/desk/server/index.ts:49`, `:57`). Ninguna petición llega antes de que la migración haya terminado.
 - **Idempotencia, sentencia a sentencia:** las veintisiete llevan `IF NOT EXISTS` (§2.1). **No hay ninguna
   que no lo sea.** Cada Deploy vuelve a pasar el fichero entero, y en el segundo arranque cada sentencia es

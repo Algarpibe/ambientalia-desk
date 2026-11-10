@@ -23,8 +23,8 @@ const registroModo = crearRegistroModoSinZoho({ avisar: (linea) => logger.warn(l
 const sync = createSync({ zohoFetch, db: pool, config, alDiscrepanciaOV: (d) => avisarDiscrepanciaOV(pool, d), conversaciones: conGuardadoDeAdjuntos(opcionesConversaciones(config), config, { zohoFetch, db: pool }) })
 
 async function main() {
-  if (config.dbSchema === 'desk') await reorgToDesk(pool)
-  await migrate(pool)
+  const puestaAlDia = await (await import('@ambientalia/zoho-sync/db/puestaAlDiaEstricta')).abrirPuestaAlDiaEstricta(pool); if (config.dbSchema === 'desk') await puestaAlDia.aplicar(reorgToDesk)
+  await puestaAlDia.aplicar(migrate).finally(() => puestaAlDia.cerrar())
   // Best-effort: no debe tumbar el arranque (p.ej. si aún existe el esquema viejo antes de recrear).
   try { await reseedTicketNumber(pool) } catch (err) { logger.error({ err }, 'reseed inicial omitido') }
 

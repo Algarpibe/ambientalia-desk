@@ -79,7 +79,7 @@ su orden); los rangos `index.ts:85-93` de `openspec/specs/zoho-sync/spec.md:48`,
 `apps/desk/server/modoSinZohoIndice.test.ts`, fichero vigilado (molde `apps/desk/server/opcionesConversaciones.test.ts:23-27`): la línea de
 `cadenaDelCiclo(` lleva las seis pasadas y `sync.syncRecent()` en orden por `indexOf` y termina en `}, config)`; `let syncing = false` va seguida de
 `setInterval(() => {` (el temporizador de `:85` no queda dentro de ningún `if`); las líneas de `countTickets(pool)`, `if (config.syncActivities` y
-`if (config.syncContacts` del arranque llevan `!config.modoSinZohoDesk`, y las de `await migrate(pool)` y `reseedTicketNumber(pool) }` (`:27`, `:29`) no;
+`if (config.syncContacts` del arranque llevan `!config.modoSinZohoDesk`, y las de `await migrate(pool)` y `reseedTicketNumber(pool) }` (`:27` en `97539c73`, `:29`) no;
 `const registroModo =` aparece UNA vez, con `avisar:`, y tanto la línea de `createZohoClient(` como la de `createApp(` pasan `registroModo`: la MISMA instancia.
 
 ## D-5 · La App: guarda común, aperturas, adjunto y manejador central (RQ-ZS-44)

@@ -293,7 +293,7 @@ Desde `081e78e`, `upsertTicket` lee la columna nueva `prioridad_en_app_at` en su
 (`packages/zoho-sync/src/db/schema.sql:710`).
 
 - **El orden lo garantiza el código, en cada proceso:** la App hace `await migrate(pool)`
-  (`apps/desk/server/index.ts:27`) antes de crear la aplicación y de programar la pasada periódica que llama a
+  (`apps/desk/server/index.ts:27` en `97539c73`) antes de crear la aplicación y de programar la pasada periódica que llama a
   `sync.syncRecent()` (`apps/desk/server/index.ts:85-93`); el worker migra el hub en la primera línea de su
   arranque (`apps/hub-sync/src/hubSync.ts:13`), y sólo después programa sus ciclos
   (`apps/hub-sync/src/hub-sync.ts:48-49`). No hay nada que ordenar a mano.
