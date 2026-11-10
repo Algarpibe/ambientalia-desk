@@ -1888,7 +1888,7 @@ decisiones_de_gerencia:
     respuesta_textual: |
       «Se añade un estado Control de calidad entre En Proceso y Por Facturar. Aprobado → Por Facturar; rechazado → vuelve a En Proceso con prioridad alta, y el retrabajo queda registrado para medirlo.
       Se aplica la misma regla que la Verificación decidida hoy: el checklist se hace siempre; la verificación con gas patrón, sólo cuando la pide el tipo de equipo y tenemos el gas.
-      El checklist revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida.
+      El checklist revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida. · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): esta frase va a F1E-03 por el supuesto S-5 de cierre-f1c07-con-lo-construido, pendiente de su P-1 (openspec/changes/archive/2026-11-10-cierre-f1c07-con-lo-construido/archive-report.md:63 y :103).
       No se entrega el equipo sin foto del equipo embalado y checklist firmado.
       Firma [el Coordinador Técnico / Calidad], nunca el técnico que hizo el trabajo. La firma se carga automáticamente con la imagen del responsable, como se decidió el 27/08.»
     consecuencias: |
@@ -4008,7 +4008,7 @@ decisiones_de_gerencia_adenda:
       persona. Hoy no existe: la persona a cargo sólo se escribe dentro de una transición
       (`apps/desk/server/services/ticketService.ts:138-142`). El maestro lo describe en
       `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2035`.
-      (4) LA RESTRICCIÓN POR PROPIETARIO, DESPUÉS DEL CORTE, CON F1C-05
+      (4) LA RESTRICCIÓN POR PROPIETARIO, DESPUÉS DEL CORTE, CON F1C-05 · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): el propietario del registro es hoy la fila F1C-13, por decision/filas-que-no-cierran-antes-del-corte (2).
       (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2037`). Hasta entonces la reasignación no
       se limita a la persona a cargo. SUPUESTO (reversible) sobre quién reasigna mientras tanto: cualquiera del área del
       estado, o un administrador, que es el mismo criterio con que hoy se ejecutan las transiciones.
@@ -4016,7 +4016,7 @@ decisiones_de_gerencia_adenda:
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e089-e220-visibilidad-y-traspaso) · docs/sdd/F0-01_Correcciones_para_el_maestro.md (27) · docs/sdd/ENTRADA.md → E-089, E-220"
     maestro_pasaje: "M1.9.1 y M1.9.2 (visibilidad por área; reasignación entre técnicos)"
     maestro_revision: "pendiente"
-    tanda_que_abre: "F1B-05 (traspaso con motivo y aviso) · la restricción por propietario, en F1C-05 después del corte"
+    tanda_que_abre: "F1B-05 (traspaso con motivo y aviso) · la restricción por propietario, en F1C-05 después del corte · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): la restricción por propietario es hoy F1C-13, por decision/filas-que-no-cierran-antes-del-corte (2)."
 
   - clave: "decision/e232-accesorios-lista-por-modelo"
     fecha: "2026-10-06"
@@ -4299,7 +4299,7 @@ decisiones_de_gerencia_adenda:
       (2) Cada tanda va en su propio worktree, con su ciclo SDD completo, y UNA parada antes de fusionar. No se empieza la
       siguiente hasta que se fusione la anterior.
       (3) NO SE CONSTRUYE: la mitad «OVI sólo para garantía» (la confirma el Director Técnico), la restricción por
-      propietario (F1C-05, después del corte), la valoración del cliente, los prefijos, la excepción de «Equipo nuevo», ni
+      propietario (F1C-05, después del corte), la valoración del cliente, los prefijos, la excepción de «Equipo nuevo», ni · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): el propietario es hoy F1C-13, por decision/filas-que-no-cierran-antes-del-corte (2).
       E-154 y E-155, que no tienen fila.
       (4) Antes de construir se para sólo si se activa un criterio de parada de la regla de ejecución.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-ocho-tandas-06-10)"
@@ -4509,7 +4509,7 @@ decisiones_de_gerencia_adenda:
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/tabla-de-cargos-y-personas-10-10) · precisa decision/cargos-se-asignan-tras-publicar-fuera-de-horario · docs/sdd/Paquete_de_Despliegue_2026-10-10.md"
     maestro_pasaje: "ninguno (permisos por cargo, F1C-05)"
     maestro_revision: "no aplica"
-    tanda_que_abre: "ninguna — deja una pregunta para F1C-07: quién firma el Control de calidad con el Coordinador Técnico vacante"
+    tanda_que_abre: "ninguna — deja una pregunta para F1C-07: quién firma el Control de calidad con el Coordinador Técnico vacante · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): la pregunta la respondió decision/f1c07-firma-control-calidad (openspec/config.yaml:5113)."
   - clave: "decision/f1b18-entra-ya-confirmada-10-10"
     fecha: "2026-10-10"
     precisa: "decision/escenario-a-festivos-plan-a-01-10"
@@ -5731,7 +5731,7 @@ decisiones_de_gerencia_adenda:
     consecuencias: |
       (1) E-248 se cierra. Cuentan como cerradas F1C-01, -02, -03, -04, -06 y -08. La población de antes del corte no se mueve.
       (2) DECISIONALES_POR_CARGO (packages/zoho-sync/src/config.ts:124), CONTROL_CALIDAD_LIBERACION y SALIDAS_ESPERAS (:125) quedan apagados hasta enero de 2027. MEDIDO por el analista: la «Liberación sin factura» sólo para el Director Comercial no depende de ninguno de los tres y está en vigor (packages/shared/src/cargos.ts:32, aplicada en apps/desk/server/services/ticketService.ts:131); la paridad de R01.3 §C.1 no se pierde.
-      (3) F1C-07 cierra con lo construido, como cambio de cierre sin código. Pasan la foto del equipo embalado y la guarda de salida a F1B-17, y la firma con imagen a F1E-04.
+      (3) F1C-07 cierra con lo construido, como cambio de cierre sin código. Pasan la foto del equipo embalado y la guarda de salida a F1B-17, y la firma con imagen a F1E-04. · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): F1C-07 cerró con lo construido en la fusión aea1d25e (openspec/changes/archive/2026-11-10-cierre-f1c07-con-lo-construido).
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e248-adelanto-f1c) · docs/sdd/ENTRADA.md → E-248 (cerrada)"
     engram: "decision/e248-adelanto-f1c — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "ninguno"
@@ -5748,7 +5748,7 @@ decisiones_de_gerencia_adenda:
       «2 · Margen: se mantiene el 14/12. Queda escrito que la regla K.3 literal da 0,7 semanas y que no se aplica porque tres de las ocho filas cierran por fecha (04/12, 12/12, 14/12), no por ritmo, y el código pendiente es XS–M. Recomprobación con fecha: lunes 23/11. Si ese día la pasada en seco del 11/11 ha dejado estados sin equivalencia que exijan más que una tanda S, o B2 no está contratado, o la primera comparación semanal no se ha podido ejecutar, el corte pasa al 01/02/2027 ese mismo día.»
     consecuencias: |
       (1) El corte operativo sigue el 14/12/2026. El plan A no se activa hoy.
-      (2) La cuenta del analista (ESTIMACIÓN): 13 filas de antes del corte cerradas del 01/10 al 08/11 en 5,2 semanas de trabajo, 2,5 por semana. Quedan 8 de 39: F1B-09, F1B-13, F1C-05, F1F-01, F1F-02, F1F-03, F1F-04 y F1F-05. Hacen falta 3,2 semanas y hay 3,9 (del 09/11 al 09/12, sin el 16/11 ni el 08/12). Margen literal: 0,7.
+      (2) La cuenta del analista (ESTIMACIÓN): 13 filas de antes del corte cerradas del 01/10 al 08/11 en 5,2 semanas de trabajo, 2,5 por semana. Quedan 8 de 39: F1B-09, F1B-13, F1C-05, F1F-01, F1F-02, F1F-03, F1F-04 y F1F-05. Hacen falta 3,2 semanas y hay 3,9 (del 09/11 al 09/12, sin el 16/11 ni el 08/12). Margen literal: 0,7. · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): de las 8 filas quedan 6, porque F1B-13 (d12fa198) y F1C-05 (b195b368) están cerradas; F1C-07 era de después del corte.
       (3) RECOMPROBACIÓN el lunes 23/11/2026. El corte pasa al 01/02/2027 ese mismo día si se da cualquiera de: (a) estados sin equivalencia de la pasada en seco que exijan más que una tanda S; (b) B2 sin contratar; (c) la primera comparación semanal de F1F-05 sin ejecutar.
       (4) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: la primera comparación cae el lunes 16/11 (decision/f1f05-referencia-semanal-indicadores, consecuencia (1)), que es festivo y no se trabaja (R01.4 §K.2). Si se hace el 17/11, la condición (c) no salta por eso. No decidido. RESUELTO 09/11/2026 (Gerencia, «si»): la primera comparación semanal se hace el martes 17/11; la condición (c) de la recomprobación del 23/11 se refiere a esa comparación.
       (5) Pasar al 01/02 cuesta las 2 licencias mensuales de Zoho de más (decision/corte-licencias-plan-a).
@@ -5775,7 +5775,7 @@ decisiones_de_gerencia_adenda:
     engram: "decision/filas-que-no-cierran-antes-del-corte — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
-    tanda_que_abre: "dos cambios de cierre sin código (F1B-13 y el nivel cargo de F1C-05) · fila nueva después del corte para el propietario del registro, sin ID"
+    tanda_que_abre: "dos cambios de cierre sin código (F1B-13 y el nivel cargo de F1C-05) · fila nueva después del corte para el propietario del registro, sin ID · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): los dos cierres sin código están hechos: F1B-13, fusión d12fa198; nivel cargo de F1C-05, fusión b195b368. La fila del propietario del registro es F1C-13 (docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:422)."
 
   - clave: "decision/1h00-transporte-correo"
     fecha: "2026-11-09"
@@ -5833,7 +5833,7 @@ decisiones_de_gerencia_adenda:
     engram: "decision/orden-tandas-tras-e266 — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
-    tanda_que_abre: "los tres cierres sin código y la puesta al día del plan, tras la fusión de E-266"
+    tanda_que_abre: "los tres cierres sin código y la puesta al día del plan, tras la fusión de E-266 · NOTA DE PRECISIÓN 10/11/2026 (Supervisión, a petición del analista; la decisión no se reescribe): los tres cierres sin código están en main: F1B-13 (d12fa198), F1C-05 (b195b368) y F1C-07 (aea1d25e); el plan está puesto al día en 0e2b609b, 9223318f y bf0af7b5."
 
   - clave: "decision/e271-tras-el-corte"
     fecha: "2026-11-09"
