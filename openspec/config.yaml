@@ -6474,11 +6474,11 @@ decisiones_de_gerencia_panel:
       (1) PASO 1, tarea de persona (Alfonso) con verificación previa del analista; no es código. Que la App no tenga transacciones
       ociosas de 15 minutos: NO MEDIDO por esta supervisión. Una consola de persona que se deje a medias más de 15 minutos se corta sola.
       (2) PASO 2, trabajo de código con ficha, después del 09/11 y publicado antes del 12/12. Tanda SIN ASIGNAR; destino PROPUESTO, no
-      decidido: `fuera-del-plan` con motivo esta decisión. Su ficha la escribe la construcción.
+      decidido: `fuera-del-plan` con motivo esta decisión. Su ficha la escribe la construcción. CONSTRUIDO el 10/11/2026: `arranque-migracion-estricta` (`fuera-del-plan`, `cierra: si`), fusionado en `6fc4e16d`; sin desplegar.
       (3) CONSECUENCIA QUE SE SEÑALA, NO SE DISCUTE: la tolerancia por sentencia de `packages/zoho-sync/src/db/migrate.ts:25-34` es
       deliberada —«un índice sobre una columna que aún no existe en un esquema viejo … se loguea y se continúa»—. Si hoy alguna
       sentencia falla en cada arranque de producción, con el cambio la App dejaría de arrancar. Qué medir antes: las líneas
-      «migrate: sentencia omitida» del registro de la App en producción. NO MEDIDO.
+      «migrate: sentencia omitida» del registro de la App en producción. NO MEDIDO. MEDIDO el 10/11/2026 por el analista: no hay ninguna línea «sentencia omitida» en el arranque del 08/11 a las 13:47:41 UTC (hipótesis: EasyPanel muestra stderr), y en producción existen todas las tablas, índices y columnas de `schema.sql` salvo `public.relleno_conversaciones_pasadas`, que es nueva y la crea el próximo arranque (consulta de sólo lectura de Alfonso). Ninguna sentencia falla hoy en cada arranque.
       (4) El procedimiento del analista (consultas `psql -c` y comprobación previa, E-268) se mantiene.
     registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/arranque-bloqueado-por-consola) · docs/sdd/ENTRADA.md → E-268 (cerrada en sitio)"
     maestro_pasaje: "ninguno"
