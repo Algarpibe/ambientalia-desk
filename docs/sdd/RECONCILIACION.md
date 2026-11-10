@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `dc58a409` · **Fecha del commit:** 2026-11-09
+**Commit medido:** `abc632ca` · **Fecha del commit:** 2026-11-10
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -36,7 +36,7 @@ Hallazgos (informativos, no bloquean):
 
 ## 3 · Cambios fuera del plan, con su motivo
 
-  10 fuera del plan
+  11 fuera del plan
   0 sin motivo
 
 ## 4 · Incumplimientos vivos, gates y claves de decisión
