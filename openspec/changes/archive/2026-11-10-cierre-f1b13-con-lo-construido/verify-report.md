@@ -58,6 +58,6 @@ cada cita en su ancla la hizo además, por su cuenta, un agente de sólo lectura
 ## Lo que el archivo tiene que ver en rojo
 
 Con la carpeta fuera de `archive/`, F1B-13 sigue «en curso» y la prueba 11f/05g
-(`apps/desk/server/reconciliacion/registro.test.ts:218` en `93c29225` y `apps/desk/server/reconciliacion/registro.test.ts:220` en
-`93c29225`) está en verde. Al moverla a `openspec/changes/archive/` con `cierra: si`, el barrido la cuenta «por archivo» y esa
+(`apps/desk/server/reconciliacion/registro.test.ts:218` en `93c29225` y
+`apps/desk/server/reconciliacion/registro.test.ts:220` en `93c29225`) está en verde. Al moverla a `openspec/changes/archive/` con `cierra: si`, el barrido la cuenta «por archivo» y esa
 prueba tiene que ponerse roja. Si no se pone roja, la prueba no distingue y hay que parar.
