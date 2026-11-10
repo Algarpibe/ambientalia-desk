@@ -15,19 +15,20 @@ archivo. Cada intento se asienta sólo con TODOS sus códigos en 0.
 
 ## 2. Verify
 
-- [ ] 2.1 Contrastar cada cita de `proposal.md` y de este fichero contra su fichero, en su ancla: qué afirma, extremo inicial y
+- [x] 2.1 Contrastar cada cita de `proposal.md` y de este fichero contra su fichero, en su ancla: qué afirma, extremo inicial y
   final.
-- [ ] 2.2 Comprobar que ninguna pieza de la fila queda sin construir y archivar salvo las que saca una decisión (la foto del
+- [x] 2.2 Comprobar que ninguna pieza de la fila queda sin construir y archivar salvo las que saca una decisión (la foto del
   embalado y la guarda de salida, a F1B-17; la firma con imagen, a F1E-04; la firma «Revisó», a F1E-04 por
-  `decision/roles-validacion-informe`) y las dos que quedan fuera por supuesto, no por decisión: el checklist que revisa los
-  puntos del diagnóstico y alimenta el informe de salida (S-5) y el indicador de retrabajo (S-6); y que lo construido está
-  detrás del interruptor que `decision/e248-adelanto-f1c` (2) mantiene apagado (S-4). **Si S-5 no se acepta, o queda alguna
-  pieza más, parar sin archivar.**
-- [ ] 2.3 Comprobar que cada requisito de «Las piezas, en las specs vivas» existe en la línea citada y dice lo que la tabla le
+  `decision/roles-validacion-informe`) y las dos cuyo destino fija un supuesto, no una decisión: el checklist que revisa
+  los puntos del diagnóstico y alimenta el informe de salida (S-5, a F1E-03) y el indicador de retrabajo (S-6, a `kpis`); y que lo
+  construido está detrás del interruptor que `decision/e248-adelanto-f1c` (2) mantiene apagado (S-4). El cierre lo ordena esa
+  decisión, no S-5 ni S-6. **Parar sin archivar sólo si aparece otra pieza que no esté construida ni quede fuera por decisión o
+  por S-5 o S-6.**
+- [x] 2.3 Comprobar que cada requisito de «Las piezas, en las specs vivas» existe en la línea citada y dice lo que la tabla le
   atribuye.
-- [ ] 2.4 Comprobar que el cambio no toca código de producción, `openspec/specs/` ni ficheros de Supervisión
+- [x] 2.4 Comprobar que el cambio no toca código de producción, `openspec/specs/` ni ficheros de Supervisión
   (`git diff --name-only` contra `9223318f`).
-- [ ] 2.5 Escribir `verify-report.md` con veredicto; los cuatro códigos con código 0.
+- [x] 2.5 Escribir `verify-report.md` con veredicto; los cuatro códigos con código 0.
 
 ## 3. Archivo
 
@@ -40,8 +41,9 @@ archivo. Cada intento se asienta sólo con TODOS sus códigos en 0.
   (`apps/desk/server/reconciliacion/registro.test.ts:220` en `9223318f`: F1C-07 ya no está «en curso»). Si no se pone roja,
   parar: la prueba no distingue.
 - [ ] 3.4 Corregir en sitio, sin mover líneas y conservando el CRLF (con `perl`, no con `sed`):
-  `apps/desk/server/reconciliacion/registro.test.ts:218` en `9223318f` (de SEIS a CINCO; F1C-07 sale de «con» y entra entre las
-  cerradas por archivo del título, «por cierre-f1c07-con-lo-construido, cierra: si, tras control-calidad-liberacion, cierra: no»)
+  `apps/desk/server/reconciliacion/registro.test.ts:218` en `9223318f` (de SEIS a CINCO; F1C-07 sale de «con F1C-07 (…)» y entra en
+  DOS sitios del título, como en el molde: al principio de la lista «sin F1C-07, F1C-05, …» y en el paréntesis «(cerradas por archivo;
+  F1C-07 por cierre-f1c07-con-lo-construido, cierra: si, tras control-calidad-liberacion, cierra: no; …»)
   y `apps/desk/server/reconciliacion/registro.test.ts:220` en `9223318f` (la lista queda `['F1B-09', 'F1F-01', 'F1F-02',
   'F1F-03', 'F1F-05']` y se añade `toContain('F1C-07')` en «cerradas por archivo»); verde. Molde: `8647518b`.
 - [ ] 3.5 Correr `npm run reconcile` y comprobar que F1C-07 pasa a «cerradas por archivo», que no entra en «cerradas sin fuente
@@ -49,7 +51,7 @@ archivo. Cada intento se asienta sólo con TODOS sus códigos en 0.
   `docs/sdd/RECONCILIACION.md` sin commitearlo.
 - [ ] 3.6 Barrido de la regla de mutación 4 sobre `apps/desk/server/reconciliacion/registro.test.ts` y pase de abreviadas; las
   citas de este cambio a las líneas de antes de corregir quedan ancladas en `9223318f`.
-- [ ] 3.7 Escribir `archive-report.md` con la línea de R-1 (qué parte de la fila cubrió y qué dejó fuera, con S-5 dicho en ella),
+- [ ] 3.7 Escribir `archive-report.md` con la línea de R-1 (qué parte de la fila cubrió y qué dejó fuera, con S-5 y S-6 dichos en ella),
   los intentos y la lista para Supervisión de `proposal.md`.
 - [ ] 3.8 Cuatro códigos con código 0; `git show --numstat` del commit con sólo este cambio.
 
@@ -65,10 +67,11 @@ destino de la foto, la guarda y la imagen de firma de D11
 
 | Qué | Dueño | Destino | Dónde queda escrito |
 |---|---|---|---|
-| Situar el checklist que revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida, o confirmar S-5 (F1E-03) | Gerencia | Punto abierto con dueño (R-3) hasta que lo confirme | `proposal.md`, «Conclusión de la medida» y S-5; `openspec/config.yaml:1891` en `9223318f` |
+| Confirmar o corregir el destino de las dos piezas sin respuesta: el checklist que revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida (S-5, F1E-03) y el indicador de retrabajo (S-6, `kpis`) | Gerencia | La lista semanal (E-237) | `proposal.md`, «Conclusión de la medida», S-5 y S-6; `openspec/config.yaml:1891` en `9223318f` |
 | Asignar el cargo de permiso al Coordinador Técnico o, mientras no lo haya, comprobar el del Director Técnico y el Especialista técnico, antes de encender | Administrador de la aplicación | Antes de encender | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/archive-report.md:131` y `DEPLOY.md:795-796` |
 | Encender `CONTROL_CALIDAD_LIBERACION`, junto con `DECISIONALES_POR_CARGO` y no antes del 14/12/2026 | Persona con acceso a producción, por orden de Gerencia | Enero de 2027 (`openspec/config.yaml:5733` en `9223318f`) | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/archive-report.md:130` y `DEPLOY.md:794-795` |
 | Probar en la aplicación con el interruptor apagado y encendido; que esté hecho es hipótesis | Gerencia (ronda final) | La lista acumulada de pruebas en la aplicación | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/archive-report.md:134` |
 | Decidir en qué lista entran los S-1 a S-18 de `control-calidad-liberacion` | Supervisión | La lista semanal (E-237) | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/archive-report.md:132` y `docs/sdd/Supuestos_semana_2026-11-02.md:226` |
-| Actualizar M9.1, M1.7 y el §3.3 del maestro al encender, y la fila de la foto y la guarda | Supervisión → Gerencia | El expediente siguiente | `proposal.md`, «Para Supervisión — no se editan en la rama», punto 4 |
+| Cambiar en el maestro la fila de la foto, la guarda y la imagen de firma (M9.1, M1.7), ya debido desde el 09/11 por `decision/e248-adelanto-f1c` (3) | Supervisión → Gerencia | El expediente siguiente | `proposal.md`, «Para Supervisión — no se editan en la rama», punto 4 |
+| Al encender, actualizar M1.7 «[CONSTRUIDO] Hoy no hay control de calidad intermedio» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1843`), el glosario y el §3.3 | Supervisión → Gerencia | El expediente que siga al encendido | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:159` |
 | Revisar S-1 a S-7 de este cambio en la lista semanal de supuestos (E-237) | Gerencia | La lista semanal | `proposal.md`, «Supuestos reversibles» |

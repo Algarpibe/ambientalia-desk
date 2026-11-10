@@ -39,9 +39,10 @@ cambian en `main`. También van ancladas las de `apps/desk/server/reconciliacion
   `decision/c6-qa-liberacion` (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:407`), y hereda la de
   `decision/p38-verificacion-calidad` (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:395`).
 - **La R01.2** no tiene fila con el ID (`grep -c F1C-07` da 0) y sólo sitúa «C6 (el estado Control de calidad)» en S48
-  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.2.md:131`). **La R01.3** saca del corte las siete de 1C que no son de
-  paridad, entre ellas C6 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:67` y
-  `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:75`).
+  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.2.md:131`). **La R01.3** saca del corte «1C (las otras siete)»
+  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:75`), las que no son la de paridad de su §C.1; ni esa línea ni
+  `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:67` nombran C6: que C6 esté entre ellas es deducción, porque la
+  única de 1C que se queda dentro es la restricción de liberar sin factura (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:65`).
 - **La fila vigente**, `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:105` en `9223318f`: «C6 Control de calidad antes
   de liberar», talla S–M, después del corte, estado «pendiente», con `decision/c6-qa-liberacion` de respaldo y la nota del 09/11
   que nombra este cambio y reparte lo que falta entre F1B-17 y F1E-04.
@@ -81,18 +82,19 @@ por Control de calidad, la construyó después otra fila con su propio `tanda:` 
 | Estado `Control de calidad` entre `En Proceso` y `Por Facturar` | `openspec/config.yaml:1889` en `9223318f` y su (1), `openspec/config.yaml:1895` en `9223318f` | `control-calidad-liberacion`: `packages/shared/src/estados.ts:99` y las tres transiciones en `packages/shared/src/transitions.ts:262` | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:83` | Construida detrás de `CONTROL_CALIDAD_LIBERACION`, apagado hasta enero (S-4) |
 | Aprobado → `Por Facturar` | `openspec/config.yaml:1889` en `9223318f` | `control-calidad-liberacion` | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:84` | Construida, mismo interruptor; las dos salidas no dependen de él |
 | Rechazado → `En Proceso` con prioridad alta | `openspec/config.yaml:1889` en `9223318f` | `control-calidad-liberacion`: `prioridadTrasRechazo` (`packages/shared/src/controlCalidad.ts:92`) | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:85` | Construida |
-| El retrabajo queda registrado para medirlo | `openspec/config.yaml:1889` en `9223318f` y su (5), `openspec/config.yaml:1899` en `9223318f` | `control-calidad-liberacion`: la fila de rechazo en la traza y `contarRetrabajos` (`packages/shared/src/controlCalidad.ts:98`) | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:86` | Construido el registro y su conteo; el indicador, fuera de la fila por su (5) (S-6) |
-| Checklist siempre | `openspec/config.yaml:1890` en `9223318f` | `control-calidad-liberacion`: tres casillas fijas, provisionales por su S-1 | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:87` | Construida |
+| El retrabajo queda registrado para medirlo | `openspec/config.yaml:1889` en `9223318f` y su (5), `openspec/config.yaml:1899` en `9223318f` | `control-calidad-liberacion`: la fila de rechazo en la traza y `contarRetrabajos` (`packages/shared/src/controlCalidad.ts:98`) | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:86` | Construido el registro y su conteo; **el indicador, sin construir y sin respuesta de Gerencia que lo saque: se trata por el supuesto S-6** |
+| Checklist siempre | `openspec/config.yaml:1890` en `9223318f` | `control-calidad-liberacion`: el mecanismo, tres casillas exigidas siempre | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:87` | Construido el mecanismo; el contenido son tres casillas provisionales (S-1 del cambio archivado, `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:140`), supuestos nunca publicados (`docs/sdd/Supuestos_semana_2026-11-02.md:190` y `docs/sdd/Supuestos_semana_2026-11-02.md:226`) |
 | Verificación con gas patrón sólo cuando la pide el tipo y hay gas, con la regla de P38 | `openspec/config.yaml:1890` en `9223318f` y su (4), `openspec/config.yaml:1898` en `9223318f` | `control-calidad-liberacion`: `exigeGasPatron` (`packages/shared/src/controlCalidad.ts:71`) | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:88` | Construida |
 | Firma el Coordinador Técnico, nunca quien hizo el trabajo; guarda por persona | `openspec/config.yaml:1893` en `9223318f`, su (2) y (3), `openspec/config.yaml:1896` en `9223318f` y `openspec/config.yaml:1897` en `9223318f`; el corchete lo resuelve `openspec/config.yaml:2314` en `9223318f` | `control-calidad-liberacion`: `veredictoFirma` (`packages/shared/src/controlCalidad.ts:51`) e `intervino` (`packages/shared/src/controlCalidad.ts:38`) | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:91` | Construida |
-| Con el Coordinador Técnico vacante, firma el Director Técnico o el Especialista técnico | `decision/f1c07-firma-control-calidad`, `openspec/config.yaml:5113` en `9223318f`, que responde la pregunta de `openspec/config.yaml:4499` en `9223318f` | `control-calidad-liberacion` | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:41` | Construida |
-| «Intervino», el administrador de respaldo con motivo y el aviso a los administradores | `decision/f1c07-supuestos-corregidos`, `openspec/config.yaml:5134` en `9223318f` | `control-calidad-liberacion` | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:41-45` | Construida |
+| Con el Coordinador Técnico vacante, firma el Director Técnico o el Especialista técnico | `decision/f1c07-firma-control-calidad`, `openspec/config.yaml:5113` en `9223318f`, que responde la pregunta de `openspec/config.yaml:4499` en `9223318f` | `control-calidad-liberacion` | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:91` y la regla de firmante, `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:57-59` | Construida |
+| «Intervino», el administrador de respaldo con motivo y el aviso a los administradores | `decision/f1c07-supuestos-corregidos`, `openspec/config.yaml:5134` en `9223318f` | `control-calidad-liberacion` | «Intervino» y el administrador, `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:59-61`; el aviso (D8), `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:45` | Construida |
 | El interruptor nace apagado y se enciende en enero con `DECISIONALES_POR_CARGO` | `openspec/config.yaml:5141` en `9223318f` y `decision/e248-adelanto-f1c` (2), `openspec/config.yaml:5733` en `9223318f` | `control-calidad-liberacion`: `packages/zoho-sync/src/config.ts:125` y `DEPLOY.md` §16 | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/archive-report.md:85-88` | Construido; apagado por decisión |
 | La calibración directa pasa también por Control de calidad | `decision/p15-p59-rutas` (3), `openspec/config.yaml:2033` en `9223318f`, y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3255` | F1C-08 (`calibracion-directa`, `cierra: si`), fusionada en `218d746d` | `openspec/changes/archive/2026-10-20-calibracion-directa/archive-report.md:7-11` | Construida por F1C-08, fuera de esta fila; con la lectura de su S-14 (`openspec/changes/archive/2026-10-20-calibracion-directa/archive-report.md:120-121`) |
 | Foto del equipo embalado | `openspec/config.yaml:1892` en `9223318f` y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3253` | F1B-17 | `openspec/config.yaml:5734` en `9223318f` y `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:97` en `9223318f` | **Pasa a F1B-17 por decisión** |
 | Guarda de salida: no se entrega sin foto y checklist firmado | `openspec/config.yaml:1892` en `9223318f` y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1829` | F1B-17 | `openspec/config.yaml:5734` en `9223318f` y `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:97` en `9223318f` | **Pasa a F1B-17 por decisión**; la firma del checklist, construida (S-7) |
 | Firma cargada con la imagen del responsable | `openspec/config.yaml:1893` en `9223318f` y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3254` | F1E-04 | `openspec/config.yaml:5734` en `9223318f` y `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:123` en `9223318f` | **Pasa a F1E-04 por decisión** |
 | La firma «Revisó» del informe es la misma del Control de calidad, en un solo paso | `openspec/config.yaml:2310` en `9223318f` y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2390` | F1E-04: `decision/roles-validacion-informe` la abre (`openspec/config.yaml:2322` en `9223318f`) | `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:76` | Fuera de la fila por su decisión: no existe el informe |
+| «Base de las etapas de validación con firma», con el gate «Diseño conjunto con las firmas de certificados (27/08)» | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:180` | Lo que toca a F1C-07, que la firma del Control de calidad sea la misma que la «Revisó», está construido como firma por persona; las etapas de validación con firma y su firma cargada son F1E-04 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:212`), que abre `decision/roles-validacion-informe` (`openspec/config.yaml:2322` en `9223318f`) | `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3274`: las etapas de validación con firma son la etapa de QA de C6 aplicada a la calibración, y la revisión del Coordinador es a la vez la firma del Control de calidad y la «Revisó» | Fuera de la fila por su decisión, hacia F1E-04 |
 | **El checklist revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida** | `openspec/config.yaml:1891` en `9223318f`, `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3252` y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2408` | **Nadie, y ninguna decisión la saca.** El cambio archivado la dio a «Épica 1E» (`openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:75`); su contenido coincide con el de F1E-03 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:211`) | `decision/e248-adelanto-f1c` (3) no la nombra (`openspec/config.yaml:5734` en `9223318f`) | **Sin construir y sin decisión: se trata por el supuesto S-5** (abajo) |
 | Producto no conforme en el flujo de equipo nuevo | `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3248` | F1A-03: la salida rechazada de Verificación a `Notificado` (`decision/p38-verificacion-calidad` (5), `openspec/config.yaml:1981` en `9223318f`) | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:73` en `9223318f` | Fuera de la fila: es de F1A-03, cerrada por archivo |
 
@@ -105,28 +107,38 @@ decisión que abre este cambio. Encenderlo es una tarea de persona con fecha, no
 **Fuera de la fila, y por eso no cuentan como pendientes:**
 
 - La calibración directa por Control de calidad, que D11 dejaba fuera porque la ruta abreviada no existía, la construyó F1C-08
-  detrás del mismo interruptor (`openspec/specs/transitions-st/spec.md:3215`, RQ-TS-56). F1C-08 está cerrada por archivo
+  detrás del mismo interruptor (`openspec/specs/transitions-st/spec.md:3215`, RQ-TS-56). F1C-08 está cerrada por archivo:
+  lo dice la nota del 10/11 de su fila, no su columna de estado, que sigue en «pendiente»
   (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:106` en `9223318f`).
 - La pregunta de quién firma con el Coordinador Técnico vacante, que `decision/tabla-de-cargos-y-personas-10-10` (7) dejó para
   esta tanda (`openspec/config.yaml:4512` en `9223318f`), la respondió `decision/f1c07-firma-control-calidad` y está construida.
-- El indicador de retrabajo de M7.1 («Rechazos en Control de calidad»,
-  `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2849`): la consecuencia (5) de la propia decisión lo
-  pone con la tanda de `kpis` (`openspec/config.yaml:1899` en `9223318f`), y no está entre los nueve que adelanta F1F-05
-  (`decision/e009b-lista-indicadores`, `openspec/config.yaml:2655` en `9223318f`). Es el supuesto S-6.
+**Conclusión de la medida: hay DOS piezas sin construir y sin una respuesta de Gerencia que las saque.** Ninguna de las dos
+la nombra `decision/e248-adelanto-f1c`. La foto y la guarda las saca su (3) hacia F1B-17; la firma con imagen, hacia F1E-04; la
+firma «Revisó» y las etapas de validación con firma, que son contenido de F1E-04, `decision/roles-validacion-informe`; la
+calibración directa la construyó F1C-08. Las dos piezas sin respuesta se tratan por supuesto, y se dice igual en todos los
+sitios:
 
-**Conclusión de la medida: hay UNA pieza sin construir y sin una decisión escrita que la saque.** Es «el checklist revisa los
-puntos que fallaron en el diagnóstico y alimenta el informe de salida» (`openspec/config.yaml:1891` en `9223318f`). La foto y la
-guarda las saca `decision/e248-adelanto-f1c` (3) hacia F1B-17; la firma con imagen, hacia F1E-04; la firma «Revisó», que es
-contenido de F1E-04, `decision/roles-validacion-informe`; la calibración directa la construyó F1C-08. La pieza del checklist de
-diagnóstico no la nombra ninguna de esas respuestas. No se disimula: no se puede construir sin el checklist de diagnóstico
-(épica 1D) ni sin el informe de salida (F1E-03, `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:122` en `9223318f`),
-que van después del corte, en 2027 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2410`); su
-contenido es el de la fila F1E-03 de la R01.1 («los puntos rojos pasan a verde si se corrigieron o quedan en rojo con motivo
-tipificado», `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:211`), que el maestro describe como «el mismo checklist
-del diagnóstico, releído al cierre» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2407`); y la
-respuesta de Gerencia, al enumerar «lo que falta de F1C-07», sólo nombra dos destinos y ordena el cierre. Se trata como
-**supuesto reversible S-5** —la pieza viaja con F1E-03— y **el cierre queda condicionado a que el orquestador lo acepte o a que
-Gerencia lo sitúe**; si se rechaza, se para sin archivar.
+- **El checklist que revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida**
+  (`openspec/config.yaml:1891` en `9223318f`). No se puede construir sin el checklist de diagnóstico (épica 1D, después del
+  corte, `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:111` en `9223318f`) ni sin el informe de salida (F1E-03,
+  `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:122` en `9223318f`), que el maestro sitúa con la épica 1E en 2027
+  (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2410`). Su contenido es el de la fila F1E-03 de la
+  R01.1 («los puntos rojos pasan a verde si se corrigieron o quedan en rojo con motivo tipificado»,
+  `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:211`), que el maestro describe como «el mismo checklist del
+  diagnóstico, releído al cierre» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2407`). Es el
+  **supuesto S-5**: su destino es F1E-03.
+- **El indicador de retrabajo de M7.1** («Rechazos en Control de calidad»,
+  `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2849`), al que M9.1 ata el retrabajo
+  (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3251`). Lo pone con la tanda de `kpis` la
+  consecuencia (5) de `decision/c6-qa-liberacion` (`openspec/config.yaml:1899` en `9223318f`), que es lectura de Supervisión y no
+  respuesta de Gerencia: la (2) de la misma decisión lo admite para sí (`openspec/config.yaml:1896` en `9223318f`). No está entre
+  los nueve que adelanta F1F-05 (`decision/e009b-lista-indicadores`, `openspec/config.yaml:2655` en `9223318f`). Es el
+  **supuesto S-6**: su destino es `kpis`, en Fase 2.
+
+**Esto no condiciona el cierre.** La respuesta de Gerencia ya lo ordena: «y F1C-07 cierra con lo construido»
+(`openspec/config.yaml:5730` en `9223318f`; su (3), `openspec/config.yaml:5734` en `9223318f`). Lo que deja abierto es el DESTINO
+de estas dos piezas, no si la fila cierra; S-5 y S-6 fijan ese destino y se corrigen situándolas Gerencia en otra fila. No se
+disimulan: van con nombre en la línea de R-1 del `archive-report.md` y en la lista semanal.
 
 ## Las piezas, en las specs vivas
 
@@ -191,7 +203,8 @@ Texto para los ficheros que esta rama no edita. Ninguno es contenido de la fila.
    (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:290` en `9223318f`, que da **6/25**) pasa a **7/25**, con F1C-07 por
    archivo y por `decision/e248-adelanto-f1c` (3). Si se acepta S-5, la fila F1E-03
    (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:122` en `9223318f`) puede nombrar que recibe el checklist que revisa
-   los puntos del diagnóstico y alimenta el informe de salida. Las filas F1B-17 y F1E-04 ya llevan su nota del 09/11.
+   los puntos del diagnóstico y alimenta el informe de salida; con S-6, el indicador de retrabajo queda con `kpis`, sin fila del
+   plan. Las filas F1B-17 y F1E-04 ya llevan su nota del 09/11.
 2. **`openspec/config.yaml`.** `decision/tabla-de-cargos-y-personas-10-10` dice en su `tanda_que_abre` que «deja una pregunta para
    F1C-07» (`openspec/config.yaml:4512` en `9223318f`): la respondió `decision/f1c07-firma-control-calidad`
    (`openspec/config.yaml:5113` en `9223318f`). Y `decision/c6-qa-liberacion` no dice dónde cae la frase de su respuesta sobre el
@@ -209,8 +222,9 @@ Texto para los ficheros que esta rama no edita. Ninguno es contenido de la fila.
    construir» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1266` y
    `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:4507`) pueden decir «construido detrás de un
    interruptor apagado hasta enero». M1.7 «[CONSTRUIDO] Hoy no hay control de calidad intermedio»
-   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1843`) sigue siendo cierto hasta el encendido (R-6 de
-   `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:159`).
+   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1843`) y la entrada del glosario
+   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5907`) siguen siendo ciertas hasta el encendido y
+   quedan desactualizadas ese día (R-6 de `openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:159`).
 5. **`CLAUDE.md`, `docs/sdd/F0-05_Bloques_para_ClaudeCode.md`, `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md` y
    `docs/sdd/F0-01_Correcciones_para_el_maestro.md`:** no nombran F1C-07 (`grep -c F1C-07` da 0 en los cuatro); sin texto.
 
@@ -237,19 +251,20 @@ Texto para los ficheros que esta rama no edita. Ninguno es contenido de la fila.
 
 | # | Supuesto | Cómo se revierte |
 |---|---|---|
-| S-1 | `maestro: ["M9.1", "M1.7", "M2.5"]`, el de `control-calidad-liberacion` (`openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:4`). «M9.1» es la fuente de la fila de la R01.1 y el barrido la cruza (`apps/desk/server/reconciliacion/comprobaciones.ts:238`) | `maestro: ["M9.1"]`, que también cruza; sin «M9.1», F1C-07 saldría «sin verificar» |
+| S-1 | `maestro: ["M9.1", "M1.7", "M2.5"]`, el de `control-calidad-liberacion` (`openspec/changes/archive/2026-10-20-control-calidad-liberacion/proposal.md:5`). «M9.1» es la fuente de la fila de la R01.1 y el barrido la cruza (`apps/desk/server/reconciliacion/comprobaciones.ts:238`) | `maestro: ["M9.1"]`, que también cruza; sin «M9.1», F1C-07 saldría «sin verificar» |
 | S-2 | `capacidad: [reconciliacion]`, porque el único efecto es el recuento del barrido y la prueba que lo fija; el cambio de la fila declaró `transitions-st`, `permissions`, `derivacion-avisos` y `trazas` | `capacidad: [transitions-st, permissions, derivacion-avisos, trazas]` |
-| S-3 | `toca_maestro: no`, como los cierres sin código de F1B-13 y F1C-05. Lo que el maestro dice de F1C-07 es una foto de la revisión: el contenido no cambia, sólo la fila de la foto, la guarda y la imagen de firma. El texto va en «Para Supervisión», punto 4 | `toca_maestro: si`, con el texto nuevo de M9.1, M1.7 y el §3.3 para Gerencia |
+| S-3 | `toca_maestro: no`. Al terminar, el maestro SÍ queda desactualizado: M9.1 dice «Cuándo: tanda F1C-07» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3256`), M1.7 pone la guarda en F1C-07 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1829`) y el §3.3 la marca «Sin empezar» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3944`). Eso va contra la letra de R-1, que pregunta «¿queda el maestro desactualizado al terminar?». Se sigue el precedente de los cierres sin código de F1B-04, F1B-13 y F1C-05, que declararon `no` con el maestro en el mismo caso: lo que cambia es la fila de la foto, la guarda y la imagen de firma, no el contenido. El texto va en «Para Supervisión», punto 4 | `toca_maestro: si`, con el texto nuevo de M9.1, M1.7 y el §3.3 para Gerencia |
 | S-4 | Lo construido, verificado y archivado detrás de `CONTROL_CALIDAD_LIBERACION`, que `decision/e248-adelanto-f1c` (2) mantiene apagado, cuenta como construido: la misma decisión, en su (3), ordena cerrar con lo construido (`openspec/config.yaml:5734` en `9223318f`) | Que la fila no cierre hasta encender en enero; contradiría la (3) |
-| S-5 | **«El checklist revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida»** (`openspec/config.yaml:1891` en `9223318f`) viaja con F1E-03, cuyo contenido es (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:211`), y depende del checklist de diagnóstico de 1D. Ninguna decisión lo dice; por eso es supuesto y no hecho | Que Gerencia la sitúe en otra fila; o que la considere de F1C-07, y entonces la fila no cierra: se para sin archivar |
-| S-6 | El indicador de retrabajo de M7.1 es de `kpis` (Fase 2), por la consecuencia (5) de la decisión (`openspec/config.yaml:1899` en `9223318f`), y no de F1F-05, que tiene lista cerrada de nueve sin él (`openspec/config.yaml:2655` en `9223318f`). F1C-07 deja el registro y el conteo | Que Gerencia lo sume a F1F-05 o le dé fila propia |
+| S-5 | **«El checklist revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida»** (`openspec/config.yaml:1891` en `9223318f`) tiene destino F1E-03, cuyo contenido es (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:211`), y depende del checklist de diagnóstico de 1D. Ninguna respuesta de Gerencia fija ese destino; por eso es supuesto y no hecho. Sólo fija el destino: el cierre lo ordena `decision/e248-adelanto-f1c` (`openspec/config.yaml:5730` en `9223318f`) | Que Gerencia la sitúe en otra fila |
+| S-6 | El indicador de retrabajo de M7.1 tiene destino `kpis` (Fase 2), por la consecuencia (5) de la decisión (`openspec/config.yaml:1899` en `9223318f`), que es lectura de Supervisión, y no F1F-05, que tiene lista cerrada de nueve sin él (`openspec/config.yaml:2655` en `9223318f`). F1C-07 deja el registro y el conteo. Sólo fija el destino; no condiciona el cierre | Que Gerencia lo sitúe en F1F-05 o en otra fila |
 | S-7 | El «checklist firmado» de la guarda (`openspec/config.yaml:1892` en `9223318f`) está construido como la firma de `aprobacion_control_calidad` en la traza (RQ-TZ-23); lo que pasa a F1B-17 es exigirlo al salir de `Por Entregar` | Que Gerencia entienda por «firmado» la firma con imagen, que va a F1E-04 |
 
 ## Riesgos
 
 - **Cita en prosa que caduca:** las líneas 218 y 220 de `apps/desk/server/reconciliacion/registro.test.ts`, contadas en `9223318f`,
   se reescriben en sitio; al cerrar se barre la regla de mutación 4 sobre ese fichero.
-- **S-5 no tiene respaldo escrito:** si el verify o Gerencia lo rechazan, el cierre se para; la propuesta lo dice antes de archivar
-  para que no parezca resuelto.
+- **S-5 y S-6 no tienen respuesta de Gerencia:** fijan el destino de dos piezas, no el cierre. Si Gerencia las sitúa en otra fila,
+  cambia ese destino y la fila sigue cerrada por `decision/e248-adelanto-f1c`; la propuesta lo dice antes de archivar para que no
+  parezca resuelto.
 - **Registro de intentos:** el archivo mide la mudanza dos veces (regla del ciclo 2, desvío 3); se abre con un techo de dos veces
   la carpeta más 800 (regla del archivo).
