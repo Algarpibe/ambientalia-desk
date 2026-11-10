@@ -30,14 +30,14 @@ a LF) y comprobar `file <fichero>`. Correr la prueba focal, anotar la prueba que
 
 ## Lote L1 — módulo, pruebas unitarias, `index.ts:26-27` y mutaciones (intento i3)
 Escenarios: RQ-ZS-52 los tres; RQ-ZS-53 límite y otro fallo; RQ-ZS-54 corte, reorganización y fuera de `index.ts`; RQ-ZS-55 posición, sin `desk`, `index.ts` conserva líneas; RQ-ZS-56 tolerante.
-- [ ] L1.1 M0: `npm test` entero en el commit de partida, con su log; anotar ficheros, pruebas y duración.
-- [ ] L1.2 ROJO `packages/zoho-sync/src/db/puestaAlDiaEstricta.test.ts` (nuevo, `design.md` §5): `FuenteDeConexiones` falsa que registra en UN solo arreglo cada texto y cada `release` con su argumento; U-1 a U-12. Rojo esperado: el módulo no existe (el import resuelve y falla la aserción de exportación, no el arnés: crear antes un esqueleto que exporte y lance «no implementado»).
-- [ ] L1.3 ROJO `apps/desk/server/arranqueEstrictoIndice.test.ts` (nuevo, molde `apps/desk/server/modoSinZohoIndice.test.ts:5-15`, `index.ts` leído como texto): líneas = las de `97539c73` (medidas al aplicar), finales homogéneos, `:8` idéntica, `:26`/`:27` como en `design.md` §3, ninguna otra línea con `aplicar(`, `await` en las dos, `app.listen(` después de `:27`, `main().catch` intacto, y el especificador del `import()` de `:26` se importa de verdad.
-- [ ] L1.4 ROJO `apps/desk/server/modoSinZohoIndice.test.ts:42`, en sitio: `expect(una('puestaAlDia.aplicar(migrate)')).not.toContain('modoSinZohoDesk')`. Rojo: la línea 27 aún dice `await migrate(pool)`. Anotar los rojos de L1.2 a L1.4.
-- [ ] L1.5 `packages/zoho-sync/src/db/puestaAlDiaEstricta.ts` (nuevo, `design.md` §4): `LIMITE_ESPERA_BLOQUEO_MS = 10_000`, `ErrorPuestaAlDia`, `ErrorLimiteEspera`, `recortarSentencia`, `abrirPuestaAlDiaEstricta` (cliente propio, `SET lock_timeout` antes de nada, captura con grabador, ejecución una a una en autocommit, `release(true)` siempre, guarda de orden, «paso no capturable»). Sin `process.env`. Importa de `migrate.ts` sólo el tipo `Queryable`. Verde: U-1 a U-12.
-- [ ] L1.6 `apps/desk/server/index.ts:26-27` en sitio, con el texto de `design.md` §3; `:8` NO se toca. Comprobar: `git diff --numstat` da `2 2`, `wc -l` y finales iguales a `97539c73`, `file index.ts` igual. Verde: L1.3 y L1.4.
-- [ ] L1.7 Verde: focal `npx vitest run packages/zoho-sync/src/db/puestaAlDiaEstricta.test.ts apps/desk/server/arranqueEstrictoIndice.test.ts apps/desk/server/modoSinZohoIndice.test.ts`; `migrate.test.ts` y las cuatro pruebas que leen `index.ts` intactas y en verde.
-- [ ] L1.8 Mutaciones (protocolo de arriba), con su rojo anotado en `apply-progress.md`:
+- [x] L1.1 M0: `npm test` entero en el commit de partida, con su log; anotar ficheros, pruebas y duración.
+- [x] L1.2 ROJO `packages/zoho-sync/src/db/puestaAlDiaEstricta.test.ts` (nuevo, `design.md` §5): `FuenteDeConexiones` falsa que registra en UN solo arreglo cada texto y cada `release` con su argumento; U-1 a U-12. Rojo esperado: el módulo no existe (el import resuelve y falla la aserción de exportación, no el arnés: crear antes un esqueleto que exporte y lance «no implementado»).
+- [x] L1.3 ROJO `apps/desk/server/arranqueEstrictoIndice.test.ts` (nuevo, molde `apps/desk/server/modoSinZohoIndice.test.ts:5-15`, `index.ts` leído como texto): líneas = las de `97539c73` (medidas al aplicar), finales homogéneos, `:8` idéntica, `:26`/`:27` como en `design.md` §3, ninguna otra línea con `aplicar(`, `await` en las dos, `app.listen(` después de `:27`, `main().catch` intacto, y el especificador del `import()` de `:26` se importa de verdad.
+- [x] L1.4 ROJO `apps/desk/server/modoSinZohoIndice.test.ts:42`, en sitio: `expect(una('puestaAlDia.aplicar(migrate)')).not.toContain('modoSinZohoDesk')`. Rojo: la línea 27 aún dice `await migrate(pool)`. Anotar los rojos de L1.2 a L1.4.
+- [x] L1.5 `packages/zoho-sync/src/db/puestaAlDiaEstricta.ts` (nuevo, `design.md` §4): `LIMITE_ESPERA_BLOQUEO_MS = 10_000`, `ErrorPuestaAlDia`, `ErrorLimiteEspera`, `recortarSentencia`, `abrirPuestaAlDiaEstricta` (cliente propio, `SET lock_timeout` antes de nada, captura con grabador, ejecución una a una en autocommit, `release(true)` siempre, guarda de orden, «paso no capturable»). Sin `process.env`. Importa de `migrate.ts` sólo el tipo `Queryable`. Verde: U-1 a U-12.
+- [x] L1.6 `apps/desk/server/index.ts:26-27` en sitio, con el texto de `design.md` §3; `:8` NO se toca. Comprobar: `git diff --numstat` da `2 2`, `wc -l` y finales iguales a `97539c73`, `file index.ts` igual. Verde: L1.3 y L1.4.
+- [x] L1.7 Verde: focal `npx vitest run packages/zoho-sync/src/db/puestaAlDiaEstricta.test.ts apps/desk/server/arranqueEstrictoIndice.test.ts apps/desk/server/modoSinZohoIndice.test.ts`; `migrate.test.ts` y las cuatro pruebas que leen `index.ts` intactas y en verde.
+- [x] L1.8 Mutaciones (protocolo de arriba), con su rojo anotado en `apply-progress.md`:
   - M-1 · en el módulo, enviar el `SET` tras la primera sentencia del primer `aplicar` (`perl` sobre la línea del `SET`) ⇒ U-1, U-2.
   - M-2 · `index.ts`: intercambiar el contenido de `:26` y `:27` (dos `perl` en sitio) ⇒ prueba de índice (y U-7 en ejecución).
   - M-3 · quitar la guarda de orden del módulo ⇒ U-7.
@@ -48,7 +48,7 @@ Escenarios: RQ-ZS-52 los tres; RQ-ZS-53 límite y otro fallo; RQ-ZS-54 corte, re
   - M-8 · leer el límite de `process.env.LOCK_TIMEOUT` ⇒ U-8.
   - M-9 · `index.ts:27` vuelve a `await migrate(pool)` ⇒ prueba de índice y `modoSinZohoIndice.test.ts:42`.
   - M-10 va en L3 (necesita la §26).
-- [ ] L1.9 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`. CA-5: `git diff --quiet 97539c73 -- packages/zoho-sync/src/db/migrate.ts packages/zoho-sync/src/db/schema.sql apps/hub-sync/src/hubSync.ts apps/hub-sync/src/hub-sync.ts packages/zoho-sync/src/db/pool.ts .env.example` sale 0.
+- [x] L1.9 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`. CA-5: `git diff --quiet 97539c73 -- packages/zoho-sync/src/db/migrate.ts packages/zoho-sync/src/db/schema.sql apps/hub-sync/src/hubSync.ts apps/hub-sync/src/hub-sync.ts packages/zoho-sync/src/db/pool.ts .env.example` sale 0.
 - [ ] L1.10 Cierre del lote: las cinco comprobaciones en una cadena, la medida, `apply-progress.md`, commit (lo hace el orquestador).
 
 ## Lote L2 — pruebas de integración y evidencia a mano (intento i4)

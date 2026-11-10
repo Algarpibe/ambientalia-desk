@@ -39,7 +39,7 @@ describe('index.ts · el arranque', () => {
   })
 
   it('la migración y la resiembra no llevan el salto: corren siempre', () => {
-    expect(una('await migrate(pool)')).not.toContain('modoSinZohoDesk')
+    expect(una('puestaAlDia.aplicar(migrate)')).not.toContain('modoSinZohoDesk')
     expect(una('reseedTicketNumber(pool) }')).not.toContain('modoSinZohoDesk')
   })
 })
