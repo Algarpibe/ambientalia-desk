@@ -185,7 +185,7 @@ Para el verify: cada pieza construida, con el requisito vivo que la impone.
   (`openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:79-83`).
 - **El maestro.** La corrección 25 sigue sin pegar: su texto propuesto no aparece en la R08.4 (`grep -c "ya no lleva casilla"` da
   0), y su última frase, «La alarma por fecha vencida sigue pendiente (F1C-02)»
-  (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1363-1364`), ya no es cierta: F1C-02 la construyó. M1.9.1 dice «La fila
+  (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1363-1364` en `0faa8832`), ya no es cierta: F1C-02 la construyó. M1.9.1 dice «La fila
   F1C-05 sigue abierta por el nivel «propietario del registro»»
   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1952`) y el §3.3 la marca «Parcial»
   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3930-3934`). Va con S-3.
@@ -213,8 +213,8 @@ Texto para los ficheros que esta rama no edita. Ninguno es contenido de la fila.
 4. **Maestro, para el expediente.** Donde la R08.4 nombra F1C-05 por el propietario del registro
    (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1952`, `:3934` y `:4184`) y el Anexo D nº 75
    (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5587`), la fila es ahora F1C-13. Las correcciones 27 y
-   30 dicen lo mismo con F1C-05 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1417-1419` y
-   `docs/sdd/F0-01_Correcciones_para_el_maestro.md:1509-1510`). Y la 25 necesita perder su última frase antes de pegarse.
+   30 dicen lo mismo con F1C-05 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1417-1419` en `0faa8832` y
+   `docs/sdd/F0-01_Correcciones_para_el_maestro.md:1509-1510` en `0faa8832`). Y la 25 necesita perder su última frase antes de pegarse.
 5. **`CLAUDE.md`, `docs/sdd/F0-05_Bloques_para_ClaudeCode.md` y `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md`:** no nombran F1C-05
    (`grep -n F1C-05` no da nada); sin texto.
 

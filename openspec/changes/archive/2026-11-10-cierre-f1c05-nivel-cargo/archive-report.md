@@ -100,9 +100,9 @@ Cómo se revierte cada uno: `proposal.md`, «Supuestos reversibles».
   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1952`), y lo mismo `:3934` y `:4184`; el Anexo D
   nº 75 tiene por fuente F1C-05 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5587`). Desde la
   consecuencia (2), la fila del propietario es F1C-13; va con S-3. Las correcciones 27 y 30 dicen lo mismo con F1C-05
-  (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1417-1419` y `docs/sdd/F0-01_Correcciones_para_el_maestro.md:1509-1510`), y
+  (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1417-1419` en `0faa8832` y `docs/sdd/F0-01_Correcciones_para_el_maestro.md:1509-1510` en `0faa8832`), y
   la 25 tiene que perder su última frase antes de pegarse
-  (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1363-1364`).
+  (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1363-1364` en `0faa8832`).
 
 ## Tareas de personas — archivar NO las da por hechas
 
