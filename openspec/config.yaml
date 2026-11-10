@@ -6493,7 +6493,7 @@ decisiones_de_gerencia_panel:
     respuesta_textual: |
       «Conversaciones y calificaciones (E-266): sí se arregla, como tanda corta fuera del plan, lanzada a partir del 09/11 junto con E-247, sin excepción hoy. Alcance: corregir la comparación de conversaciones.ts para que la calificación de satisfacción no haga fallar el cuadre (contarla, o aceptar recibido ≥ contado; lo decide la construcción y lo anota como supuesto), y volver a lanzar la pasada sobre los 51 tickets de E-266. El resumen de esa pasada se guarda donde sobreviva a un redespliegue. No toca datos de producción más allá de marcar como borrado lo que Zoho ya no tiene.»
     consecuencias: |
-      (1) QUÉ SE CONSTRUYE: el criterio de `packages/zoho-sync/src/conversaciones.ts:120` (`recibidos.size === esperado`, con
+      (1) QUÉ SE CONSTRUYE: el criterio de `packages/zoho-sync/src/conversaciones.ts:120` en `79546497` (`recibidos.size === esperado`, con
       `esperado` en `:50-57`) deja de fallar por los hilos de calificación; lo usan las tres vías (E-266). Más la nueva pasada sobre
       los 51 y un resumen que sobreviva a un redespliegue (hoy vive en memoria y se perdió el 03/11, E-266).
       (2) Lleva también la medición de peticiones a Zoho por pasada (`decision/restos-del-historico-de-conversaciones`, excepción).
