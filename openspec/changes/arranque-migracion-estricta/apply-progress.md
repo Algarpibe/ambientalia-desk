@@ -145,7 +145,7 @@ Método: `git grep -noE` de la forma completa (`apps/desk/server/<fichero>:N[-M]
 | `archive/2026-11-08-modo-sin-zoho/design.md:82` | `:27` (abreviada) | las líneas de `await migrate(pool)` y de la resiembra no llevan el salto | B (cita literal) | anclada |
 | `archive/2026-11-09-calificaciones-cuadre-conversaciones/verify-report.md:51` | `deployCalificacionesConversaciones.test.ts:67` | prueba de posición de la §25 «última» | B (la prueba ahora fija «precede a la §26») | anclada |
 | `archive/2026-11-09-calificaciones-cuadre-conversaciones/apply-progress.md:127` | `DEPLOY.md:1068-1110` | «§25 añadida al final» | B (ya no es el final) | anclada |
-| `archive/2026-11-09-calificaciones-cuadre-conversaciones/design.md:174`, `…/archive-report.md:23` | `DEPLOY.md:1066`, `:1068` | dónde entra / empieza la §25 | A | — |
+| `archive/2026-11-09-calificaciones-cuadre-conversaciones/design.md:174`, `openspec/changes/archive/2026-11-09-calificaciones-cuadre-conversaciones/archive-report.md:23` | `DEPLOY.md:1066`, `:1068` | dónde entra / empieza la §25 | A | — |
 | `archive/2026-11-08-modo-sin-zoho/verify-report.md:56` | `modoSinZohoIndice.test.ts:35`, `:41` | el arranque migra (la prueba `:41` conserva su título) | A | — |
 | `arranque-migracion-estricta/proposal.md:95` | `modoSinZohoIndice.test.ts:42` | exige UNA línea con `await migrate(pool)` | B (propia, redactada antes del cambio) | anclada |
 | `arranque-migracion-estricta/design.md:55` | `modoSinZohoIndice.test.ts:42` | idem | B | anclada (se quitó la negrita para que el ancla vaya pegada) |
