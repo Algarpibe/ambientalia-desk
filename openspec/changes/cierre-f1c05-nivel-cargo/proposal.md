@@ -74,7 +74,7 @@ fusión (`32e5df3a` y `da916152`).
 | Pieza | Fuente | Quién la cubre | Dónde se dice | Estado |
 |---|---|---|---|---|
 | Siete cargos con nombres exactos, en lista cerrada y en una columna de cargo de permiso separada de la de firma | `openspec/config.yaml:1933` en `0e2b609b` y `openspec/config.yaml:2589` en `0e2b609b` | `permisos-por-cargo` | `openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:17-18` | Construida; el octavo, «Especialista técnico», lo añadió F1C-11 (`d179c122`) por `decision/cargo-encargado-de-inventario` (`openspec/config.yaml:3497-3499` en `0e2b609b`) |
-| El área es la base y el cargo sólo restringe; el administrador siempre puede | `openspec/config.yaml:1932` en `0e2b609b` y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1943` | `permisos-por-cargo` | El barrido «sólo restringe» de `openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:56` y el S-1 de `openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:79-80` | Construida |
+| El área es la base y el cargo sólo restringe; el administrador siempre puede | `openspec/config.yaml:1932` en `0e2b609b` y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1943` | `permisos-por-cargo` | El barrido «sólo restringe» de `openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:56` y, para el administrador, RQ-PM-19 (`openspec/specs/permissions/spec.md:464`) | Construida |
 | «Liberación sin factura» → Director Comercial, `403` en el servidor | `openspec/config.yaml:1934` en `0e2b609b`, `openspec/config.yaml:2378` en `0e2b609b` y `openspec/config.yaml:2187-2188` en `0e2b609b` | `permisos-por-cargo`: `packages/shared/src/cargos.ts:32`, aplicada en `apps/desk/server/services/ticketService.ts:131` | `openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:17-19` | Construida y en vigor (`openspec/config.yaml:5733` en `0e2b609b`) |
 | Asociar la OVI de garantía → Director Técnico | `openspec/config.yaml:1934` en `0e2b609b` | La primitiva, `permisos-por-cargo` (`packages/shared/src/cargos.ts:71-74`); el llamador, F1B-03 (`packages/shared/src/ordenOVI.ts:55`) | `openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:18-19` | Construida, con llamador |
 | Fijar la prioridad de los Top 5 → Director Comercial | `openspec/config.yaml:1934` en `0e2b609b` | La primitiva, `permisos-por-cargo` (`packages/shared/src/cargos.ts:80-83`); el llamador, F1B-07 (`apps/desk/server/routes/prioridad.ts:40`) | `openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:18-19` | Construida, con llamador |
@@ -115,8 +115,9 @@ con su texto y se le añade qué la cerró.
 - El «+ Director Técnico» en «Aprobación», que la corrección 8 decía que sería alcance nuevo de F1C-05 si fuese una decisión real
   (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:410-415`): la R08.4 lo retiró
   (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:6921`). Caso C.
-- La asignación de trabajo (E-098), que se apoya en el modelo de cargo, es de M6 y su pieza nueva está sin destino
-  (`docs/sdd/ENTRADA.md:1359` en `0e2b609b`).
+- La asignación de trabajo (E-098), que se apoya en el modelo de cargo, es de M6. Su pieza nueva, la disponibilidad por persona,
+  nació sin destino (`docs/sdd/ENTRADA.md:1359` en `0e2b609b`) y E-142 la sitúa en 2027 (`docs/sdd/ENTRADA.md:1355` en `0e2b609b`
+  y `docs/sdd/ENTRADA.md:1689` en `0e2b609b`).
 
 **Conclusión de la medida:** de las piezas de la fila, ninguna queda sin construir y archivar sin que la saque una decisión. El
 propietario del registro lo saca la consecuencia (2) hacia F1C-13; la alarma la saca E-102 hacia F1C-02, que la construyó; el
@@ -130,12 +131,12 @@ Para el verify: cada pieza construida, con el requisito vivo que la impone.
 
 | Pieza | Requisitos |
 |---|---|
-| Lista cerrada, columna, fuera de lista, alta y edición, sesión | `openspec/specs/permissions/spec.md:306` (RQ-PM-12), `openspec/specs/permissions/spec.md:349` (RQ-PM-13), `openspec/specs/permissions/spec.md:372` (RQ-PM-14), `openspec/specs/permissions/spec.md:382` (RQ-PM-15) y `openspec/specs/permissions/spec.md:403` (RQ-PM-16) |
+| Lista cerrada, columna, fuera de lista, alta y edición, sesión (RQ-PM-12 dice hoy «Ocho cargos»: el octavo es de F1C-11) | `openspec/specs/permissions/spec.md:306` (RQ-PM-12), `openspec/specs/permissions/spec.md:349` (RQ-PM-13), `openspec/specs/permissions/spec.md:372` (RQ-PM-14), `openspec/specs/permissions/spec.md:382` (RQ-PM-15) y `openspec/specs/permissions/spec.md:403` (RQ-PM-16) |
 | Liberación sin factura → Director Comercial, su posición y el administrador | `openspec/specs/permissions/spec.md:413` (RQ-PM-17), `openspec/specs/permissions/spec.md:434` (RQ-PM-18) y `openspec/specs/permissions/spec.md:464` (RQ-PM-19) |
 | Primitivas con llamador; el cargo sólo restringe; estricto sin cargo | `openspec/specs/permissions/spec.md:474` (RQ-PM-20), `openspec/specs/permissions/spec.md:506` (RQ-PM-21) y `openspec/specs/permissions/spec.md:531` (RQ-PM-22) |
 | Top 5 y OVI con sus llamadores | `openspec/specs/permissions/spec.md:543` (RQ-PM-23, F1B-07), `openspec/specs/permissions/spec.md:698` (RQ-PM-24, F1B-03) y `openspec/specs/transitions-st/spec.md:2475` (RQ-TS-36, F1B-03) |
 | Motivo, fecha prevista y texto, con su guarda | `openspec/specs/transitions-st/spec.md:2177` (RQ-TS-35), sobre `openspec/specs/transitions-st/spec.md:202` (RQ-TS-06), `openspec/specs/transitions-st/spec.md:314` (RQ-TS-08) y `openspec/specs/transitions-st/spec.md:364` (RQ-TS-09) |
-| Decisionales por cargo: interruptor, regla, servidor y cliente | `openspec/specs/permissions/spec.md:894` (RQ-PM-28), `openspec/specs/permissions/spec.md:921` (RQ-PM-29), `openspec/specs/permissions/spec.md:980` (RQ-PM-30) y `openspec/specs/permissions/spec.md:1021` (RQ-PM-31) |
+| Decisionales por cargo: interruptor, regla, servidor y cliente; las tres «Anulación» no tienen escenario propio y las cubre la regla general de RQ-PM-29, con el área Comercial que les da `decision/f1c04-tabla-tipos-validada` (4) | `openspec/specs/permissions/spec.md:894` (RQ-PM-28), `openspec/specs/permissions/spec.md:921` (RQ-PM-29), `openspec/specs/permissions/spec.md:980` (RQ-PM-30) y `openspec/specs/permissions/spec.md:1021` (RQ-PM-31) |
 | La alarma, fuera de la fila (F1C-02) | `openspec/specs/derivacion-avisos/spec.md:1174` (RQ-AV-23) |
 
 ## Las decisiones de respaldo, contrastadas
@@ -174,8 +175,8 @@ Para el verify: cada pieza construida, con el requisito vivo que la impone.
 
 - **F1C-13 recibe el propietario del registro**, con talla por medir y nombre como supuesto de nomenclatura
   (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:428` en `0e2b609b`).
-- **Encender `DECISIONALES_POR_CARGO` en enero**, con los cargos asignados antes (`DEPLOY.md:754-774`). Que la línea del interruptor
-  esté en el fichero de ejemplo de entorno es hipótesis: este cambio no pudo leer ese fichero.
+- **Encender `DECISIONALES_POR_CARGO` en enero**, con los cargos asignados antes (`DEPLOY.md:754-774`). La línea del interruptor ya
+  está en el fichero de ejemplo de entorno (`.env.example:40-41`).
 - **Las preguntas de la paridad.** E-201 a E-205 siguen abiertas en la bandeja, con dueño Gerencia
   (`docs/sdd/ENTRADA.md:2002-2025` en `0e2b609b`). E-206 tiene su hipótesis despejada (`docs/sdd/ENTRADA.md:2032` en `0e2b609b`),
   pero su encabezado sigue diciendo «ABIERTA» (`docs/sdd/ENTRADA.md:2027` en `0e2b609b`).
@@ -203,8 +204,9 @@ Texto para los ficheros que esta rama no edita. Ninguno es contenido de la fila.
    (`f409b550`) y de `decisionales-por-cargo` (`da916152`). Si se acepta S-5, la fila de F1C-13
    (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:422` en `0e2b609b`) puede nombrar las dos restricciones que recibe.
 2. **`openspec/config.yaml`.** `decision/e089-e220-visibilidad-y-traspaso` dice «la restricción por propietario, en F1C-05 después
-   del corte» (`openspec/config.yaml:4019` en `0e2b609b`); desde la consecuencia (2), esa fila es F1C-13. La decisión no se reescribe:
-   si hace falta, una nota de precisión.
+   del corte» (`openspec/config.yaml:4019` en `0e2b609b`), como el título de su (4) (`openspec/config.yaml:4011` en `0e2b609b`), y
+   `decision/orden-ocho-tandas-06-10` (3) dice «propietario (F1C-05, después del corte)» (`openspec/config.yaml:4302` en `0e2b609b`);
+   desde la consecuencia (2), esa fila es F1C-13. Las decisiones no se reescriben: si hace falta, una nota de precisión.
 3. **`docs/sdd/ENTRADA.md`.** E-092 «Afecta a: fila F1C-05» (`docs/sdd/ENTRADA.md:1279` en `0e2b609b`) y E-201 a E-206 llevan
    «F1C-05» en el título: con la fila cerrada, quien triage decide si su destino pasa a F1C-13 o a un punto abierto con dueño. El
    encabezado de E-206 puede pasar a cerrada por su propia actualización.
@@ -241,14 +243,14 @@ Texto para los ficheros que esta rama no edita. Ninguno es contenido de la fila.
 |---|---|---|
 | S-1 | `maestro: ["M1.9.1", "Anexo D nº 39"]`, el de `permisos-por-cargo` (`openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:10`). «M1.9.1» es la fuente de la fila de la R01.1 y el barrido la cruza (`apps/desk/server/reconciliacion/comprobaciones.ts:238`); con sólo «Anexo D nº 39», F1C-05 saldría «sin verificar» | `["M1.9", "Anexo D nº 39"]`, el de `decisionales-por-cargo`, que también cruza porque «M1.9» está dentro de «M1.9.1» |
 | S-2 | `capacidad: [reconciliacion]`, porque el único efecto es el recuento del barrido y la prueba que lo fija; los tres cambios de la fila declararon `permissions`, `transitions-st` y `trazas` | `capacidad: [permissions, transitions-st, trazas]` |
-| S-3 | `toca_maestro: no`, como los precedentes de F1B-04 y F1B-13. Lo que el maestro dice de F1C-05 es una foto de la revisión: el contenido no cambia, sólo el ID de la fila del propietario. El texto va en «Para Supervisión», punto 4 | `toca_maestro: si`, con el texto nuevo de M1.9.1, del §3.3 y del Anexo D para Gerencia |
+| S-3 | `toca_maestro: no`, como los cierres sin código de F1B-04 y F1B-13. Lo que el maestro dice de F1C-05 es una foto de la revisión: el contenido no cambia, sólo el ID de la fila del propietario. El texto va en «Para Supervisión», punto 4 | `toca_maestro: si`, con el texto nuevo de M1.9.1, del §3.3 y del Anexo D para Gerencia |
 | S-4 | Lo construido, verificado y archivado detrás de un interruptor que una decisión mantiene apagado cuenta como construido: Gerencia lo pidió así (`openspec/config.yaml:5086` en `0e2b609b`) y `decision/e248-adelanto-f1c` (1) cuenta igual F1C-03 (`openspec/config.yaml:5732` en `0e2b609b`) | Que la fila no cierre hasta encender `DECISIONALES_POR_CARGO` en enero; contradiría la consecuencia (2), que la cierra antes del corte |
 | S-5 | Reasignar sólo la persona a cargo (`openspec/config.yaml:4011-4014` en `0e2b609b`) y Solicitud / Entrega de repuestos sólo sus dos ejecutores (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2037`) son nivel propietario del registro y van con él a F1C-13, aunque la fila de F1C-13 no las nombre (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:422` en `0e2b609b`) | Que Gerencia las sitúe en otra fila |
-| S-6 | Los dos campos de cargo (E-092, Anexo D nº 75) son una pregunta de Gerencia, no pieza de la fila: ni la fila ni sus decisiones de respaldo los nombran. Si la respuesta pide unificarlos, es trabajo nuevo con su fila | Que Gerencia la asigne a F1C-13 |
+| S-6 | Los dos campos de cargo (E-092, Anexo D nº 75) son una pregunta de Gerencia, no pieza de la fila: ni la fila ni sus decisiones de respaldo los nombran, aunque E-092 (`docs/sdd/ENTRADA.md:1279` en `0e2b609b`) y el Anexo D nº 75 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5587`) los atan a F1C-05; por eso es supuesto y no hecho. Si la respuesta pide unificarlos, es trabajo nuevo con su fila | Que Gerencia la asigne a F1C-13 |
 
 ## Riesgos
 
-- **Cita en prosa que caduca:** las líneas 218 y 220 de `apps/desk/server/reconciliacion/registro.test.ts` se reescriben en
+- **Cita en prosa que caduca:** las líneas 218 y 220 de `apps/desk/server/reconciliacion/registro.test.ts`, contadas en `0e2b609b`, se reescriben en
   sitio; al cerrar se barre la regla de mutación 4 sobre ese fichero.
 - **Otro cierre sin código a la vez:** el de F1C-07 va en el mismo orden (`openspec/config.yaml:5829` en `0e2b609b`). Si se archiva
   antes con `cierra: si`, cambia la misma lista; entonces se corrige contra la del árbol de ese momento, conservando las dos bajas.
