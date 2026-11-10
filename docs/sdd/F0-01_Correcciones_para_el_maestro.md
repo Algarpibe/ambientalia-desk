@@ -1360,8 +1360,8 @@ equipo sin factura.»
 lleva casilla. Exige Motivo, de una lista cerrada de tres —fecha de corte de facturación del cliente, servicio incluido
 en contrato con facturación periódica, autorización excepcional de Dirección Comercial—, y Fecha prevista de
 facturación; con el tercer motivo exige además el texto de la autorización. El servidor rechaza un motivo fuera de la
-lista y una fecha que no sea un día real. Las liberaciones anteriores conservan su casilla. La alarma por fecha vencida
-sigue pendiente (F1C-02).»
+lista y una fecha que no sea un día real. Las liberaciones anteriores
+conservan su casilla.»
 
 **Lo que esta entrada NO pide.** No da por decididos los supuestos del cambio: están como preguntas en E-201 a E-205.
 No afirma que esté en producción.
@@ -1416,7 +1416,7 @@ opción (a) el 06/10/2026; la recomendación anterior, la (b), queda retirada.»
 
 **Lo que esta entrada NO pide.** No cambia el párrafo de la restricción por propietario del registro
 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2037`): sigue aplazada, y la misma respuesta la sitúa
-después del corte, con F1C-05. No da por construida la reasignación con motivo
+después del corte, con F1C-13. No da por construida la reasignación con motivo
 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2035`): Gerencia la aprobó ese día y se construye en F1B-05;
 su corrección llegará con el cambio que la construya.
 
@@ -1476,7 +1476,7 @@ a la OVI de garantía (F1B-03), como tanda pequeña; sin empezar a 01/10. Cierra
    `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1232`, donde dice que las líneas de una OVI conservan el costo de referencia, decir que el costo lo conserva el catálogo del artículo, no la línea.
 3. En la línea 2668, sustituir «sin empezar a 01/10» por «[CONSTRUIDO EN PARTE] Construidas la ficha, sus tres estados, el aviso de 60 días, el valor
    reclamado automático (foto de la OVI, en USD) y las dos mediciones de la línea 2666 (valor recuperado frente al reclamado por marca y piezas con fallas
-   repetidas). Queda fuera el envío físico por remisión sin ticket de la línea 2667». Y retirar de esa misma línea la
+   repetidas). Queda fuera el envío físico por remisión sin ticket de la línea 2667, que pasa a F1B-16». Y retirar de esa misma línea la
    frase «Cierra el punto 7 del Anexo D».
 
 **Lo que esta entrada NO pide.** **No cierra el punto 7 del Anexo D**: lo construido es una parte, y queda abierto
@@ -1507,7 +1507,7 @@ queda trazado con origen, destino, motivo, fecha y hora. La pueden hacer la pers
    puede hacer cualquier persona que tenga el área de alguna de las transiciones que salen del estado actual del ticket, o un
    administrador; no hace falta ser la persona a cargo ni tener un cargo determinado. En un estado sin transiciones de salida sólo la
    hace un administrador. La restricción a la persona a cargo y a la dirección del área llega con el nivel «propietario del registro»
-   (F1C-05).» Y donde dice «técnicos de la misma área», añadir que el destino puede ser cualquier persona activa, sin exigir que sea del
+   (F1C-13).» Y donde dice «técnicos de la misma área», añadir que el destino puede ser cualquier persona activa, sin exigir que sea del
    área. La persona de destino recibe aviso en la aplicación y por correo, con el motivo y el nombre de quien reasigna; reasignarse a
    uno mismo se permite y no genera aviso.
 2. En las líneas 2060-2062, sustituir «Propuesto R08.4» por «[CONSTRUIDO] Decidido por Gerencia el 06/10/2026» y la recomendación por:
