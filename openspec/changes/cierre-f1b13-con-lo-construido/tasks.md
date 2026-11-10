@@ -15,15 +15,16 @@ archivo. Cada intento se asienta sólo con TODOS sus códigos en 0.
 
 ## 2. Verify
 
-- [ ] 2.1 Contrastar cada cita de `proposal.md` y de este fichero contra su fichero, en su ancla: qué afirma, extremo inicial y
+- [x] 2.1 Contrastar cada cita de `proposal.md` y de este fichero contra su fichero, en su ancla: qué afirma, extremo inicial y
   final.
-- [ ] 2.2 Comprobar que ninguna pieza de la fila queda sin construir y archivar salvo las que saca una decisión o su propia
-  fuente (el envío físico, la carga en la ISO 14224); si queda alguna, parar sin archivar.
-- [ ] 2.3 Comprobar que cada requisito de «Las piezas, en las specs vivas» existe en la línea citada y dice lo que la tabla le
+- [x] 2.2 Comprobar que ninguna pieza de la fila queda sin construir y archivar salvo la que saca una decisión (el envío
+  físico, a F1B-16) y la que queda fuera por el supuesto S-4, no por decisión (la carga en la ISO 14224); si queda alguna
+  más, parar sin archivar.
+- [x] 2.3 Comprobar que cada requisito de «Las piezas, en las specs vivas» existe en la línea citada y dice lo que la tabla le
   atribuye.
-- [ ] 2.4 Comprobar que el cambio no toca código de producción, `openspec/specs/` ni ficheros de Supervisión
+- [x] 2.4 Comprobar que el cambio no toca código de producción, `openspec/specs/` ni ficheros de Supervisión
   (`git diff --name-only` contra `93c29225`).
-- [ ] 2.5 Escribir `verify-report.md` con veredicto; los cuatro códigos con código 0.
+- [x] 2.5 Escribir `verify-report.md` con veredicto; los cuatro códigos con código 0.
 
 ## 3. Archivo
 
@@ -55,10 +56,10 @@ No son casillas, y **archivar no las da por hechas** (regla del ciclo 1).
 | Qué | Dueño | Destino | Dónde queda escrito |
 |---|---|---|---|
 | Confirmar los 60 días del aviso y que son naturales (P-2 de `ficha-garantia-proveedor`) | Gerencia | `decision/anexo-7-garantia-proveedor`, consecuencia (4) | `openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/archive-report.md:93` |
-| Asignar el cargo Director Técnico en producción, condición de publicación (P-3 de `ficha-garantia-proveedor`); la tabla de personas está entregada, y que esté asignado es hipótesis | Gerencia | La pantalla de usuarios | `openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/archive-report.md:94` y `openspec/config.yaml:6081` en `93c29225` |
+| Asignar el cargo Director Técnico en producción, condición de publicación (P-3 de `ficha-garantia-proveedor`); la tabla de personas está entregada (`decision/tabla-de-cargos-y-personas-10-10`, `openspec/config.yaml:4438` en `93c29225`), y que esté asignado es hipótesis | Gerencia | La pantalla de usuarios | `openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/archive-report.md:94` y `openspec/config.yaml:6081` en `93c29225` |
 | Pegar en el maestro la corrección 29 enmendada (P-4 de `ficha-garantia-proveedor`, P-2 de `valor-reclamado-usd`) | Gerencia | El `.docx` del maestro | `docs/sdd/F0-01_Correcciones_para_el_maestro.md:1456` |
 | Contar con SQL de sólo lectura las fichas previas con algún importe, por si alguna se anotó en pesos (P-1 de `valor-reclamado-usd`; S-5) | Alfonso | Si alguna está en pesos, punto abierto con dueño en la bandeja | `openspec/changes/archive/2026-10-26-valor-reclamado-usd/archive-report.md:126` |
 | Verificar en la aplicación la vista «Garantías» y que la ficha y la medición enseñan «USD» y el origen del valor (P-1 de `medicion-garantias-por-marca`, P-3 de `valor-reclamado-usd`) | Quien despliega, con Gerencia | La aplicación, en la lista acumulada de pruebas | `openspec/changes/archive/2026-10-17-medicion-garantias-por-marca/archive-report.md:88` y `openspec/changes/archive/2026-10-26-valor-reclamado-usd/archive-report.md:128` |
-| Situar la fila de la carga de las fallas repetidas en la ISO 14224 (P-3 de `medicion-garantias-por-marca`; S-4) | Gerencia | La fila que abra `decision/anexo-56-taxonomia` | `openspec/changes/archive/2026-10-17-medicion-garantias-por-marca/archive-report.md:90` |
+| Situar la fila de la carga de las fallas repetidas en la ISO 14224 (P-3 de `medicion-garantias-por-marca`; S-4) | Gerencia; plazo, la semana de corrección de la lista semanal que publique S-4 (E-237) | La fila que abra `decision/anexo-56-taxonomia` | `openspec/changes/archive/2026-10-17-medicion-garantias-por-marca/archive-report.md:90` |
 | Decidir en qué lista entran los supuestos de la fila sin lista aceptada: los de `medicion-garantias-por-marca` y los S-1 a S-12 de `ficha-garantia-proveedor` | Supervisión | La lista semanal (E-237) | `docs/sdd/Supuestos_semana_2026-11-02.md:217` y `proposal.md`, «Lo que sigue abierto» |
 | Revisar S-1 a S-5 de este cambio en la lista semanal de supuestos (E-237) | Gerencia | La lista semanal | `proposal.md`, «Supuestos reversibles» |

@@ -71,7 +71,7 @@ consecuencia (1) pasa a F1B-16.
 
 | Pieza | Fuente | Quién la cubre | Dónde se dice | Estado |
 |---|---|---|---|---|
-| Ficha propia vinculada al ticket y a la OVI de garantía, fuera del blueprint | `openspec/config.yaml:2345` en `93c29225` y `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:93` | `ficha-garantia-proveedor`: tabla `public.garantia_proveedor`, capa de datos, cuatro rutas y panel | `openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/archive-report.md:19-24` | Construida |
+| Ficha propia vinculada al ticket y a la OVI de garantía, fuera del blueprint | `openspec/config.yaml:2345` en `93c29225` y `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:93` | `ficha-garantia-proveedor`: tabla `public.garantia_proveedor`, capa de datos, cuatro rutas y panel | `openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/archive-report.md:19-28` | Construida |
 | Vínculo con la OVI de garantía: el acto de asociarla, del que cuelga la pregunta | `decision/e157-ovi-garantia-por-cargo` (8), `openspec/config.yaml:3986` en `93c29225` | F1B-03 (`ovi-garantia-por-cargo`); la ficha lo consume | `openspec/config.yaml:6078-6080` en `93c29225` | Construido por F1B-03 |
 | «¿Se reclama al fabricante?», con los tres motivos cerrados del «no» | `openspec/config.yaml:2345` en `93c29225` | `ficha-garantia-proveedor` | `openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/archive-report.md:6-7` | Construida como acto propio sobre cada OVI asociada, no «al crear la OVI» (salvedad, abajo) |
 | Datos de la ficha: fabricante, pieza (referencia y serial), ticket y OVI de origen, RMA | `openspec/config.yaml:2345` en `93c29225` | `ficha-garantia-proveedor` | `openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/archive-report.md:6-8` | Construida |
@@ -110,15 +110,15 @@ consecuencia (1) pasa a F1B-16.
   `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1232`, y la corrección 29 enmendada lo recoge
   (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1474-1476`).
 - **Los 60 días naturales** son una interpretación registrada (`openspec/config.yaml:2350` en `93c29225`), construida como
-  S-7 de `ficha-garantia-proveedor` y pendiente de confirmar por Gerencia (P-2).
+  S-7 de `ficha-garantia-proveedor` (`openspec/changes/archive/2026-10-06-ficha-garantia-proveedor/archive-report.md:35-36`) y pendiente de confirmar por Gerencia (P-2).
 
-**Conclusión de la medida:** ninguna pieza de la fila queda sin construir y archivar sin que la saque una decisión. De las
-tres que el remanente daba por pendientes (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:217`), dos se
+**Conclusión de la medida:** de las piezas de la fila, ninguna queda sin construir y archivar sin que la saque una decisión.
+De las tres que el remanente daba por pendientes (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:217`), dos se
 construyeron y archivaron después (`medicion-garantias-por-marca` y `valor-reclamado-usd`), y la tercera, el envío físico,
-la pasa a F1B-16 la consecuencia (1). Queda **una** pieza de la decisión de respaldo sin construir, la carga de las fallas
-repetidas en la ISO 14224. La fila no la nombra, la decisión la engancha a otra (`decision/anexo-56-taxonomia`) y ninguna
-respuesta de Gerencia la nombra al cerrar: se trata como fuera de la fila (S-4) y se escribe aquí para que se pueda
-corregir. Lo demás son tareas de persona y supuestos.
+la pasa a F1B-16 la consecuencia (1). **Salvo una**, que no es de la fila sino de su decisión de respaldo y que no saca
+ninguna decisión: la carga de las fallas repetidas en la ISO 14224. La fila no la nombra, la decisión la engancha a otra
+(`decision/anexo-56-taxonomia`) y ninguna respuesta de Gerencia la nombra al cerrar. Se trata como fuera de la fila por un
+supuesto, S-4, no por decisión, y se escribe aquí para que se pueda corregir. Lo demás son tareas de persona y supuestos.
 
 ## Las piezas, en las specs vivas
 
@@ -166,13 +166,13 @@ Para el verify: cada pieza construida, con el requisito vivo que la impone.
 ## Lo que sigue abierto y NO es contenido de la fila
 
 - **F1B-16 recibe el envío físico de la pieza** (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:96`). Es la fila de
-  E-104, cuya lista de motivos ya incluye «envío al fabricante por garantía» (`docs/sdd/ENTRADA.md:1392` en `93c29225`).
+  E-104 (`decision/trabajo-del-30-09-sin-fila` (1), `openspec/config.yaml:3450` en `93c29225`), cuya lista de motivos ya incluye «envío al fabricante por garantía» (`docs/sdd/ENTRADA.md:1392` en `93c29225`).
 - **La carga de las fallas repetidas en la ISO 14224**: la P-3 de `medicion-garantias-por-marca` pide que Gerencia sitúe la
   fila (`openspec/changes/archive/2026-10-17-medicion-garantias-por-marca/archive-report.md:90`). Ningún fichero de `apps` ni
   de `packages` nombra la norma (`git grep -c 14224 -- apps packages` no da nada en `93c29225`); que la taxonomía no exista
   todavía en el código es hipótesis.
 - **La bandeja.** Ninguna entrada tiene F1B-13 por destino: `grep -n F1B-13 docs/sdd/ENTRADA.md` da siete líneas, todas en
-  tres entradas.
+  tres entradas: E-105, E-157 y E-274. Se añade E-034, que es el origen de la decisión y no nombra F1B-13.
   - E-105 la nombra como «la fila más próxima» (`docs/sdd/ENTRADA.md:1400-1401` en `93c29225`); se decidió como F1B-18.
   - E-157 está cerrada; su mitad abierta es de F1B-03 (`docs/sdd/ENTRADA.md:1781` en `93c29225`).
   - E-274 está ruteada, y su parte de F1B-13 la cerraron S-8 y S-10 (`docs/sdd/ENTRADA.md:2468-2469` en `93c29225`).
