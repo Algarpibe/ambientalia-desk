@@ -1,0 +1,150 @@
+# apply-progress — `calificaciones-cuadre-conversaciones`, lote L1 (partida `5b49569f`)
+
+## Hecho, por fichero y línea
+- `packages/zoho-sync/src/conversaciones.ts`: `:106` y `:107` (docblock, siguen siendo cinco líneas), `:119` (`; const contadas = contadasPorZoho(lista.items)`), `:120` (`… && contadas === esperado`), `:124` (`recibidos ${contadas} únicos sin calificaciones (${recibidos.size} con ellas), …`); `esCalificacion` (`:186` el `channel === 'FEEDBACK'`) y `contadasPorZoho` AL FINAL, tras `:175`. `:121`, `:135` sin cambio.
+- `apps/desk/server/rellenoConversaciones.ts`: `:4` (importa `esCalificacion`), `:74` («sin calificaciones (RQ-ZS-48)»), `:76` (`SELECT raw`, mismo `WHERE`), `:77` (`.filter((f) => !esCalificacion(f.raw)).length`). Sigue con 154 líneas.
+- Pruebas nuevas (24): `packages/zoho-sync/src/conversacionesCalificaciones.test.ts` (21: predicado por tabla, `contadasPorZoho`, `guardarYReflejar` directo, (a) y (b) en pasada periódica y en `syncConversations`) y `apps/desk/server/rellenoConversacionesCalificaciones.test.ts` (3: (a), (b) y CA-4 del relleno).
+- Cierre (L1.3): `git diff --numstat` → `rellenoConversaciones.ts` 4/4; `conversaciones.ts` 22/5 (5 en sitio + 17 al final). `file` de ambos y de los dos nuevos: CRLF. Sin pruebas existentes editadas.
+
+## Rojo → verde
+- Rojo (24 de 24, antes de tocar producción): predicado y `contadasPorZoho`, 13 pruebas, `TypeError: (0 , esCalificacion) is not a function` / `(0 , contadasPorZoho) is not a function` (export inexistente, previsto). Las 11 restantes, por ASERCIÓN: (a) en las tres vías `expected [] to deeply equal [ 'vieja' ]`; (b) en las tres `expected [ 'falta' ] to deeply equal []`; relleno CA-4 `expected { completo: +0, descuadrado: 1, …(3) } to match object { completo: 1, … }`; directo `expected { marcadas: [], completa: false } to deeply equal { marcadas: [ 'vieja' ], … }`, `…completa: true` y, con `marcar` apagado, (b) `completa: true` frente a `false`.
+- Verde: focal de la tabla de `tasks.md` (los dos nuevos + `conversaciones.test.ts`, `sync.conversaciones.test.ts`, `rellenoConversaciones.test.ts`, `rellenoConversacionesPausas.test.ts`, `conversacionesPausas.test.ts`, `sync.conversacionesPeriodicas.test.ts`): 8 ficheros, 110 pruebas, 0 rojas. `opcionesConversaciones`, `completitud/`, `rellenoConversacionesRutas` y `zoho-sync/src/db`: 395 verdes (D-10: ninguna guarda se rompe). `npm run typecheck` salida 0; `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)».
+
+## Mutaciones (PM: sha256 y `file` antes; `perl -i -pe … if $. == N`; restaurar desde la copia). 110 pruebas en la focal
+| Id | Mutación (línea) | Rojas | Restaurado |
+|---|---|---|---|
+| M-1 | `:120` `contadas === esperado` → `recibidos.size === esperado` | 10: (a) y (b) en las tres vías + 4 directas | sha igual, CRLF |
+| M-2 | `:120` → `recibidos.size >= esperado` | 4: (b) en las tres vías + directa `marcar` apagado (b) | sha igual, CRLF |
+| M-3 | `:119` filtra calificaciones en `recibidos` | 5: (a) en las tres vías + 2 directas («recibida nunca se marca», «guardada se marca y se desmarca») | sha igual, CRLF |
+| M-4 | `rellenoConversaciones.ts:77` quita el `.filter` | 3: relleno (a), (b) y CA-4 | sha igual, CRLF |
+| M-5 | `:186` `.channel?.toString().trim().toUpperCase() === 'FEEDBACK'` | 3: `'feedback'`, `' FEEDBACK'` y `['FEEDBACK']` | sha igual, CRLF |
+| P-2 | `:121` `completa` → `completa: recibidos.size === esperado` | 2: `marcar` apagado (a) y (b) | sha igual, CRLF |
+Ninguna mutación sobrevivió. sha256 de `conversaciones.ts`: `a0f36705…cc52d`; de `rellenoConversaciones.ts`: `12f268f2…1357d`.
+
+## Barrido de citas (L1.7, regla de mutación 4)
+`grep -rnoE` completo de `conversaciones.ts:N` (124 citas) y `rellenoConversaciones.ts:N` (186; incluye `routes/`, que es otro fichero) sobre el árbol del worktree; las que caen en líneas editadas, leídas contra el fichero nuevo:
+- Registros fechados, B (no se tocan): `openspec/changes/archive/2026-10-29-sync-conversaciones-zoho/verify-report.md:81`, `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/design.md:48`, `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/proposal.md:47`, `openspec/changes/archive/2026-11-04-persistencia-adjuntos/proposal.md:52` (109-140), `docs/sdd/Paquete_de_Despliegue_2026-10-30.md:74` y `:95`, `docs/sdd/Paquete_de_Despliegue_2026-11-02.md:77`. Ninguna toca código.
+- Las que citan la línea 76 de `apps/desk/server/rellenoConversaciones.ts` (`openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/apply-progress.md:208`, `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/verify-report.md:79` y `:80`, `openspec/changes/archive/2026-11-07-verificacion-completitud/design.md:46`, `openspec/changes/archive/2026-11-07-verificacion-completitud/proposal.md:115`): A, el `WHERE` sigue en esa línea. `openspec/changes/archive/2026-11-08-modo-sin-zoho/tasks.md:77` cita la línea 4 de `apps/desk/server/routes/rellenoConversaciones.ts`: no aplica.
+- De esta propuesta: `design.md` y `tasks.md` describen el estado nuevo: A. `proposal.md:39, :40, :41, :171, :173, :190` y `:48, :172, :174` describen `79546497`: B, pasan a B al archivar (D-12); sin tocar.
+- Seis de Supervisión, NO tocados: `docs/sdd/ENTRADA.md:2411` (`conversaciones.ts:120-127` «cuadra con `esperadoDeZoho`»: B, ahora cuadra el recuento sin calificaciones), `docs/sdd/ENTRADA.md:2414` (`:120` «`recibidos.size === esperado`»: B), `openspec/config.yaml:6310` (`:120` ídem: B). `CLAUDE.md`, `F0-05_*` y `R08.4_Expediente_de_cambios.md`: sin citas en líneas editadas.
+- Segundo pase de abreviadas (`:119`, `:120`, `:124`, `:104-108`, `:4`, `:74-77` sin fichero) en los 29 ficheros que citan los módulos: ninguna cae en lo editado (la línea 120 que cita `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/apply-progress.md:214` es de `estado.enMarcha`, sin cambio).
+- Código y comentarios con cita a líneas editadas: ninguno (`apps/desk/server/completitud/lectores.ts:4` cita `packages/zoho-sync/src/conversaciones.ts:67-93`, sin tocar).
+
+## Medida (L1.8)
+`git diff --shortstat --no-renames 5b49569f` = 35 inserciones + 18 borrados (3 ficheros, con `tasks.md` 9/9) + `wc -l` de lo nuevo sin trackear: 135 + 82 (pruebas) + este fichero (34). Total ≈ 53 + 217 + 34 = ~304, muy por debajo de 800 (estimado ~700 con margen). Sin binarios.
+
+Informe contrastado por el orquestador: `git diff --numstat` 22/5 (`conversaciones.ts`, 175 → 192, sólo crece por el final) y 4/4 (`rellenoConversaciones.ts`, 154 → 154); `wc -l` 135 + 82 + 34; CRLF en los cuatro `.ts`. Corregido en sitio un espacio perdido tras la coma en la línea de log `packages/zoho-sync/src/conversaciones.ts:124` («(3 con ellas),Zoho cuenta 3»), sin cambio de línea. M-2 reproducida por el orquestador (`>=` en `:120`): 4 rojas de 24 —la (b) en relleno, pasada periódica y `syncConversations`, y la directa con `marcar` apagado—; sha256 restaurado `0c699615ba82aa6b`, CRLF.
+
+# apply-progress — lote L2 (partida `0fc75999`)
+
+## Hecho, por fichero
+- `packages/zoho-sync/src/db/schema.sql`: SÓLO al final (10 inserciones, 0 borrados): cuatro líneas de comentario sin punto y coma y el `CREATE TABLE IF NOT EXISTS public.relleno_conversaciones_pasadas` de D-4 (cuatro columnas, sin asunto, contacto ni cuenta). Es la ÚLTIMA sentencia (el fichero pasa de 852 a 862 líneas).
+- `packages/zoho-sync/src/db/migrate.ts`: la línea 73 gana `'relleno_conversaciones_pasadas'` al final de `PUBLIC_TABLES` (1/1).
+- `apps/desk/server/rellenoConversacionesResumen.ts` (NUEVO, 68 líneas): `LIMITE_PETICIONES`, `PasadaGuardada`, `GuardaResumen`, `guardaEnBase` (cada operación con su `catch` y el aviso en su PROPIO `try`; `logger.error`, nunca `info`) y `conResumenGuardado` (`limite === 0` sólo corre; si no, `abrir` sin esperarlo, `correr`, `cerrar` con la foto final por referencia; el `cerrar` también va protegido).
+- `apps/desk/server/rellenoConversaciones.ts` (5/5, sigue en 154 líneas): la línea 8 importa en la MISMA línea física (`; import { guardaEnBase, conResumenGuardado, type GuardaResumen } …`), la 33 gana `; guardar?: GuardaResumen`, la 51 `guardar = guardaEnBase(db),`, la 144 `void conResumenGuardado({ guardar, estado, correr: () => pasada(estado.desde, estado.limite) })` y la 152 `ultimaGuardada: () => guardar.ultima(),` en la línea de `estado()`. `registrar` y su `try` sin cambio.
+- Pruebas nuevas (21): `packages/zoho-sync/src/db/rellenoConversacionesPasadas.test.ts` (5) y `apps/desk/server/rellenoConversacionesResumen.test.ts` (16). Sin mocks de módulos; pg-mem y `createSync` reales.
+
+## Rojo → verde
+- Rojo antes de producción (21 de 21 en los dos ficheros): las 5 de la tabla por ASERCIÓN (`expected [] to have a length of 1 but got +0`, `expected 'ALTER TABLE conversations ADD COLUMN …' to match /^CREATE TABLE IF NOT EXISTS public\.r…/`, `relation "relleno_conversaciones_pasadas" does not exist`); el fichero del resumen no importaba (`Cannot find module './rellenoConversacionesResumen'`, previsto).
+- Con la tabla ya creada y el ESQUELETO del módulo (firmas de D-5, cuerpos vacíos), 13 de 16 rojas por aserción o por espera: `expected [ 'correr(abrirResuelto=false)' ] to deeply equal [ 'abrir', …(1) ]`, `expected [] to deeply equal [ { id: null, peticiones: +0 } ]`, `expected 'object' to be 'number'`, `expected [] to have a length of 1 but got +0`, `expected "spy" to be called 4 times, but got 0 times`; las cuatro de fila en base agotan `vi.waitFor` (tabla vacía) y `a.ultimaGuardada is not a function` (el export del enganche, inevitable). Las 3 que pasaban con el esqueleto (`limite: 0` con la base real y con la guarda falsa, y «abrir resuelve con avisar que lanza») las fijan luego M-7 y M-6.
+- Guardas del árbol (L2.4): la tabla puso rojas EXACTAMENTE 5 de `packages/zoho-sync/src/db/migrate.test.ts` (el recuento de la línea 282, la suma de la 652 y los tres ordinales desde el final de las líneas 794, 837 y 877); con ellas corregidas, `packages/zoho-sync/src/db`: 224 verdes, 7 saltadas.
+- Verde: `packages/zoho-sync/src/db`, los dos nuevos, `apps/desk/server/rellenoConversaciones.test.ts`, `apps/desk/server/rellenoConversacionesPausas.test.ts` (H-2: el `INSERT` de `abrir` cabe en las 200 vueltas, sin tocarla), `apps/desk/server/rellenoConversacionesCalificaciones.test.ts`, `apps/desk/server/rellenoConversacionesRutas.test.ts` y los que leen `schema.sql` o `migrate.ts` (`apps/desk/server/db`, `apps/desk/server/remisiones.test.ts`, `apps/desk/server/transicionesEjecucion.test.ts`, `apps/desk/server/opcionesConversaciones.test.ts`, `apps/desk/server/completitud`, `apps/desk/server/modoSinZohoRutas.test.ts`): 80 ficheros, 1.112 pruebas verdes, 0 rojas. `rellenoConversaciones.test.ts` sigue viendo UNA llamada a `info` por pasada. `npm run typecheck` salida 0; `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)».
+
+## Guardas del árbol editadas (en sitio, 16/16 en `packages/zoho-sync/src/db/migrate.test.ts`)
+- Línea 282: título 47 → 48 tablas, 34 → 35 de `public`, nombra la nueva; línea 283: `[10, 34, 3]` → `[10, 35, 3]`; líneas 284, 285 y 286: `47` → `48`.
+- Línea 652: la suma gana `+ 1` y el mensaje termina en «y el CREATE de public.relleno_conversaciones_pasadas (calificaciones-cuadre-conversaciones)».
+- Desde el final, +1: línea 796, 22 → 23; línea 798, 21 → 22 y 20 → 21; línea 839, 19 → 20; línea 840, 18 → 19; línea 879, 17 → 18; línea 880, 16 → 17; línea 882, 17 → 18.
+- Títulos: línea 794 (VIGÉSIMA TERCERA, vigésima segunda, vigésima primera, quinta y cuarta por el final, antepenúltima, penúltima, y «la última, el CREATE de relleno_conversaciones_pasadas»), línea 837 (VIGÉSIMA, decimonovena) y línea 877 (DECIMOCTAVA, decimoséptima). Las líneas 266 y 377 sin tocar. Ninguna otra prueba existente se editó.
+
+## Mutaciones (PM: sha256 y `file` antes; `perl -i -pe … if $. == N`; restaurar desde la copia). Focal: `packages/zoho-sync/src/db`, los dos nuevos, `rellenoConversaciones.test.ts` y `rellenoConversacionesPausas.test.ts` (277 pruebas)
+| Id | Mutación (línea) | Rojas | Restaurado |
+|---|---|---|---|
+| M-6 | `apps/desk/server/rellenoConversacionesResumen.ts` línea 40: el `catch` de `abrir` → `finally { }` | 3: «abrir, cerrar y ultima resuelven…», «abrir resuelve con una base que falla…» y la de los tres tickets | sha igual, CRLF |
+| M-7 | línea 64: `if (estado.limite === 0)` → `if (false)` | 2: «limite: 0 no deja fila» (guarda falsa y base real) | sha igual, CRLF |
+| P-3 | líneas 65 y 66: `abrir` después de `await correr()` | 4: «fila al lanzar» (base y guarda falsa) y «completa al terminar» (base y guarda falsa) | sha igual, CRLF |
+| P-4 | línea 66: `cerrar` antes de `correr` (la 67 anulada) | 7: «fila al lanzar», «completa al terminar» (base y guarda falsa), «sin desde ni limite», «instancia nueva», «abrir ANTES de correr» y «datos de cliente» | sha igual, CRLF |
+| R-1 | `packages/zoho-sync/src/db/schema.sql` línea 857: `EXISTS public.relleno` → `EXISTS relleno` | 2: el guardián de `packages/zoho-sync/src/db/migrate.test.ts` (clasificada y calificada) y «el CREATE va calificado con public. y es la ÚLTIMA sentencia» | sha igual, CRLF |
+Ninguna sobrevivió. sha256 de `rellenoConversacionesResumen.ts`: `62a7b722…bfa68e`; de `schema.sql`: `4dbde11e…2a553`; de `rellenoConversaciones.ts`: `ef88663f…2a902`; de `migrate.ts`: `758dc1d3…aa11`.
+
+## Barrido de citas (L2.7)
+`grep -rnoE` completo sobre el árbol del worktree (sin `node_modules`; con `openspec/changes/archive/` y `docs/`), leído contra los ficheros nuevos:
+- `apps/desk/server/rellenoConversaciones.ts`, líneas editadas 8, 33, 51, 144 y 152: las únicas citas con línea o rango que las contienen son `openspec/changes/archive/2026-11-04-persistencia-adjuntos/design.md:106` (rango 139-153: el `return` del módulo sigue ahí, A) y `openspec/changes/archive/2026-11-04-persistencia-adjuntos/proposal.md:97` (rango 140-144, «molde»: la línea 144 sigue lanzando la pasada en segundo plano, A). Las de la línea 76 (L1) siguen siendo A.
+- `packages/zoho-sync/src/db/migrate.ts`, línea 73: 109 citas (la línea sola o dentro de los rangos 62-73, 63-80, 66-73 y 70-73), todas en `openspec/changes/archive/`, `docs/sdd/Paquete_de_Despliegue_*`, esta propuesta y cinco menciones de specs vivas (`openspec/specs/gases-patron/spec.md:56`, `openspec/specs/remisiones/spec.md:857`, `openspec/specs/tickets-core/spec.md:1522`, `openspec/specs/zoho-sync/spec.md:745` y `openspec/specs/zoho-sync/spec.md:765`). La línea 73 sigue siendo el final de `PUBLIC_TABLES` y las listas siguen en las líneas 70-73 y 80: A para las que citan la posición; B las que describen el contenido de esa línea a su fecha (cada tanda anterior la editó igual, en sitio). No se tocan.
+- `packages/zoho-sync/src/db/schema.sql`: sólo se añade al final; ninguna cita apunta a una línea posterior a la 852.
+- `packages/zoho-sync/src/db/migrate.test.ts`: 118 citas a las líneas editadas, todas en `openspec/changes/archive/` salvo las de esta propuesta y `openspec/specs/gases-patron/spec.md:198` (cita la línea 283 con «contadores fijados… medidos sobre `f5255d2`»: B, fechada). La posición no se mueve: las guardas siguen en su línea; lo que cambia es el valor (B: «47 tablas» era cierto a su fecha). No se renumera nada.
+- Seis de Supervisión, NO tocados: `CLAUDE.md` cita las líneas 63-64, 70-73 y 80 de `packages/zoho-sync/src/db/migrate.ts` (A: las listas siguen en esas líneas) y las líneas 327, 409-411, 266, 245 y 220-232 de `packages/zoho-sync/src/db/migrate.test.ts` (ninguna editada); `docs/sdd/ENTRADA.md`, `docs/sdd/F0-05_Bloques_para_ClaudeCode.md`, `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md`, `docs/sdd/R08.4_Expediente_de_cambios.md` y `openspec/config.yaml`: ninguna cita cae en una línea editada.
+- Segundo pase de abreviadas (líneas 8, 33, 51, 144 y 152 sin fichero) en los 9 ficheros que citan el módulo: las que aparecen son de otros ficheros de `openspec/changes/archive/2026-11-08-modo-sin-zoho/`. Ninguna cae en lo editado.
+- Código y comentarios con cita a líneas editadas: ninguno.
+
+## Medida (L2.8)
+`git diff --shortstat --no-renames 0fc75999` = 32 inserciones + 22 borrados (4 ficheros de código y pruebas, sin contar `tasks.md` 8/8) + `wc -l` de lo nuevo sin trackear: 53 + 290 + 68 = 411 + este bloque (~45). Total ≈ 54 + 411 + 45 + 16 = ~526, por debajo de 800 (estimado ~710). Sin binarios.
+
+Informe de L2 contrastado por el orquestador: `git diff --numstat` 5/5 (`apps/desk/server/rellenoConversaciones.ts`, 154 → 154), 1/1 (`packages/zoho-sync/src/db/migrate.ts`), 16/16 (`packages/zoho-sync/src/db/migrate.test.ts`) y 10/0 (`packages/zoho-sync/src/db/schema.sql`, 852 → 862, sólo al final); `wc -l` 68 + 290 + 53; CRLF en los `.ts` y el `.sql`. R-1 reproducida por el orquestador (sin `public.` en la línea 857 de `packages/zoho-sync/src/db/schema.sql`): 2 rojas de 69 —el guardián «toda tabla del esquema está clasificada» y «el CREATE va calificado con public. y es la ÚLTIMA sentencia»—; sha256 restaurado `4dbde11e45095173`, CRLF.
+
+# Lote L3 — `GET` con `ultimaGuardada` y `numeros` (partida `41d9883d`)
+
+## Hecho, por fichero y línea
+- `apps/desk/server/routes/rellenoConversaciones.ts` (8 líneas en sitio, 10 al final; 49 → 59): líneas 30 (docblock: «devuelve el estado y la última pasada guardada»), 37 (`numeros` en la desestructuración), 38 (`|| !numerosValidos(numeros) || (numeros !== undefined && desde !== undefined)` y mensaje ampliado), 39 y 42 (`numeros: aNumeros(numeros)` al recuento y a `lanzar`), 46 a 48 (`asyncHandler(async …)` y `{ ...relleno.estado(), ultimaGuardada: await relleno.ultimaGuardada() }`); `numerosValidos` y `aNumeros` al final, tras la línea 49. Las líneas 1 a 49 conservan su número.
+- `apps/desk/server/rellenoConversaciones.ts` (16 líneas en sitio; 154 → 154): líneas 24 y 28 (`numeros` y `noEncontrados` en `EstadoRelleno`), 37 y 39 (`estadoInicial`), 56, 60 y 61 (`tramo` filtra por `numeros` y devuelve `noEncontrados`), 117, 119 y 121 (`pasada`), 141, 143 y 144 (`lanzar`, con `estado.numeros` en la misma línea del enganche de L2), 148 a 150 (`recuento`, con `noEncontrados` sólo si vino `numeros`).
+- Pruebas nuevas (25): `apps/desk/server/rellenoConversacionesResumenRutas.test.ts` (4; 78 líneas) y `apps/desk/server/rellenoConversacionesNumeros.test.ts` (21; 219 líneas). Ninguna prueba existente se editó.
+- Cierre (L3.3): `git diff --numstat 41d9883d` → `apps/desk/server/rellenoConversaciones.ts` 16/16; `apps/desk/server/routes/rellenoConversaciones.ts` 18/8 (8 en sitio + 10 al final). `file` de los cuatro: CRLF.
+
+## Rojo → verde (strict TDD)
+- Rojo antes de producción, por aserción, 19 de 25: `apps/desk/server/rellenoConversacionesResumenRutas.test.ts` 3 de 4 («expected undefined to be null» en las dos de `ultimaGuardada: null`; la de la segunda instancia agota su `waitFor` porque el campo no existe); `apps/desk/server/rellenoConversacionesNumeros.test.ts` 16 de 21 (el módulo recorre los cinco en vez de los dos; `numeros` y `noEncontrados` ausentes del estado; el recuento da `aRecorrer: 5` en vez de 2; los seis `400` y el de `limite=0` dan 200). Las seis que nacen verdes son caracterización: `POST ?limite=0` no deja fila, «200 números no dan 400» y las cuatro de posición con `401`, `403` de rol, `503` y `403` del interruptor (hoy `numeros` se ignora; se ponen rojas con P-1).
+- Una prueba mía mal contada (el recuento sin `numeros` esperaba 4 y son 5 ids de Zoho) se corrigió tras el primer verde; era error de la prueba, no de producción.
+- Verde: focal de L3 más `apps/desk/server/modoSinZohoRutas.test.ts`, `apps/desk/server/rellenoConversaciones.test.ts`, `apps/desk/server/rellenoConversacionesResumen.test.ts`, `apps/desk/server/rellenoConversacionesCalificaciones.test.ts` y `apps/desk/server/rellenoConversacionesPausas.test.ts`: 8 ficheros, 135 pruebas en verde. Las guardas de `apps/desk/server/rellenoConversacionesRutas.test.ts` y de `apps/desk/server/modoSinZohoRutas.test.ts` (L3.4) siguen verdes sin editarse. `npm run typecheck` salida 0; `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)».
+
+## Mutaciones (PM: sha256 y `file` antes; `perl -i -pe … if $. == N`; restaurar desde la copia). Focal: las cuatro pruebas de la cadena (86 pruebas)
+| Id | Mutación (línea) | Rojas | Restaurado |
+|---|---|---|---|
+| M-8 | `apps/desk/server/rellenoConversaciones.ts` línea 60: sin la conjunción de `numeros` | 6: «recorre sólo el 11 y el 14», «no está en la base», «con limite», el recuento y dos de ruta con `limite=0` | sha `33c52d23bcb22697` igual, CRLF |
+| M-9 | `apps/desk/server/routes/rellenoConversaciones.ts` línea 38: sin la conjunción de `desde` | 1: «numeros junto a desde: 400» | sha `2f9c3a6233ba2cbb` igual, CRLF |
+| M-10 | `apps/desk/server/rellenoConversaciones.ts` línea 150: `noEncontrados` siempre | 5: tres de `apps/desk/server/rellenoConversacionesRutas.test.ts` («limite=0 sólo cuenta» con abierto=false y abierto=true, y `desde=3`), la de `limite=0` de `apps/desk/server/rellenoConversacionesResumenRutas.test.ts` y la del recuento de `apps/desk/server/rellenoConversacionesNumeros.test.ts` | sha igual, CRLF |
+| P-1a | línea 36 de la ruta: validador DELANTE de `guardaModoSinZoho` | 7: cinco `400` (cuerpo sin `error`), «modo abierto: 503» y «interruptor cerrado: 403» | sha igual, CRLF |
+| P-1b | validador DELANTE de `interruptorRelleno` | 6: cinco `400` y «interruptor cerrado: 403» | sha igual, CRLF |
+| P-1c | validador DELANTE de `requireSuperAdmin` | 8: cinco `400`, «403 de rol», «503» y «403 del interruptor» | sha igual, CRLF |
+| P-1d | validador DELANTE de `requireAuth(db)` | 9: cinco `400`, «401», «403 de rol», «503» y «403 del interruptor» | sha igual, CRLF |
+Ninguna sobrevivió. Los cinco `400` que caen en P-1 caen también por el cuerpo vacío del validador mutado; lo que fija la POSICIÓN son las pruebas de las cuatro guardas con dos activas a la vez.
+
+## Barrido de citas (L3.7)
+`rg -o` completo del patrón de cita `rellenoConversaciones.ts` con línea o rango sobre todo el árbol del worktree (sin `node_modules`; con `openspec/changes/archive/` y `docs/`): 187 citas, 55 caen en líneas editadas por L3, leídas contra los ficheros de hoy.
+- Caso A (la línea sigue diciendo lo que la cita afirma): `docs/sdd/Paquete_de_Despliegue_2026-11-03.md` líneas 110, 115, 132, 157, 159 y 171; `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/apply-progress.md` líneas 214, 352, 384, 385 y 419; `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/verify-report.md` líneas 52, 81, 105 y 109; `openspec/changes/archive/2026-11-04-persistencia-adjuntos/proposal.md` líneas 97 y 98; `openspec/changes/archive/2026-11-04-persistencia-adjuntos/design.md` línea 106. La línea 38 de la ruta sigue siendo el `400` (ahora también de `numeros`), la 39 el recuento, la 46 el `GET`, la 60 el filtro `>= desde`, la 61 el filtro `app-` y la 143 el estado en marcha.
+- Caso B (fechadas, no se renumeran): `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/apply-progress.md` línea 354 y `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/verify-report.md` línea 83 (mutación M5 «el `GET` llama a `lanzar`» sobre la línea 47 de la ruta, hoy con `ultimaGuardada`); `openspec/changes/archive/2026-11-08-modo-sin-zoho/design.md` línea 103 (cita el `GET` sin directorio, línea 46 de la ruta, y afirma que sólo lee memoria: hoy lee además la base).
+- Las de este mismo cambio (`design.md`, `proposal.md` y `tasks.md` de `openspec/changes/calificaciones-cuadre-conversaciones/`) describen las líneas que L3 acaba de editar; pasan a B al archivar.
+- Segundo pase de abreviadas (`:NN` sin fichero) en los 16 ficheros que ya citan los módulos: las que apuntan a líneas editadas son moldes o mutaciones de `openspec/changes/archive/2026-11-04-persistencia-adjuntos/design.md` (líneas 115 y 116: A) y de `openspec/changes/archive/2026-11-02-relleno-completo-conversaciones/verify-report.md` (líneas 94 y 154: A).
+- Seis de Supervisión, NO tocados: `docs/sdd/ENTRADA.md` cita las líneas 96 y 104 del módulo (ninguna editada); `CLAUDE.md`, `docs/sdd/F0-05_Bloques_para_ClaudeCode.md`, `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md`, `docs/sdd/R08.4_Expediente_de_cambios.md` y `openspec/config.yaml`: ninguna cita cae en una línea editada de los dos ficheros.
+- Código y comentarios con cita a líneas editadas: ninguno.
+
+## Medida (L3.8)
+`git diff --shortstat --no-renames 41d9883d` = 34 inserciones + 24 borrados (2 ficheros) + `wc -l` de lo nuevo sin trackear: 78 + 219 = 297, más este bloque (~45) y `tasks.md` 8/8. Total ≈ 58 + 297 + 45 + 16 = ~416, por debajo de 800 (estimado ~640). Sin binarios.
+
+Informe de L3 contrastado por el orquestador: `git diff --numstat` 16/16 (`apps/desk/server/rellenoConversaciones.ts`, 154 → 154) y 18/8 (`apps/desk/server/routes/rellenoConversaciones.ts`, 49 → 59, las líneas 1 a 49 en su sitio); `wc -l` 78 + 219; 154, 59, 78 y 219 líneas con CRLF y ningún retorno de carro suelto (contado con perl). P-1a reproducida por el orquestador (el `400` de `numeros` como middleware delante de `guardaModoSinZoho` en la línea 36 de `apps/desk/server/routes/rellenoConversaciones.ts`): 7 rojas de 21 —las dos de posición, `503` del modo y `403` del interruptor, y los cinco `400`, porque el mutante responde sin el texto—; sha256 restaurado `2f9c3a6233ba2cbb`, CRLF. Un primer intento del orquestador con el sustituto escrito en línea perdió las barras de la expresión y no medía la posición; se descartó.
+
+# apply-progress — lote L4 (partida `761ab3b1`, `DEPLOY.md` §25 y sus pruebas)
+
+## Hecho, por fichero
+- `apps/desk/server/deployCalificacionesConversaciones.test.ts` (nuevo, 71 líneas): `faltasSeccion25` pura, sobre el real y sobre copias en memoria; seis pruebas.
+- `DEPLOY.md`: §25 añadida al final (`DEPLOY.md:1068-1110`, tras la línea en blanco 1067; 44 inserciones, 0 borrados); las §21 a §24 no se mueven y la frase de `DEPLOY.md:888` no se edita. CRLF conservado (`file` y perl: 0 `\n` ni `\r` sueltos). Sin `.env.example`.
+- `apps/desk/server/deployModoSinZoho.test.ts`, en sitio y con las mismas 73 líneas: `:9` («va antes de la §25»), `:24` (acota la §24 hasta la `## 25. ` si existe), `:25` y `:66` (falta «la §24 sola hasta la §25»), `:50` (añade que la §25 va tras la §24), `:65` (título) y `:66` (mete una `## 99. Otra` antes de la §25).
+
+## Rojo → verde (strict TDD)
+- Rojo inicial por aserción, 5 de 5 en `apps/desk/server/deployCalificacionesConversaciones.test.ts` (el real no tiene §25: «expected -1 to be greater than 79126» y `la sección ## 25.` donde se esperaba la falta concreta).
+- La §25 puso rojas 3 de 5 en `apps/desk/server/deployModoSinZoho.test.ts` (la §24 ya no era última): se corrigieron en sitio; hoy 5 de 5 en verde. `npx vitest run` de todas las `deploy*` (8 ficheros): 48 pruebas en verde. `npm run typecheck` salida 0; `npm run lint -- --max-warnings 165` salida 0, «165 problems (0 errors, 165 warnings)».
+- Hallazgo propio: la mutación D (quitar `numeros` sólo del apartado «Qué se rompe») sobrevivía porque `numeros` salía en otros apartados; se añadió a la prueba el tramo del apartado (`numeros`, `noEncontrados`, `400`, `503`) y una prueba que lo fija.
+
+## Mutaciones R-2 sobre el `DEPLOY.md` real (sha256 `67b5a40a1e83fac0` antes y después, CRLF)
+| Id | Línea de `DEPLOY.md` | Rojas |
+|---|---|---|
+| A | 1083: encabezado «Qué se rompe» renombrado | 5 de 6 |
+| B | 1072: «No hay interruptor nuevo» cambiado | 5 de 6 |
+| C | 1100: «contacto y cuenta» (la 1099 lo repite) | 0 (sobrevive por diseño, la frase está dos veces) |
+| D | 1083: `numeros` por `otros` solo en ese apartado | 3 de 6 con la prueba reforzada (0 antes del refuerzo) |
+
+## Barrido de citas (L4.6)
+- Citas a `DEPLOY.md:NNNN` en todo el árbol: ninguna pasa de la 1066; `DEPLOY.md` sólo creció por el final. Las de `docs/sdd/ENTRADA.md` y `openspec/config.yaml` (los seis de Supervisión), sólo listadas, no se tocan.
+- Citas a `apps/desk/server/deployModoSinZoho.test.ts` con línea editada: sólo las de este cambio (`design.md`, `proposal.md`, `tasks.md`), que pasan a B al archivar; las del `verify-report.md` archivado (líneas 49, 54 y 70) apuntan a líneas no editadas.
+
+## Medida (L4.7)
+`git diff --shortstat --no-renames 761ab3b1` = 84 inserciones y 13 borrados (4 ficheros, con este bloque y las casillas) + `wc -l` sin trackear 71 = 168 líneas, por debajo de 800 (estimado ~165). Sin binarios.
+
+Informe de L4 contrastado por el orquestador: `git diff --numstat` 44/0 (`DEPLOY.md`, 1066 → 1110, sólo crece por el final) y 6/6 (`apps/desk/server/deployModoSinZoho.test.ts`, 73 → 73); `wc -l` 71; las 1110 líneas de `DEPLOY.md` con CRLF y ningún retorno de carro suelto. Corregido por el orquestador en sitio, sin cambiar líneas: los pasos P-1 y P-3 de la §25 citaban por línea la `proposal.md` de la carpeta del cambio, que se muda al archivar; ahora nombran el §8 de la propuesta en prosa. R-2 (B) reproducida por el orquestador (quitar «No hay interruptor nuevo» de la línea 1072 de `DEPLOY.md`): 5 rojas de 6; sha256 restaurado `065d944f6f252c38`, CRLF. El mutante C (contacto y cuenta) sobrevive por la doble mención y queda declarado.

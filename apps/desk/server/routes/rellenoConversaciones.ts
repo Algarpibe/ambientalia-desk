@@ -27,23 +27,33 @@ const entero = (v: unknown): boolean => v === undefined || (typeof v === 'string
 
 /**
  * `POST /api/admin/relleno-conversaciones` lanza la pasada en segundo plano y responde sin esperarla; con una en marcha devuelve su
- * estado y no lanza otra (S-2). `GET` devuelve sólo el estado y NUNCA lanza, al revés que `backfill-details`. La decisión (rol e
+ * estado y no lanza otra (S-2). `GET` devuelve el estado y la última pasada guardada, y NUNCA lanza, al revés que `backfill-details`. La decisión (rol e
  * interruptor) es del servidor; el cliente no participa (regla invariable 13). SOLO super administrador.
  */
 export function registerRellenoConversacionesRoutes(
   app: Express, { db, relleno, habilitado, modo }: { db: Queryable; relleno: Relleno; habilitado: boolean; modo: ModoSinZoho },
 ): void {
   app.post('/api/admin/relleno-conversaciones', requireAuth(db), requireSuperAdmin, guardaModoSinZoho(modo, esRecuento), interruptorRelleno(habilitado), asyncHandler(async (req, res) => {
-    const { desde, limite } = req.query
-    if (!entero(desde) || !entero(limite)) { res.status(400).json({ error: '`desde` y `limite` sólo admiten enteros no negativos' }); return }
-    if (limite === '0') { res.json(await relleno.recuento({ desde: desde === undefined ? undefined : Number(desde) })); return }
+    const { desde, limite, numeros } = req.query
+    if (!entero(desde) || !entero(limite) || !numerosValidos(numeros) || (numeros !== undefined && desde !== undefined)) { res.status(400).json({ error: '`desde` y `limite` sólo admiten enteros no negativos, y `numeros`, hasta 200 enteros separados por comas y nunca junto a `desde`' }); return }
+    if (limite === '0') { res.json(await relleno.recuento({ desde: desde === undefined ? undefined : Number(desde), numeros: aNumeros(numeros) })); return }
     res.json(relleno.lanzar({
       desde: desde === undefined ? undefined : Number(desde),
-      limite: limite === undefined ? undefined : Number(limite),
+      limite: limite === undefined ? undefined : Number(limite), numeros: aNumeros(numeros),
     }))
   }))
 
-  app.get('/api/admin/relleno-conversaciones', requireAuth(db), requireSuperAdmin, (_req, res) => {
-    res.json(relleno.estado())
-  })
+  app.get('/api/admin/relleno-conversaciones', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
+    res.json({ ...relleno.estado(), ultimaGuardada: await relleno.ultimaGuardada() })
+  }))
+}
+
+/** `numeros` (RQ-ZS-50): ausente vale; si viene, UNA cadena de enteros separados por comas y como mucho 200 (repetido en la query llega como lista y no vale). */
+function numerosValidos(v: unknown): boolean {
+  return v === undefined || (typeof v === 'string' && /^\d+(,\d+)*$/.test(v) && v.split(',').length <= 200)
+}
+
+/** Los `numeros` ya validados, sin repetidos y en orden ascendente; `undefined` si no vinieron. */
+function aNumeros(v: unknown): number[] | undefined {
+  return typeof v === 'string' ? [...new Set(v.split(',').map(Number))].sort((a, b) => a - b) : undefined
 }

@@ -103,8 +103,8 @@ export async function instanteBase(db: Queryable): Promise<Date> {
 
 /**
  * Guarda lo recibido (siempre, aunque la lista traiga error) y, con `marcar` y la lista COMPLETA, marca las filas de Zoho
- * del ticket que ya no vinieron. Completa = sin error, con recuento de Zoho, e ids ÚNICOS recibidos igual a ese recuento.
- * Marca, no borra: ninguna fila de `conversations` ni de `attachments` se elimina nunca (RQ-ZS-26).
+ * del ticket que ya no vinieron. Completa = sin error, con recuento de Zoho, e ids ÚNICOS recibidos que NO son calificación
+ * (RQ-ZS-48) igual a ese recuento; para marcar valen TODOS. Marca, no borra: ninguna fila de `conversations` ni de `attachments` se elimina nunca (RQ-ZS-26).
  */
 export async function guardarYReflejar(
   db: Queryable,
@@ -116,12 +116,12 @@ export async function guardarYReflejar(
     await upsertConversation(db, conversationRowFromZoho(c, ticketId))
     for (const a of attachmentRowsFrom(c, ticketId)) await upsertAttachment(db, a)
   }
-  const recibidos = new Set(lista.items.map((c) => String(c.id)))
-  const completa = lista.error === null && esperado !== null && recibidos.size === esperado
+  const recibidos = new Set(lista.items.map((c) => String(c.id))); const contadas = contadasPorZoho(lista.items)
+  const completa = lista.error === null && esperado !== null && contadas === esperado
   if (!marcar) return { marcadas: [], completa }
   if (!completa) {
     console.error(
-      `conversaciones: ticket ${ticketId} sin marcar ausentes, recibidos ${recibidos.size} únicos, ${esperado === null ? 'sin recuento' : `Zoho cuenta ${esperado}`}${lista.error ? `, error: ${lista.error}` : ''}`,
+      `conversaciones: ticket ${ticketId} sin marcar ausentes, recibidos ${contadas} únicos sin calificaciones (${recibidos.size} con ellas), ${esperado === null ? 'sin recuento' : `Zoho cuenta ${esperado}`}${lista.error ? `, error: ${lista.error}` : ''}`,
     )
     return { marcadas: [], completa }
   }
@@ -172,4 +172,21 @@ export function crearPasadaConversaciones({ zohoFetch, db, marcar, pausaMs = PAU
       }
     } if (guardados.length > 0) await trasGuardar?.(guardados)?.catch((e) => console.error('conversaciones: el gancho trasGuardar falló:', e instanceof Error ? e.message : String(e)))
   }
+}
+
+/**
+ * calificaciones-cuadre-conversaciones (RQ-ZS-48, S-2, hipótesis hasta P-1): una calificación de satisfacción es la conversación cuyo
+ * objeto de Zoho trae `channel === 'FEEDBACK'` EXACTO (ni mayúsculas ni espacios normalizados: lo dudoso cuenta como hoy y no se marca
+ * de más). Acepta el objeto o el `jsonb` como texto, como `esperadoDeZoho`. Es el predicado ÚNICO de las cuatro comparaciones.
+ */
+export function esCalificacion(raw: unknown): boolean {
+  let obj = raw
+  if (typeof raw === 'string') { try { obj = JSON.parse(raw) } catch { return false } }
+  if (typeof obj !== 'object' || obj === null) return false
+  return (obj as ZohoRecord).channel === 'FEEDBACK'
+}
+
+/** Los ids ÚNICOS de la lista que NO son calificación: lo que Zoho cuenta en `commentCount` + `threadCount` (RQ-ZS-48). */
+export function contadasPorZoho(items: ZohoRecord[]): number {
+  return new Set(items.filter((c) => !esCalificacion(c)).map((c) => String(c.id))).size
 }

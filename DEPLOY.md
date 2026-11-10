@@ -1064,3 +1064,47 @@ en su log una línea por origen o ruta nuevos. En el worker no hay HTTP: el log 
 1. **P-2 · Desplegar cerrado.** Poner `MODO_SIN_ZOHO_DESK=false` en la App `ambientalia-desk` y en el worker `zoho-hub-sync` y redesplegar los dos. No cambia nada visible.
 2. **P-3 · La semana.** Con decisión de Gerencia, ponerla en `true` en los dos servicios y redesplegar los dos. Durante la semana, leer el `GET` de la App y el
    log del worker. Al terminar, el resumen del `GET` y del log se pasa al analista, se vuelve a `false` en los dos y se redespliegan los dos.
+
+## 25. Relleno de conversaciones: calificaciones de satisfacción, `numeros` y resumen guardado (`decision/calificaciones-y-borrados-de-zoho`)
+
+Las calificaciones de satisfacción (canal `FEEDBACK`) ya no cuentan contra `commentCount` + `threadCount` en las tres vías que marcan lo ausente ni en la
+verificación del relleno (`packages/zoho-sync/src/conversaciones.ts:186`). Reconocerlas por `channel === 'FEEDBACK'` es **hipótesis** hasta la consulta P-1 de
+abajo, con fallo seguro: si el canal real fuera otro, todo sigue como hoy y no se marca de más. **No hay interruptor nuevo** ni línea nueva para `.env.example`:
+todo queda tras `RELLENO_CONVERSACIONES_HABILITADO` (§21) y `MARCAR_CONVERSACIONES_AUSENTES` (§19). Efecto inmediato al desplegar: con
+`MARCAR_CONVERSACIONES_AUSENTES` encendido, la pasada periódica y `syncConversations` empiezan a marcar en los tickets con calificación que se modifiquen; marcar es
+ocultar, no borrar, y se deshace sola si la fila reaparece.
+
+### `numeros` y el resumen guardado
+
+**Qué enciende:** nada nuevo. `numeros` (lista de números de ticket separados por comas) acota la pasada del `POST /api/admin/relleno-conversaciones` a esos tickets, y cada
+pasada deja su fila en `public.relleno_conversaciones_pasadas` (`packages/zoho-sync/src/db/schema.sql:857`). Precisa la §21: el `GET` de la misma ruta devuelve además
+`ultimaGuardada` (`apps/desk/server/routes/rellenoConversaciones.ts:47`); ya no «sólo devuelve el estado».
+
+**Qué se rompe si se pone mal:** `numeros` mal escrito, vacío, con más de 200 o junto a `desde` da `400` y no lanza nada (`apps/desk/server/routes/rellenoConversaciones.ts:38`).
+Un número que no está en `desk.tickets` no se recorre y sale en `noEncontrados`. Con `MODO_SIN_ZOHO_DESK` abierto (§24), el `POST` sin `limite=0` responde `503`. Si la
+tabla no se puede escribir, la pasada sigue y el log de la App lleva una línea `logger.error` (`apps/desk/server/rellenoConversacionesResumen.ts:28`).
+
+### Cómo leer el resumen guardado
+
+Con la App: `GET /api/admin/relleno-conversaciones` (superadministrador), campo `ultimaGuardada`. Una pasada cortada por un redespliegue deja su fila con `terminada_at` nulo.
+Sin la App, en `psql` de `desk-db` y de sólo lectura:
+
+> ```
+> BEGIN READ ONLY;
+> SELECT id, lanzada_at, terminada_at, resumen FROM public.relleno_conversaciones_pasadas ORDER BY id DESC LIMIT 1;
+> ROLLBACK;
+> \q
+> ```
+
+`peticiones` cuenta el detalle y las páginas con sus reintentos; las lecturas de contacto y cuenta del `Sync` compartido no se cuentan (a lo sumo 3 por ticket, menos por
+su caché). El resumen lo declara en `limitePeticiones` (`apps/desk/server/rellenoConversacionesResumen.ts:15`): el límite de las peticiones es contacto y cuenta sin contar.
+
+### Pasos (paso de persona)
+
+1. **P-1 · Comprobar la hipótesis**, mejor antes de desplegar: la consulta P-1 del §8 de la propuesta de `calificaciones-cuadre-conversaciones` (archivada en `openspec/changes/archive/`), de sólo lectura
+   (`BEGIN READ ONLY; … ROLLBACK;` y `\q`). Si el canal no es `FEEDBACK`, se corrige el predicado antes de desplegar.
+2. **P-2 · Relanzar sobre una lista** (el caso de los 51 de E-266): `MODO_SIN_ZOHO_DESK` cerrado; `RELLENO_CONVERSACIONES_HABILITADO=true` y `MARCAR_CONVERSACIONES_AUSENTES=true`
+   (se leen al arrancar: cada cambio pide redesplegar). Primero `POST …?numeros=<lista>&limite=0` (cuenta, sin Zoho ni escritura); después, sin `limite`,
+   `POST …?numeros=<lista>`; `GET` hasta `terminado: true` y leer `ultimaGuardada` (o la tabla). Cerrar el interruptor del relleno y redesplegar.
+3. **P-3 · Medir al cerrar**: la consulta P-3 de ese mismo §8, también de sólo lectura; se espera 0 filas
+   entre los archivados, salvo los que la pasada clasifique «no está en Zoho» o «sin recuento».

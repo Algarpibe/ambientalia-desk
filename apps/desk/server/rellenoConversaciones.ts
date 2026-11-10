@@ -1,11 +1,11 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import {
-  leerConversaciones, guardarYReflejar, esperadoDeZoho, instanteBase,
+  leerConversaciones, guardarYReflejar, esperadoDeZoho, instanteBase, esCalificacion,
   REINTENTOS_429, PAUSA_429_MS, PAUSA_ENTRE_TICKETS_MS,
 } from '@ambientalia/zoho-sync/conversaciones'
 import { nacidoEnLaApp } from './db/ticketFuentes'
-import { logger } from './util/logger'
+import { logger } from './util/logger'; import { guardaEnBase, conResumenGuardado, type GuardaResumen } from './rellenoConversacionesResumen'
 
 /**
  * relleno-completo-conversaciones (1G-01, RQ-ZS-28 y RQ-ZS-29). La pasada que una persona lanza a mano: recorre los ids de
@@ -21,22 +21,22 @@ type ZohoFetch = (path: string, init?: RequestInit) => Promise<Response>
 type ZohoRecord = Record<string, unknown>
 
 export interface EstadoRelleno {
-  enMarcha: boolean; terminado: boolean; cortadoEn: number | null; error?: string; desde: number | null
+  enMarcha: boolean; terminado: boolean; cortadoEn: number | null; error?: string; desde: number | null; numeros: number[] | null
   limite: number | null; aRecorrer: number; saltadosApp: number; recorridos: number; peticiones: number; vistos429: number
   cuentas: { completo: number; descuadrado: number; sinRecuento: number; conError: number; noEstaEnZoho: number }
   descuadrados: { numero: number; esperado: number; guardadas: number }[]; sinRecuento: number[]; conError: number[]
-  noEstaEnZoho: number[]; motivoPrimerFallo?: string; inicio?: string; fin?: string   // números de ticket; nunca datos de cliente
+  noEstaEnZoho: number[]; noEncontrados: number[]; motivoPrimerFallo?: string; inicio?: string; fin?: string   // números de ticket; nunca datos de cliente
 }
 
 export interface DepsRelleno {
   zohoFetch: ZohoFetch; db: Queryable; sync: Pick<Sync, 'syncTicket'>; marcar: boolean
-  pausaMs?: number; pausa429Ms?: number; registrar?: (r: EstadoRelleno) => void
+  pausaMs?: number; pausa429Ms?: number; registrar?: (r: EstadoRelleno) => void; guardar?: GuardaResumen
 }
 
 const estadoInicial = (): EstadoRelleno => ({
-  enMarcha: false, terminado: false, cortadoEn: null, desde: null, limite: null, aRecorrer: 0, saltadosApp: 0, recorridos: 0,
+  enMarcha: false, terminado: false, cortadoEn: null, desde: null, numeros: null, limite: null, aRecorrer: 0, saltadosApp: 0, recorridos: 0,
   peticiones: 0, vistos429: 0, cuentas: { completo: 0, descuadrado: 0, sinRecuento: 0, conError: 0, noEstaEnZoho: 0 },
-  descuadrados: [], sinRecuento: [], conError: [], noEstaEnZoho: [],
+  descuadrados: [], sinRecuento: [], conError: [], noEstaEnZoho: [], noEncontrados: [],
 })
 
 const dormir = (ms: number) => (ms > 0 ? new Promise<void>((r) => setTimeout(r, ms)) : Promise.resolve())
@@ -48,17 +48,17 @@ const verdadero = (v: unknown) => v === true || v === 'true'
 const registrarEnLog = (r: EstadoRelleno) => logger.info({ resumen: r }, `relleno-completo-conversaciones: ${r.cortadoEn === null ? 'terminada' : `cortada en el ticket ${r.cortadoEn}`}, ${r.recorridos} de ${r.aRecorrer} recorridos`)
 
 export function crearRellenoConversaciones({
-  zohoFetch, db, sync, marcar, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS, registrar = registrarEnLog,
+  zohoFetch, db, sync, marcar, pausaMs = PAUSA_ENTRE_TICKETS_MS, pausa429Ms = PAUSA_429_MS, registrar = registrarEnLog, guardar = guardaEnBase(db),
 }: DepsRelleno) {
   let estado = estadoInicial()
 
   /** La lista de la pasada (D4): una consulta simple y el filtro en código, porque pg-mem no resuelve subconsultas correlacionadas. */
-  async function tramo(desde: number | null): Promise<{ zoho: { id: string; numero: number }[]; saltadosApp: number }> {
+  async function tramo(desde: number | null, numeros: number[] | null = null): Promise<{ zoho: { id: string; numero: number }[]; saltadosApp: number; noEncontrados: number[] }> {
     const r = await db.query('SELECT id, number FROM tickets ORDER BY number')
     const filas = (r.rows as { id: string; number: unknown }[])
       .map((f) => ({ id: String(f.id), numero: Number(f.number) }))
-      .filter((f) => desde === null || f.numero >= desde)
-    return { zoho: filas.filter((f) => !nacidoEnLaApp(f.id)), saltadosApp: filas.filter((f) => nacidoEnLaApp(f.id)).length }
+      .filter((f) => (desde === null || f.numero >= desde) && (numeros === null || numeros.includes(f.numero)))
+    return { zoho: filas.filter((f) => !nacidoEnLaApp(f.id)), saltadosApp: filas.filter((f) => nacidoEnLaApp(f.id)).length, noEncontrados: (numeros ?? []).filter((n) => !filas.some((f) => f.numero === n)) }
   }
 
   /** Cuenta toda petición de detalle y de página, y todo `429` visto en ellas (D6); la de contacto y cuenta va por la `zohoFetch` del `Sync`. */
@@ -71,10 +71,10 @@ export function crearRellenoConversaciones({
   /** Un fallo se cuenta y su texto, el primero, se guarda como `motivoPrimerFallo` (S-10; molde `packages/zoho-sync/src/sync.ts:228`, `:238`). */
   const aError = (numero: number, motivo: string) => { estado.conError.push(numero); estado.cuentas.conError++; estado.motivoPrimerFallo ??= motivo }
   const aNoEsta = (numero: number) => { estado.noEstaEnZoho.push(numero); estado.cuentas.noEstaEnZoho++ }
-  /** Lo guardado y VISIBLE de Zoho para el ticket, DESPUÉS de guardar y marcar (D3): `id` es clave primaria, así que son ids únicos. */
+  /** Lo guardado y VISIBLE de Zoho para el ticket, DESPUÉS de guardar y marcar (D3), sin calificaciones (RQ-ZS-48): `id` es clave primaria, así que son ids únicos. */
   const visibles = async (id: string): Promise<number> => {
-    const r = await db.query("SELECT count(*)::int AS n FROM conversations WHERE ticket_id=$1 AND source='zoho' AND ausente_en_zoho_at IS NULL", [id])
-    return Number((r.rows[0] as { n: unknown }).n)
+    const r = await db.query("SELECT raw FROM conversations WHERE ticket_id=$1 AND source='zoho' AND ausente_en_zoho_at IS NULL", [id])
+    return (r.rows as { raw: unknown }[]).filter((f) => !esCalificacion(f.raw)).length
   }
 
   /**
@@ -114,11 +114,11 @@ export function crearRellenoConversaciones({
     }
   }
 
-  async function pasada(desde: number | null, limite: number | null): Promise<void> {
+  async function pasada(desde: number | null, limite: number | null, numeros: number[] | null = null): Promise<void> {
     try {
-      const t = await tramo(desde)
+      const t = await tramo(desde, numeros)
       estado.inicio = new Date().toISOString()
-      estado.saltadosApp = t.saltadosApp
+      estado.saltadosApp = t.saltadosApp; estado.noEncontrados = t.noEncontrados
       const lista = limite === null ? t.zoho : t.zoho.slice(0, limite)
       estado.aRecorrer = lista.length
       for (const [i, f] of lista.entries()) {
@@ -138,17 +138,17 @@ export function crearRellenoConversaciones({
 
   return {
     /** Lanza la pasada en segundo plano y devuelve ya. `enMarcha` va ANTES del primer `await`; con una en marcha no lanza otra (S-2, P4). */
-    lanzar({ desde, limite }: { desde?: number; limite?: number } = {}): { lanzada: boolean; estado: EstadoRelleno } {
+    lanzar({ desde, limite, numeros }: { desde?: number; limite?: number; numeros?: number[] } = {}): { lanzada: boolean; estado: EstadoRelleno } {
       if (estado.enMarcha) return { lanzada: false, estado: structuredClone(estado) }
-      estado = { ...estadoInicial(), enMarcha: true, desde: desde ?? null, limite: limite ?? null }
-      void pasada(estado.desde, estado.limite)
+      estado = { ...estadoInicial(), enMarcha: true, desde: desde ?? null, limite: limite ?? null, numeros: numeros ?? null }
+      void conResumenGuardado({ guardar, estado, correr: () => pasada(estado.desde, estado.limite, estado.numeros) })
       return { lanzada: true, estado: structuredClone(estado) }
     },
     /** Cuántos ids recorrería la pasada y cuántos `app-` salta, sin Zoho ni escritura (S-3). */
-    async recuento({ desde }: { desde?: number } = {}): Promise<{ aRecorrer: number; saltadosApp: number }> {
-      const t = await tramo(desde ?? null)
-      return { aRecorrer: t.zoho.length, saltadosApp: t.saltadosApp }
+    async recuento({ desde, numeros }: { desde?: number; numeros?: number[] } = {}): Promise<{ aRecorrer: number; saltadosApp: number; noEncontrados?: number[] }> {
+      const t = await tramo(desde ?? null, numeros ?? null)
+      return { aRecorrer: t.zoho.length, saltadosApp: t.saltadosApp, ...(numeros === undefined ? {} : { noEncontrados: t.noEncontrados }) }
     },
-    estado(): EstadoRelleno { return structuredClone(estado) },
+    estado(): EstadoRelleno { return structuredClone(estado) }, ultimaGuardada: () => guardar.ultima(),
   }
 }

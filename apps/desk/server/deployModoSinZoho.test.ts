@@ -6,7 +6,7 @@ import path from 'node:path'
  * modo-sin-zoho (1G-04, D-9, RQ-ZS-47) · presencia de `MODO_SIN_ZOHO_DESK` en `DEPLOY.md` §24 (regla de secretos de CLAUDE.md: un interruptor
  * nace cerrado y se documenta con dos frases, qué enciende y qué se rompe si se pone mal). Molde: `deployVerificacionCompletitud.test.ts`.
  *
- * QUÉ COMPRUEBA: que la §24 existe tras la §23 y es la última; que el apartado de la variable dice las dos frases, que nace cerrada con
+ * QUÉ COMPRUEBA: que la §24 existe tras la §23 y va antes de la §25; que el apartado de la variable dice las dos frases, que nace cerrada con
  * `=== 'true'` (y el código lo lee así) y que lleva su línea de entorno con `false`; que nombra los DOS servicios (`ambientalia-desk`,
  * `zoho-hub-sync`, el worker `hub-sync`), la ruta del `GET`, el log del worker, `cortes` frente a `rechazos` y «redesplegar los dos».
  * QUÉ NO COMPRUEBA: `.env.example` (lo añade una persona, P-1) ni que cada línea citada siga diciendo lo que la frase afirma.
@@ -21,8 +21,8 @@ export const faltasSeccion24 = (texto: string): string[] => {
   const s24 = texto.indexOf('## 24. ')
   if (s24 === -1) return ['la sección `## 24. `']
   if (s24 <= s23) faltas.push('la §24 detrás de la §23')
-  const seccion = texto.slice(s24)
-  if ((seccion.match(/^## \d+\./gm) ?? []).length !== 1) faltas.push('la §24 como última sección')
+  const seccion = texto.slice(s24, texto.indexOf("## 25. ") > s24 ? texto.indexOf("## 25. ") : undefined)
+  if ((seccion.match(/^## \d+\./gm) ?? []).length !== 1) faltas.push('la §24 sola hasta la §25')
   const desde = seccion.indexOf(`### \`${VARIABLE}\``)
   const resto = desde === -1 ? '' : seccion.slice(desde + 4)
   const fin = resto.search(/^##+ /m)
@@ -47,7 +47,7 @@ const config = readFileSync(path.join(RAIZ, 'packages/zoho-sync/src/config.ts'),
 
 describe('DEPLOY.md §24 · MODO_SIN_ZOHO_DESK (1G-04, RQ-ZS-47)', () => {
   it('el DEPLOY.md real no tiene faltas', () => {
-    expect(deploy.indexOf('## 24. ')).toBeGreaterThan(deploy.indexOf('## 23. '))
+    expect(deploy.indexOf('## 24. ')).toBeGreaterThan(deploy.indexOf('## 23. ')); expect(deploy.indexOf("## 25. ")).toBeGreaterThan(deploy.indexOf("## 24. "))
     expect(faltasSeccion24(deploy)).toEqual([])
   })
 
@@ -62,8 +62,8 @@ describe('DEPLOY.md §24 · MODO_SIN_ZOHO_DESK (1G-04, RQ-ZS-47)', () => {
     expect(faltasSeccion24(sin)).toEqual(['**Qué se rompe si se pone mal:**'])
   })
 
-  it('discrimina por posición: una §24 que no es la última, o que no existe, tiene falta', () => {
-    expect(faltasSeccion24(`${deploy}\n## 25. Otra\n`)).toEqual(['la §24 como última sección'])
+  it('discrimina por posición: una §24 que no es la que precede a la §25, o que no existe, tiene falta', () => {
+    expect(faltasSeccion24(deploy.replace('## 25. ', '## 99. Otra\n## 25. '))).toEqual(['la §24 sola hasta la §25'])
     expect(faltasSeccion24(deploy.slice(0, deploy.indexOf('## 24. ')))).toEqual(['la sección `## 24. `'])
   })
 
