@@ -21,8 +21,8 @@ cita en su ancla la hizo además, por su cuenta, un agente de sólo lectura que 
 
 ## Avisos, corregidos en este commit
 
-1. **`proposal.md`, «Fuera de la fila», E-098.** Decía que su pieza nueva «está sin destino», citando `docs/sdd/ENTRADA.md:1359`
-   en `0e2b609b`. Esa línea lo dice, pero el encabezado de la entrada la da por decidida en E-142
+1. **`proposal.md`, «Fuera de la fila», E-098.** Decía que su pieza nueva «está sin destino», citando
+   `docs/sdd/ENTRADA.md:1359` en `0e2b609b`. Esa línea lo dice, pero el encabezado de la entrada la da por decidida en E-142
    (`docs/sdd/ENTRADA.md:1355` en `0e2b609b`), y E-142 la manda a 2027 (`docs/sdd/ENTRADA.md:1689` en `0e2b609b`). Ahora dice
    las dos cosas.
 2. **`proposal.md`, «Riesgos».** La cita en prosa a las líneas 218 y 220 de `registro.test.ts` iba sin revisión, y ese fichero
@@ -32,8 +32,8 @@ cita en su ancla la hizo además, por su cuenta, un agente de sólo lectura que 
    las ya hechas.
 4. **`proposal.md`, «Para Supervisión», punto 2.** Nombraba sólo `openspec/config.yaml:4019` en `0e2b609b` entre las menciones
    que siguen poniendo el propietario en F1C-05. Faltaban el título de la (4) de la misma decisión
-   (`openspec/config.yaml:4011` en `0e2b609b`) y `decision/orden-ocho-tandas-06-10` (3) (`openspec/config.yaml:4302` en
-   `0e2b609b`).
+   (`openspec/config.yaml:4011` en `0e2b609b`) y `decision/orden-ocho-tandas-06-10` (3)
+   (`openspec/config.yaml:4302` en `0e2b609b`).
 5. **`proposal.md`, S-6.** «Ni la fila ni sus decisiones de respaldo los nombran» era cierto, pero callaba que E-092 y el Anexo D
    nº 75 sí atan los dos campos de cargo a F1C-05. Ahora lo dice, que es lo que hace de S-6 un supuesto.
 6. **`tasks.md`, primera tarea de persona.** Atribuía a la P.2 de `permisos-por-cargo` «el botón y el `403`», y la línea citada

@@ -29,26 +29,26 @@ archivo. Cada intento se asienta sólo con TODOS sus códigos en 0.
 
 ## 3. Archivo
 
-- [ ] 3.1 Medir antes de aplicar la parte revisable (`archive-report.md` y las líneas de
+- [x] 3.1 Medir antes de aplicar la parte revisable (`archive-report.md` y las líneas de
   `apps/desk/server/reconciliacion/registro.test.ts`) con `git diff --shortstat --no-renames`; si supera 800, parar. Abrir el
   intento con un techo de dos veces la carpeta más 800.
-- [ ] 3.2 Mover la carpeta a `openspec/changes/archive/<fecha>-cierre-f1c05-nivel-cargo/`; las rutas a la propia carpeta que
+- [x] 3.2 Mover la carpeta a `openspec/changes/archive/<fecha>-cierre-f1c05-nivel-cargo/`; las rutas a la propia carpeta que
   sean históricas se conservan (caso B).
-- [ ] 3.3 Correr `apps/desk/server/reconciliacion/registro.test.ts` y ANOTAR el rojo esperado en la prueba 11f/05g
+- [x] 3.3 Correr `apps/desk/server/reconciliacion/registro.test.ts` y ANOTAR el rojo esperado en la prueba 11f/05g
   (`apps/desk/server/reconciliacion/registro.test.ts:220` en `0e2b609b`: F1C-05 ya no está «en curso»). Si no se pone roja,
   parar: la prueba no distingue.
-- [ ] 3.4 Corregir en sitio, sin mover líneas y conservando el CRLF (con `perl`, no con `sed`):
+- [x] 3.4 Corregir en sitio, sin mover líneas y conservando el CRLF (con `perl`, no con `sed`):
   `apps/desk/server/reconciliacion/registro.test.ts:218` en `0e2b609b` (de SIETE a SEIS, con F1C-05 entre las cerradas por
   archivo del título) y `apps/desk/server/reconciliacion/registro.test.ts:220` en `0e2b609b` (la lista sin `'F1C-05'` y
   `toContain('F1C-05')` en «cerradas por archivo»); verde. Molde: `8b3c4bac`.
-- [ ] 3.5 Correr `npm run reconcile` y comprobar que F1C-05 pasa a «cerradas por archivo», que no entra en «cerradas sin fuente
+- [x] 3.5 Correr `npm run reconcile` y comprobar que F1C-05 pasa a «cerradas por archivo», que no entra en «cerradas sin fuente
   declarada en la R01.1» (tiene fila) ni en «marcadas sin verificar» (S-1), y que «en curso» baja de siete a seis; restaurar
   `docs/sdd/RECONCILIACION.md` sin commitearlo.
-- [ ] 3.6 Barrido de la regla de mutación 4 sobre `apps/desk/server/reconciliacion/registro.test.ts` y pase de abreviadas; las
+- [x] 3.6 Barrido de la regla de mutación 4 sobre `apps/desk/server/reconciliacion/registro.test.ts` y pase de abreviadas; las
   citas de este cambio a las líneas de antes de corregir quedan ancladas en `0e2b609b`.
-- [ ] 3.7 Escribir `archive-report.md` con la línea de R-1 (qué parte de la fila cubrió y qué dejó fuera), los intentos y la
+- [x] 3.7 Escribir `archive-report.md` con la línea de R-1 (qué parte de la fila cubrió y qué dejó fuera), los intentos y la
   lista para Supervisión de `proposal.md`.
-- [ ] 3.8 Cuatro códigos con código 0; `git show --numstat` del commit con sólo este cambio.
+- [x] 3.8 Cuatro códigos con código 0; `git show --numstat` del commit con sólo este cambio.
 
 ## Tareas de personas — fuera del recuento
 
