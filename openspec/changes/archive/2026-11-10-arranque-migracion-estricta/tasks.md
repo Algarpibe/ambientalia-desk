@@ -77,7 +77,7 @@ Escenarios: RQ-ZS-57 los tres.
 
 ## Verificación y archivo (intentos propios, tras L3)
 - [x] V.1 Verify independiente: `verify-report.md` con cada escenario de RQ-ZS-52 a RQ-ZS-57 contra su prueba y CA-1 a CA-9; reproducir al menos M-1, M-4 y M-10 con `perl` y restauración comprobada.
-- [ ] A.1 Archivo: techo = 2 × `wc -l` de la carpeta + 800; fusión por script de los seis ADDED (RQ-ZS-52 a RQ-ZS-57) al final de `openspec/specs/zoho-sync/spec.md`, ensayo `--dry`, finales de línea conservados; `archive-report.md` con la línea de R-1 (cubre el paso 2 entero; deja fuera el paso 1 y la medida P-2). Medir la parte revisable antes de aplicar; si supera 800, parar.
+- [x] A.1 Archivo: techo = 2 × `wc -l` de la carpeta + 800; fusión por script de los seis ADDED (RQ-ZS-52 a RQ-ZS-57) al final de `openspec/specs/zoho-sync/spec.md`, ensayo `--dry`, finales de línea conservados; `archive-report.md` con la línea de R-1 (cubre el paso 2 entero; deja fuera el paso 1 y la medida P-2). Medir la parte revisable antes de aplicar; si supera 800, parar.
 
 ## Tareas de persona — fuera del recuento; archivar NO las da por hechas
 | Id | Qué | Dueño | Dónde queda escrito |
