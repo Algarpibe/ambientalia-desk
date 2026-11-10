@@ -200,7 +200,7 @@ arrancó bien. **La causa del reinicio de la base es desconocida.**
 
 Lo que el código explica: la migración es tolerante por sentencia y sigue aunque fallen todas
 (`packages/zoho-sync/src/db/migrate.ts:29-35`); corre al principio del arranque
-(`apps/desk/server/index.ts:27`). Que el proceso cayera después, en la primera consulta que no está envuelta, es
+(`apps/desk/server/index.ts:27` en `97539c73`). Que el proceso cayera después, en la primera consulta que no está envuelta, es
 **hipótesis**: no se ha leído el log.
 
 Por qué importa aunque se resolviera sola: es el mismo mecanismo de las condiciones (i) y (j) del consolidado. **Una

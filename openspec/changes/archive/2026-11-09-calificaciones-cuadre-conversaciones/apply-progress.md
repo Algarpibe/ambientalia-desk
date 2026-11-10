@@ -124,7 +124,7 @@ Informe de L3 contrastado por el orquestador: `git diff --numstat` 16/16 (`apps/
 
 ## Hecho, por fichero
 - `apps/desk/server/deployCalificacionesConversaciones.test.ts` (nuevo, 71 líneas): `faltasSeccion25` pura, sobre el real y sobre copias en memoria; seis pruebas.
-- `DEPLOY.md`: §25 añadida al final (`DEPLOY.md:1068-1110`, tras la línea en blanco 1067; 44 inserciones, 0 borrados); las §21 a §24 no se mueven y la frase de `DEPLOY.md:888` no se edita. CRLF conservado (`file` y perl: 0 `\n` ni `\r` sueltos). Sin `.env.example`.
+- `DEPLOY.md`: §25 añadida al final (`DEPLOY.md:1068-1110` en `97539c73`, tras la línea en blanco 1067; 44 inserciones, 0 borrados); las §21 a §24 no se mueven y la frase de `DEPLOY.md:888` no se edita. CRLF conservado (`file` y perl: 0 `\n` ni `\r` sueltos). Sin `.env.example`.
 - `apps/desk/server/deployModoSinZoho.test.ts`, en sitio y con las mismas 73 líneas: `:9` («va antes de la §25»), `:24` (acota la §24 hasta la `## 25. ` si existe), `:25` y `:66` (falta «la §24 sola hasta la §25»), `:50` (añade que la §25 va tras la §24), `:65` (título) y `:66` (mete una `## 99. Otra` antes de la §25).
 
 ## Rojo → verde (strict TDD)

@@ -52,7 +52,7 @@ resuelve razonando: la demuestra la prueba I-3 (§6), y es además la razón por
   **hipótesis**, comprobada por la prueba de índice (resuelve el especificador leído de `:26`) y por la evidencia E-3.
 - **`:26` sigue siendo «la reorganización» y `:27` «la migración»**: las dos líneas ejecutan su paso, en el mismo orden y con la misma
   condición `config.dbSchema === 'desk'`. Las citas que lo afirman siguen siendo caso A (§9).
-- **`modoSinZohoIndice.test.ts:42`** busca UNA línea con `await migrate(pool)` (`:41-42`); ese texto desaparece. Se corrige **en sitio**,
+- `modoSinZohoIndice.test.ts:42` en `97539c73` busca UNA línea con `await migrate(pool)` (`:41-42`); ese texto desaparece. Se corrige **en sitio**,
   sólo `:42`: `expect(una('puestaAlDia.aplicar(migrate)')).not.toContain('modoSinZohoDesk')`. El título de `:41` sigue siendo cierto.
 - **Cómo se para la secuencia.** `aplicar(paso)` no ejecuta `paso` contra la base: lo llama contra un **grabador** (`Queryable` que
   apunta cada texto y resuelve `{ rows: [] }` sin fallar nunca). Como el grabador no rechaza, la tolerancia de `migrate.ts:30-34` y

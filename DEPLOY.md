@@ -1108,3 +1108,41 @@ su caché). El resumen lo declara en `limitePeticiones` (`apps/desk/server/relle
    `POST …?numeros=<lista>`; `GET` hasta `terminado: true` y leer `ultimaGuardada` (o la tabla). Cerrar el interruptor del relleno y redesplegar.
 3. **P-3 · Medir al cerrar**: la consulta P-3 de ese mismo §8, también de sólo lectura; se espera 0 filas
    entre los archivados, salvo los que la pasada clasifique «no está en Zoho» o «sin recuento».
+
+## 26. Arranque de la App: límite de espera de bloqueo y fallo que detiene (`decision/arranque-bloqueado-por-consola`)
+
+Desde este cambio, la puesta al día de la base que hace el arranque de la App (la reorganización de esquema y la migración, `apps/desk/server/index.ts:26-27`) corre en una conexión propia con un
+límite de espera de bloqueo (`lock_timeout`) de **10 s** por sentencia, ya vigente antes de la primera, y la **primera sentencia que falla detiene el arranque** con salida 1. El código está en
+`packages/zoho-sync/src/db/puestaAlDiaEstricta.ts`. Sólo cambia la App: el worker `hub-sync` (`zoho-hub-sync` en EasyPanel) y las pruebas siguen con la migración tolerante de siempre.
+**No hay interruptor nuevo** ni variable de entorno nueva ni línea nueva para `.env.example`: el valor es la constante `LIMITE_ESPERA_BLOQUEO_MS` del código (10 s), y cambiarlo pide publicar.
+
+### Qué cambia
+
+Antes, una sentencia que fallaba se omitía con una línea por `console.error` y la App arrancaba igual, y una espera de bloqueo no tenía fin: el 03/11 la App estuvo cerca de dos horas en `502`
+porque el arranque esperaba un bloqueo sin dejar ninguna línea en el registro. Ahora, la sentencia que falla, o que agota el límite de espera, detiene el arranque: el servicio no llega a escuchar
+(`502` en el panel hasta que se arregle) y el registro de la App dice cuál fue y por qué. Una espera de bloqueo de hasta 10 s por sentencia sigue siendo normal y no detiene nada.
+
+### Cómo es la línea del registro
+
+La línea sale por el `logger` de la App (stdout) con el texto «Fallo al arrancar el servidor» y, en `err`, el tipo y el mensaje. Si se agotó el límite de espera (medido contra PostgreSQL 16, `err` de tipo `ErrorLimiteEspera`):
+
+> ```
+> ERROR: Fallo al arrancar el servidor
+>   err: { "type": "ErrorLimiteEspera", "message": "Puesta al día de la base detenida: se agotó el límite de espera de bloqueo (lock_timeout 10000 ms) en la sentencia «CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_marca ON catalogo_modelos (marca_id)» [55P03] canceling statement due to lock timeout", "codigo": "55P03", "limiteMs": 10000 }
+> ```
+
+Si falló otra sentencia (`err` de tipo `ErrorPuestaAlDia`), el mensaje es «Puesta al día de la base detenida: falló la sentencia «…» [código] …», con el código de PostgreSQL (o «sin código») y el error original.
+
+**Ojo con la sentencia nombrada:** es la **primera** que toca la tabla bloqueada, que puede no ser la que uno espera. En la prueba contra PostgreSQL real, con la tabla `catalogo_modelos` bloqueada, la sentencia nombrada fue el
+`CREATE INDEX IF NOT EXISTS … ON catalogo_modelos` y no el `ALTER … ADD COLUMN sku` del incidente: un `CREATE INDEX IF NOT EXISTS` pide su bloqueo antes de comprobar que el índice ya existe. Lo que importa es la tabla.
+
+### Qué hacer si la App no arranca tras desplegar
+
+1. Buscar en el registro de la App la línea «Fallo al arrancar el servidor» y, junto a ella, «Puesta al día de la base detenida».
+2. Si dice **límite de espera** (código `55P03`): alguna sesión de la base tiene la tabla bloqueada. En `desk-db`, con consultas en forma `psql -c "…"` que salen solas (no abrir una consola interactiva: una consola
+   en `idle in transaction` es justo lo que causó el incidente), localizar la cadena de bloqueos con `pg_stat_activity` y `pg_blocking_pids(pid)`, quedarse con el **pid raíz** (la sesión que no espera a nadie) y
+   cortarla con `pg_terminate_backend(<pid raíz>)`. El siguiente reinicio de la App arranca solo. Procedimiento completo del incidente: `docs/sdd/ENTRADA.md` E-268.
+3. Si es **otra sentencia** (`ErrorPuestaAlDia`): la sentencia y el error dicen qué arreglar. La salida inmediata es volver a la imagen anterior y pasar la línea al analista.
+4. Antes de desplegar (P-2, de persona): mirar en el registro de producción las líneas «migrate: sentencia omitida» y «reorgToDesk: sentencia omitida» y comprobar si EasyPanel muestra stderr. Si alguna sentencia
+   falla en **cada** arranque, con este cambio la App dejaría de arrancar.
+5. Nunca pegar credenciales ni cadenas de conexión en el registro ni en chats (regla de secretos de `CLAUDE.md`).

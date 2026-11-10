@@ -144,7 +144,7 @@ carácter a ciegas (`packages/zoho-sync/src/db/migrate.ts:19-21`).
 ### 2.2 · Dónde se aplican: al arrancar, idempotentes, y en silencio si algo falla
 
 - **App:** `main()` corre `reorgToDesk` si el esquema es `desk` y luego `await migrate(pool)`
-  (`apps/desk/server/index.ts:26-27`), **antes** de sembrar el administrador, de montar la API y de
+  (`apps/desk/server/index.ts:26-27` en `97539c73`), **antes** de sembrar el administrador, de montar la API y de
   escuchar en el puerto (`apps/desk/server/index.ts:49`, `:57`). Es lo que `DEPLOY.md:175` en `c2b2888` describe como «el
   server corre `migrate`». Ninguna petición llega antes de que la migración haya terminado.
 - **Idempotencia, sentencia a sentencia:** las veinte llevan `IF NOT EXISTS` (§2.1, columna

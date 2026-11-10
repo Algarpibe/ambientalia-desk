@@ -382,7 +382,7 @@ lista de novedades en Configuración. **Nuevo desde `36dc352`:**
 ### 2.1 · Cómo y dónde se aplica
 
 - **App, base `desk`:** al arrancar, `reorgToDesk` si `DB_SCHEMA=desk` y después `migrate`
-  (`apps/desk/server/index.ts:26-27`). `migrate` lee `packages/zoho-sync/src/db/schema.sql`, lo trocea por `;` a
+  (`apps/desk/server/index.ts:26-27` en `97539c73`). `migrate` lee `packages/zoho-sync/src/db/schema.sql`, lo trocea por `;` a
   ciegas (`packages/zoho-sync/src/db/migrate.ts:19-21`) y ejecuta cada trozo **en el orden del fichero**, tolerando
   fallos (`packages/zoho-sync/src/db/migrate.ts:29-35`).
 - **Worker, base `zoho-hub`:** `hub-sync.ts` llama a `hubBootstrap` (`apps/hub-sync/src/hub-sync.ts:48`), que ejecuta

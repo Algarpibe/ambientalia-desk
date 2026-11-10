@@ -92,7 +92,7 @@ no garantiza que la sentencia siguiente vaya por la misma conexión. Dos salidas
   `@typescript-eslint/eslint-plugin`, fuera del árbol versionado), y
   `eslint.config.js:29-32` no lo relaja. Si las líneas 26 y 27 de `index.ts` dejan de nombrar `reorgToDesk` o `migrate`, el lint sale con
   **error**, no con un aviso más contra 165. El diseño tiene que mantener los dos identificadores en uso desde esas dos líneas.
-- `apps/desk/server/modoSinZohoIndice.test.ts:42` exige UNA línea con el texto `await migrate(pool)`: si la línea 27 de `index.ts` cambia ese
+- `apps/desk/server/modoSinZohoIndice.test.ts:42` en `97539c73` exige UNA línea con el texto `await migrate(pool)`: si la línea 27 de `index.ts` cambia ese
   texto, se rompe por construcción y se corrige en sitio.
 
 **Spec:** ADDED al final de `zoho-sync`, desde **RQ-ZS-52** (el último vivo es RQ-ZS-51, `openspec/specs/zoho-sync/spec.md:2696`) (S-5).

@@ -48,7 +48,7 @@ Lo que sigue se refiere a `openspec/changes/calificaciones-cuadre-conversaciones
 | RQ-ZS-50: `limite=0` cuenta y nombra los inexistentes | `apps/desk/server/rellenoConversacionesNumeros.test.ts:122` y `apps/desk/server/rellenoConversacionesNumeros.test.ts:100` | CUMPLE |
 | RQ-ZS-50: `400` de vacío, mal formado, 201 o junto a `desde`; 200 no dan `400` | `apps/desk/server/rellenoConversacionesNumeros.test.ts:153` y `apps/desk/server/rellenoConversacionesNumeros.test.ts:177` | CUMPLE |
 | RQ-ZS-50: posición con dos guardas activas | `apps/desk/server/rellenoConversacionesNumeros.test.ts:185` | CUMPLE (mutación P-1c de la sección 4) |
-| RQ-ZS-51: la sección existe y cubre lo obligatorio; quitar una parte la pone roja | `apps/desk/server/deployCalificacionesConversaciones.test.ts:40`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:45`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:51`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:57`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:62`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:67` | CUMPLE (mutaciones R-2 A, D y E de la sección 4) |
+| RQ-ZS-51: la sección existe y cubre lo obligatorio; quitar una parte la pone roja | `apps/desk/server/deployCalificacionesConversaciones.test.ts:40`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:45`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:51`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:57`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:62`, `apps/desk/server/deployCalificacionesConversaciones.test.ts:67` en `97539c73` | CUMPLE (mutaciones R-2 A, D y E de la sección 4) |
 
 ## 3 · Strict TDD
 

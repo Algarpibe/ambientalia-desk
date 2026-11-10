@@ -175,7 +175,7 @@ de la sección.
 
 **Precedencia (contradice RQ-ZS-51 en un punto, y lo dice).** RQ-ZS-51 (`openspec/specs/zoho-sync/spec.md:2698`) dice que `DEPLOY.md` «SHALL terminar» con la §25. Eso era cierto el
 día que se escribió; desde este cambio la última es la §26, igual que RQ-ZS-47 (`openspec/specs/zoho-sync/spec.md:2551`) dejó de ser la última al llegar la §25. RQ-ZS-51 no se
-modifica (elección (a) de la cabecera). La guarda de `apps/desk/server/deployCalificacionesConversaciones.test.ts:24`, `:67-68` («la §25 es la última») se corrige en sitio con el
+modifica (elección (a) de la cabecera). La guarda de `apps/desk/server/deployCalificacionesConversaciones.test.ts:24` en `97539c73`, `:67-68` («la §25 es la última») se corrige en sitio con el
 molde «es la última hasta la §N» de `apps/desk/server/deployControlCalidad.test.ts:17`, sin desplazar líneas.
 
 Fuente: decision/arranque-bloqueado-por-consola (2), `openspec/config.yaml:6472`; regla de secretos de `CLAUDE.md` (qué enciende y qué se rompe).
