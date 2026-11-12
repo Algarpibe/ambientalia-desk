@@ -30,21 +30,21 @@ Restaurar y comprobar `git diff --quiet -- <fichero>` (salida 0, contra el índi
 
 ## Lote L1 — módulo, pruebas unitarias, `pool.ts` y mutaciones (intento i3)
 Escenarios: RQ-ZS-58 los cinco; RQ-ZS-59 los cuatro; RQ-ZS-61 los tres.
-- [ ] L1.1 M0: `npm test` entero en el commit de partida con su log (si no se hizo ya en el intento); anotar ficheros, pruebas, memoria libre y duración.
-- [ ] L1.2 ROJO `packages/zoho-sync/src/db/conexionPerdida.test.ts` (nuevo): U-1 se escribe primero importando SÓLO `./pool` (`createPool` `desk`, `public` y `createPoolFromUrl`: un oyente y `emit('error')` no lanza). Correrla y anotar el rojo: debe ser «lanza», no «módulo inexistente».
-- [ ] L1.3 ROJO resto de la prueba (`design.md` §5): U-2 a U-9 contra el módulo, con un esqueleto que exporta `escucharConexionPerdida` y `lineaConexionPerdida` sin lógica; U-10 (forma de `pool.ts`: 11 líneas, finales homogéneos, 2-5, 7-9 y 11 literales de `96cba5ab`). Anotar los rojos por aserción.
-- [ ] L1.4 `packages/zoho-sync/src/db/conexionPerdida.ts` (nuevo, `design.md` §3): `TEXTO_CONEXION_PERDIDA`, `lineaConexionPerdida` pura (saneado D-3, código D-4, no-Error D-5, nunca el objeto), `escucharConexionPerdida` genérico sobre `EventEmitter` con `try`/`catch` comentado y `pool.on('error', …)` en su propia línea. Verde: U-2 a U-9. Typecheck cierra la hipótesis del genérico.
-- [ ] L1.5 `packages/zoho-sync/src/db/pool.ts` en sitio, sólo las líneas 1, 6 y 10 con el texto exacto de `design.md` §4. Comprobar: `git diff --numstat` da `3 3`, `wc -l` 11 y `file` CRLF igual que en `96cba5ab`. Verde: U-1 y U-10.
-- [ ] L1.6 Verde focal: `npx vitest run packages/zoho-sync/src/db/conexionPerdida.test.ts packages/zoho-sync/src/db/pool.test.ts`; `pool.test.ts` intacta y en verde (RQ-ZS-61.2).
-- [ ] L1.7 Mutaciones M-1 a M-6 (`design.md` §7), cada una con su rojo anotado:
+- [x] L1.1 M0: `npm test` entero en el commit de partida con su log (si no se hizo ya en el intento); anotar ficheros, pruebas, memoria libre y duración.
+- [x] L1.2 ROJO `packages/zoho-sync/src/db/conexionPerdida.test.ts` (nuevo): U-1 se escribe primero importando SÓLO `./pool` (`createPool` `desk`, `public` y `createPoolFromUrl`: un oyente y `emit('error')` no lanza). Correrla y anotar el rojo: debe ser «lanza», no «módulo inexistente».
+- [x] L1.3 ROJO resto de la prueba (`design.md` §5): U-2 a U-9 contra el módulo, con un esqueleto que exporta `escucharConexionPerdida` y `lineaConexionPerdida` sin lógica; U-10 (forma de `pool.ts`: 11 líneas, finales homogéneos, 2-5, 7-9 y 11 literales de `96cba5ab`). Anotar los rojos por aserción.
+- [x] L1.4 `packages/zoho-sync/src/db/conexionPerdida.ts` (nuevo, `design.md` §3): `TEXTO_CONEXION_PERDIDA`, `lineaConexionPerdida` pura (saneado D-3, código D-4, no-Error D-5, nunca el objeto), `escucharConexionPerdida` genérico sobre `EventEmitter` con `try`/`catch` comentado y `pool.on('error', …)` en su propia línea. Verde: U-2 a U-9. Typecheck cierra la hipótesis del genérico.
+- [x] L1.5 `packages/zoho-sync/src/db/pool.ts` en sitio, sólo las líneas 1, 6 y 10 con el texto exacto de `design.md` §4. Comprobar: `git diff --numstat` da `3 3`, `wc -l` 11 y `file` CRLF igual que en `96cba5ab`. Verde: U-1 y U-10.
+- [x] L1.6 Verde focal: `npx vitest run packages/zoho-sync/src/db/conexionPerdida.test.ts packages/zoho-sync/src/db/pool.test.ts`; `pool.test.ts` intacta y en verde (RQ-ZS-61.2).
+- [x] L1.7 Mutaciones M-1 a M-6 (`design.md` §7), cada una con su rojo anotado:
   - M-1 · comentar la línea `pool.on('error', …)` del módulo ⇒ U-1 (las tres), U-2 a U-5.
   - M-2 · `pool.ts:10` vuelve a `return new Pool({ connectionString })` ⇒ sólo los casos de `createPoolFromUrl` de U-1 y U-10.
   - M-3 · el mensaje pasa a `JSON.stringify(err)` ⇒ U-4.
   - M-4 · el oyente llama `console.error(linea, err)` en vez de `registrar(linea)` ⇒ U-2 y U-4.
   - M-5 · quitar el `try` del oyente ⇒ U-8.
   - M-6 · quitar la sustitución de URL ⇒ U-6.
-- [ ] L1.8 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`. CA-5: `git diff --quiet 96cba5ab -- packages/zoho-sync/src/db/migrate.ts packages/zoho-sync/src/db/schema.sql .env.example` sale 0.
-- [ ] L1.9 Cierre del lote: las cinco comprobaciones en una cadena, la medida (i3), `apply-progress.md`, commit (lo hace el orquestador).
+- [x] L1.8 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`. CA-5: `git diff --quiet 96cba5ab -- packages/zoho-sync/src/db/migrate.ts packages/zoho-sync/src/db/schema.sql .env.example` sale 0.
+- [x] L1.9 Cierre del lote: las cinco comprobaciones en una cadena, la medida (i3), `apply-progress.md`, commit (lo hace el orquestador).
 
 ## Lote L2 — arnés de integración en proceso hijo y evidencia (intento i4)
 Escenarios: RQ-ZS-60 los cuatro. Necesita el oyente de L1.
