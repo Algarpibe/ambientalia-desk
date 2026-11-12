@@ -5643,7 +5643,7 @@ decisiones_de_gerencia_adenda:
       «Margen del 14/12: se mantiene si la pasada en seco, el recuento y B2 tienen fecha antes del 16/11»). La
       decisión del margen sigue siendo del 09/11.
       (4) El paso a paso sigue la salida (3) de E-268: consultas a desk-db en forma `psql -c "…"` y comprobación previa
-      de que no queda ninguna sesión `idle in transaction`.
+      de que no queda ninguna sesión `idle in transaction`. (5) HECHA el 12/11/2026 por Alfonso, fuera de la fecha y de la reserva. Es una consulta de sólo lectura, sin `aplicar`, con corte `2026-11-12T23:59:00-05:00`. Resultado: 29 abiertos y 28 migrables; el otro nació en la App y ya lo gobierna ella. Los 8 estados presentes se migran por identidad, sin cambio de estado. `negativa` es nula, y `sinEquivalencia`, `trasElCorte`, `pendientes` y `sinRemisionVigente` están vacíos. `numeracion.arrastra` es falso: el más alto a marcar es 1022, frente a la base 10000. Ningún estado pide código. Mide el estado del 12/11: si el día de la migración aparece un estado sin equivalencia, la pasada con `aplicar=true` responde `409` sin escribir.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f01-fecha-pasada-en-seco) · docs/sdd/ENTRADA.md → E-269"
     engram: "decision/f1f01-fecha-pasada-en-seco — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "ninguno"
