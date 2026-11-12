@@ -6761,5 +6761,5 @@ decisiones_de_gerencia_adenda_2:
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda_2 (decision/f1b09-epica-1b-antes-del-corte) · notas de precisión del 12/11 en :3805, :4177 y :5619 · docs/sdd/ENTRADA.md → E-286"
     engram: "decision/f1b09-epica-1b-antes-del-corte — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "M11.6"
-    maestro_revision: "no aplica"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-09"

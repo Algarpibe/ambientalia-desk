@@ -706,3 +706,9 @@ artículos en Zoho Books, que está en USD —la moneda base de la organización
 *Por qué está aquí y no sólo en la decisión:* el aterrizaje de una regla es este fichero, que se carga entero en cada
 sesión. La tanda que la registra (F1B-13, `valor-reclamado-usd`) sólo la aplica a sus propios importes; los demás que hoy
 no llevan moneda quedan inventariados, con ruta y línea, en su `archive-report.md` como entrada para la bandeja (R-3).
+
+## Regla del bloque final de `openspec/config.yaml`
+
+Gerencia, 12/11/2026, a propuesta del analista al registrar `decision/f1b09-epica-1b-antes-del-corte`. **En `openspec/config.yaml`, sólo el último bloque de primer nivel admite entradas nuevas sin mover líneas.** Hoy ese bloque es `decisiones_de_gerencia_adenda_2`, y las decisiones nuevas van a su final. Añadir a un bloque anterior exige contar antes las citas a las líneas que se moverían; si hay alguna, se para y se consulta.
+
+*Por qué existe:* el 12/11, insertar una decisión en `decisiones_de_gerencia_adenda` habría movido 46 citas de 15 ficheros, y nada se habría puesto rojo: una cita desplazada a otra línea con texto pasa el detector en verde (regla de mutación 4).
