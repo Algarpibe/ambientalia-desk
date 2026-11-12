@@ -27,13 +27,13 @@ Cada intento se asienta sólo con TODOS sus códigos en 0 (`design.md`, D6) y co
 
 ## 3. Verify
 
-- [ ] 3.1 Contrastar cada cita de `proposal.md`, `design.md`, las deltas, este fichero y el repaso contra su fichero, en su
+- [x] 3.1 Contrastar cada cita de `proposal.md`, `design.md`, las deltas, este fichero y el repaso contra su fichero, en su
   ancla: qué afirma, extremo inicial y final por separado.
-- [ ] 3.2 Que un agente de sólo lectura, que no escribió el repaso, compruebe por su cuenta cada discrepancia y cada fila del
+- [x] 3.2 Que un agente de sólo lectura, que no escribió el repaso, compruebe por su cuenta cada discrepancia y cada fila del
   contraste contra `main`.
-- [ ] 3.3 Comprobar que ninguna discrepancia queda sin destino y que el cambio no toca código de producción, `openspec/specs/`,
+- [x] 3.3 Comprobar que ninguna discrepancia queda sin destino y que el cambio no toca código de producción, `openspec/specs/`,
   la auditoría del 05/10 ni ficheros de Supervisión (`git diff --name-only` contra `87510cbf`).
-- [ ] 3.4 Escribir `verify-report.md` con veredicto; cinco códigos en 0.
+- [x] 3.4 Escribir `verify-report.md` con veredicto; cinco códigos en 0.
 
 ## 4. Archivo
 

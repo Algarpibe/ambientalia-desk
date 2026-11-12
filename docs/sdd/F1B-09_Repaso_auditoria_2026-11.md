@@ -7,7 +7,7 @@
 | Auditoría que se repasa | `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md`, del 2026-10-05, sobre el árbol `0d1a40b`. No se edita |
 | Commit medido | `87510cbf`, `main` = `origin/main` el 2026-11-12 |
 | Fecha | 2026-11-12 |
-| Naturaleza | Lectura y documento. No se corrige nada: cada discrepancia va a la lista de §5 con un destino |
+| Naturaleza | Lectura y documento. No se corrige nada: cada discrepancia va a la lista de §4 con un destino |
 
 Las citas a `docs/sdd/ENTRADA.md`, `docs/sdd/R08.4_Expediente_de_cambios.md` y `docs/sdd/RECONCILIACION.md` van ancladas en
 `87510cbf`: son de Supervisión o se regeneran en `main`. Las demás citas de código y pruebas describen `main` en `87510cbf`.
@@ -76,7 +76,7 @@ lo dice. «**D-n**» = discrepancia, en la lista de §4 (supuesto S-1 de la prop
 | Los dos flujos nuevos no imponen contenido (§1.2) | Sigue igual en las de trabajo; el servidor impone lo que el catálogo declara | `apps/desk/server/transitionExec.ts:76-77`; el supuesto, `packages/shared/src/transitions.ts:385` | Coincide |
 | `liberacion` desde `En Proceso` se rechaza con `409` si el equipo exige verificación | Igual | `apps/desk/server/services/ticketService.ts:241-250`; la pertenencia al flujo, `apps/desk/server/services/ticketService.ts:125` y `apps/desk/server/services/ticketService.ts:231-234` | Coincide |
 | §1.3 (1): equipo nuevo nace en `Ticket creado`; la guarda de remisión le alcanza, abierto en E-158 | Nace igual; E-158 cerrada el 13/10: el equipo nuevo llega con remisión | `packages/shared/src/flujos.ts:138-140`; `docs/sdd/ENTRADA.md:1783` en `87510cbf` | Superado |
-| §1.3 (2): un `Pendiente` heredado de servicio no tiene transición; lo resuelve la migración de F1F-01 | Igual; F1F-01 sigue en curso | `packages/shared/src/migracionTickets.ts:31-35`; `docs/sdd/RECONCILIACION.md:21` en `87510cbf` | Coincide, destino vivo |
+| §1.3 (2): un `Pendiente` heredado de servicio no tiene transición, y de `Pendiente` «sólo sale `continuacion_soporte`»; lo resuelve la migración de F1F-01 | El heredado sigue sin transición, porque se enruta a servicio. De `Pendiente` sale además `anulacion_soporte` (`packages/shared/src/transitions.ts:396`). F1F-01 sigue en curso | `packages/shared/src/migracionTickets.ts:31-35`; `docs/sdd/RECONCILIACION.md:21` en `87510cbf` | Coincide, destino vivo |
 | §1.3 (3): las áreas de soporte remoto son un supuesto; E-090 «nueva» | Decididas y construidas (`areas-soporte-remoto`, fusión `3ac80f32`) | `packages/shared/src/transitions.ts:384` | Superado; **D-3** |
 | §1.4: tres decisiones del cliente, cada una con su línea del servidor | Las tres siguen impuestas en las mismas líneas | `apps/desk/src/components/TransitionPanel.tsx:56`; `apps/desk/server/services/ticketService.ts:125`, `apps/desk/server/services/ticketService.ts:126-128`, `apps/desk/server/services/ticketService.ts:129-131`, `apps/desk/server/services/ticketService.ts:91` | Coincide; los títulos de sus matrices, **D-11** |
 
@@ -111,7 +111,7 @@ se pone al día en `main` al fusionar este cambio.
 |---|---|---|---|
 | `transitionsForStatus` y `transitionById` | Sin llamador de producción; anotadas y vigiladas desde `cifras-caducas-y-lectores-de-servicio`; retirarlas lo decide Gerencia y no lo ha hecho | `packages/shared/src/transitions.ts:300-305` | **D-7** |
 | `periodosDeBodegaje` y `diasDeBodegaje` | Sin llamador | §2.2, A-2 | **D-5** |
-| `puedeCrearOVIGarantia` | Con llamadores: la ficha de garantía, el mantenimiento de novedades y la orden OVI | `packages/shared/src/cargos.ts:71` | Superado, y E-227 ya lo dice |
+| `puedeCrearOVIGarantia` | Con dos llamadores: la ficha de garantía y la orden OVI (`packages/shared/src/mantenimientoNovedades.ts:10` sólo la nombra en un comentario) | `packages/shared/src/cargos.ts:71`; `packages/shared/src/garantiaProveedor.ts:91`, `packages/shared/src/ordenOVI.ts:55` | Superado, y E-227 ya lo dice |
 | `puedeLiberarSinFactura` | Sin llamador, sin destino | `packages/shared/src/cargos.ts:63` | **D-6** |
 | Rutas sin cliente: 14 de 120, todas bajo `/api/admin/` | Con la misma heurística, 20 de 122: 18 bajo `/api/admin/`, la carga de las respuestas de la encuesta (sólo administradores y sin pantalla por diseño, `apps/desk/server/routes/encuestaRespuestas.ts:9-10`) y el callback de n8n (`apps/desk/server/routes/remision.ts:355`) | — | Coincide en el fondo: ninguna es de la épica 1B |
 
@@ -130,7 +130,10 @@ se pone al día en `main` al fusionar este cambio.
   `apps/desk/server/routes/remision.ts:158`, `apps/desk/server/routes/remision.ts:177`, `apps/desk/server/routes/remision.ts:197`,
   `apps/desk/server/routes/remision.ts:220`, `apps/desk/server/routes/remision.ts:232`, con la prueba de posición en
   `apps/desk/server/remisiones.test.ts:988`. Los dos detalles caducos que la auditoría encontró en sus fichas (B-8) los corrigió
-  E-229, cerrada. Coincide.
+  E-229, cerrada. Coincide, con una precisión: la auditoría da IV-12 «en sus tres puntos»
+  (`docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:227`) y hoy son cuatro. El cuarto, la guarda de cargo para asociar una
+  orden OVI, en la misma `apps/desk/server/routes/remision.ts:220`, lo registró `ovi-garantia-por-cargo` (F1B-03) el 06/10 en
+  `CLAUDE.md`, que ya lo dice. Es superado con su registro al día, no discrepancia.
 
 ### 2.6 · §6: los lectores comunes ante los tres flujos
 
@@ -187,15 +190,19 @@ documental directo), las dos cerradas. Queda la del maestro: **D-14**.
 | 6 | Contrastar cada tanda de 1B con su `archive-report.md` | No se rehace: cada fila de 1B de antes del corte está cerrada por archivo con su línea R-1, que es lo que sostiene su `cierra` (supuesto S-6) |
 | 7 | Buscar si cada hallazgo duplicaba una entrada | No se rehace; ninguna de las nueve entradas se cerró por duplicada |
 | 8 | Regenerar o ampliar el mapa, y corregir las cifras de §7.3 | **Hecho por otros**: el mapa, `mapa-blueprint-tres-flujos` (`60b171fb`); las cifras, `cifras-caducas-y-lectores-de-servicio` (`1029c903`) |
-| 9 | Revisar el flujo de la remisión (n8n, callback, anulación) | Tampoco. Sigue sin dueño: **D-15** |
+| 9 | Revisar el flujo de la remisión (n8n, callback, anulación) | Tampoco. El flujo es común a la remisión de entrada, a la de salida y a la sin ticket, así que lo recorrerán las auditorías de hito de F1B-16 y F1B-17: **D-15** y **D-17** |
 
 ---
 
 ## 4 · Las discrepancias, con su destino
 
-Dieciséis. **Ninguna cae en el alcance de F1B-16, F1B-17 ni F1B-20, así que las dieciséis van a «bandeja»**: la lista para
-Supervisión de §5, que las registra en `docs/sdd/ENTRADA.md` (supuesto S-2). Ninguna queda sin destino. Este cambio no corrige
-ninguna.
+Diecinueve. **Diecisiete van a «bandeja»**, la lista para Supervisión de §5, que las registra en `docs/sdd/ENTRADA.md`. **Dos
+caen en el alcance de una fila de 2027**: D-15 en F1B-16 y D-17 en F1B-17, porque las dos filas cambian el flujo común de la
+remisión que la auditoría no revisó (supuesto S-2, corregido en el verify). Ninguna cae en F1B-20. Ninguna queda sin destino.
+Este cambio no corrige ninguna.
+
+D-11, D-18 y D-19 son de la clase de B-7 (cifras y afirmaciones caducas en comentarios y títulos) y no salen de un barrido
+exhaustivo: son las que encontraron los dos lectores del repaso, el que lo escribió y el verificador.
 
 | # | Discrepancia | Dónde, hoy | Destino |
 |---|---|---|---|
@@ -209,19 +216,24 @@ ninguna.
 | D-8 | A-1 de F1A-05 sigue: la aprobación sin repuestos escribe la fecha «Final» y deja vacía la de la columna 58. La prueba que lo documenta lo asigna a F1C-02, que está cerrada | `packages/shared/src/transitions.ts:203`; `packages/shared/src/reentrancia.test.ts:126-128` | bandeja |
 | D-9 | El hallazgo 3 de la R04, el ciclo reentrante, sigue con 12 campos de fecha reentrantes, y los cuatro indicadores que afecta (columnas 50, 53, 57 y 58) no tienen dueño. La auditoría lo daba a F1C-02 y F1C-06, las dos cerradas | `packages/shared/src/reentrancia.ts:80-82`; `packages/shared/src/reentrancia.test.ts:166-171`; `packages/shared/src/invariantesGrafo.test.ts:137` | bandeja |
 | D-10 | El comentario de la guarda de obligatorios dice que hoy no hay ningún checkbox obligatorio; hay tres, en la aprobación del control de calidad (F1C-07). La guarda sí los impone | `apps/desk/server/transitionExec.ts:73`; `packages/shared/src/camposControlCalidad.ts:33` | bandeja |
-| D-11 | Títulos de prueba con cifras caducas, que ninguna aserción lee: la unión «(23)» tiene 26 estados; la matriz de equipo nuevo dice «6×3» y «las cinco» y recorre siete (21 casos); la de soporte remoto dice «4×3» y «las cuatro» y recorre cinco (15 casos) | `packages/shared/src/invariantesGrafo.test.ts:163`; `apps/desk/server/permisos.test.ts:219`, `apps/desk/server/permisos.test.ts:221`, `apps/desk/server/permisos.test.ts:243`; `apps/desk/server/permisos.test.ts:304`, `apps/desk/server/permisos.test.ts:306`, `apps/desk/server/permisos.test.ts:328` | bandeja |
+| D-11 | Títulos de prueba con cifras caducas, que ninguna aserción lee: la unión «(23)» tiene 26 estados; en equipo nuevo, «`Finalizado` es el único sin salida» y hoy también lo es `Anulado`; la matriz de equipo nuevo dice «6×3», «las cinco» y «pasa por las cinco» y recorre siete (21 casos, como dice bien `apps/desk/server/permisos.test.ts:243`); la de soporte remoto dice «4×3» y «las cuatro» y recorre cinco (15 casos, `apps/desk/server/permisos.test.ts:328`) | `packages/shared/src/invariantesGrafo.test.ts:163`, `packages/shared/src/invariantesGrafo.test.ts:302`; `apps/desk/server/permisos.test.ts:219`, `apps/desk/server/permisos.test.ts:221`, `apps/desk/server/permisos.test.ts:250`; `apps/desk/server/permisos.test.ts:304`, `apps/desk/server/permisos.test.ts:306` | bandeja |
 | D-12 | El comentario de los estados de salida única pone `Ingresado` de ejemplo; desde F1C-08 tiene dos salidas (`calibracion_directa`). Las cifras del mismo comentario, nueve y cinco, aciertan y están vigiladas | `packages/shared/src/estados.ts:142-145` | bandeja |
-| D-13 | Cuatro líneas de «Fuera de alcance» vecinas de las que corrige este cambio remiten a destinos ya cumplidos: la guarda de remisión a F1B-03, cerrada; la anulación y el área de soporte remoto, construidas; soporte remoto a `blueprint-soporte-remoto`, archivado; la guarda de `habilitar_servicio` a F1B-03 (hoy `apps/desk/server/services/ticketService.ts:273`). Una la dejó a propósito `areas-soporte-remoto`, por ser foto de lo que su tanda dejó fuera | `openspec/specs/transitions-soporte-remoto/spec.md:320`, `openspec/specs/transitions-soporte-remoto/spec.md:326`; `openspec/specs/transitions-equipo-nuevo/spec.md:551`, `openspec/specs/transitions-equipo-nuevo/spec.md:552` | bandeja |
+| D-13 | Cuatro líneas de «Fuera de alcance» vecinas de las que corrige este cambio remiten a destinos ya cumplidos: la guarda de remisión a F1B-03, cerrada; la anulación y el área de soporte remoto, construidas; soporte remoto a `blueprint-soporte-remoto`, archivado; la guarda de `habilitar_servicio` a F1B-03 (hoy `apps/desk/server/services/ticketService.ts:273`). Una la dejó a propósito `areas-soporte-remoto`, por ser foto de lo que su tanda dejó fuera | `openspec/specs/transitions-soporte-remoto/spec.md:321`, `openspec/specs/transitions-soporte-remoto/spec.md:326`; `openspec/specs/transitions-equipo-nuevo/spec.md:551`, `openspec/specs/transitions-equipo-nuevo/spec.md:552` | bandeja |
 | D-14 | M11.6 dice que la extensión a los tres flujos es F1B-09 «sin empezar», y el texto entregado para la R08.5 dice «en curso; el cierre se hace al cerrar la épica 1B». Con este cierre, ninguno de los dos es cierto | `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3521`; `docs/sdd/R08.4_Expediente_de_cambios.md:318` en `87510cbf` | bandeja |
-| D-15 | El flujo de la remisión (n8n, callback, anulación) sigue sin auditar más allá de las líneas de IV-12, y no tiene dueño. Es de la remisión de entrada, de filas ya cerradas, no de la remisión sin ticket ni de la de salida (supuesto S-2) | `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:339`; `apps/desk/server/routes/remision.ts:355` | bandeja |
+| D-15 | El flujo de la remisión sigue sin auditar más allá de las líneas de IV-12. Su envío a n8n rechaza con `422` la remisión sin ticket, que es justo lo que F1B-16 tiene que cambiar; su auditoría de hito lo recorre | `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:339`; `apps/desk/server/routes/remision.ts:273`, `apps/desk/server/routes/remision.ts:302` | F1B-16 |
 | D-16 | «Cliente sin ruta» sigue sin buscarse de forma mecánica, y no tiene dueño | `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:330-331` | bandeja |
+| D-17 | La otra mitad del mismo flujo: anular, restaurar y el callback de n8n no distinguen el tipo de remisión, y el recuento que mueve el estado del ticket tampoco filtra por tipo. Sólo actúa con el ticket en `Ticket creado` o `Remisión creada`, pero la remisión de salida de F1B-17 pasará por esas mismas rutas; su auditoría de hito las recorre | `apps/desk/server/routes/remision.ts:329`, `apps/desk/server/routes/remision.ts:341`, `apps/desk/server/routes/remision.ts:355`; `apps/desk/server/db/estadoPorRemision.ts:41`, `apps/desk/server/db/estadoPorRemision.ts:43-46` | F1B-17 |
+| D-18 | Comentarios del código con cifras de un catálogo de servicio de 31 o 33 transiciones, que hoy tiene 40: «las otras 28» (las que no proponen derivado; hoy 35, porque cinco sí lo proponen, `packages/shared/src/transitions.ts:274-282`), «33 declaraciones», «las 33 entradas … la 32.ª» y «las 33 copias»; «las 31 transiciones» en tres ficheros. Y el comentario de las columnas del tablero dice que son los estados de servicio técnico, cuando dos son de los flujos nuevos | `packages/shared/src/transitions.ts:269`, `packages/shared/src/transitions.ts:272`, `packages/shared/src/transitions.ts:289-290`, `packages/shared/src/transitions.ts:293`; `apps/desk/server/services/valoresDeTransicion.ts:10`, `packages/shared/src/bodegaje.ts:28`, `packages/shared/src/sla.ts:14`; `packages/shared/src/columns.ts:4` | bandeja |
+| D-19 | Comentarios de pruebas con cifras o afirmaciones caducas: la matriz de servicio dice «93 casos, 55 prohibidos y 38 permitidos» y hoy son 120, 73 y 47 (`apps/desk/server/permisos.test.ts:77`); la de equipo nuevo, «seis … 12 prohibidos, 6 permitidos … las seis son Servicio Técnico», y hoy son siete, con la anulación de Comercial; la de soporte remoto, «4 permitidos, 8 prohibidos», y hoy son 5 y 10; un comentario dice que `transitionsForStatus` y `transitionById` son lo que ejecuta el servidor, cuando `packages/shared/src/transitions.ts:300` dice que no tienen llamador de producción; y «las 31 transiciones» en otra prueba | `apps/desk/server/permisos.test.ts:26-27`, `apps/desk/server/permisos.test.ts:338`, `apps/desk/server/permisos.test.ts:211-213`, `apps/desk/server/permisos.test.ts:301`; `packages/shared/src/invariantesGrafo.test.ts:16-18`; `packages/shared/src/sla.test.ts:22` | bandeja |
 
 ---
 
 ## 5 · Para Supervisión — no se editan en la rama
 
-- **La bandeja.** Las dieciséis de §4. En particular, las trazas de E-223 (D-1), E-226 (D-2) y E-090 (D-3) dicen algo que ya no
-  es cierto, y la de E-224 (D-4) se queda a medias. De E-227 queda sin destino lo de D-5, D-6 y D-7.
+- **La bandeja.** Las diecisiete de §4 con destino «bandeja». En particular, las trazas de E-223 (D-1), E-226 (D-2) y E-090
+  (D-3) dicen algo que ya no es cierto, y la de E-224 (D-4) se queda a medias. De E-227 queda sin destino lo de D-5, D-6 y D-7.
+- **Las filas de 2027.** D-15 queda como entrada de la auditoría de hito de F1B-16, y D-17 de la de F1B-17
+  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:96-97`), que es donde la decisión de respaldo pone esa auditoría.
 - **Las tres decisiones** que mantenían el `cierra: no` reciben su nota fechada 12/11, sin reescribirlas:
   `decision/orden-tres-tandas-04-10` (2), `decision/e222-mapa-equipo-nuevo-soporte-remoto` (5) y
   `decision/f1b04-recuento-no-retiene` (5).
