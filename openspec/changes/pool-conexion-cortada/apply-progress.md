@@ -61,3 +61,66 @@ Ver línea final, anotada con todo en el índice.
 ### Cierre del lote (orquestador)
 - **M0 (L1.1):** `npm test` entero en la partida `a98a113d`, la misma del intento i2: salida 0, 376 ficheros y 6.462 pruebas en verde (30 omitidas), 283 s, 5.854 MB libres al arrancar.
 - **Las cinco comprobaciones (L1.9)** corren sobre el commit de este lote; su resultado queda en el `settle` del intento i3 y al principio del bloque de L2 de este fichero.
+
+## Lote L2 (intento i4) — HECHO (L2.9, cierre y commit, del orquestador)
+
+**Cierre de L1 (orquestador) sobre el commit `cb278436`:** typecheck 0, lint 0 (165 avisos contra 165), detector de citas 0 (8.751 comprobadas), `npm test` 0 (6.481 pruebas en verde, 30 omitidas, 305 s, 4.298 MB libres al arrancar), build 0 (`index-F1jDYjEU.js`); medida 330 + 12 = 342, igual a lo registrado.
+
+Modo: strict TDD. Partida de la medida: `cb278436`. Worktree propio. Registro: el orquestador abrió el intento i4 (no hubo `acquire` ni `settle` en este lote).
+
+### Contenedor (L2.1, L2.8)
+- Imagen local `postgres:17-alpine`, nombre `pcc-pg`. **Desvío de puerto:** el `55433` lo ocupaba `salestracker-postgres-e2e` (otro proyecto, `127.0.0.1:55433->5432`, 8 h arriba); no se tocó. Se usó `-p 55434:5432`, el resto del comando idéntico; `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55434/postgres`.
+- `SHOW server_version` = **17.10** (en contenedor, y mismo mayor que el servicio `postgres:17` del CI).
+- `docker stop pcc-pg` (el `--rm` lo borra); `docker ps -a` sin `pcc-pg`. Nunca producción ni otra base: cada ejecución creó `pcc_it_<pid>_<ts>` y la borró con `WITH (FORCE)`.
+
+### Medido (hecho, no hipótesis)
+| Dato | Valor |
+|---|---|
+| SQLSTATE de la línea (I-1, I-2) | **`57P01`** (la hipótesis acertó) |
+| Líneas por corte (I-1, I-2) | **exactamente 1**, `Pool de la base: se perdió una conexión inactiva; el proceso sigue — terminating connection due to administrator command [57P01]` |
+| Salida del hijo en I-1 e I-2 | 0; pid nuevo tras el corte (p. ej. 96 → 99 en la prueba manual; 112 → 113 en I-3) |
+| `application_name` del pool (I-1) | vacío (`''`) |
+| `application_name` de `psql` (E-1) | **`psql`** (hipótesis confirmada): la consola se distingue de la App porque la App llega con nombre vacío |
+| I-3 (consulta en curso, estado `active`) | la consulta RECHAZA con `57P01` («terminating connection due to administrator command»); el proceso SIGUE (salida 0, vuelve a servir con pid nuevo); **0 líneas** y stderr vacío: el error llega a la consulta, no al evento `error` del pool |
+| I-4 (cliente prestado + `BEGIN`, estado `idle in transaction`) | **EL PROCESO MUERE**: salida **1**, `Unhandled 'error' event` sobre `Client`, `code: '57P01'`; **0 líneas** del texto fijo; el hijo no llega a `baja` ni `despues` |
+
+**I-4 cambia la §27 y la respuesta del §7 de la propuesta:** el oyente del pool NO cubre un cliente prestado (`pool.connect()` sin liberar, el caso de `apps/desk/server/db/transaccion.ts:16-26` y del pid raíz de la §26 de `DEPLOY.md`): si el servidor corta esa conexión con la transacción abierta, el proceso sigue muriendo. La §27 debe decir el límite tal cual, y la protección de ese caso (oyente por cliente prestado) queda fuera de este cambio. I-3 no depende del oyente (verde también con M-1).
+
+### Tiempos (anti falso verde)
+- I-1: 1.246-1.456 s por prueba; I-2: 1.057-1.456 s; I-3: ~1.1-1.4 s; I-4: ~1.1-1.2 s. Fichero entero 4 pruebas: 5,6 s de pruebas (8,2 s con arranque). Plazo por `it`: 60 s.
+- Desde «listo» al corte < 8 s en todas (la ventana real es ~1 s); estado `idle` antes del corte; `pg_terminate_backend` = `true` (aserto) en las cuatro.
+- E-1: `docker exec pcc-pg psql -U postgres -c "SELECT application_name FROM pg_stat_activity WHERE pid = pg_backend_pid()"` → `psql`.
+
+### Rojo y verde (fichero › prueba › aserción)
+- Rojo (M-1: `// pool.on('error', oyente)` en `packages/zoho-sync/src/db/conexionPerdida.ts:43`, con el contenedor): `packages/zoho-sync/src/db/conexionPerdida.integration.test.ts › I-1 · createPool (desk) … › expect(codigo).toBe(0)` → `expected 1 to be +0`; igual `› I-2 · createPoolFromUrl › expect(codigo).toBe(0)`. El hijo muere con salida 1 por un `error` sin oyente: rojo por aserción, no por conexión.
+- Verde con el oyente restaurado: I-1 e I-2 pasan a la primera, con la línea exacta aceptada (SQLSTATE y texto íntegro).
+- I-3 e I-4 no tienen rojo previo (caracterización D-7, medida primero con una prueba de medición que se sustituyó por los asertos fijados). Triangulación: dos modos de reposo (`desk` y URL), uno con consulta en curso y uno con cliente prestado: cuatro caminos distintos del hijo.
+- Sin `TEST_DATABASE_URL`: 4 omitidas, no rojas (`conexionPerdida.integration.test.ts`: «4 skipped»), junto a `conexionPerdida.test.ts` y `pool.test.ts`: 2 ficheros en verde (21), 1 omitido. Con la variable: 3 ficheros, 25/25 en verde.
+
+### Mutaciones sobre la integración (protocolo: `git add` antes; `perl -i -pe '… if $. == N'`; `git checkout --`; `git diff --quiet` = 0; `file` CRLF tras cada una)
+| Mutación | Cambio | Se puso rojo |
+|---|---|---|
+| M-1 | `// pool.on('error', oyente)` (`conexionPerdida.ts:43`) | I-1 e I-2 (`expected 1 to be +0`, el hijo muere con salida 1). **I-3 sigue verde** (no depende del oyente: la consulta en curso recibe el error y el proceso sigue) e I-4 sigue verde (muere con o sin oyente) |
+| M-2 | `pool.ts:10` vuelve a `return new Pool({ connectionString })` | sólo I-2 (`expected 1 to be +0`); I-1, I-3 e I-4 verdes: el cableado es por función |
+Ninguna mutación quedó sin rojo; M-2 acotada a `createPoolFromUrl`, como pide el diseño.
+
+### Verificaciones
+- Focal con contenedor: 3 ficheros, 25/25 en verde. `npm run typecheck`: salida 0. `npm run lint -- --max-warnings 165`: salida 0, **165 avisos contra 165**; sin `eslint-disable`.
+- Ficheros nuevos en CRLF (`file`): hijo e integración. `testing/hijoConexionCortada.ts` no es `.test.ts` (vitest no lo ejecuta, `vitest.config.ts:17-20`) y `tsc -b` lo tipa.
+- Sólo ficheros de L2 (`design.md` §9): ni `openspec/config.yaml`, ni `docs/sdd/ENTRADA.md`, ni `.env.example`, `schema.sql`, `migrate.ts`.
+
+### Desvíos del diseño (con su porqué)
+1. **Puerto 55434 en vez de 55433:** el 55433 estaba ocupado por un contenedor ajeno; no se paró.
+2. El hijo emite además un paso `baja` (`total` del pool tras el corte) y el `app` en «listo»: no rompe el protocolo de §6, sólo añade información.
+3. El cierre `rl.on('close')` del hijo sólo sale con 3 si no llegó «cortado» (la primera versión salía con 3 aunque «cortado» y el cierre llegaran juntos; se vio en la prueba manual).
+4. La base propia por ejecución se crea con `CREATE DATABASE` aunque el pool no migra nada: así el aislamiento es el mismo que el de `puestaAlDiaEstricta.integration.test.ts`.
+5. I-3: el esperado fija «0 líneas» (el diseño dejaba 0 o 1); lo observado es 0.
+
+### Medida del intento (i4)
+Ver línea final, anotada con todo en el índice.
+
+`git diff --cached --shortstat --no-renames cb278436` con todo en el índice antes de la nota del orquestador: 4 ficheros, 330 inserciones y 8 borrados (338 líneas; la medida final está en la nota de abajo; incluye este fichero y las casillas de `tasks.md`). Sin ficheros nuevos fuera del índice (`wc -l` = 0), sin binarios. Muy por debajo de 800.
+
+### Nota del orquestador (L2)
+- **Reproducción independiente** en un contenedor propio (`pcc-pg-v`, `postgres:17-alpine`, puerto 55435, `SHOW server_version` = 17.10): I-1 a I-4 en verde, 4 de 4. M-1 (comentar `pool.on` en `packages/zoho-sync/src/db/conexionPerdida.ts:43`): 11 rojas, entre ellas U-1 e I-1 e I-2 con «expected 1 to be +0»; I-3 e I-4 siguen verdes. Restaurado con `git checkout --`: mismo sha256, `git diff --quiet` 0 y CRLF. Contenedor retirado.
+- **Medida final al commit:** `git diff --shortstat --no-renames cb278436` = 337 + 9 = 346 líneas, sin nada sin trackear. Las cinco comprobaciones (L2.9) quedan en el `settle` del intento i4 y al principio del bloque de L3.

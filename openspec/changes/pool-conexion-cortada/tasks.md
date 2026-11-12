@@ -48,15 +48,15 @@ Escenarios: RQ-ZS-58 los cinco; RQ-ZS-59 los cuatro; RQ-ZS-61 los tres.
 
 ## Lote L2 — arnés de integración en proceso hijo y evidencia (intento i4)
 Escenarios: RQ-ZS-60 los cuatro. Necesita el oyente de L1.
-- [ ] L2.1 Contenedor desechable, sólo local: `docker run --rm -d --name pcc-pg -p 55433:5432 -e POSTGRES_PASSWORD=postgres postgres:17-alpine`; esperar `pg_isready`; anotar `SHOW server_version`.
-- [ ] L2.2 `packages/zoho-sync/src/db/testing/hijoConexionCortada.ts` (nuevo, no `.test.ts`; `design.md` §6): modos `reposo-desk`, `reposo-url`, `en-curso`, `prestado`; una línea JSON por paso; sale 3 si se cierra stdin sin «cortado» y 4 por temporizador `unref` de 40 s.
-- [ ] L2.3 ROJO `packages/zoho-sync/src/db/conexionPerdida.integration.test.ts` (nuevo, molde `packages/zoho-sync/src/db/puestaAlDiaEstricta.integration.test.ts:17-35`, se salta sin `TEST_DATABASE_URL`): I-1 e I-2 con `spawn(process.execPath, [tsx cli.mjs, hijo, modo])` asíncrono, anti falso verde (`idle`, `pg_terminate_backend` = `true`, < 8 s desde «listo»), plazo propio de 60 s. Rojo medido CON el contenedor y con el esqueleto de L1 sin oyente activo (M-1), por aserción, no por conexión.
-- [ ] L2.4 Verde I-1 e I-2: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55433/postgres npx vitest run packages/zoho-sync/src/db/conexionPerdida.integration.test.ts`. Anotar versión, SQLSTATE (`57P01` es hipótesis: se fija lo observado), línea exacta, pid antes/después y `application_name` del pool.
-- [ ] L2.5 I-3 (caracterización · consulta en curso) e I-4 (límite · cliente prestado con transacción abierta): primero medir, luego fijar lo observado (D-7); sus títulos dicen que son caracterización. Anotar la respuesta al §7 de la propuesta y si I-4 cambia la §27.
-- [ ] L2.6 E-1 a mano: `docker exec pcc-pg psql -U postgres -c "SELECT application_name FROM pg_stat_activity WHERE pid = pg_backend_pid()"`; anotar cómo se distingue la consola de la App.
-- [ ] L2.7 M-1 y M-2 sobre la integración (protocolo): M-1 ⇒ I-1 e I-2 rojas (hijo con salida ≠ 0), anotar qué hace I-3; M-2 ⇒ sólo I-2 roja.
-- [ ] L2.8 `docker stop pcc-pg` (el `--rm` lo borra); comprobar con `docker ps -a` que no queda.
-- [ ] L2.9 Cierre del lote: las cinco comprobaciones (la suite NO lleva `TEST_DATABASE_URL`; la integración queda omitida), medida (i4), `apply-progress.md` (fusionado), commit.
+- [x] L2.1 Contenedor desechable, sólo local: `docker run --rm -d --name pcc-pg -p 55433:5432 -e POSTGRES_PASSWORD=postgres postgres:17-alpine`; esperar `pg_isready`; anotar `SHOW server_version`.
+- [x] L2.2 `packages/zoho-sync/src/db/testing/hijoConexionCortada.ts` (nuevo, no `.test.ts`; `design.md` §6): modos `reposo-desk`, `reposo-url`, `en-curso`, `prestado`; una línea JSON por paso; sale 3 si se cierra stdin sin «cortado» y 4 por temporizador `unref` de 40 s.
+- [x] L2.3 ROJO `packages/zoho-sync/src/db/conexionPerdida.integration.test.ts` (nuevo, molde `packages/zoho-sync/src/db/puestaAlDiaEstricta.integration.test.ts:17-35`, se salta sin `TEST_DATABASE_URL`): I-1 e I-2 con `spawn(process.execPath, [tsx cli.mjs, hijo, modo])` asíncrono, anti falso verde (`idle`, `pg_terminate_backend` = `true`, < 8 s desde «listo»), plazo propio de 60 s. Rojo medido CON el contenedor y con el esqueleto de L1 sin oyente activo (M-1), por aserción, no por conexión.
+- [x] L2.4 Verde I-1 e I-2: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55433/postgres npx vitest run packages/zoho-sync/src/db/conexionPerdida.integration.test.ts`. Anotar versión, SQLSTATE (`57P01` es hipótesis: se fija lo observado), línea exacta, pid antes/después y `application_name` del pool.
+- [x] L2.5 I-3 (caracterización · consulta en curso) e I-4 (límite · cliente prestado con transacción abierta): primero medir, luego fijar lo observado (D-7); sus títulos dicen que son caracterización. Anotar la respuesta al §7 de la propuesta y si I-4 cambia la §27.
+- [x] L2.6 E-1 a mano: `docker exec pcc-pg psql -U postgres -c "SELECT application_name FROM pg_stat_activity WHERE pid = pg_backend_pid()"`; anotar cómo se distingue la consola de la App.
+- [x] L2.7 M-1 y M-2 sobre la integración (protocolo): M-1 ⇒ I-1 e I-2 rojas (hijo con salida ≠ 0), anotar qué hace I-3; M-2 ⇒ sólo I-2 roja.
+- [x] L2.8 `docker stop pcc-pg` (el `--rm` lo borra); comprobar con `docker ps -a` que no queda.
+- [x] L2.9 Cierre del lote: las cinco comprobaciones (la suite NO lleva `TEST_DATABASE_URL`; la integración queda omitida), medida (i4), `apply-progress.md` (fusionado), commit.
 
 ## Lote L3 — `DEPLOY.md` §27, guardas y barrido (intento i5)
 Escenarios: RQ-ZS-62 los tres; RQ-ZS-61.3.
