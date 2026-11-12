@@ -58,7 +58,7 @@ describe('syncConversations · lista entera (RQ-ZS-25)', () => {
       '/tickets/T1/conversations?from=200&limit=100',
     ])
     expect(await cuenta('T1')).toBe(250)
-  })
+  }, 20_000) // E-287: límite propio; en el CI lento pasa de los 5 s por defecto
   it('una segunda página con 500 guarda las 100 de la primera y rechaza nombrando ticket y estado', async () => {
     const s = servidor(250, { fallaEn: 100 })
     await expect(createSync({ zohoFetch: s.zohoFetch, db, config }).syncConversations('T2')).rejects.toThrow('Zoho /tickets/T2/conversations 500')

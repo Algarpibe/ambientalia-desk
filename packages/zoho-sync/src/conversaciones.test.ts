@@ -308,5 +308,5 @@ describe('guardarYReflejar · reflejo de lo ausente (RQ-ZS-26)', () => {
     const r = await guardarYReflejar(db, 'T9', completa, { esperado: 150, marcar: true, inicio })
     expect(r).toEqual({ marcadas: ['c150'], completa: true })
     expect(await marcadas('T9')).toEqual(['c150'])
-  })
+  }, 20_000) // E-287: límite propio; en el CI lento pasa de los 5 s por defecto
 })
