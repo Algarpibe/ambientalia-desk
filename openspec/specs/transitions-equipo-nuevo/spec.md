@@ -550,7 +550,7 @@ esquema y del cambio **MUST NOT** modificar, marcar ni rellenar ninguna fila exi
 
 - Soporte remoto (M1.5) → segundo cambio de F1B-06, `blueprint-soporte-remoto`.
 - Guarda de `habilitar_servicio` → F1B-03.
-- Columna propia de tablero para `Verificación`; mapa generado de los tres flujos → F1B-09.
+- Columna propia de tablero para `Verificación` → hecha por F1B-08 (`columna-propia-dos-estados`, fusión `ae2e5223`); mapa generado de los tres flujos → hecho por F1B-09 (`mapa-blueprint-tres-flujos`, fusión `60b171fb`).
 - Siembra de compuestos y gases patrón en producción: tarea de persona (Alfonso, `openspec/config.yaml:2897`).
 - Pantalla de mantenimiento de gases patrón y edición del compuesto desde la ficha de la hoja de vida → F1B-02 y F1D-01.
 - Certificado propio de Ambientalia y sus tres firmas → módulo de informes (`config.yaml:2914`).

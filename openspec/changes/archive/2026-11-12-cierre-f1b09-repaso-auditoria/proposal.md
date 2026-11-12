@@ -44,9 +44,10 @@ cambio corrige, porque cambian al archivar.
 ## Qué pide la fila, medido
 
 - **Su origen**, `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:166`: «Auditoría de blueprint de los tres flujos
-  (`audit-F1B`); extensión a equipo nuevo y soporte remoto como pide M11.6». La columna de fuente de esa fila es «—», así que el
-  barrido no cruza su `maestro:` y, archivada, la cuenta entre las «cerradas sin fuente declarada en la R01.1»
-  (`apps/desk/server/reconciliacion/comprobaciones.ts:231-234`).
+  (`audit-F1B`); extensión a equipo nuevo y soporte remoto como pide M11.6». *Corregido en el archivo:* el barrido lee la
+  cuarta columna de la fila (`apps/desk/server/reconciliacion/comprobaciones.ts:133-141`), que dice «la extensión de M11.6 deja
+  de ser manual», y el `maestro: ["M11.6"]` de esta cabecera la cruza: archivada, F1B-09 cuenta como verificada, ni «sin fuente
+  declarada» ni «sin verificar» (`apps/desk/server/reconciliacion/comprobaciones.ts:237-238`).
 - **La fila vigente**, `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:89`: talla S, antes del 14/12, «en curso».
 - **El remanente**, `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:215`, escrito el 09/10: «falta el repaso al cerrar
   la épica 1B (XS; hipótesis) y E-223 a E-230, sin talla».
@@ -112,8 +113,8 @@ archivar.
 
 ### (c) La línea de prueba que marca F1B-09 «en curso»
 
-`apps/desk/server/reconciliacion/registro.test.ts:218` en `87510cbf` y `apps/desk/server/reconciliacion/registro.test.ts:220`
-en `87510cbf` fijan la lista «en curso» del árbol real en CINCO, con F1B-09. Al archivar este cambio con `cierra: si`, el
+`apps/desk/server/reconciliacion/registro.test.ts:218` en `87510cbf` y `apps/desk/server/reconciliacion/registro.test.ts:220` en `87510cbf`
+fijan la lista «en curso» del árbol real en CINCO, con F1B-09. Al archivar este cambio con `cierra: si`, el
 barrido la cuenta «por archivo» y la prueba tiene que ponerse roja. Se ve el rojo y se corrige en sitio, sin mover líneas: de
 CINCO a CUATRO, sin F1B-09, con `toContain('F1B-09')` en «cerradas por archivo». Es la única edición de código del cambio, con
 el molde de `openspec/changes/archive/2026-11-10-cierre-f1b13-con-lo-construido` (`8b3c4bac`).

@@ -11,7 +11,7 @@ usarlo, y uno se descartó.
 
 | # | Comprobación | Resultado |
 |---|---|---|
-| 1 | Cabecera de siete campos, con `tanda: F1B-09`, `cierra: si`, `toca_maestro: si` y `origen_cabecera: declarada` | Cumple. La fuente de la fila en la R01.1 es «—» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:166`), así que el barrido la contará entre las «cerradas sin fuente declarada» (`apps/desk/server/reconciliacion/comprobaciones.ts:231-234`) |
+| 1 | Cabecera de siete campos, con `tanda: F1B-09`, `cierra: si`, `toca_maestro: si` y `origen_cabecera: declarada` | Cumple. *Corregido en el archivo:* aquí se decía que la fuente de la fila en la R01.1 es «—» y que el barrido la contaría «sin fuente declarada»; es falso. El barrido lee la cuarta columna de `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:166` (`apps/desk/server/reconciliacion/comprobaciones.ts:133-141`), que nombra M11.6, y la cabecera la cruza: verificada |
 | 2 | Forma de cada cita de `proposal.md`, `design.md`, `tasks.md`, `apply-progress.md`, las deltas y el repaso, en su ancla | 232 de 232, con un guion propio que lee cada extremo con `git show <ancla>:<ruta>` o en el árbol |
 | 3 | Que cada cita de la lista de discrepancias diga lo que se le atribuye | Leídas una a una. Una no lo decía (aviso 1) |
 | 4 | Las cifras, contadas otra vez por el verificador | 40 + 7 + 5 = 52 hoy y 31 + 6 + 4 = 41 en `0d1a40b`; las once ids nuevas, exactamente las del repaso, con los mismos commits de origen |

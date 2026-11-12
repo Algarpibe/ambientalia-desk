@@ -37,26 +37,26 @@ Cada intento se asienta sólo con TODOS sus códigos en 0 (`design.md`, D6) y co
 
 ## 4. Archivo
 
-- [ ] 4.1 Medir antes de aplicar la parte revisable (la fusión de las deltas, las líneas de `registro.test.ts` y
+- [x] 4.1 Medir antes de aplicar la parte revisable (la fusión de las deltas, las líneas de `registro.test.ts` y
   `archive-report.md`); si supera 800, parar. Abrir el intento con un techo de dos veces la carpeta más 800.
-- [ ] 4.2 Mover la carpeta a `openspec/changes/archive/<fecha>-cierre-f1b09-repaso-auditoria/`.
-- [ ] 4.3 **Guarda que cuenta el árbol.** Correr `apps/desk/server/reconciliacion/registro.test.ts` y ANOTAR el rojo esperado en
+- [x] 4.2 Mover la carpeta a `openspec/changes/archive/<fecha>-cierre-f1b09-repaso-auditoria/`.
+- [x] 4.3 **Guarda que cuenta el árbol.** Correr `apps/desk/server/reconciliacion/registro.test.ts` y ANOTAR el rojo esperado en
   la prueba 11f/05g (`apps/desk/server/reconciliacion/registro.test.ts:220` en `87510cbf`: F1B-09 ya no está «en curso»). Si no
   se pone roja, parar: la prueba no distingue.
-- [ ] 4.4 Corregir en sitio, sin mover líneas y conservando sus finales de línea,
+- [x] 4.4 Corregir en sitio, sin mover líneas y conservando sus finales de línea,
   `apps/desk/server/reconciliacion/registro.test.ts:218` en `87510cbf` (de CINCO a CUATRO, con F1B-09 entre las cerradas por
   archivo del título) y `apps/desk/server/reconciliacion/registro.test.ts:220` en `87510cbf` (la lista sin `'F1B-09'` y
   `toContain('F1B-09')` en «cerradas por archivo»); verde. Molde: `8b3c4bac`.
-- [ ] 4.5 Fusionar las dos deltas por script (`design.md`, D3): una línea por una línea, mismo número de líneas, CRLF, y `cmp`
+- [x] 4.5 Fusionar las dos deltas por script (`design.md`, D3): una línea por una línea, mismo número de líneas, CRLF, y `cmp`
   de lo anterior y lo posterior.
-- [ ] 4.6 Correr `npm run reconcile` y comprobar que F1B-09 pasa a «cerradas por archivo» y a «cerradas sin fuente declarada en
-  la R01.1», no a «marcadas sin verificar», y que «en curso» baja de cinco a cuatro; restaurar `docs/sdd/RECONCILIACION.md`
-  sin commitearlo.
-- [ ] 4.7 Barrido de la regla de mutación 4 sobre `apps/desk/server/reconciliacion/registro.test.ts`,
+- [x] 4.6 Correr `npm run reconcile` y comprobar que F1B-09 pasa a «cerradas por archivo», no a «marcadas sin verificar», y que
+  «en curso» baja de cinco a cuatro; restaurar `docs/sdd/RECONCILIACION.md` sin commitearlo. *Corregido en el archivo:* la
+  previsión de que entraría en «cerradas sin fuente declarada» era falsa; su fila de la R01.1 nombra M11.6 y queda verificada.
+- [x] 4.7 Barrido de la regla de mutación 4 sobre `apps/desk/server/reconciliacion/registro.test.ts`,
   `openspec/specs/transitions-soporte-remoto/spec.md` y `openspec/specs/transitions-equipo-nuevo/spec.md`, con pase de
   abreviadas y sin excluir `archive/`.
-- [ ] 4.8 Escribir `archive-report.md` con la línea de R-1, los intentos, la lista de discrepancias y la lista para Supervisión.
-- [ ] 4.9 Cinco códigos en 0; `git show --numstat` del commit con sólo este cambio.
+- [x] 4.8 Escribir `archive-report.md` con la línea de R-1, los intentos, la lista de discrepancias y la lista para Supervisión.
+- [x] 4.9 Cinco códigos en 0; `git show --numstat` del commit con sólo este cambio.
 
 ## Tareas de personas — fuera del recuento
 
