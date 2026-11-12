@@ -3802,7 +3802,7 @@ decisiones_de_gerencia_adenda:
       (1) El orden es F1F-01 (migración de tickets abiertos y fecha de corte), F1B-05 sin la mitad de visibilidad
       (traspaso y trazas) y F1B-09 (auditoría de la épica 1B), encadenadas sin consulta entre una y otra (modo producción).
       (2) F1B-05 lleva `cierra: no`: la mitad de visibilidad espera a la respuesta de E-089. F1B-09 lleva `cierra: no`
-      por respuesta textual: la épica 1B sigue abierta y la auditoría se repasa al cerrarla.
+      por respuesta textual: la épica 1B sigue abierta y la auditoría se repasa al cerrarla. NOTA DE PRECISIÓN 12/11/2026 (Supervisión; la decisión no se reescribe): para el repaso de la auditoría, «cerrar la épica 1B» son sus filas de antes del corte, todas cerradas salvo F1B-09; F1B-16, F1B-17 y F1B-20 tendrán su propia auditoría en su hito. F1B-09 cierra antes del 14/12 (`decision/f1b09-epica-1b-antes-del-corte`).
       (3) Cada tanda va en su propio worktree (regla del ciclo 3). Ninguna de las tres se fusiona a `main` hasta que el
       analista la verifique; las ramas se dejan listas y no se rebasan sobre `main`.
       (4) La prueba de integración de E-206 (`prueba-integracion-mezcla-jsonb`, `fuera-del-plan`) se fusionó a `main` en
@@ -4174,7 +4174,7 @@ decisiones_de_gerencia_adenda:
       (3) LA PRUEBA QUE IMPIDE EL DESFASE SE EXTIENDE con los ficheros nuevos, como exige `decision/mapa-blueprint-generado`:
       sin prueba, un mapa no se mantiene.
       (4) F1A-10 (el mapa dentro de la aplicación) NO se adelanta: sigue después del corte.
-      (5) F1B-09 sigue con `cierra: no` mientras la épica 1B esté abierta (`decision/orden-tres-tandas-04-10`).
+      (5) F1B-09 sigue con `cierra: no` mientras la épica 1B esté abierta (`decision/orden-tres-tandas-04-10`). NOTA DE PRECISIÓN 12/11/2026 (Supervisión; la decisión no se reescribe): para el repaso de la auditoría, «cerrar la épica 1B» son sus filas de antes del corte, todas cerradas salvo F1B-09; F1B-16, F1B-17 y F1B-20 tendrán su propia auditoría en su hito. F1B-09 cierra antes del 14/12 (`decision/f1b09-epica-1b-antes-del-corte`).
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e222-mapa-equipo-nuevo-soporte-remoto) · docs/sdd/ENTRADA.md → E-222"
     maestro_pasaje: "M11.6 (Herramientas de desarrollo y prototipado)"
     maestro_revision: "no aplica"
@@ -5616,7 +5616,7 @@ decisiones_de_gerencia_adenda:
       (4) Supuesto del analista, reversible: el cierre se asienta con un cambio de cierre propio (`tanda: F1B-04`,
       `cierra: si`, sin código), como `cierre-f1b08-con-lo-construido` y `cierre-f0-04-por-dictamen`, cuando la terminal
       termine lo que queda de 1G-01. Hasta archivarlo, F1B-04 no cuenta en el avance («Regla de avance» de CLAUDE.md).
-      (5) F1B-09 sigue esperando: su repaso es al cerrar la épica 1B, y en 1B siguen abiertas F1B-13 y las filas de 2027.
+      (5) F1B-09 sigue esperando: su repaso es al cerrar la épica 1B, y en 1B siguen abiertas F1B-13 y las filas de 2027. NOTA DE PRECISIÓN 12/11/2026 (Supervisión; la decisión no se reescribe): para el repaso de la auditoría, «cerrar la épica 1B» son sus filas de antes del corte, todas cerradas salvo F1B-09; F1B-16, F1B-17 y F1B-20 tendrán su propia auditoría en su hito. F1B-09 cierra antes del 14/12 (`decision/f1b09-epica-1b-antes-del-corte`). F1B-13, que esta línea daba por abierta, cerró el 10/11.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b04-recuento-no-retiene) · docs/sdd/ENTRADA.md → E-265"
     engram: "decision/f1b04-recuento-no-retiene — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
     maestro_pasaje: "ninguno"
@@ -6743,3 +6743,23 @@ mediciones_de_produccion:
       Servicio externo 31, En espera de SKU inventario 20, Solicitado 13.
     registro: "openspec/config.yaml → mediciones_de_produccion (medicion/p90-esperas-2026-10-21)"
     tanda_que_abre: "F1C-03 (la consume como registro propio de plazos en packages/shared, con la fecha de esta medición)"
+decisiones_de_gerencia_adenda_2:
+  # Continúa decisiones_de_gerencia_adenda (:3263-5906). Va al final del fichero para no mover líneas citadas (12/11/2026, decisión del analista).
+  - clave: "decision/f1b09-epica-1b-antes-del-corte"
+    fecha: "2026-11-12"
+    origen: "conversación del analista, 12/11/2026"
+    pregunta: |
+      El analista señala una contradicción. Por un lado, F1B-09 lleva `cierra: no` mientras la épica 1B esté abierta (:3804-3805, :4177, :5619); F1B-16 y F1B-17 siguen en 2027 (:4893), y F1B-20 es de después del corte (plan R01.4, línea 423), así que 1B no cierra antes de 2027. Por otro, :5751 cuenta F1B-09 entre las 8 filas de antes del corte, y decision/orden-tandas-tras-e266 la pone como la siguiente tanda. ¿(a) «cerrar la épica 1B» son sus filas de antes del corte, o (b) F1B-09 sigue abierta hasta 2027 y sale de las de antes del corte?
+    respuesta_textual: |
+      «F1B-09: opción (a). «Cerrar la épica 1B» se entiende, para el repaso de la auditoría, como sus filas de antes del corte, todas cerradas salvo F1B-09; las de 2027 (F1B-16, F1B-17, F1B-20) tendrán su propia auditoría en su hito, como manda el maestro. Las tres decisiones de config.yaml (:3804-3805, :4177, :5619) se conservan y reciben una nota fechada 12/11 con esta lectura, sin reescribirlas. Encargo: repaso de la auditoría sobre el código de hoy (52 transiciones), corrección de las dos referencias de las especificaciones que aún mandan a F1B-09 trabajo hecho, y la línea de prueba que la marca en curso. El repaso entrega una lista de discrepancias, cada una con destino: bandeja o fila de 2027. Con eso F1B-09 cierra antes del 14/12 y siguen siendo 8 las filas de antes del corte.» — Gerencia, 12/11/2026, conversación del analista.
+    consecuencias: |
+      (1) Para el repaso de la auditoría, «cerrar la épica 1B» son sus filas de antes del corte, todas cerradas salvo F1B-09. F1B-16, F1B-17 y F1B-20 tendrán su propia auditoría en su hito (M11.6).
+      (2) Encargo de la terminal: el repaso sobre el código de hoy, la corrección en sitio de las dos referencias de las especificaciones y la línea de prueba. El repaso entrega una lista de discrepancias, cada una con destino: bandeja o fila de 2027.
+      (3) F1B-09 cierra antes del 14/12 con `cierra: si`, y siguen siendo 8 las filas de antes del corte (:5751).
+      (4) Las tres decisiones se conservan y reciben una nota fechada el 12/11 (punto 2 de este bloque).
+      (5) Las 52 transiciones son una medida del analista sin comprobar; las mide la terminal.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda_2 (decision/f1b09-epica-1b-antes-del-corte) · notas de precisión del 12/11 en :3805, :4177 y :5619 · docs/sdd/ENTRADA.md → E-286"
+    engram: "decision/f1b09-epica-1b-antes-del-corte — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "M11.6"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-09"

@@ -2535,3 +2535,9 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **De dónde viene:** el analista, 10/11/2026, al verificar el paso (1) de E-268.
 **Afecta a:** la App y el worker `hub-sync`, que crean sus pools con esas mismas funciones; y el procedimiento de `DEPLOY.md:1112` (§26), que corta sesiones con `pg_terminate_backend`: hay que cortar sólo la de la consola.
 **Estado:** nueva · **Destino propuesto, no decidido:** un cambio corto fuera del plan, de la terminal.
+
+## E-286 · 2026-11-12 · decisión · **REGISTRADA** — F1B-09: «cerrar la épica 1B» son sus filas de antes del corte, y F1B-09 cierra antes del 14/12
+**Qué:** Gerencia elige la opción (a). Para el repaso de la auditoría, «cerrar la épica 1B» son sus filas de antes del corte; las de 2027 tendrán su propia auditoría en su hito. Encargo: el repaso sobre el código de hoy, con una lista de discrepancias que tengan destino, las dos referencias de las especificaciones y la línea de prueba.
+**De dónde viene:** Gerencia, 12/11/2026, conversación del analista. Resuelve la contradicción entre :3804-3805, :4177 y :5619 por un lado y :5751 por otro.
+**Afecta a:** F1B-09 · la cuenta de las 8 filas de antes del corte.
+**Estado:** registrada · **Destino:** F1B-09; `openspec/config.yaml` → `decision/f1b09-epica-1b-antes-del-corte`.
