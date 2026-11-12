@@ -42,7 +42,7 @@ jobs:
       # Corre la suite UNA vez y además exige el umbral de cobertura. El umbral y, sobre todo, la
       # nota de qué NO puede ver ese número viven en `vitest.config.ts`; léela antes de sacar
       # conclusiones del porcentaje.
-      - run: npm run test:coverage
+      - run: npm run test:coverage -- --testTimeout=20000 # E-288: límite de 20 s sólo en el CI; en local sigue en 5 s (vitest.config.ts)
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb
       - run: npm run build
