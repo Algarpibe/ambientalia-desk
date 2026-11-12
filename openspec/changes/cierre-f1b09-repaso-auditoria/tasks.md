@@ -14,16 +14,16 @@ Cada intento se asienta sólo con TODOS sus códigos en 0 (`design.md`, D6) y co
 
 ## 2. Apply — el repaso
 
-- [ ] 2.1 Medir con el guion de `design.md` (D2) las transiciones y los estados por flujo, sobre `main` y sobre `0d1a40b`, y
+- [x] 2.1 Medir con el guion de `design.md` (D2) las transiciones y los estados por flujo, sobre `main` y sobre `0d1a40b`, y
   escribir las dos cifras con la prueba que fija cada una.
-- [ ] 2.2 Contrastar con `main` cada afirmación de estado de la auditoría, de §1 a §7 y su resumen de §9, con evidencia en ruta y
+- [x] 2.2 Contrastar con `main` cada afirmación de estado de la auditoría, de §1 a §7 y su resumen de §9, con evidencia en ruta y
   línea de hoy.
-- [ ] 2.3 Contrastar punto a punto lo que la auditoría declaró no haber hecho
+- [x] 2.3 Contrastar punto a punto lo que la auditoría declaró no haber hecho
   (`docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md:323-339`).
-- [ ] 2.4 Escribir la lista de discrepancias, cada una con ruta y línea y UN destino (bandeja, F1B-16, F1B-17 o F1B-20). **Si
+- [x] 2.4 Escribir la lista de discrepancias, cada una con ruta y línea y UN destino (bandeja, F1B-16, F1B-17 o F1B-20). **Si
   alguna no cabe en ninguno, parar y decirlo: es una pregunta de alcance.**
-- [ ] 2.5 Escribir la lista para Supervisión, con el texto nuevo para M11.6.
-- [ ] 2.6 `apply-progress.md` con la evidencia; cinco códigos en 0.
+- [x] 2.5 Escribir la lista para Supervisión, con el texto nuevo para M11.6.
+- [x] 2.6 `apply-progress.md` con la evidencia; cinco códigos en 0.
 
 ## 3. Verify
 
