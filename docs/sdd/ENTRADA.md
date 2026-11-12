@@ -2541,3 +2541,9 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **De dónde viene:** Gerencia, 12/11/2026, conversación del analista. Resuelve la contradicción entre :3804-3805, :4177 y :5619 por un lado y :5751 por otro.
 **Afecta a:** F1B-09 · la cuenta de las 8 filas de antes del corte.
 **Estado:** registrada · **Destino:** F1B-09; `openspec/config.yaml` → `decision/f1b09-epica-1b-antes-del-corte`.
+
+## E-287 · 2026-11-12 · hallazgo · **ABIERTA** — dos pruebas de conversaciones rozan el límite de 5 s y fallan en el CI cuando el runner va lento
+**Qué:** el CI 43238461227 sobre `1b9a6b50`, un commit que sólo toca documentos, falló en dos de 6.492 pruebas por «Test timed out in 5000ms»: `packages/zoho-sync/src/conversaciones.test.ts:304` (M1: 151 guardadas y 150 recibidas en dos páginas) y la de las 250 conversaciones en tres páginas de `packages/zoho-sync/src/sync.conversaciones.test.ts`. En el CI verde anterior, 43230852789, las mismas tardaron 2.948 ms y 4.309 ms: están a menos de un segundo del límite por defecto de vitest.
+**De dónde viene:** el analista, 12/11/2026. El trabajo fallido se relanzó.
+**Afecta a:** cualquier push. Una prueba que falla por tiempo para el CI sin que haya un fallo real, igual que E-284.
+**Estado:** nueva · **Destino propuesto, no decidido:** un cambio corto fuera del plan, de la terminal, junto con E-284.
