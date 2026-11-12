@@ -1146,3 +1146,41 @@ Si falló otra sentencia (`err` de tipo `ErrorPuestaAlDia`), el mensaje es «Pue
 4. Antes de desplegar (P-2, de persona): mirar en el registro de producción las líneas «migrate: sentencia omitida» y «reorgToDesk: sentencia omitida» y comprobar si EasyPanel muestra stderr. Si alguna sentencia
    falla en **cada** arranque, con este cambio la App dejaría de arrancar.
 5. Nunca pegar credenciales ni cadenas de conexión en el registro ni en chats (regla de secretos de `CLAUDE.md`).
+
+## 27. Conexión de la base cortada por el servidor: una línea en el registro y el proceso sigue (E-285)
+
+Desde este cambio, los dos pools de conexiones de `packages/zoho-sync/src/db/pool.ts` (`createPool` y `createPoolFromUrl`) escuchan su evento `error`. Antes, si PostgreSQL cortaba una conexión **en reposo**
+(un reinicio de `desk-db`, un `pg_terminate_backend` o un corte de red), el evento no tenía oyente y el proceso moría con un error sin capturar; ahora el oyente deja **una línea** en el registro y el proceso
+sigue: la siguiente consulta abre otra conexión porque el pool ya descarta la muerta. Sirve a los tres procesos que usan esos pools: la App, el worker `hub-sync` (`zoho-hub-sync` en EasyPanel) y el relleno de artículos.
+**No hay interruptor nuevo** ni variable de entorno nueva ni línea nueva para `.env.example`: el oyente no se enciende ni se apaga, y el código está en `packages/zoho-sync/src/db/conexionPerdida.ts`.
+
+### Cómo es la línea del registro
+
+Sale por stderr (`console.error`), **una por conexión perdida**, sin agrupar. El texto fijo es «Pool de la base: se perdió una conexión inactiva; el proceso sigue», seguido del mensaje del error y, si el error trae
+código, su SQLSTATE entre corchetes. Nunca lleva la cadena de conexión, el usuario, la contraseña ni el host. La línea medida contra PostgreSQL 17.10 (contenedor local `postgres:17-alpine`, no producción) al cortar
+una conexión en reposo con `pg_terminate_backend`, con el código `57P01`:
+
+> ```
+> Pool de la base: se perdió una conexión inactiva; el proceso sigue — terminating connection due to administrator command [57P01]
+> ```
+
+Si EasyPanel no muestra stderr, la línea no se verá aunque salga: ver el apartado siguiente.
+
+### Qué hacer
+
+Nada, salvo que se repita. Un reinicio de `desk-db` puede dar una ráfaga: hasta tantas líneas como conexiones en reposo tenga cada pool en ese momento, una por conexión, y no es una avería. Si la línea se repite **sin**
+reinicio ni corte conocido, pasar la línea al analista.
+
+Opcional, de persona (P-2 de este cambio): cortar una conexión en reposo de la App y buscar la línea en el registro; si no aparece, EasyPanel no enseña stderr, y eso cierra también la P-2 de la §26 (comprobar si
+EasyPanel muestra stderr).
+
+### Lo que no cubre
+
+El oyente cubre las conexiones **en reposo** dentro del pool. **No** cubre:
+
+- **Una consulta en curso** cuando se corta la conexión: la consulta falla con el mismo `57P01` y el proceso sigue, pero el error llega a la consulta y **no sale la línea**.
+- **Un cliente prestado por `pool.connect()`** con una transacción abierta (el caso de `apps/desk/server/db/transaccion.ts:16-26`): medido en la prueba de integración, si el servidor corta esa conexión el proceso **sigue
+  muriendo** (salida 1, «Unhandled 'error' event», `57P01`) y tampoco sale la línea. Proteger ese caso queda fuera de este cambio.
+
+Por eso la precaución de la §26 **sigue vigente**: antes de cortar con `pg_terminate_backend` el **pid raíz** de una cadena de bloqueos, comprobar que es de la consola (`application_name` «psql» en
+`pg_stat_activity`; la App llega con el nombre vacío, medido también en el contenedor local, no en producción) y no de la App. Un pid de la App con una transacción abierta **no se corta**: se pasa al analista.

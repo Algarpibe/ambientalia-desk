@@ -32,7 +32,7 @@ siguiente consulta abre otra conexión.
 analista, no probada en ejecución» (`docs/sdd/ENTRADA.md:2534` en `96cba5ab`). Esta propuesta la mantiene como **hipótesis** hasta CA-1 (rojo) y
 CA-3 (PostgreSQL real con la mutación de CA-4).
 
-**2.2 · Los pools.** `packages/zoho-sync/src/db/pool.ts:4-11`: `createPool` (`:6`) y `createPoolFromUrl` (`:10`) devuelven un `new Pool` sin ningún
+**2.2 · Los pools.** `packages/zoho-sync/src/db/pool.ts:4-11` en `96cba5ab`: `createPool` (`:6`) y `createPoolFromUrl` (`:10`) devuelven un `new Pool` sin ningún
 oyente y sin fijar `max`, `min` ni `idleTimeoutMillis`.
 
 **2.3 · Qué hace `pg-pool` (3.14.0 instalado, fuera del árbol versionado; fichero index.js).** Cada cliente en reposo lleva un oyente propio
@@ -69,7 +69,7 @@ enseña stderr (`docs/sdd/ENTRADA.md:2430` en `96cba5ab`).
 - **c · Evidencia contra PostgreSQL real**, con el molde de `packages/zoho-sync/src/db/puestaAlDiaEstricta.integration.test.ts:17-18` (se salta sin `TEST_DATABASE_URL`),
   de su base propia creada y borrada (`packages/zoho-sync/src/db/puestaAlDiaEstricta.integration.test.ts:62-79`) y de sus esperas acotadas (`:23-35`).
 - **d · Mutación** del oyente (CA-4), con restauración byte a byte.
-- **e · `DEPLOY.md` §27, al final** (hoy la última es la §26, `DEPLOY.md:1112`): cómo es la línea y que no hay que hacer nada salvo que se repita.
+- **e · `DEPLOY.md` §27, al final** (en `96cba5ab` la última es la §26, `DEPLOY.md:1112` en `96cba5ab`): cómo es la línea y que no hay que hacer nada salvo que se repita.
 - **La lógica, en un módulo nuevo** de `packages/zoho-sync/src/db/`, importable por `packages/zoho-sync/package.json:2` (`"./*": "./src/*.ts"`).
 
 **Restricciones sobre `pool.ts`** (regla de mutación 4: 34 citas en el repositorio, 24 a la línea 5 y las demás a los rangos 4-7, 9-11, 4-11 y a la

@@ -124,3 +124,100 @@ Ver línea final, anotada con todo en el índice.
 ### Nota del orquestador (L2)
 - **Reproducción independiente** en un contenedor propio (`pcc-pg-v`, `postgres:17-alpine`, puerto 55435, `SHOW server_version` = 17.10): I-1 a I-4 en verde, 4 de 4. M-1 (comentar `pool.on` en `packages/zoho-sync/src/db/conexionPerdida.ts:43`): 11 rojas, entre ellas U-1 e I-1 e I-2 con «expected 1 to be +0»; I-3 e I-4 siguen verdes. Restaurado con `git checkout --`: mismo sha256, `git diff --quiet` 0 y CRLF. Contenedor retirado.
 - **Medida final al commit:** `git diff --shortstat --no-renames cb278436` = 337 + 9 = 346 líneas, sin nada sin trackear. Las cinco comprobaciones (L2.9) quedan en el `settle` del intento i4 y al principio del bloque de L3.
+
+## Lote L3 (intento i5) — HECHO (L3.9, cierre y commit, del orquestador)
+
+**Cierre de L2 (orquestador) sobre el commit `bf4dc0a6`:** typecheck 0, lint 0 (165 avisos contra 165), detector de citas 0 (8.759 comprobadas), `npm test` 0 (6.481 pruebas en verde, 34 omitidas —las 4 de integración sin `TEST_DATABASE_URL`—, 293 s, 3.793 MB libres), build 0 (`index-F1jDYjEU.js`); medida 337 + 9 = 346, igual a lo registrado.
+
+Modo: strict TDD. Partida de la medida: `bf4dc0a6`. Worktree propio. Registro: el orquestador abrió el intento i5 (token `sha256:f2eb27a0…`); no hubo `acquire` ni `settle` en este lote.
+
+### Rojos anotados (fichero › prueba › aserción)
+1. Primero la prueba, sin §27: `apps/desk/server/deployPoolConexionCortada.test.ts` (5 pruebas, 5 rojas):
+   - `el DEPLOY.md real no tiene faltas › expected -1 to be greater than 86145` (no hay `## 27. `);
+   - las tres pruebas de mutación sobre copias (`salvo que se repita`, `pool.connect()`, texto fijo) caen en su primera aserción, `expected '# Despliegue en EasyPanel (VPS)…' not to be …`: sin §27 la copia no cambia (no hay nada que mutar);
+   - `discrimina por posición › expected [ 'la sección ## 27. ' ] to deeply equal [ 'la §27 como última sección' ]`.
+2. Tras escribir la §27 en `DEPLOY.md`, el rojo que la §27 causa en la guarda de la §26, MEDIDO antes de corregirla: `apps/desk/server/deployArranqueEstricto.test.ts`, 3 rojas de 4:
+   `el DEPLOY.md real no tiene faltas › expected [ 'la §26 como última sección' ] to deeply equal []`; `sin pg_terminate_backend… › expected [ 'la §26 como última sección', …(1) ] to deeply equal [ 'pg_terminate_backend' ]`; `sin el apartado «Qué hacer si la App no arranca tras desplegar»… › expected [ 'la §26 como última sección', …(1) ] to deeply equal [ Array(1) ]`. La cuarta (`discrimina por posición`) queda verde porque ya añade una sección detrás.
+3. Verde: `deployPoolConexionCortada.test.ts` 5/5 con la §27; tras corregir la guarda, `deployArranqueEstricto.test.ts` 4/4.
+
+### Casillas
+- [x] L3.1 a L3.8 hechas (abajo). [ ] L3.9: cierre y commit, del orquestador.
+
+### `DEPLOY.md` §27 (L3.2)
+`git diff --numstat -- DEPLOY.md` = `38 0` (38 líneas añadidas al final, ninguna borrada ni movida; `## 27.` en `DEPLOY.md:1150`, el fichero pasa de 1.148 a 1.186); CRLF conservados (`file`). Dice: párrafo (los dos pools de `pool.ts` escuchan `error`; App, worker `hub-sync` y relleno de artículos; **No hay interruptor nuevo**, ni variable, ni línea para `.env.example`); «### Cómo es la línea del registro» (stderr, una por conexión, la línea medida en I-1 con `57P01` y PostgreSQL 17.10, dicho que es contenedor local y no producción); «### Qué hacer» (nada, salvo que se repita; ráfaga tras un reinicio de `desk-db`; si se repite sin reinicio ni corte, al analista; comprobación opcional de persona de que EasyPanel muestra stderr, que cierra también la P-2 de la §26); «### Lo que no cubre» (I-3: consulta en curso, falla con `57P01`, sin línea; I-4: cliente prestado por `pool.connect()` con transacción abierta, el proceso muere; la precaución de la §26 sigue vigente: comprobar `application_name` «psql» antes de cortar el pid raíz, y un pid de la App con transacción abierta no se corta).
+
+### Prueba nueva (L3.1)
+`apps/desk/server/deployPoolConexionCortada.test.ts` (CRLF, `file`): `faltasSeccion27` pura. Exige la §27 detrás de la §26 y como última; los tres apartados; `57P01`, `salvo que se repita`, `conexiones en reposo`, `pool.connect()`, `stderr`, `§26`, `No hay interruptor nuevo`; y el texto fijo (`TEXTO_CONEXION_PERDIDA`) y la línea medida (`lineaConexionPerdida` sobre un error con `57P01`) IMPORTADOS de `@ambientalia/zoho-sync/db/conexionPerdida`, no copiados. Cinco pruebas: real sin faltas; sin «salvo que se repita» ⇒ esa falta exacta; sin `pool.connect()` ⇒ esa falta exacta; texto fijo mutado ⇒ las dos faltas del código; `## 28. Otra` detrás ⇒ `la §27 como última sección`, y sin §27 ⇒ `la sección ## 27. `.
+
+### La guarda de la §26 en sitio (L3.3)
+`git diff --numstat -- apps/desk/server/deployArranqueEstricto.test.ts` = **`5 5`**; `wc -l` = 57 antes y después; 57 de 57 con CRLF (`file`). Líneas: `:9` «es la última hasta la §27»; `:23` acota con `texto.indexOf('## 27. ')` (molde `apps/desk/server/deployCalificacionesConversaciones.test.ts:23`); `:24` y `:54` la falta pasa a `la §26 sola hasta la §27`; `:53` título «que no es la que precede a la §27»; `:54` la entrada es `deploy.replace('## 27. ', '## 99. Otra\n## 27. ')`. Verde: esa prueba (4), `deployCalificacionesConversaciones.test.ts` (6), `deployControlCalidad.test.ts` (6), `deployModoSinZoho.test.ts` (5), `deployPoolConexionCortada.test.ts` (5), `registro.test.ts` y `conexionPerdida.test.ts` (19): 7 ficheros, 68/68.
+
+### Mutaciones del fichero vigilado (L3.4; protocolo: `git add` antes; `perl -i -ne 'print unless $. == N'`; `git checkout --`; `git diff --quiet` = 0; `file` CRLF tras cada una)
+| Mutación | Cambio | Se puso rojo |
+|---|---|---|
+| Copias en memoria (regla 2) | sin `salvo que se repita`; sin `pool.connect()`; texto fijo cambiado; `## 28. Otra` detrás; sin §27 | las cinco pruebas de `apps/desk/server/deployPoolConexionCortada.test.ts` las fijan, cada una con su falta exacta (`['salvo que se repita']`, `['pool.connect()']`, `[TEXTO_CONEXION_PERDIDA, LINEA_MEDIDA]`, `['la §27 como última sección']`, `['la sección ## 27. ']`) |
+| DEPLOY-1 (real) | borrar `DEPLOY.md:1171` (la línea de «Nada, salvo que se repita…», que lleva también «conexiones en reposo») | 5 de 5 rojas de la prueba de la §27: `expected [ 'salvo que se repita', …(1) ] to deeply equal []`. Se borra la línea entera, así que cae también `conexiones en reposo` |
+| DEPLOY-2 (real) | borrar `DEPLOY.md:1182` (la viñeta del cliente prestado por `pool.connect()`) | 5 de 5 rojas: `expected [ 'pool.connect()' ] to deeply equal []` |
+| POS-1 (regla 1) | quitar la acotación de `apps/desk/server/deployArranqueEstricto.test.ts:23` (`texto.slice(s26)`) | 3 rojas de 4: `expected [ 'la §26 sola hasta la §27' ] to deeply equal []`. La acotación está probada |
+Ninguna mutación quedó sin rojo. Restauración tras cada una: `git diff --quiet` = 0 y CRLF.
+
+### Barrido de citas de `pool.ts` (L3.6, regla de mutación 4)
+`grep -rnoE "pool\.ts:[0-9]+(-[0-9]+)?" .` en el worktree (sin `node_modules`, `.git`, `.codegraph`, `dist`), CON `openspec/changes/archive/` y `docs/`: **47** citas, **12 dentro** del archivo y **35 fuera**. Explicación de 26 frente a 34: `git grep` en `96cba5ab` da **34** = 22 fuera del archivo + 12 dentro (la 34 de la propuesta es la cifra con archivo); las 26 del diseño eran las 22 fuera del archivo más las 4 de `proposal.md` y del delta de la spec (que ya existían al escribir el diseño). Hoy 47 = 34 + 13 de los artefactos de este cambio (`design.md` 5, `apply-progress.md` 3, `proposal.md` 2, delta de la spec 2, `tasks.md` 1). `pool.ts` hoy: líneas 1, 6 y 10 cambiadas; 4, 5, 7 a 9 y 11 idénticas.
+
+Clasificación de las 34 de `96cba5ab`: **33 A, 1 B, 0 C**.
+| Cita | Qué AFIRMA | Clase |
+|---|---|---|
+| `CLAUDE.md:199`, `DEPLOY.md:320`, `packages/zoho-sync/src/db/migrate.ts:88`, `packages/zoho-sync/src/db/migrate.test.ts:395`, `openspec/specs/tickets-core/spec.md:1503`, `openspec/specs/zoho-sync/spec.md:357`, `:418`, `:706` — `pool.ts:5` | el `search_path=desk,public` se fija ahí y `books` nunca está | A (la línea 5 no cambia) |
+| `docs/sdd/Paquete_de_Despliegue_2026-09-10.md:111`, `:393`; `docs/sdd/Paquete_de_Despliegue_2026-09-27.md:78`; `docs/sdd/Paquete_de_Despliegue_2026-09-29.md:125`; `docs/sdd/Paquete_de_Despliegue_2026-09-30.md:139`; `docs/sdd/Paquete_de_Despliegue_2026-10-01.md:213`; `docs/sdd/Paquete_de_Despliegue_2026-10-03.md:239`; `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:473`; `docs/sdd/Paquete_de_Despliegue_2026-10-05b.md:267`; `docs/sdd/Paquete_de_Despliegue_2026-10-09.md:407` — `pool.ts:5` | el mismo `search_path` (paquetes fechados) | A; no se reescriben |
+| `openspec/specs/zoho-sync/spec.md:2721` — `pool.ts:4-7` | «el pool no fija límite alguno» | A (siguen sin límites) |
+| `docs/sdd/ENTRADA.md:2425`, `:2430` — `pool.ts:6` | el pool no fija `lock_timeout`, `statement_timeout` ni `connectionTimeoutMillis` | A (la línea 6 sigue sin ellos) |
+| `docs/sdd/ENTRADA.md:2533` — `pool.ts:4-11` | «crea los dos pools sin escuchar su evento `error`» | **B** (cierta en `96cba5ab`, falsa desde este cambio) |
+| `openspec/changes/archive/2026-09-09-cerrar-hallazgos-revision-f1b-01/design.md:150`, `exploration.md:77`, `proposal.md:94`, `:154`, `specs/zoho-sync/spec.md:30`; `openspec/changes/archive/2026-09-17-tercera-puerta-orden-venta/design.md:10` — `pool.ts:5` | el `search_path` | A |
+| `openspec/changes/archive/2026-10-11-migracion-una-sola-ejecucion/design.md:116`, `tasks.md:20`, `verify-report.md:49` — `pool.ts:9-11` | `createPoolFromUrl` no fija `search_path` (el `verify-report` sólo lista la cita) | A |
+| `openspec/changes/archive/2026-11-10-arranque-migracion-estricta/design.md:101`, `proposal.md:45`, `specs/zoho-sync/spec.md:28` — `pool.ts:4-7` | `new Pool` sin `lock_timeout` ni `statement_timeout` | A |
+
+Las 13 de este cambio: `openspec/changes/pool-conexion-cortada/design.md:18`, `:20`, `:49` (`pool.ts:4`), `:66` (`pool.ts:5`), `:150` (`pool.ts:10`); `apply-progress.md:31`, `:35`, `:104` (`pool.ts:10`); `tasks.md:41` (`pool.ts:10`); `proposal.md:76` (`pool.ts:6`); `specs/zoho-sync/spec.md:18` (`pool.ts:6`): todas **A** (afirman que esas líneas se editan, o que las firmas de 4 y 9 no cambian; ciertas). **B, 2, reparadas en sitio** añadiendo «en `96cba5ab`», sin mover líneas (`git diff --numstat` = `1 1` cada una, CRLF): `openspec/changes/pool-conexion-cortada/proposal.md:35` y `openspec/changes/pool-conexion-cortada/specs/zoho-sync/spec.md:24` (`pool.ts:4-11`, «sin oyente»; las abreviadas `:6` y `:10` de `proposal.md:35` heredan el ancla).
+
+**Segundo pase de la forma abreviada** (líneas que citan `pool.ts` con `:N` sueltos): `design.md:18`, `:20`, `:49` (`:9`), `proposal.md:35`, `:76` (`:10`), `specs/zoho-sync/spec.md:18` (`:10`), todas de este cambio: A salvo `proposal.md:35`, ya reparada. Citas a la guarda de la §26 (`apps/desk/server/deployArranqueEstricto.test.ts:23-24`, `:54`, `:17-31`): `design.md:175`, `:222`, `proposal.md:127`, `:162`, `specs/zoho-sync/spec.md:148`, `tasks.md:63`, `:68`, todas de este cambio: **A** (siguen señalando la misma guarda y las mismas líneas; no hay ninguna en el archivo ni en Supervisión).
+
+**Afirmaciones de que la §26 es la última** (`grep -rn "§26" --include=*.md --include=*.ts`):
+| Dónde | Qué afirma | Clase |
+|---|---|---|
+| `openspec/changes/pool-conexion-cortada/proposal.md:72` y `openspec/changes/pool-conexion-cortada/design.md:158` («hoy la última es la §26, `DEPLOY.md:1112`») | la §26 era la última | **B**, reparadas en sitio: «en `96cba5ab` la última es la §26, `DEPLOY.md:1112` en `96cba5ab`», `1 1` cada una |
+| `openspec/specs/zoho-sync/spec.md:2862` («SHALL terminar» con la §26) y `:2870` («desde este cambio la última es la §26») | RQ-ZS-57 | **B**, declarada: elección (a) de la propuesta (S-6), RQ-ZS-62 la contradice a propósito; la spec viva no se toca hasta el archivo |
+| `openspec/specs/zoho-sync/spec.md:2887` («es la última hasta la §26»), `apps/desk/server/deployCalificacionesConversaciones.test.ts:9` | la §25 es la última hasta la §26 | A |
+| `openspec/changes/archive/2026-11-10-arranque-migracion-estricta/` (`apply-progress.md:107-112`, `design.md:190`, `:211`, `:224`, `proposal.md:72`, `:150`, `specs/zoho-sync/spec.md:177`, `tasks.md:66-69`, `verify-report.md:59`, `archive-report.md:22`) | la §26 se escribió al final, era la última | B históricas; no se reescriben (paquete fechado) |
+| `openspec/changes/pool-conexion-cortada/specs/zoho-sync/spec.md:10`, `:146-148`, `proposal.md:104`, `:126`, `design.md:176`, `:185`, `:189` | describen la elección y la guarda | A |
+| `DEPLOY.md:1185`, `apps/desk/server/deployPoolConexionCortada.test.ts:10` | la §27 es la última | A (nuevas) |
+| `docs/sdd/ENTRADA.md:2536` | el procedimiento de la §26 en `DEPLOY.md:1112` corta sesiones con `pg_terminate_backend` | A |
+
+### Para Supervisión (L3.7): NO se editan
+| Fichero y línea | Afirma | Clase | Nota |
+|---|---|---|---|
+| `docs/sdd/ENTRADA.md:2533` | `pool.ts:4-11` «crea los dos pools sin escuchar su evento `error`» | **B** | cierta en `96cba5ab`; falsa desde este cambio. Pedir «en `96cba5ab`» |
+| `docs/sdd/ENTRADA.md:2536` («Afecta a») | la App y el worker; la §26 manda cortar sólo la sesión de la consola | A, con matiz | I-4: el oyente NO cubre el cliente prestado, así que la precaución de la §26 sigue vigente (así lo dice la §27) |
+| `docs/sdd/ENTRADA.md:2425`, `:2430` | `pool.ts:6` sin límites de tiempo | A | |
+| `CLAUDE.md:199` | `pool.ts:5` fija `search_path=desk,public` | A | |
+| `openspec/config.yaml`, `docs/sdd/F0-05_*`, `docs/sdd/R08.4_Expediente_de_cambios.md` | no citan `pool.ts:N` | — | |
+Las de `openspec/specs/zoho-sync/spec.md:2862` y `:2870` (B declarada) las resuelve el archivo.
+
+### L3.8 (CA-6 / CA-8)
+`apps/desk/server/reconciliacion/registro.test.ts` en verde sin tocarlo (en los 7 ficheros, 68/68). `git diff --quiet bf4dc0a6 -- .env.example packages/zoho-sync/src/db/schema.sql packages/zoho-sync/src/db/migrate.ts` = 0.
+
+### Verificaciones
+`npm run typecheck`: salida 0. `npm run lint -- --max-warnings 165`: salida 0, **165 avisos contra 165**; sin `eslint-disable` en lo nuevo. Ficheros nuevos y editados en CRLF (`file`).
+
+### Desvíos del diseño (con su porqué)
+1. La sección «Lo que no cubre» recoge I-3 (consulta en curso, sin línea) además de I-4, porque `tasks.md` lo pide («I-3 e I-4 tal como se midieron»).
+2. DEPLOY-1 borra la línea entera, que contiene también `conexiones en reposo`: el rojo trae dos faltas y no una (la exactitud de la falta se fija sobre copias).
+3. Las tres pruebas de copia salen rojas en su primera aserción (`not.toBe`) antes de existir la §27 (no hay nada que mutar): rojo por la razón correcta para esa prueba.
+4. Dos B más de artefactos propios (`proposal.md:72`, `design.md:158`, «hoy la última es la §26») reparadas en sitio, no previstas en `tasks.md` L3.5.
+
+### Medida del intento (i5)
+Ver línea final, anotada con todo en el índice.
+
+`git diff --cached --shortstat --no-renames bf4dc0a6` con todo en el índice antes de esta línea: 8 ficheros, 214 inserciones y 17 borrados (231 líneas; incluye este fichero y las casillas de `tasks.md`). Sin ficheros nuevos fuera del índice (`wc -l` = 0), sin binarios. Muy por debajo de 800.
+
+### Nota del orquestador (L3)
+- La §27 (`DEPLOY.md:1150`) se leyó contra lo medido en L2: la línea, el `57P01`, la versión 17.10 y los límites I-3 e I-4 coinciden con el bloque de L2.
+- **Medida final al commit:** `git diff --shortstat --no-renames bf4dc0a6` = 221 + 18 = 239 líneas, sin nada sin trackear. Las cinco comprobaciones (L3.9) quedan en el `settle` del intento i5 y en el `verify-report.md`.

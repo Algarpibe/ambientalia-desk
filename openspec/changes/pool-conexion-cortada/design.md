@@ -155,7 +155,7 @@ tras restaurar, `git diff --quiet -- <fichero>` compara contra el índice, y `fi
 
 ## 8 · `DEPLOY.md` §27 y la guarda de la §26 en sitio (RQ-ZS-62)
 
-**§27, al final** (la última es hoy la §26, `DEPLOY.md:1112`; nada se mueve). Se escribe en L3, **después** de las mediciones de L2:
+**§27, al final** (en `96cba5ab` la última es la §26, `DEPLOY.md:1112` en `96cba5ab`; nada se mueve). Se escribe en L3, **después** de las mediciones de L2:
 
 ```
 ## 27. Conexión de la base cortada por el servidor: una línea en el registro y el proceso sigue (E-285)

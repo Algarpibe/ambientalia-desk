@@ -21,7 +21,7 @@ sobre un pool recién creado **MUST NOT** lanzar ninguna excepción, con `dbSche
 por su cuenta: la siguiente consulta abre otra conexión porque el pool ya saca la muerta. **MUST NOT** cambiar `max`, `min`, `idleTimeoutMillis`, `statement_timeout` ni
 `connectionTimeoutMillis`. **Hipótesis (CA-1):** hoy un `error` sin oyente lanza; el rojo previo de la prueba lo comprueba antes de tocar `pool.ts`.
 
-Fuente: E-285, `docs/sdd/ENTRADA.md:2532-2537` en `96cba5ab`; los pools sin oyente, `packages/zoho-sync/src/db/pool.ts:4-11`.
+Fuente: E-285, `docs/sdd/ENTRADA.md:2532-2537` en `96cba5ab`; los pools sin oyente, `packages/zoho-sync/src/db/pool.ts:4-11` en `96cba5ab`.
 
 #### Scenario: `createPool` con esquema `desk` sobrevive a un `error` — ROJO
 - GIVEN un pool creado con `createPool` y `dbSchema` `desk`, sin base alguna detrás
