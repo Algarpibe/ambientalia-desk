@@ -2540,16 +2540,22 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** Gerencia elige la opción (a). Para el repaso de la auditoría, «cerrar la épica 1B» son sus filas de antes del corte; las de 2027 tendrán su propia auditoría en su hito. Encargo: el repaso sobre el código de hoy, con una lista de discrepancias que tengan destino, las dos referencias de las especificaciones y la línea de prueba.
 **De dónde viene:** Gerencia, 12/11/2026, conversación del analista. Resuelve la contradicción entre :3804-3805, :4177 y :5619 por un lado y :5751 por otro.
 **Afecta a:** F1B-09 · la cuenta de las 8 filas de antes del corte.
-**Estado:** registrada · **Destino:** F1B-09; `openspec/config.yaml` → `decision/f1b09-epica-1b-antes-del-corte`. **Traza 12/11/2026 (supervisión):** F1B-09 cerrada por archivo, con la fusión `17444a60` y la reconciliación `05305a5b` (37 por archivo, 4 en curso). Las discrepancias del repaso están en E-223, E-224, E-226, E-227, E-090 y E-288.
+**Estado:** registrada · **Destino:** F1B-09; `openspec/config.yaml` → `decision/f1b09-epica-1b-antes-del-corte`. **Traza 12/11/2026 (supervisión):** F1B-09 cerrada por archivo, con la fusión `17444a60` y la reconciliación `05305a5b` (37 por archivo, 4 en curso). Las discrepancias del repaso están en E-223, E-224, E-226, E-227, E-090 y E-289.
 
 ## E-287 · 2026-11-12 · hallazgo · **ABIERTA** — dos pruebas de conversaciones rozan el límite de 5 s y fallan en el CI cuando el runner va lento
 **Qué:** el CI 43238461227 sobre `1b9a6b50`, un commit que sólo toca documentos, falló en dos de 6.492 pruebas por «Test timed out in 5000ms»: `packages/zoho-sync/src/conversaciones.test.ts:304` (M1: 151 guardadas y 150 recibidas en dos páginas) y la de las 250 conversaciones en tres páginas de `packages/zoho-sync/src/sync.conversaciones.test.ts`. En el CI verde anterior, 43230852789, las mismas tardaron 2.948 ms y 4.309 ms: están a menos de un segundo del límite por defecto de vitest.
 **De dónde viene:** el analista, 12/11/2026. El trabajo fallido se relanzó.
 **Afecta a:** cualquier push. Una prueba que falla por tiempo para el CI sin que haya un fallo real, igual que E-284.
-**Estado:** nueva · **Destino propuesto, no decidido:** un cambio corto fuera del plan, de la terminal, junto con E-284.
+**Estado:** nueva · **Destino propuesto, no decidido:** un cambio corto fuera del plan, de la terminal, junto con E-284. **Traza 12/11/2026 (supervisión):** resuelta en dos pasos. `13b9a694` da un límite propio de 20 s a las dos pruebas, que en el CI 43274678556 tardaron 6.119 y 9.791 ms. Y `de9dcd73` (E-288) pone 20 s a toda prueba en el CI. El CI 43280239345 salió verde.
 
-## E-288 · 2026-11-12 · hallazgo · **ABIERTA** — las discrepancias del repaso de F1B-09 que no tienen entrada propia
+## E-289 · 2026-11-12 · hallazgo · **ABIERTA** — las discrepancias del repaso de F1B-09 que no tienen entrada propia
 **Qué:** el repaso de la auditoría de F1B-09 (`docs/sdd/F1B-09_Repaso_auditoria_2026-11.md`, §4) dejó diecinueve discrepancias. Siete tienen ya su sitio (D-1 a D-7 en E-223, E-226, E-090, E-224 y E-227), D-14 va al expediente y D-15 y D-17 a las filas F1B-16 y F1B-17. Quedan nueve sin entrada propia: D-8 (A-1 de F1A-05, asignado a F1C-02, que está cerrada), D-9 (los cuatro indicadores del ciclo reentrante, sin dueño), D-10 (un comentario del motor niega el checkbox obligatorio que hoy existe), D-11 (títulos de prueba con cifras caducas), D-12 (`Ingresado` como ejemplo de salida única), D-13 (cuatro líneas de «Fuera de alcance» con destinos ya cumplidos), D-16 («cliente sin ruta», sin buscar y sin dueño), y D-18 y D-19 (cifras caducas en comentarios de código y de pruebas). Cada una lleva su ruta y línea en el repaso.
 **De dónde viene:** `cierre-f1b09-repaso-auditoria` (F1B-09), 12/11/2026, fusionado en `17444a60`.
 **Afecta a:** comentarios, títulos de prueba y registros. Ninguna es un fallo de comportamiento.
 **Estado:** nueva · **Destino:** punto abierto con dueño, Supervisión, en la revisión de la bandeja del 23/11 (`decision/revision-bandeja-23-11`).
+
+## E-288 · 2026-11-12 · hallazgo · ~~ABIERTA~~ **RESUELTA 12/11** — el runner del CI va hasta tres veces más lento que en local, y cualquier prueba cerca de 5 s falla por tiempo
+**Qué:** tras E-287 falló en el CI 43274678556 otra prueba por la misma causa, `apps/desk/server/calibracionDirecta.test.ts:351` (5.261 ms; en local, 747). Ese día la suite tardó 800 s en el CI, frente a unos 280 en local.
+**De dónde viene:** el analista, 12/11/2026.
+**Afecta a:** cualquier push.
+**Estado:** resuelta en `de9dcd73`: `.github/workflows/ci.yml:45` corre las pruebas con `--testTimeout=20000` sólo en el CI, y en local el límite sigue en 5 s. CI 43280239345 verde (suite de 643 s; ninguna prueba dependió del límite nuevo). Supuesto reversible del analista, para la lista semanal.
