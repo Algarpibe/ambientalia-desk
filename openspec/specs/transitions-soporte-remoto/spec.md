@@ -319,7 +319,7 @@ la sincronización con Zoho no la pise. Los tickets heredados quedan con `NULL` 
 
 - **Rama de servicio en sitio** → 2027 T2 (`openspec/config.yaml:2413`, `:2415`).
 - **Guarda de remisión** → F1B-03 (`openspec/config.yaml:2417`).
-- **Columna propia de tablero para `Solicitud Soporte`** y mapa generado de los tres flujos → F1B-09.
+- **Columna propia de tablero para `Solicitud Soporte`** → hecha por F1B-08 (`columna-propia-dos-estados`, fusión `ae2e5223`); **mapa generado de los tres flujos** → hecho por F1B-09 (`mapa-blueprint-tres-flujos`, fusión `60b171fb`).
 - **Relleno de `modalidad` en heredados** y migración de datos (S-9).
 - **Selector en `CreateTicket.tsx` y lectura en la ficha:** `.tsx`, fuera de la red de pruebas (F0-00);
   sin `jsdom`. La imposición está probada en el servidor (RQ-SR-07 a RQ-SR-10).
