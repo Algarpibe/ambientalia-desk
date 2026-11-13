@@ -2529,12 +2529,12 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Afecta a:** capacidad de adjuntos (1G-02, cerrada); una prueba que falla a veces puede parar un push o un CI sin que haya fallo real.
 **Estado:** nueva · **Destino propuesto, no decidido:** un cambio corto fuera del plan, de la terminal.
 
-## E-285 · 2026-11-12 · hallazgo · **ABIERTA** — los pools de la base no gestionan que el servidor les corte una conexión
+## E-285 · 2026-11-12 · hallazgo · ~~ABIERTA~~ **RESUELTA 13/11** — los pools de la base no gestionan que el servidor les corte una conexión
 **Qué:** `packages/zoho-sync/src/db/pool.ts:4-11` crea los dos pools sin escuchar su evento `error`. En `pg-pool` 3.14.0, cuando muere una conexión que está en reposo en el pool, el pool emite `error` (la línea 62 de su `index.js`); si nadie escucha ese evento, Node lo trata como un fallo no capturado.
 **Hipótesis del analista, no probada en ejecución:** si el servidor corta una conexión inactiva de la App —un reinicio de `desk-db`, o un `pg_terminate_backend` dirigido a un pid de la App—, el proceso se cae en vez de abrir otra conexión. El límite de 15 minutos del paso (1) de E-268 no lo dispara: sólo corta sesiones con una transacción abierta, y la App no las deja (verificación del 10/11).
 **De dónde viene:** el analista, 10/11/2026, al verificar el paso (1) de E-268.
 **Afecta a:** la App y el worker `hub-sync`, que crean sus pools con esas mismas funciones; y el procedimiento de `DEPLOY.md:1112` (§26), que corta sesiones con `pg_terminate_backend`: hay que cortar sólo la de la consola.
-**Estado:** nueva · **Destino propuesto, no decidido:** un cambio corto fuera del plan, de la terminal.
+**Estado:** nueva · **Destino propuesto, no decidido:** un cambio corto fuera del plan, de la terminal. **Traza 13/11/2026 (supervisión):** construida por `pool-conexion-cortada` (`fuera-del-plan`, `cierra: si`), fusión 0ac45899. La hipótesis queda medida: sin oyente, cortar una conexión en reposo tumbaba el proceso; con él, el proceso sigue y deja una línea en el registro (`DEPLOY.md:1150`, §27). La cita de su «Qué» a `pool.ts` pasa a ser histórica (caso B, ancla 96cba5ab). Su «Afecta a» sigue en pie, pero por otra razón: tras E-290 un corte ya no tumba el proceso, pero la operación del usuario falla y su transacción no se confirma, así que la precaución de la §26 (cortar sólo la consola) sigue vigente (`DEPLOY.md:1185`).
 
 ## E-286 · 2026-11-12 · decisión · **REGISTRADA** — F1B-09: «cerrar la épica 1B» son sus filas de antes del corte, y F1B-09 cierra antes del 14/12
 **Qué:** Gerencia elige la opción (a). Para el repaso de la auditoría, «cerrar la épica 1B» son sus filas de antes del corte; las de 2027 tendrán su propia auditoría en su hito. Encargo: el repaso sobre el código de hoy, con una lista de discrepancias que tengan destino, las dos referencias de las especificaciones y la línea de prueba.
@@ -2542,7 +2542,7 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Afecta a:** F1B-09 · la cuenta de las 8 filas de antes del corte.
 **Estado:** registrada · **Destino:** F1B-09; `openspec/config.yaml` → `decision/f1b09-epica-1b-antes-del-corte`. **Traza 12/11/2026 (supervisión):** F1B-09 cerrada por archivo, con la fusión `17444a60` y la reconciliación `05305a5b` (37 por archivo, 4 en curso). Las discrepancias del repaso están en E-223, E-224, E-226, E-227, E-090 y E-289.
 
-## E-287 · 2026-11-12 · hallazgo · **ABIERTA** — dos pruebas de conversaciones rozan el límite de 5 s y fallan en el CI cuando el runner va lento
+## E-287 · 2026-11-12 · hallazgo · ~~ABIERTA~~ **RESUELTA 12/11** — dos pruebas de conversaciones rozan el límite de 5 s y fallan en el CI cuando el runner va lento
 **Qué:** el CI 43238461227 sobre `1b9a6b50`, un commit que sólo toca documentos, falló en dos de 6.492 pruebas por «Test timed out in 5000ms»: `packages/zoho-sync/src/conversaciones.test.ts:304` (M1: 151 guardadas y 150 recibidas en dos páginas) y la de las 250 conversaciones en tres páginas de `packages/zoho-sync/src/sync.conversaciones.test.ts`. En el CI verde anterior, 43230852789, las mismas tardaron 2.948 ms y 4.309 ms: están a menos de un segundo del límite por defecto de vitest.
 **De dónde viene:** el analista, 12/11/2026. El trabajo fallido se relanzó.
 **Afecta a:** cualquier push. Una prueba que falla por tiempo para el CI sin que haya un fallo real, igual que E-284.
@@ -2559,3 +2559,9 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **De dónde viene:** el analista, 12/11/2026.
 **Afecta a:** cualquier push.
 **Estado:** resuelta en `de9dcd73`: `.github/workflows/ci.yml:45` corre las pruebas con `--testTimeout=20000` sólo en el CI, y en local el límite sigue en 5 s. CI 43280239345 verde (suite de 643 s; ninguna prueba dependió del límite nuevo). Supuesto reversible del analista, para la lista semanal.
+
+## E-290 · 2026-11-13 · hallazgo · ~~ABIERTA~~ **RESUELTA 13/11** — el cliente que la App toma prestado del pool no escuchaba su evento `error`, y si el servidor cortaba su conexión el proceso se caía
+**Qué:** E-285 cubrió las conexiones en reposo del pool, pero no el cliente prestado con `pool.connect()`. Lo usan `apps/desk/server/db/transaccion.ts:16`, `apps/desk/server/db/eliminarTicket.ts:178`, `packages/zoho-sync/src/db/repo.ts:336` y `:440`, `packages/zoho-sync/src/db/puestaAlDiaEstricta.ts:80` y `apps/hub-sync/src/hub-sync.ts:55`. Medido contra PostgreSQL: un cliente prestado con `BEGIN` al que el servidor cortaba la conexión tumbaba el proceso con salida 1 y «Unhandled 'error' event» (I-4); también si el corte pillaba una consulta en curso dentro de la transacción (I-5, caso nuevo) y en el pool del worker (I-6).
+**De dónde viene:** W-1 del verify de `pool-conexion-cortada` (`openspec/changes/archive/2026-11-12-pool-conexion-cortada/verify-report.md:147`), 12/11/2026.
+**Afecta a:** la App y el worker.
+**Estado:** resuelta por `cliente-prestado-conexion-cortada` (`fuera-del-plan`, `cierra: si`), fusión ebf7de7c y reconciliación 6f67a5cf. Ninguno de los seis sitios ni `pool.ts` cambian: el oyente va en `packages/zoho-sync/src/db/conexionPerdida.ts`, en sitio en su línea 44 y lo demás al final del fichero. La integración corrió en el CI 43495399978 contra PostgreSQL 17.12, con los seis casos (I-1 a I-6) en verde. En la spec viva, RQ-ZS-67 deja sin efecto, por precedencia declarada, el límite que RQ-ZS-62 fijaba para el cliente prestado (`openspec/specs/zoho-sync/spec.md:3184`). Queda sin medir hasta el despliegue (tarea de Alfonso): que las rutas de la App devuelvan su error de siempre, que EasyPanel muestre stderr y el `application_name` de la App en producción.
