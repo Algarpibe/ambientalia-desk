@@ -6502,7 +6502,7 @@ decisiones_de_gerencia_panel:
       anclada de las esperas, `docs/sdd/ENTRADA.md:2282`, `5f5393bb`). La entrada vecina que encaja por contenido es E-257 (tickets
       archivados con una conversación borrada en Zoho que sigue visible); es SUPUESTO de esta supervisión, no decidido. Registrada
       como PARCIAL en ese punto y devuelta como pregunta del panel (qid `calificaciones-junto-con-que`).
-      (5) La comparación por ids de 1G-03 ya saca estos 51 de la prueba del corte (`openspec/changes/archive/2026-11-07-verificacion-completitud/archive-report.md:147-148`).
+      (5) La comparación por ids de 1G-03 ya saca estos 51 de la prueba del corte (`openspec/changes/archive/2026-11-07-verificacion-completitud/archive-report.md:147-148`). CUMPLIDA el 13/11/2026: desplegado en be1c0167; P-1 confirma el canal FEEDBACK; el relleno de los 51 da completo 51; y P-3 da 0 filas en los archivados (E-266 y E-257 resueltas).
     registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/calificaciones-y-borrados-de-zoho) · docs/sdd/ENTRADA.md → E-266 (traza)"
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
@@ -6648,7 +6648,7 @@ decisiones_de_gerencia_panel:
       «El 5 era E-257.»
     consecuencias: |
       (1) La tanda corta `fuera-del-plan` desde el 09/11 lleva sólo E-266. E-257 se mide al cerrarla: se cierra por medición o queda
-      abierta con su medición, sin ampliar la tanda.
+      abierta con su medición, sin ampliar la tanda. MEDIDO el 13/11/2026: P-3 da 0 filas tras el relleno de los 51, así que E-257 se cierra sin entrada propia.
     registro: "openspec/config.yaml → decisiones_de_gerencia_panel (decision/calificaciones-junto-con-que) · docs/sdd/ENTRADA.md → E-266 y E-257 (traza)"
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
