@@ -6,7 +6,7 @@ import path from 'node:path'
  * arranque-migracion-estricta (RQ-ZS-57) · contenido de `DEPLOY.md` §26 (regla de secretos de CLAUDE.md: qué cambia y qué se rompe si se pone mal;
  * aquí no hay interruptor: el límite es una constante del código). Molde: `deployModoSinZoho.test.ts`.
  *
- * QUÉ COMPRUEBA: que la §26 existe tras la §25 y es la última; los tres apartados; las dos formas de la línea del registro; el procedimiento con
+ * QUÉ COMPRUEBA: que la §26 existe tras la §25 y es la última hasta la §27; los tres apartados; las dos formas de la línea del registro; el procedimiento con
  * `pg_blocking_pids` y `pg_terminate_backend` del pid raíz; la constante `LIMITE_ESPERA_BLOQUEO_MS` y su valor; y que NO hay interruptor nuevo.
  * QUÉ NO COMPRUEBA: que el texto de la línea coincida con el del módulo (lo fija `puestaAlDiaEstricta.test.ts`) ni que cada línea citada siga
  * diciendo lo que la frase afirma.
@@ -20,8 +20,8 @@ export const faltasSeccion26 = (texto: string): string[] => {
   if (s26 === -1) return ['la sección `## 26. `']
   const faltas: string[] = []
   if (s26 <= s25) faltas.push('la §26 detrás de la §25')
-  const seccion = texto.slice(s26)
-  if ((seccion.match(/^## \d+\./gm) ?? []).length !== 1) faltas.push('la §26 como última sección')
+  const seccion = texto.slice(s26, texto.indexOf('## 27. ') > s26 ? texto.indexOf('## 27. ') : undefined)
+  if ((seccion.match(/^## \d+\./gm) ?? []).length !== 1) faltas.push('la §26 sola hasta la §27')
   for (const cadena of ['### Qué cambia', '### Cómo es la línea del registro', '### Qué hacer si la App no arranca tras desplegar',
     'Fallo al arrancar el servidor', 'Puesta al día de la base detenida', 'límite de espera', 'pg_blocking_pids', 'pg_terminate_backend', 'pid raíz',
     'LIMITE_ESPERA_BLOQUEO_MS', '10 s', 'No hay interruptor nuevo']) {
@@ -50,8 +50,8 @@ describe('DEPLOY.md §26 · arranque estricto (RQ-ZS-57)', () => {
     expect(faltasSeccion26(sin)).toEqual(['### Qué hacer si la App no arranca tras desplegar'])
   })
 
-  it('discrimina por posición: una §26 que no es la última, o que no existe, tiene falta', () => {
-    expect(faltasSeccion26(`${deploy}\n## 27. Otra\n`)).toEqual(['la §26 como última sección'])
+  it('discrimina por posición: una §26 que no es la que precede a la §27, o que no existe, tiene falta', () => {
+    expect(faltasSeccion26(deploy.replace('## 27. ', '## 99. Otra\n## 27. '))).toEqual(['la §26 sola hasta la §27'])
     expect(faltasSeccion26(deploy.slice(0, deploy.indexOf('## 26. ')))).toEqual(['la sección `## 26. `'])
   })
 })
