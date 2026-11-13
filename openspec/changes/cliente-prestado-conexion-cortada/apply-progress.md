@@ -138,12 +138,12 @@ Método: para cada fichero tocado en la rama (`conexionPerdida.ts`, su `.test.ts
 | `proposal.md:168` → `hijoConexionCortada.ts:51-54` | el modo `prestado` no libera nunca el cliente | B | anclada; «Hoy … no libera» pasa a «Su … no liberaba» |
 | `specs/zoho-sync/spec.md:98` → `hijoConexionCortada.ts:51-54` | el modo `prestado` no libera el cliente | B | anclada; «no libera» pasa a «no liberaba» |
 | `design.md:193` → `DEPLOY.md:1182` y `:1183` (abreviada) | «Sigue muriendo» está partida hoy entre las dos | B (hallada en el barrido) | anclada; «está partida hoy» pasa a «estaba partida … en `4d7aad75`» |
-| `proposal.md:77` → `DEPLOY.md:1182-1183`; `:78` → `1185-1186`; `:82` → `1179-1186`, `:43` y `…integration.test.ts:179`; `:107` → `:179`; `:144` → `1185-1186` | nombran dónde están el cliente prestado, la precaución de la §26 y la I-4, o lo que CA-2 pide cambiar | A | sin cambio: las líneas siguen siendo ese lugar |
+| `proposal.md:77` → `DEPLOY.md:1182-1183`; `:78` → `1185-1186`; `:82` → `1179-1186`, `packages/zoho-sync/src/db/conexionPerdida.ts:43` y `packages/zoho-sync/src/db/conexionPerdida.integration.test.ts:179`; `:107` → `:179`; `:144` → `1185-1186` | nombran dónde están el cliente prestado, la precaución de la §26 y la I-4, o lo que CA-2 pide cambiar | A | sin cambio: las líneas siguen siendo ese lugar |
 | `specs/zoho-sync/spec.md:19` → `conexionPerdida.ts:35`; `:91` → `:179`; `:161` → `DEPLOY.md:1179-1183` y `:1182-1183`; `:163` → `1185-1186`; `:175` → `1182-1186` | piden o nombran el sitio a cambiar; `:175` ya va anclada «en `4d7aad75`» | A | sin cambio |
 | `design.md:20, 68, 97, 98, 99, 118, 119, 120, 124, 157, 164, 166, 172, 173, 174, 177, 184, 185, 186, 187` y `tasks.md:56` | el plan en sitio: qué línea cambia y a qué (`:157` ya va con «su texto en `4d7aad75`») | A | sin cambio: describen el cambio, no el estado previo |
 | `archive/2026-11-12-pool-conexion-cortada/apply-progress.md:160` → `DEPLOY.md:1182` | DEPLOY-2 de entonces borró aquella viñeta | B (informe fechado) | NO se edita |
-| `archive/…/apply-progress.md:191` → `DEPLOY.md:1185` | la §27 era la última, comprobado en la revisión de entonces | B | NO se edita |
-| `archive/…/verify-report.md:117` → `DEPLOY.md:1179-1186` | CA-7 «límite escrito» cumplido en aquella revisión | B | NO se edita |
+| `openspec/changes/archive/2026-11-12-pool-conexion-cortada/apply-progress.md:191` → `DEPLOY.md:1185` | la §27 era la última, comprobado en la revisión de entonces | B | NO se edita |
+| `openspec/changes/archive/2026-11-12-pool-conexion-cortada/verify-report.md:117` → `DEPLOY.md:1179-1186` | CA-7 «límite escrito» cumplido en aquella revisión | B | NO se edita |
 
 Citas del archivo que no caen en línea cambiada, por tanto caso A y sin acción: `conexionPerdida.ts:43`, `integration.test.ts:132 :141 :101-105 :18 :17`, `hijoConexionCortada.ts:37`, `conexionPerdida.test.ts:30 :44 :61 :74 :93 :165 :184-209`, `deployPoolConexionCortada.test.ts:10 :40 :41 :46`, `DEPLOY.md:1150 :1171 :1143 :1127 :1146`.
 
