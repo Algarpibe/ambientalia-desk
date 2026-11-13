@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { TEXTO_CONEXION_PERDIDA, lineaConexionPerdida } from '@ambientalia/zoho-sync/db/conexionPerdida'
+import { TEXTO_CONEXION_PERDIDA, TEXTO_CLIENTE_PRESTADO, lineaConexionPerdida, lineaClientePrestado } from '@ambientalia/zoho-sync/db/conexionPerdida'
 
 /**
  * pool-conexion-cortada (E-285, RQ-ZS-62) · contenido de `DEPLOY.md` §27 (regla de secretos de CLAUDE.md: qué enciende y qué se rompe si se pone mal;
  * aquí no hay interruptor). Molde: `deployArranqueEstricto.test.ts`.
  *
  * QUÉ COMPRUEBA: que la §27 existe tras la §26 y es la última; los tres apartados; el SQLSTATE `57P01`; «salvo que se repita»; la ráfaga de «conexiones en reposo»;
- * el límite del cliente prestado por `pool.connect()`; el canal `stderr`; la remisión a la §26; que NO hay interruptor nuevo; y que el texto fijo y la línea
+ * la cobertura del cliente prestado por `pool.connect()` y la precaución de la §26; el canal `stderr`; la remisión a la §26; que NO hay interruptor nuevo; y que el texto fijo y la línea
  * medida de la §27 son LOS DEL CÓDIGO (se importan de `conexionPerdida`, no se copian: si el código cambia la línea, la §27 se pone roja).
  * QUÉ NO COMPRUEBA: que el procedimiento descrito sea el adecuado ni que cada línea citada siga diciendo lo que la frase afirma.
  */
@@ -29,10 +29,10 @@ export const faltasSeccion27 = (texto: string): string[] => {
   const seccion = texto.slice(s27)
   if ((seccion.match(/^## \d+\./gm) ?? []).length !== 1) faltas.push('la §27 como última sección')
   for (const cadena of ['### Cómo es la línea del registro', '### Qué hacer', '### Lo que no cubre', '57P01', 'salvo que se repita', 'conexiones en reposo',
-    'pool.connect()', 'stderr', '§26', 'No hay interruptor nuevo', TEXTO_CONEXION_PERDIDA, LINEA_MEDIDA]) {
+    'pool.connect()', 'stderr', '§26', 'No hay interruptor nuevo', TEXTO_CONEXION_PERDIDA, LINEA_MEDIDA, 'su transacción no se confirma', 'no se corta', TEXTO_CLIENTE_PRESTADO, LINEA_MEDIDA_PRESTADO]) {
     if (!seccion.includes(cadena)) faltas.push(cadena)
   }
-  return faltas
+  return seccion.replace(/\s+/g, ' ').includes('sigue muriendo') ? [...faltas, 'sin «sigue muriendo»'] : faltas
 }
 
 const deploy = readFileSync(path.join(RAIZ, 'DEPLOY.md'), 'utf8')
@@ -64,5 +64,33 @@ describe('DEPLOY.md §27 · conexión de la base cortada (RQ-ZS-62)', () => {
   it('discrimina por posición: una §27 que no es la última, o que no existe, tiene falta', () => {
     expect(faltasSeccion27(`${deploy}\n## 28. Otra\n`)).toEqual(['la §27 como última sección'])
     expect(faltasSeccion27(deploy.slice(0, deploy.indexOf('## 27. ')))).toEqual(['la sección `## 27. `'])
+  })
+})
+
+/** La línea del cliente prestado tal como la midió I-4 en PostgreSQL 17.10, construida con el código y no copiada (E-290, RQ-ZS-67). */
+export const LINEA_MEDIDA_PRESTADO = lineaClientePrestado(
+  Object.assign(new Error('terminating connection due to administrator command'), { code: '57P01' }),
+)
+describe('DEPLOY.md §27 · cliente prestado cubierto y precaución de la §26 conservada (RQ-ZS-67)', () => {
+  it('«sigue muriendo» devuelta a la §27, en un renglón o partida por un salto, se pone roja y la nombra', () => {
+    for (const frase of ['sigue muriendo', 'sigue\n  muriendo']) {
+      const sucio = deploy.replace('### Lo que no cubre', `### Lo que no cubre\n\nel proceso ${frase}`)
+      expect(sucio).not.toBe(deploy)
+      expect(faltasSeccion27(sucio)).toEqual(['sin «sigue muriendo»'])
+    }
+  })
+
+  it('sin el texto fijo del cliente prestado, se pone roja y nombra el texto y su línea medida', () => {
+    const sin = deploy.split(TEXTO_CLIENTE_PRESTADO).join('Otro texto')
+    expect(sin).not.toBe(deploy)
+    expect(faltasSeccion27(sin)).toEqual([TEXTO_CLIENTE_PRESTADO, LINEA_MEDIDA_PRESTADO])
+  })
+
+  it('sin «su transacción no se confirma» y sin «no se corta», cada una da su falta', () => {
+    for (const cadena of ['su transacción no se confirma', 'no se corta']) {
+      const sin = deploy.split(cadena).join('otra cosa')
+      expect(sin).not.toBe(deploy)
+      expect(faltasSeccion27(sin)).toEqual([cadena])
+    }
   })
 })

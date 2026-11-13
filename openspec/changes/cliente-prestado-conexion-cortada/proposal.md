@@ -12,7 +12,7 @@ origen_cabecera: declarada
 
 Atiende E-290, que nace del aviso W-1 del verify de `pool-conexion-cortada`
 (`openspec/changes/archive/2026-11-12-pool-conexion-cortada/verify-report.md:147`): el oyente que E-285 puso en los pools no cubre un cliente prestado
-por `pool.connect()`, y la integración I-4 (`packages/zoho-sync/src/db/conexionPerdida.integration.test.ts:179`) fija que, si el servidor corta ese
+por `pool.connect()`, y la integración I-4 (`packages/zoho-sync/src/db/conexionPerdida.integration.test.ts:179` en `4d7aad75`) fija que, si el servidor corta ese
 cliente con una transacción abierta, el proceso muere. E-290 se cita por su número: su entrada en la bandeja la escribe Supervisión.
 
 *Sobre la cabecera.* `tanda: fuera-del-plan` con motivo: E-290, como E-285, no tiene fila del plan, y fuera del plan el cambio no entra en el
@@ -55,7 +55,7 @@ a 211). Un cliente prestado, por tanto, no tiene ningún oyente de `error`.
 | `apps/hub-sync/src/hub-sync.ts:55` | Libera en `finally` (`apps/hub-sync/src/hub-sync.ts:59`); su pool `stPool` sale de `createPoolFromUrl` (`:53`) |
 
 Todos los pools salen de `packages/zoho-sync/src/db/pool.ts:6` y `:10`, que ya pasan por `escucharConexionPerdida`
-(`packages/zoho-sync/src/db/conexionPerdida.ts:35`, que hoy sólo pone el oyente del pool, en `:43`). La App crea el suyo en `apps/desk/server/index.ts:18`
+(`packages/zoho-sync/src/db/conexionPerdida.ts:35` en `4d7aad75`, que sólo pone el oyente del pool, en `:43`). La App crea el suyo en `apps/desk/server/index.ts:18`
 y abre con él la puesta al día del arranque (`apps/desk/server/index.ts:26`). Un oyente puesto desde el pool alcanza, pues, a los seis. Los rechazos
 que siguen al corte ya tienen quien los recoja en el worker: la derivación diaria, `packages/zoho-sync/src/booksHub/schedule.ts:16`, y la inicial,
 `apps/hub-sync/src/hub-sync.ts:61`. **Hipótesis:** en la App, el rechazo de `enTransaccion` llega a la ruta como cualquier error de base y recibe su
@@ -145,7 +145,7 @@ falla con su error de siempre y sale una línea por cliente.
 
 | A favor de retirarla | En contra, o sin medir |
 |---|---|
-| Su razón escrita es que el proceso muere (`DEPLOY.md:1182-1183`); si CA-2 a CA-4 pasan, deja de ser cierta | Cortar un pid de la App con transacción abierta sigue haciendo fallar la operación de un usuario (un alta, una transición, un borrado): su transacción no llega a confirmarse y, **hipótesis**, el usuario ve un error |
+| Su razón escrita es que el proceso muere (`DEPLOY.md:1182-1183` en `4d7aad75`); si CA-2 a CA-4 pasan, deja de ser cierta | Cortar un pid de la App con transacción abierta sigue haciendo fallar la operación de un usuario (un alta, una transición, un borrado): su transacción no llega a confirmarse y, **hipótesis**, el usuario ve un error |
 | Mientras no se corte, el arranque se sigue deteniendo por el límite de espera (`DEPLOY.md:1142`) | Si el pid raíz es la puesta al día del arranque (`packages/zoho-sync/src/db/puestaAlDiaEstricta.ts:80`), cortarlo detiene ese arranque con la salida 1 de la §26 |
 | | Sin medir en producción: el `application_name` de la App, que EasyPanel enseñe la línea y el comportamiento sobre PostgreSQL 17.11 |
 
@@ -165,7 +165,7 @@ Todos reversibles; van a la lista semanal (`decision/preguntas-de-detalle-sin-ll
 | S-5 | Integración en un contenedor desechable `postgres:17-alpine` (17.10), nunca contra producción (17.11) | Otra imagen |
 | S-6 | Spec: ADDED desde RQ-ZS-63. Como RQ-ZS-62 es el último bloque del fichero, un MODIFIED suyo no mueve líneas de los anteriores. La fase de spec elige entre ese MODIFIED y una precedencia declarada, como la de RQ-ZS-62 sobre RQ-ZS-57 (`openspec/specs/zoho-sync/spec.md:3021-3022`) | La otra vía |
 | S-7 | I-4 deja de ser caracterización (D-7, `openspec/changes/archive/2026-11-12-pool-conexion-cortada/design.md:245`) y pasa a requisito; se reescribe en sitio y los casos nuevos van al final | Dejar I-4 y añadir otra prueba |
-| S-8 | El hijo de la integración gana los modos que hagan falta, en sitio o al final, o se crea otro hijo: lo decide el diseño. Hoy su modo `prestado` no libera nunca el cliente (`packages/zoho-sync/src/db/testing/hijoConexionCortada.ts:51-54`) | Otro hijo |
+| S-8 | El hijo de la integración gana los modos que hagan falta, en sitio o al final, o se crea otro hijo: lo decide el diseño. Su modo `prestado` no liberaba nunca el cliente (`packages/zoho-sync/src/db/testing/hijoConexionCortada.ts:51-54` en `4d7aad75`) | Otro hijo |
 
 **Ronda de preguntas:** no se hace. El preflight es `auto` (`openspec/config.yaml:26`) y ninguna duda da causa de parada de la «Regla de ejecución»:
 no cambia el alcance de una fila, no cuesta dinero, no toca datos de producción ni contradice una decisión. Las que habría hecho —el texto de la

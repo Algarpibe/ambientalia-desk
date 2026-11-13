@@ -52,12 +52,12 @@ Medición: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/postg
 
 ## Lote L2 — guarda, `DEPLOY.md` §27 y barrido (intento i4)
 Escenarios: RQ-ZS-67 los tres. Necesita la línea medida en L1.
-- [ ] L2.1 ROJO `apps/desk/server/deployPoolConexionCortada.test.ts`: en sitio `:4`, `:11`, `:32`, `:35`; al final, `LINEA_MEDIDA_PRESTADO` y el `describe` de copias ensuciadas (`design.md` §6). Roja contra el `DEPLOY.md` de hoy por sus faltas exactas.
-- [ ] L2.2 `DEPLOY.md:1179-1186` en sitio (cambian 1179, 1182, 1183, 1185 y 1186; ocho renglones siguen siendo ocho, CRLF) y bloque `### La línea del cliente prestado (E-290)` al final con la línea medida en L1, sin `## ` nuevo.
-- [ ] L2.3 Verde: la guarda y las que la rodean (`deployPoolConexionCortada.test.ts`, `deployArranqueEstricto.test.ts`) sin tocar estas últimas.
-- [ ] L2.4 DEPLOY-1 a DEPLOY-3 sobre el `DEPLOY.md` real (regla de mutación 2), con restauración comprobada.
-- [ ] L2.5 Barrido de citas (regla de mutación 4, `design.md` §9): caso B anclado «en `4d7aad75`» en la misma línea física de `proposal.md:15`, `:58`, `:148`, `:168` y `specs/zoho-sync/spec.md:98`; segundo pase humano de abreviadas; listar sin editar el archivo de `pool-conexion-cortada` y cualquier cita de Supervisión.
-- [ ] L2.6 Anotar en `apply-progress.md` la respuesta medida a la pregunta de la §26 (`design.md` §7) para el verify.
+- [x] L2.1 ROJO `apps/desk/server/deployPoolConexionCortada.test.ts`: en sitio `:4`, `:11`, `:32`, `:35`; al final, `LINEA_MEDIDA_PRESTADO` y el `describe` de copias ensuciadas (`design.md` §6). Roja contra el `DEPLOY.md` de hoy por sus faltas exactas.
+- [x] L2.2 `DEPLOY.md:1179-1186` en sitio (cambian 1179, 1182, 1183, 1185 y 1186; ocho renglones siguen siendo ocho, CRLF) y bloque `### La línea del cliente prestado (E-290)` al final con la línea medida en L1, sin `## ` nuevo.
+- [x] L2.3 Verde: la guarda y las que la rodean (`deployPoolConexionCortada.test.ts`, `deployArranqueEstricto.test.ts`) sin tocar estas últimas.
+- [x] L2.4 DEPLOY-1 a DEPLOY-3 sobre el `DEPLOY.md` real (regla de mutación 2), con restauración comprobada.
+- [x] L2.5 Barrido de citas (regla de mutación 4, `design.md` §9): caso B anclado «en `4d7aad75`» en la misma línea física de `proposal.md:15`, `:58`, `:148`, `:168` y `specs/zoho-sync/spec.md:98`; segundo pase humano de abreviadas; listar sin editar el archivo de `pool-conexion-cortada` y cualquier cita de Supervisión.
+- [x] L2.6 Anotar en `apply-progress.md` la respuesta medida a la pregunta de la §26 (`design.md` §7) para el verify.
 - [ ] L2.7 Cierre del lote: medida (i4) contra el commit de cierre de L1, las cinco comprobaciones, `git show --numstat` con sólo ficheros de este cambio.
 
 ## Verificación y archivo (intentos propios, tras L2)

@@ -190,7 +190,7 @@ hacer: nada, salvo que se repita, y si alguien informa de una operación fallida
   «sigue\n  muriendo» devuelta y **partida** por un salto de línea → `['sin «sigue muriendo»']`; sin el texto fijo → `[TEXTO_CLIENTE_PRESTADO, LINEA_MEDIDA_PRESTADO]`;
   sin «su transacción no se confirma» y sin «no se corta» → cada una, su falta.
 
-**Por qué esas cadenas (D-14).** «Su operación falla» no discrimina: va dentro del texto fijo (S-1). «Sigue muriendo» está partida hoy entre `DEPLOY.md:1182` y `:1183`, así que
+**Por qué esas cadenas (D-14).** «Su operación falla» no discrimina: va dentro del texto fijo (S-1). «Sigue muriendo» estaba partida entre `DEPLOY.md:1182` y `:1183` en `4d7aad75`, así que
 un `includes` sobre el texto crudo no la vería nunca: se colapsan los espacios en vez de buscar «muriendo» a secas, que prohibiría cualquier uso legítimo y no resiste mejor
 un reajuste de renglones. Las pruebas de hoy siguen verdes: `apps/desk/server/deployPoolConexionCortada.test.ts:46-50`, `:52-56`, `:58-62` y `:64-67`, porque el texto nuevo no contiene
 `salvo que se repita`, `pool.connect()` ni el texto de E-285, y la `## 28.` de `apps/desk/server/deployPoolConexionCortada.test.ts:65` sigue dando sólo su falta. La guarda

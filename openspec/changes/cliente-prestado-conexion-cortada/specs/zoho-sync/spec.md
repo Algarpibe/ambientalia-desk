@@ -95,7 +95,7 @@ un pool de `createPoolFromUrl` (el molde de `apps/hub-sync/src/hub-sync.ts:53-55
 (CA-5): I-1 e I-2 siguen dejando exactamente una línea de E-285 y ninguna del texto nuevo; I-3, ninguna de las dos. Antes de cortar, cada caso **SHALL** comprobar el estado del backend
 (`idle in transaction` o `active`, la espera acotada de `packages/zoho-sync/src/db/conexionPerdida.integration.test.ts:155`) y que `pg_terminate_backend` devolvió `true` (`:156`). Sin
 `TEST_DATABASE_URL`, la integración se salta y la suite no falla (en el CI corre: `.github/workflows/ci.yml:47`). El hijo
-(`packages/zoho-sync/src/db/testing/hijoConexionCortada.ts:51-54`, cuyo modo `prestado` no libera el cliente) gana los modos que hagan falta, en sitio o al final (S-8).
+(`packages/zoho-sync/src/db/testing/hijoConexionCortada.ts:51-54` en `4d7aad75`, cuyo modo `prestado` no liberaba el cliente) gana los modos que hagan falta, en sitio o al final (S-8).
 
 Fuente: H-1, H-2, H-4, CA-2 a CA-5, S-5, S-7 y S-8 de `proposal.md`; E-290.
 
