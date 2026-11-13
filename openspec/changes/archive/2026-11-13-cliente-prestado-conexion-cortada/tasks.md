@@ -62,7 +62,7 @@ Escenarios: RQ-ZS-67 los tres. Necesita la línea medida en L1.
 
 ## Verificación y archivo (intentos propios, tras L2)
 - [x] V.1 Verify independiente (i5): `verify-report.md` con cada escenario de RQ-ZS-63 a RQ-ZS-67 contra su prueba y CA-1 a CA-10; reproducir al menos M-1, M-3 y DEPLOY-1.
-- [ ] A.1 Archivo (i6): techo = 2 × carpeta + 800; fusión por script del delta, ensayo `--dry`, finales de línea conservados; `archive-report.md` con la línea de R-1; medir la parte revisable antes de aplicar y parar si supera 800.
+- [x] A.1 Archivo (i6): techo = 2 × carpeta + 800; fusión por script del delta, ensayo `--dry`, finales de línea conservados; `archive-report.md` con la línea de R-1; medir la parte revisable antes de aplicar y parar si supera 800.
 
 ## Tareas de persona — fuera del recuento; archivar NO las da por hechas
 | Id | Qué | Dueño | Dónde queda escrito |
