@@ -1176,11 +1176,21 @@ EasyPanel muestra stderr).
 
 ### Lo que no cubre
 
-El oyente cubre las conexiones **en reposo** dentro del pool. **No** cubre:
+El oyente del pool cubre las conexiones **en reposo**; desde E-290, un oyente por cliente cubre además el cliente **prestado** por `pool.connect()` (su línea está al final de esta sección). **No** cubre:
 
 - **Una consulta en curso** cuando se corta la conexión: la consulta falla con el mismo `57P01` y el proceso sigue, pero el error llega a la consulta y **no sale la línea**.
-- **Un cliente prestado por `pool.connect()`** con una transacción abierta (el caso de `apps/desk/server/db/transaccion.ts:16-26`): medido en la prueba de integración, si el servidor corta esa conexión el proceso **sigue
-  muriendo** (salida 1, «Unhandled 'error' event», `57P01`) y tampoco sale la línea. Proteger ese caso queda fuera de este cambio.
+- **Un cliente prestado por `pool.connect()`** con una transacción abierta (el caso de `apps/desk/server/db/transaccion.ts:16-26`): medido en la prueba de integración, si el servidor corta esa conexión el proceso ya no cae y sale una línea, pero **su operación falla**:
+  su transacción no se confirma y quien la pidió recibe el error de base de siempre (hipótesis para las rutas de la App); nada la reintenta. Evitar esa falla queda fuera de este cambio.
 
-Por eso la precaución de la §26 **sigue vigente**: antes de cortar con `pg_terminate_backend` el **pid raíz** de una cadena de bloqueos, comprobar que es de la consola (`application_name` «psql» en
-`pg_stat_activity`; la App llega con el nombre vacío, medido también en el contenedor local, no en producción) y no de la App. Un pid de la App con una transacción abierta **no se corta**: se pasa al analista.
+Por eso la precaución de la §26 **sigue vigente**, ya no porque el proceso muera sino porque la operación de un usuario falla y su transacción no se confirma: antes de cortar con `pg_terminate_backend` el **pid raíz** de una cadena de bloqueos, comprobar que es de la consola (`application_name` «psql» en
+`pg_stat_activity`; la App llega con el nombre vacío, medido también en el contenedor local, no en producción) y no de la App. Un pid de la App con una transacción abierta **no se corta**: se pasa al analista, porque la operación de ese usuario fallaría.
+
+### La línea del cliente prestado (E-290)
+
+Sale por el mismo canal, stderr (`console.error`), y es **distinta** de la de E-285: lleva su propio texto fijo, seguido del mensaje del error y, si lo trae, su SQLSTATE entre corchetes. Sale **una por cliente**, aunque ese cliente dé dos errores (el del servidor y «Connection terminated unexpectedly»). La línea medida contra PostgreSQL 17.10 (contenedor local `postgres:17-alpine`, no producción) al cortar con `pg_terminate_backend` un cliente prestado con la transacción abierta, con el código `57P01`:
+
+> ```
+> Pool de la base: se perdió la conexión de un cliente prestado; su operación falla y el proceso sigue — terminating connection due to administrator command [57P01]
+> ```
+
+Qué hacer: nada, salvo que se repita. Si alguien informa de una operación fallida a esa hora, esa es la causa: la transacción de esa operación no se confirmó y hay que repetirla. Si la línea se repite **sin** reinicio ni corte conocido, pasar la línea al analista.

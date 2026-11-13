@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { Pool } from 'pg'
 import { createPool, createPoolFromUrl } from './pool'
-import { escucharConexionPerdida, lineaConexionPerdida, TEXTO_CONEXION_PERDIDA } from './conexionPerdida'
+import { escucharConexionPerdida, lineaClientePrestado, lineaConexionPerdida, TEXTO_CLIENTE_PRESTADO, TEXTO_CONEXION_PERDIDA } from './conexionPerdida'
 import type { AppConfig } from '../config'
 
 const URL_PRUEBA = 'postgres://u:p@h:5432/db'
@@ -207,4 +207,139 @@ describe('U-10 · forma de pool.ts (RQ-ZS-61.1, CA-5)', () => {
     const envueltas = lineas.map((l, i) => (l.includes('escucharConexionPerdida(new Pool(') ? i + 1 : 0)).filter(Boolean)
     expect(envueltas).toEqual([6, 10])
   })
+})
+
+// E-290 · el cliente prestado por `pool.connect()` (RQ-ZS-63, RQ-ZS-64). Pool y clientes son EventEmitter falsos: sin base.
+// `pg-pool` emite `connect` al crear el cliente y `acquire` al prestarlo; `release(err, cliente)` al devolverlo.
+function montar(registrar: (linea: string) => void) {
+  const pool = escucharConexionPerdida(new EventEmitter(), registrar)
+  const nuevo = (prestado: boolean): EventEmitter => {
+    const cliente = new EventEmitter()
+    pool.emit('connect', cliente)
+    if (prestado) pool.emit('acquire', cliente)
+    return cliente
+  }
+  return { pool, nuevo }
+}
+
+describe('U-11 · un cliente prestado que pierde la conexión deja una línea y no lanza (RQ-ZS-63.1, RQ-ZS-64.1)', () => {
+  it('una llamada, un argumento, texto del cliente prestado, mensaje y código; un solo oyente de error', () => {
+    const registrar = vi.fn()
+    const cliente = montar(registrar).nuevo(true)
+    expect(() => cliente.emit('error', errorConCodigo(MENSAJE_57P01, '57P01'))).not.toThrow()
+    expect(registrar.mock.calls).toEqual([[`${TEXTO_CLIENTE_PRESTADO} — ${MENSAJE_57P01} [57P01]`]])
+    expect(cliente.listenerCount('error')).toBe(1)
+  })
+})
+
+describe('U-12 · en reposo habla el oyente del pool, no el del cliente (RQ-ZS-63.2)', () => {
+  it('el error del cliente en reposo no lanza ni registra; el del pool da exactamente la línea de E-285', () => {
+    const registrar = vi.fn()
+    const { pool, nuevo } = montar(registrar)
+    const cliente = nuevo(false)
+    expect(() => cliente.emit('error', errorConCodigo(MENSAJE_57P01, '57P01'))).not.toThrow()
+    expect(registrar).not.toHaveBeenCalled()
+    pool.emit('error', errorConCodigo(MENSAJE_57P01, '57P01'), cliente)
+    expect(registrar.mock.calls).toEqual([[`${TEXTO_CONEXION_PERDIDA} — ${MENSAJE_57P01} [57P01]`]])
+  })
+})
+
+describe('U-13 · un cliente ya liberado calla (RQ-ZS-63.3)', () => {
+  it('tras release(undefined, cliente) el error no lanza ni registra', () => {
+    const registrar = vi.fn()
+    const { pool, nuevo } = montar(registrar)
+    const cliente = nuevo(true)
+    pool.emit('release', undefined, cliente)
+    expect(() => cliente.emit('error', errorConCodigo(MENSAJE_57P01, '57P01'))).not.toThrow()
+    expect(registrar).not.toHaveBeenCalled()
+  })
+})
+
+describe('U-14 · una línea por cliente aunque dé dos errores (RQ-ZS-63.4)', () => {
+  it('57P01 y «Connection terminated unexpectedly» sin code: una llamada, la del primero', () => {
+    const registrar = vi.fn()
+    const cliente = montar(registrar).nuevo(true)
+    expect(() => cliente.emit('error', errorConCodigo(MENSAJE_57P01, '57P01'))).not.toThrow()
+    expect(() => cliente.emit('error', errorConCodigo('Connection terminated unexpectedly'))).not.toThrow()
+    expect(registrar.mock.calls).toEqual([[`${TEXTO_CLIENTE_PRESTADO} — ${MENSAJE_57P01} [57P01]`]])
+  })
+})
+
+describe('U-15 · cada cliente prestado deja la suya (RQ-ZS-63.5)', () => {
+  it('dos clientes prestados, un error cada uno: dos llamadas', () => {
+    const registrar = vi.fn()
+    const { nuevo } = montar(registrar)
+    const a = nuevo(true)
+    const b = nuevo(true)
+    expect(() => a.emit('error', errorConCodigo('uno', '57P01'))).not.toThrow()
+    expect(() => b.emit('error', errorConCodigo('dos'))).not.toThrow()
+    expect(registrar.mock.calls).toEqual([[`${TEXTO_CLIENTE_PRESTADO} — uno [57P01]`], [`${TEXTO_CLIENTE_PRESTADO} — dos`]])
+  })
+})
+
+describe('U-16 · sin code no hay corchetes y los dos textos fijos se distinguen (RQ-ZS-64.1, RQ-ZS-64.2)', () => {
+  it('sin code la línea no lleva corchetes; ninguno de los dos textos contiene al otro', () => {
+    const registrar = vi.fn()
+    const cliente = montar(registrar).nuevo(true)
+    expect(() => cliente.emit('error', errorConCodigo('Connection terminated unexpectedly'))).not.toThrow()
+    expect(registrar.mock.calls).toEqual([[`${TEXTO_CLIENTE_PRESTADO} — Connection terminated unexpectedly`]])
+    expect(String(registrar.mock.calls[0][0])).not.toContain('[')
+    expect(TEXTO_CLIENTE_PRESTADO).not.toContain(TEXTO_CONEXION_PERDIDA)
+    expect(TEXTO_CONEXION_PERDIDA).not.toContain(TEXTO_CLIENTE_PRESTADO)
+    expect(lineaClientePrestado(errorConCodigo('x'))).toBe(`${TEXTO_CLIENTE_PRESTADO} — x`)
+  })
+})
+
+describe('U-17 · nunca el objeto de error ni su cliente (RQ-ZS-64.3)', () => {
+  it('con err.client falso y una URL con contraseña en el mensaje la línea no filtra testigos y lleva un solo argumento', () => {
+    const registrar = vi.fn()
+    const cliente = montar(registrar).nuevo(true)
+    const client = {
+      connectionString: 'postgres://usuario-testigo:TESTIGO-7Q@host-testigo:5432/db',
+      connectionParameters: { password: 'TESTIGO-7Q', user: 'usuario-testigo', host: 'host-testigo' },
+    }
+    const err = Object.assign(errorConCodigo(`${MENSAJE_57P01} en postgres://usuario-testigo:TESTIGO-7Q@host-testigo:5432/db`, '57P01'), { client })
+    expect(() => cliente.emit('error', err, client)).not.toThrow()
+    expect(registrar).toHaveBeenCalledTimes(1)
+    expect(registrar.mock.calls[0]).toHaveLength(1)
+    const linea = String(registrar.mock.calls[0][0])
+    expect(linea).toContain(MENSAJE_57P01)
+    for (const testigo of ['TESTIGO-7Q', 'host-testigo', 'usuario-testigo', 'postgres://']) {
+      expect(linea).not.toContain(testigo)
+    }
+  })
+})
+
+describe('U-18 · un registrar que lanza no tumba el emit del cliente (RQ-ZS-64.4)', () => {
+  it('emit(error) del cliente prestado no lanza aunque el registrar lance', () => {
+    const registrar = vi.fn(() => {
+      throw new Error('el registro falló')
+    })
+    const cliente = montar(registrar).nuevo(true)
+    expect(() => cliente.emit('error', errorConCodigo('x'))).not.toThrow()
+    expect(registrar).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('U-19 · los tres pools reales cubren al cliente prestado (RQ-ZS-63.1, por pool.ts)', () => {
+  const casos: Array<[string, () => ReturnType<typeof createPoolFromUrl>]> = [
+    ['createPool desk', () => createPool({ databaseUrl: URL_PRUEBA, dbSchema: 'desk' } as AppConfig)],
+    ['createPool public', () => createPool({ databaseUrl: URL_PRUEBA, dbSchema: 'public' } as AppConfig)],
+    ['createPoolFromUrl', () => createPoolFromUrl(URL_PRUEBA)],
+  ]
+  for (const [nombre, crear] of casos) {
+    it(`${nombre}: connect y acquire de un cliente falso, y su error no lanza`, async () => {
+      const espia = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const pool = crear()
+      try {
+        const cliente = new EventEmitter()
+        pool.emit('connect', cliente)
+        pool.emit('acquire', cliente)
+        expect(() => cliente.emit('error', errorConCodigo(MENSAJE_57P01, '57P01'))).not.toThrow()
+        expect(espia.mock.calls).toEqual([[`${TEXTO_CLIENTE_PRESTADO} — ${MENSAJE_57P01} [57P01]`]])
+      } finally {
+        await pool.end()
+      }
+    })
+  }
 })

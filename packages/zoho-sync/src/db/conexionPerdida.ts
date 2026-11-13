@@ -41,5 +41,29 @@ export function escucharConexionPerdida<P extends EventEmitter>(pool: P, registr
     }
   }
   pool.on('error', oyente)
+  return escucharClientePrestado(pool, registrar)
+}
+
+// E-290: pg-pool quita su oyente de reposo al prestar un cliente, y un `error` sin oyente tumba el proceso.
+export const TEXTO_CLIENTE_PRESTADO = 'Pool de la base: se perdió la conexión de un cliente prestado; su operación falla y el proceso sigue'
+
+export function lineaClientePrestado(err: unknown): string {
+  try { return `${TEXTO_CLIENTE_PRESTADO} — ${mensajeDe(err)}${codigoDe(err)}` } catch { return `${TEXTO_CLIENTE_PRESTADO} — (sin detalle)` }
+}
+
+// Declaración, no `const`: el hoisting la hace visible en la línea 44.
+function escucharClientePrestado<P extends EventEmitter>(pool: P, registrar: Registrar): P {
+  const prestados = new WeakSet<object>()
+  const registrados = new WeakSet<object>()
+  pool.on('connect', (cliente: EventEmitter) => {
+    cliente.on('error', (err: unknown) => {
+      if (!prestados.has(cliente)) return   // filtro (H-3): en reposo habla el oyente del pool
+      if (registrados.has(cliente)) return  // deduplicación (H-1): un corte da dos errores por cliente
+      registrados.add(cliente)
+      try { registrar(lineaClientePrestado(err)) } catch { /* un registro que lanzara dentro del emit tumbaría el proceso */ }
+    })
+  })
+  pool.on('acquire', (cliente: object) => { prestados.add(cliente) })
+  pool.on('release', (_err: unknown, cliente: object) => { prestados.delete(cliente) })
   return pool
 }
