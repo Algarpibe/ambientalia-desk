@@ -1187,7 +1187,7 @@ Por eso la precaución de la §26 **sigue vigente**, ya no porque el proceso mue
 
 ### La línea del cliente prestado (E-290)
 
-Sale por el mismo canal, stderr (`console.error`), y es **distinta** de la de E-285: lleva su propio texto fijo, seguido del mensaje del error y su SQLSTATE entre corchetes. Sale **una por cliente**, aunque ese cliente dé dos errores (el del servidor y «Connection terminated unexpectedly»). La línea medida contra PostgreSQL 17.10 (contenedor local `postgres:17-alpine`, no producción) al cortar con `pg_terminate_backend` un cliente prestado con la transacción abierta, con el código `57P01`:
+Sale por el mismo canal, stderr (`console.error`), y es **distinta** de la de E-285: lleva su propio texto fijo, seguido del mensaje del error y, si lo trae, su SQLSTATE entre corchetes. Sale **una por cliente**, aunque ese cliente dé dos errores (el del servidor y «Connection terminated unexpectedly»). La línea medida contra PostgreSQL 17.10 (contenedor local `postgres:17-alpine`, no producción) al cortar con `pg_terminate_backend` un cliente prestado con la transacción abierta, con el código `57P01`:
 
 > ```
 > Pool de la base: se perdió la conexión de un cliente prestado; su operación falla y el proceso sigue — terminating connection due to administrator command [57P01]
