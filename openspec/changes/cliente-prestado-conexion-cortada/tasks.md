@@ -48,7 +48,7 @@ Medición: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/postg
 - [x] L1.7 `npm run typecheck` (cierra la hipótesis del tipado) y `npm run lint -- --max-warnings 165` con «165 contra 165».
 - [x] L1.8 Mutaciones M-1 a M-7 (protocolo; rojos previstos en `design.md` §5): M-1 la 44 vuelve a `return pool`; M-2 filtro `!prestados.has`; M-3 deduplicación; M-4 `release`; M-5 `try` del registro; M-6 `JSON.stringify(err)`; M-7 línea de E-285 en el oyente de cliente.
 - [x] L1.9 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`; `git diff --quiet` sobre `pool.ts`, `migrate.ts`, `schema.sql` y `.env.example` sale 0.
-- [ ] L1.10 Cierre del lote: medida (i3) y las cinco comprobaciones en una cadena, con memoria libre anotada; `apply-progress.md`; commit lo hace el orquestador.
+- [x] L1.10 Cierre del lote: medida (i3) y las cinco comprobaciones en una cadena, con memoria libre anotada; `apply-progress.md`; commit lo hace el orquestador.
 
 ## Lote L2 — guarda, `DEPLOY.md` §27 y barrido (intento i4)
 Escenarios: RQ-ZS-67 los tres. Necesita la línea medida en L1.
@@ -58,10 +58,10 @@ Escenarios: RQ-ZS-67 los tres. Necesita la línea medida en L1.
 - [x] L2.4 DEPLOY-1 a DEPLOY-3 sobre el `DEPLOY.md` real (regla de mutación 2), con restauración comprobada.
 - [x] L2.5 Barrido de citas (regla de mutación 4, `design.md` §9): caso B anclado «en `4d7aad75`» en la misma línea física de `proposal.md:15`, `:58`, `:148`, `:168` y `specs/zoho-sync/spec.md:98`; segundo pase humano de abreviadas; listar sin editar el archivo de `pool-conexion-cortada` y cualquier cita de Supervisión.
 - [x] L2.6 Anotar en `apply-progress.md` la respuesta medida a la pregunta de la §26 (`design.md` §7) para el verify.
-- [ ] L2.7 Cierre del lote: medida (i4) contra el commit de cierre de L1, las cinco comprobaciones, `git show --numstat` con sólo ficheros de este cambio.
+- [x] L2.7 Cierre del lote: medida (i4) contra el commit de cierre de L1, las cinco comprobaciones, `git show --numstat` con sólo ficheros de este cambio.
 
 ## Verificación y archivo (intentos propios, tras L2)
-- [ ] V.1 Verify independiente (i5): `verify-report.md` con cada escenario de RQ-ZS-63 a RQ-ZS-67 contra su prueba y CA-1 a CA-10; reproducir al menos M-1, M-3 y DEPLOY-1.
+- [x] V.1 Verify independiente (i5): `verify-report.md` con cada escenario de RQ-ZS-63 a RQ-ZS-67 contra su prueba y CA-1 a CA-10; reproducir al menos M-1, M-3 y DEPLOY-1.
 - [ ] A.1 Archivo (i6): techo = 2 × carpeta + 800; fusión por script del delta, ensayo `--dry`, finales de línea conservados; `archive-report.md` con la línea de R-1; medir la parte revisable antes de aplicar y parar si supera 800.
 
 ## Tareas de persona — fuera del recuento; archivar NO las da por hechas
