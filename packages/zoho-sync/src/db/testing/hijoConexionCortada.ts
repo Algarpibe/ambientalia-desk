@@ -1,5 +1,5 @@
 import { createInterface } from 'node:readline'
-import type { Pool } from 'pg'
+import type { Pool, PoolClient } from 'pg'
 import { createPool, createPoolFromUrl } from '../pool'
 import type { AppConfig } from '../../config'
 
@@ -9,9 +9,9 @@ import type { AppConfig } from '../../config'
  * `conexionPerdida`. Protocolo: una línea JSON por paso en stdout; el padre corta la sesión con `pg_terminate_backend` y escribe
  * «cortado» por stdin. Sale con 3 si se cierra stdin sin «cortado» y con 4 por su temporizador de 40 s (no queda huérfano).
  */
-type Modo = 'reposo-desk' | 'reposo-url' | 'en-curso' | 'prestado'
+type Modo = 'reposo-desk' | 'reposo-url' | 'en-curso' | 'prestado' | 'prestado-en-curso' | 'prestado-url'
 
-const MODOS: readonly Modo[] = ['reposo-desk', 'reposo-url', 'en-curso', 'prestado']
+const MODOS: readonly Modo[] = ['reposo-desk', 'reposo-url', 'en-curso', 'prestado', 'prestado-en-curso', 'prestado-url']
 const LIMITE_VIDA_MS = 40_000
 const ESPERA_BAJA_MS = 10_000
 
@@ -23,7 +23,7 @@ const detalleDe = (e: unknown): { codigo: string | null; mensaje: string } => ({
 })
 
 function crearPool(modo: Modo, url: string): Pool {
-  if (modo === 'reposo-url') return createPoolFromUrl(url)
+  if (modo === 'reposo-url' || modo === 'prestado-url') return createPoolFromUrl(url)
   return createPool({ databaseUrl: url, dbSchema: modo === 'reposo-desk' ? 'desk' : 'public' } as AppConfig)
 }
 
@@ -47,11 +47,11 @@ async function principal(): Promise<void> {
     rl.on('close', () => { if (!recibido) process.exit(3) })
   })
 
-  let primero: { pid: number; app: string }
-  if (modo === 'prestado') {
+  let primero: { pid: number; app: string }, tras: Promise<void> = Promise.resolve()
+  if (modo === 'prestado' || modo === 'prestado-en-curso' || modo === 'prestado-url') {
     const cliente = await pool.connect()
     await cliente.query('BEGIN')
-    primero = await pidYNombre(cliente) // el cliente NO se libera: queda prestado con la transacción abierta
+    primero = await pidYNombre(cliente); tras = comoEnTransaccion(modo, cliente, cortado)
   } else {
     primero = await pidYNombre(pool)
   }
@@ -64,7 +64,7 @@ async function principal(): Promise<void> {
     )
   }
 
-  await cortado
+  await cortado; await tras
   const fin = Date.now() + ESPERA_BAJA_MS
   while (pool.totalCount > 0 && Date.now() < fin) await dormir(50)
   emitir({ paso: 'baja', total: pool.totalCount })
@@ -76,3 +76,18 @@ async function principal(): Promise<void> {
 }
 
 principal().catch((e: unknown) => { emitir({ paso: 'fallo', ...detalleDe(e) }); process.exit(5) })
+
+// E-290: imita `apps/desk/server/db/transaccion.ts:16-27` tras el corte: la siguiente consulta, el ROLLBACK y la liberación del cliente prestado.
+async function comoEnTransaccion(modo: Modo, cliente: PoolClient, cortado: Promise<void>): Promise<void> {
+  const terminado = new Promise<void>((resolve) => { cliente.once('end', () => resolve()) })
+  const paso = (nombre: string) => ({
+    ok: () => emitir({ paso: nombre, rechazada: false }),
+    ko: (e: unknown) => emitir({ paso: nombre, rechazada: true, ...detalleDe(e) }),
+  })
+  if (modo === 'prestado-en-curso') void cliente.query('SELECT pg_sleep(30)').then(paso('consulta').ok, paso('consulta').ko)
+  await cortado
+  await Promise.race([terminado, dormir(ESPERA_BAJA_MS)])
+  if (modo !== 'prestado-en-curso') await cliente.query('SELECT 1').then(paso('siguiente').ok, paso('siguiente').ko)
+  await cliente.query('ROLLBACK').then(paso('rollback').ok, paso('rollback').ko)
+  cliente.release()
+}

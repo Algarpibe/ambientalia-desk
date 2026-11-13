@@ -3,12 +3,12 @@ import { Pool } from 'pg'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { resolve } from 'node:path'
-import { TEXTO_CONEXION_PERDIDA } from './conexionPerdida'
+import { TEXTO_CLIENTE_PRESTADO, TEXTO_CONEXION_PERDIDA } from './conexionPerdida'
 
 /**
  * `pool-conexion-cortada` (E-285, RQ-ZS-60) · evidencia contra PostgreSQL REAL de lo que pg-mem no puede probar: que, cuando el
  * servidor corta una conexión INACTIVA del pool, el proceso NO muere, deja UNA línea con el SQLSTATE y sigue sirviendo (I-1, I-2).
- * I-3 e I-4 son caracterización (D-7): fijan lo observado cuando el corte pilla una consulta en curso y un cliente prestado.
+ * I-3 es caracterización (D-7); I-4 a I-6 son requisito (E-290): el cliente prestado deja una línea y el proceso sigue.
  *
  * El pool vive en un proceso HIJO (`testing/hijoConexionCortada.ts`, node + CLI de tsx): un `uncaughtException` dentro de vitest no
  * demuestra la salida del proceso. Aislamiento: base propia en el servidor de `TEST_DATABASE_URL`, borrada al terminar (molde de
@@ -133,7 +133,7 @@ d('conexión cortada por el servidor · PostgreSQL real (RQ-ZS-60)', () => {
     const { h, codigo, pid } = await cortarEnReposo('reposo-desk')
     const despues = h.pasos.find((p) => p.paso === 'despues')
     expect(codigo).toBe(0)
-    expect(lineasDelRegistro(h)).toEqual([`${TEXTO_CONEXION_PERDIDA} — terminating connection due to administrator command [57P01]`])
+    expect([lineasDelRegistro(h), lineasPrestado(h)]).toEqual([[`${TEXTO_CONEXION_PERDIDA} — terminating connection due to administrator command [57P01]`], []])
     expect(despues?.pid).not.toBe(pid)
     expect(typeof despues?.pid).toBe('number')
   }, PLAZO_PRUEBA_MS)
@@ -142,13 +142,13 @@ d('conexión cortada por el servidor · PostgreSQL real (RQ-ZS-60)', () => {
     const { h, codigo, pid } = await cortarEnReposo('reposo-url')
     const despues = h.pasos.find((p) => p.paso === 'despues')
     expect(codigo).toBe(0)
-    expect(lineasDelRegistro(h)).toEqual([`${TEXTO_CONEXION_PERDIDA} — terminating connection due to administrator command [57P01]`])
+    expect([lineasDelRegistro(h), lineasPrestado(h)]).toEqual([[`${TEXTO_CONEXION_PERDIDA} — terminating connection due to administrator command [57P01]`], []])
     expect(despues?.pid).not.toBe(pid)
     expect(typeof despues?.pid).toBe('number')
   }, PLAZO_PRUEBA_MS)
 
   /** Corte de un pool con la conexión OCUPADA (consulta en curso o cliente prestado): espera el estado, corta y espera la salida. */
-  async function cortarOcupado(modo: 'en-curso' | 'prestado', estado: string) {
+  async function cortarOcupado(modo: 'en-curso' | 'prestado' | 'prestado-en-curso' | 'prestado-url', estado: string) {
     const h = lanzarHijo(modo)
     const listo = await h.esperarPaso('listo', PLAZO_ARRANQUE_MS)
     const pid = listo.pid as number
@@ -167,21 +167,42 @@ d('conexión cortada por el servidor · PostgreSQL real (RQ-ZS-60)', () => {
     const despues = h.pasos.find((p) => p.paso === 'despues')
     expect(consulta).toMatchObject({ rechazada: true, codigo: '57P01', mensaje: 'terminating connection due to administrator command' })
     expect(codigo).toBe(0)
-    expect(lineasDelRegistro(h)).toHaveLength(0) // la línea de I-1 sí sale por el evento `error`; aquí no hay ninguna que contar
+    expect([lineasDelRegistro(h), lineasPrestado(h)]).toEqual([[], []]) // la línea de I-1 sí sale por el evento `error`; aquí no hay ninguna que contar
     expect(h.stderr()).not.toContain("Unhandled 'error' event")
     expect(typeof despues?.pid).toBe('number')
     expect(despues?.pid).not.toBe(pid)
   }, PLAZO_PRUEBA_MS)
 
-  // D-7: LÍMITE medido. Un cliente prestado con la transacción abierta (el caso de `apps/desk/server/db/transaccion.ts:16-26`) NO está
-  // cubierto: el cliente prestado no pertenece al oyente del pool y su evento `error` sin oyente tumba el proceso. Es el límite que
-  // dice la §27 de DEPLOY.md; esta prueba lo fija para que, si una versión de pg lo cambia, se note.
-  it('I-4 · LÍMITE · cliente prestado con transacción abierta: el proceso MUERE (salida 1, 57P01 sin controlar) y no sale la línea', async () => {
-    const { h, codigo } = await cortarOcupado('prestado', 'idle in transaction')
-    expect(codigo).toBe(1)
-    expect(h.stderr()).toContain("Unhandled 'error' event")
-    expect(h.stderr()).toContain("code: '57P01'")
-    expect(lineasDelRegistro(h)).toHaveLength(0)
-    expect(h.pasos.map((p) => p.paso)).toEqual(['listo']) // murió antes de dar «baja» y «despues»
+  // E-290: el cliente prestado con la transacción abierta (el caso de `apps/desk/server/db/transaccion.ts:16-26`) YA está cubierto: el
+  // oyente por cliente deja UNA línea y el proceso sigue; la operación falla (la siguiente consulta y el ROLLBACK rechazan).
+  // El hijo espera el `end` del cliente antes de la siguiente consulta, para que los dos errores del corte lleguen al evento y no a ella.
+  it('I-4 · cliente prestado con transacción abierta: el proceso sigue, UNA línea del cliente prestado y la operación falla', async () => {
+    const { h, codigo, pid } = await cortarOcupado('prestado', 'idle in transaction')
+    expect(codigo).toBe(0); expect(h.stderr()).not.toContain("Unhandled 'error' event")
+    expect([lineasDelRegistro(h), lineasPrestado(h)]).toEqual([[], [`${TEXTO_CLIENTE_PRESTADO} — terminating connection due to administrator command [57P01]`]])
+    expect(h.pasos.map((p) => p.paso)).toEqual(['listo', 'siguiente', 'rollback', 'baja', 'despues'])
+    expect(h.pasos.filter((p) => p.paso === 'siguiente' || p.paso === 'rollback').map((p) => p.rechazada)).toEqual([true, true])
+    const despues = h.pasos.find((p) => p.paso === 'despues')?.pid; expect(h.pasos.find((p) => p.paso === 'baja')?.total).toBe(0); expect(typeof despues === 'number' && despues !== pid).toBe(true)
   }, PLAZO_PRUEBA_MS)
+
+  // E-290 (CA-3, H-2): el cliente prestado con una consulta EN CURSO. La consulta rechaza con 57P01 y el error del evento es el segundo.
+  it('I-5 · cliente prestado con consulta en curso: el proceso sigue, la consulta y el ROLLBACK rechazan y sale UNA línea del cliente prestado', async () => {
+    const { h, codigo, pid } = await cortarOcupado('prestado-en-curso', 'active')
+    expect(codigo).toBe(0); expect(h.stderr()).not.toContain("Unhandled 'error' event")
+    expect(h.pasos.find((p) => p.paso === 'consulta')).toMatchObject({ rechazada: true, codigo: '57P01' })
+    expect(h.pasos.find((p) => p.paso === 'rollback')).toMatchObject({ rechazada: true })
+    expect([lineasDelRegistro(h), lineasPrestado(h)]).toEqual([[], [`${TEXTO_CLIENTE_PRESTADO} — Connection terminated unexpectedly`]])
+    const despues = h.pasos.find((p) => p.paso === 'despues')?.pid; expect(h.pasos.find((p) => p.paso === 'baja')?.total).toBe(0); expect(typeof despues === 'number' && despues !== pid).toBe(true)
+  }, PLAZO_PRUEBA_MS)
+
+  // E-290 (CA-4): el pool del worker (`createPoolFromUrl`, el molde de `apps/hub-sync/src/hub-sync.ts:53-55`), con lo mismo que I-4.
+  it('I-6 · createPoolFromUrl, cliente prestado con transacción abierta: lo mismo que I-4', async () => {
+    const { h, codigo, pid } = await cortarOcupado('prestado-url', 'idle in transaction')
+    expect(codigo).toBe(0); expect(h.stderr()).not.toContain("Unhandled 'error' event")
+    expect([lineasDelRegistro(h), lineasPrestado(h)]).toEqual([[], [`${TEXTO_CLIENTE_PRESTADO} — terminating connection due to administrator command [57P01]`]])
+    expect(h.pasos.map((p) => p.paso)).toEqual(['listo', 'siguiente', 'rollback', 'baja', 'despues'])
+    const despues = h.pasos.find((p) => p.paso === 'despues')?.pid; expect(h.pasos.find((p) => p.paso === 'baja')?.total).toBe(0); expect(typeof despues === 'number' && despues !== pid).toBe(true)
+  }, PLAZO_PRUEBA_MS)
+
+  const lineasPrestado = (h: Hijo) => h.stderr().split(/\r?\n/).filter((l) => l.includes(TEXTO_CLIENTE_PRESTADO))
 })

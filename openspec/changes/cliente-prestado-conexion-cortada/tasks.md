@@ -39,15 +39,15 @@ por prueba y aserción. Restaurar con la sustitución inversa y comprobar `git d
 ## Lote L1 — módulo, hijo, integración, unitarias y mutaciones (intento i3)
 Escenarios: RQ-ZS-63 los cinco; RQ-ZS-64 los cuatro; RQ-ZS-65 los cinco; RQ-ZS-66.
 Medición: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/postgres npx vitest run packages/zoho-sync/src/db/conexionPerdida.integration.test.ts` (contenedor del orquestador; si no está, uno desechable `--rm` en otro puerto).
-- [ ] L1.1 Hijo `packages/zoho-sync/src/db/testing/hijoConexionCortada.ts`: en sitio `:2`, `:12`, `:14`, `:26`, `:50`, `:51`, `:54`, `:67`; `comoEnTransaccion` al final, detrás de la 78 (`design.md` §4.1, D-4, D-11).
-- [ ] L1.2 Padre `packages/zoho-sync/src/db/conexionPerdida.integration.test.ts` en sitio: `:6`, `:11`, `:136`, `:145`, `:151`, `:170` y la I-4 reescrita en `:176-186` (once líneas); I-5, I-6 y `lineasPrestado` al final del `describe`, antes de su cierre (`design.md` §4.2).
-- [ ] L1.3 ROJO de integración con el módulo SIN tocar: I-4, I-5 e I-6 rojas por salida 1, I-1 a I-3 verdes; anotar prueba, aserción y valor recibido (D-9).
-- [ ] L1.4 ROJO unitario `packages/zoho-sync/src/db/conexionPerdida.test.ts`: import en sitio `:7` y U-11 a U-19 al final, detrás de la 210; rojas por «lanza» (`design.md` §3). Si el fichero no carga con el nombre aún sin exportar, añadir antes sólo la constante al final del módulo y anotarlo.
-- [ ] L1.5 Módulo `packages/zoho-sync/src/db/conexionPerdida.ts`: enganche en sitio en `:44` (`return escucharClientePrestado(pool, registrar)`) y el bloque del §2 al final, una pieza por línea física. Verde: U-1 a U-19.
-- [ ] L1.6 Verde de unitarias e integración con el contenedor; anotar `SHOW server_version` y la línea observada de I-5 (hipótesis: se fija lo observado).
-- [ ] L1.7 `npm run typecheck` (cierra la hipótesis del tipado) y `npm run lint -- --max-warnings 165` con «165 contra 165».
-- [ ] L1.8 Mutaciones M-1 a M-7 (protocolo; rojos previstos en `design.md` §5): M-1 la 44 vuelve a `return pool`; M-2 filtro `!prestados.has`; M-3 deduplicación; M-4 `release`; M-5 `try` del registro; M-6 `JSON.stringify(err)`; M-7 línea de E-285 en el oyente de cliente.
-- [ ] L1.9 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`; `git diff --quiet` sobre `pool.ts`, `migrate.ts`, `schema.sql` y `.env.example` sale 0.
+- [x] L1.1 Hijo `packages/zoho-sync/src/db/testing/hijoConexionCortada.ts`: en sitio `:2`, `:12`, `:14`, `:26`, `:50`, `:51`, `:54`, `:67`; `comoEnTransaccion` al final, detrás de la 78 (`design.md` §4.1, D-4, D-11).
+- [x] L1.2 Padre `packages/zoho-sync/src/db/conexionPerdida.integration.test.ts` en sitio: `:6`, `:11`, `:136`, `:145`, `:151`, `:170` y la I-4 reescrita en `:176-186` (once líneas); I-5, I-6 y `lineasPrestado` al final del `describe`, antes de su cierre (`design.md` §4.2).
+- [x] L1.3 ROJO de integración con el módulo SIN tocar: I-4, I-5 e I-6 rojas por salida 1, I-1 a I-3 verdes; anotar prueba, aserción y valor recibido (D-9).
+- [x] L1.4 ROJO unitario `packages/zoho-sync/src/db/conexionPerdida.test.ts`: import en sitio `:7` y U-11 a U-19 al final, detrás de la 210; rojas por «lanza» (`design.md` §3). Si el fichero no carga con el nombre aún sin exportar, añadir antes sólo la constante al final del módulo y anotarlo.
+- [x] L1.5 Módulo `packages/zoho-sync/src/db/conexionPerdida.ts`: enganche en sitio en `:44` (`return escucharClientePrestado(pool, registrar)`) y el bloque del §2 al final, una pieza por línea física. Verde: U-1 a U-19.
+- [x] L1.6 Verde de unitarias e integración con el contenedor; anotar `SHOW server_version` y la línea observada de I-5 (hipótesis: se fija lo observado).
+- [x] L1.7 `npm run typecheck` (cierra la hipótesis del tipado) y `npm run lint -- --max-warnings 165` con «165 contra 165».
+- [x] L1.8 Mutaciones M-1 a M-7 (protocolo; rojos previstos en `design.md` §5): M-1 la 44 vuelve a `return pool`; M-2 filtro `!prestados.has`; M-3 deduplicación; M-4 `release`; M-5 `try` del registro; M-6 `JSON.stringify(err)`; M-7 línea de E-285 en el oyente de cliente.
+- [x] L1.9 Casilla de la regla 13: `git diff --name-only` sin nada bajo `apps/desk/src`; `git diff --quiet` sobre `pool.ts`, `migrate.ts`, `schema.sql` y `.env.example` sale 0.
 - [ ] L1.10 Cierre del lote: medida (i3) y las cinco comprobaciones en una cadena, con memoria libre anotada; `apply-progress.md`; commit lo hace el orquestador.
 
 ## Lote L2 — guarda, `DEPLOY.md` §27 y barrido (intento i4)
