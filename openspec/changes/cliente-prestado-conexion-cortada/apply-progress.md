@@ -2,7 +2,7 @@
 
 ## Lote L1 (intento i3) — módulo, hijo, integración, unitarias y mutaciones
 
-Partida: `a1882ad7`. Worktree `C:\Users\algar`-ajeno: `C:\dev\Desk_2_R1.023-worktrees\cliente-prestado-conexion-cortada`. Contenedor `cpc-pg17` (`postgres:17-alpine`, puerto 55432), sin parar ni borrar.
+Partida: `a1882ad7`. Worktree propio: `C:\dev\Desk_2_R1.023-worktrees\cliente-prestado-conexion-cortada`. Contenedor `cpc-pg17` (`postgres:17-alpine`, puerto 55432), sin parar ni borrar.
 **PostgreSQL medido: `SHOW server_version` = 17.10.** Estado: L1.1 a L1.9 hechas; L1.10 (las cinco comprobaciones en cadena sobre el commit) la corre el orquestador.
 
 ### Rojos previos (strict TDD, D-9)
