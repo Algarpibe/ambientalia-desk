@@ -61,8 +61,8 @@ const contenido = () => readdir(dir)
 
 /** Espera el fin de la pasada con el reloj real (las pausas se inyectan a 0). */
 async function fin(r: { estado(): EstadoRellenoAdjuntos }) {
-  for (let i = 0; i < 5000 && !r.estado().terminado; i++) await new Promise<void>((res) => setImmediate(res))
-  expect(r.estado().terminado).toBe(true)
+  const t0 = ahoraReal(); while (!r.estado().terminado && ahoraReal() - t0 < LIMITE_FIN_MS) await new Promise<void>((res) => setImmediate(res))
+  expect(r.estado().terminado, sinTerminar('fin', ahoraReal() - t0, r.estado())).toBe(true)
   return r.estado()
 }
 const sinPausas = { pausaMs: 0, pausa429Ms: 0 }
@@ -77,11 +77,11 @@ function relojFalso() {
     // Sólo se cuentan las esperas del módulo (>= 100 ms); pg-mem o el disco no piden otras.
     esperas: () => esperas.filter((ms) => ms >= 100),
     async fin(r: { estado(): EstadoRellenoAdjuntos }) {
-      for (let i = 0; i < 3000 && !r.estado().terminado; i++) {
+      const t0 = ahoraReal(); while (!r.estado().terminado && ahoraReal() - t0 < LIMITE_FIN_MS) {
         await vi.advanceTimersByTimeAsync(3000)
         await new Promise<void>((res) => setImmediate(res))
       }
-      expect(r.estado().terminado).toBe(true)
+      expect(r.estado().terminado, sinTerminar('relojFalso().fin', ahoraReal() - t0, r.estado())).toBe(true)
       return r.estado()
     },
   }
@@ -384,3 +384,19 @@ describe('relleno de adjuntos · un solo lanzamiento, resumen y log sin datos de
     expect(typeof e.fin).toBe('string')
   })
 })
+
+/**
+ * E-284 · los dos `fin()` —el de reloj real y el de `relojFalso()`— esperan el fin de la pasada por reloj REAL, no por vueltas.
+ * Antes contaban vueltas de `setImmediate` (5.000 y 3.000), y la pasada hace `stat`, `writeFile` y `rename` reales que ningún
+ * reloj falso mueve: medido el 16/11/2026, una pasada de 25 ms llegó a pedir 6.058 vueltas, así que el contador podía agotarse
+ * antes que la pasada y la prueba fallaba sin fallo real (12 de 200 ejecuciones sueltas del fichero).
+ * `LIMITE_FIN_MS` es unas cien veces la pasada más lenta medida (42 ms) y queda por debajo del `testTimeout` de 5.000 ms de vitest
+ * en local (el CI lo sube a 20.000), para que al agotarse falle `sinTerminar` —cuánto esperó y en qué estado quedó— y no el
+ * timeout. `ahoraReal` se fija al cargar el módulo, antes de ningún reloj falso: aunque una prueba falsee `performance`, la
+ * espera sigue contando tiempo real.
+ */
+const LIMITE_FIN_MS = 4000
+const ahoraReal = performance.now.bind(performance)
+function sinTerminar(quien: string, ms: number, e: EstadoRellenoAdjuntos): string {
+  return `${quien}: la pasada no terminó tras ${Math.round(ms)} ms de reloj real (límite ${LIMITE_FIN_MS} ms); estado: ${JSON.stringify(e)}`
+}
