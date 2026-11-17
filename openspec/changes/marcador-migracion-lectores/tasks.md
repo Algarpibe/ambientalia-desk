@@ -67,42 +67,42 @@ Si la medida de un lote pasa de 800, se para y se parte (no se cierra el intento
 ## L2 · pantallas y reconocimiento (intento 2, parte del commit de L1)
 
 ### Rojo
-- [ ] 2.1 Ampliar `packages/shared/src/marcadorMigracion.test.ts`: `presentarMarcador` con `values` nulo, vacío y completo; título `TITULO_MARCADOR_MIGRACION`, textos de S-1, orden de detalles, omitir vacíos y ninguna etiqueta `Regla` (design §4).
-- [ ] 2.2 Reescribir en sitio R2: `apps/desk/server/migracionMarcadorLectores.test.ts:62-71` (historial de z1 con título nuevo y «Estado en Zoho» = «En Proceso»; conversación de z1 sin mensajes), mismas 10 líneas. TZ-26 y TZ-27 «identidad».
-- [ ] 2.3 Reescribir en sitio R3: `apps/desk/server/migracionMarcadorLectores.test.ts:73-77`, ninguna etapa con `NOMBRE_TRANSICION_MIGRACION` (z1 y z2), mismas 5 líneas. HV-20.
-- [ ] 2.4 Añadir al final de `apps/desk/server/migracionMarcadorLectores.test.ts` un segundo `describe` (L2): P10 (TZ-26 «cambia el estado», `eventName` `AppTransition`), P11 (TZ-27, la fila sigue en la base), P12 (HV-20 y «no cambian», CAR) y P13 (RQ-TZ-28: escaneo de `.ts`/`.tsx` de `apps/` y `packages/` sin `*.test.ts`, `node_modules` ni `dist`, exactamente los cuatro ficheros de D-12).
-- [ ] 2.5 Ver el rojo con la orden exacta: `npx vitest run packages/shared/src/marcadorMigracion.test.ts apps/desk/server/migracionMarcadorLectores.test.ts apps/desk/server/db/traspaso.test.ts apps/desk/server/db/historialTipoEvento.test.ts`; P13 queda roja por `apps/desk/server/db/traspaso.ts:2` y `:26`. Anotar cada rojo.
+- [x] 2.1 Ampliar `packages/shared/src/marcadorMigracion.test.ts`: `presentarMarcador` con `values` nulo, vacío y completo; título `TITULO_MARCADOR_MIGRACION`, textos de S-1, orden de detalles, omitir vacíos y ninguna etiqueta `Regla` (design §4).
+- [x] 2.2 Reescribir en sitio R2: `apps/desk/server/migracionMarcadorLectores.test.ts:62-71` (historial de z1 con título nuevo y «Estado en Zoho» = «En Proceso»; conversación de z1 sin mensajes), mismas 10 líneas. TZ-26 y TZ-27 «identidad».
+- [x] 2.3 Reescribir en sitio R3: `apps/desk/server/migracionMarcadorLectores.test.ts:73-77`, ninguna etapa con `NOMBRE_TRANSICION_MIGRACION` (z1 y z2), mismas 5 líneas. HV-20.
+- [x] 2.4 Añadir al final de `apps/desk/server/migracionMarcadorLectores.test.ts` un segundo `describe` (L2): P10 (TZ-26 «cambia el estado», `eventName` `AppTransition`), P11 (TZ-27, la fila sigue en la base), P12 (HV-20 y «no cambian», CAR) y P13 (RQ-TZ-28: escaneo de `.ts`/`.tsx` de `apps/` y `packages/` sin `*.test.ts`, `node_modules` ni `dist`, exactamente los cuatro ficheros de D-12).
+- [x] 2.5 Ver el rojo con la orden exacta: `npx vitest run packages/shared/src/marcadorMigracion.test.ts apps/desk/server/migracionMarcadorLectores.test.ts apps/desk/server/db/traspaso.test.ts apps/desk/server/db/historialTipoEvento.test.ts`; P13 queda roja por `apps/desk/server/db/traspaso.ts:2` y `:26`. Anotar cada rojo.
 
 ### Verde
-- [ ] 2.6 `packages/shared/src/marcadorMigracion.ts`: añadir al final `TITULO_MARCADOR_MIGRACION`, `TEXTO_REGLA_MIGRACION` (cuatro reglas de `packages/shared/src/migracionTickets.ts:18`) y `presentarMarcador` (S-1, S-12).
-- [ ] 2.7 `apps/desk/server/db/historial.ts:3` (import de `esPasoDeMigracion, presentarMarcador`) y `:143` (rama con `eventoMigracion`), en sitio; al final, tras la 162, `eventoMigracion` (D-8, `eventName: 'AppTransition'`). `lineaTraspaso` se sigue llamando antes.
-- [ ] 2.8 `apps/desk/server/db/conversacion.ts:1` (import), `:140` (`SELECT` con `transition_id`) y `:143` (`.filter((f) => !esPasoDeMigracion(f.transition_id))`), en sitio.
-- [ ] 2.9 `apps/desk/server/db/equipos.ts:6` (import), `:274` (`SELECT` con `transition_id`) y `:278` (`(tr.rows as any[]).filter(...)`, sin sumar un segundo `as any[]`).
-- [ ] 2.10 `apps/desk/server/db/traspaso.ts:2` (import de `esPasoDeMigracion` en vez de `ID_TRANSICION_MIGRACION`) y `:26` (`if (esPasoDeMigracion(fila.transition_id)) return []`), en sitio (S-9).
-- [ ] 2.11 Ver el verde con la orden de 2.5, más CA-6: `apps/desk/server/migracionMarcadorLectores.test.ts:46-54` y `apps/desk/server/cierreMigracionEnCifras.test.ts:87` siguen verdes sin tocarlas.
-- [ ] 2.12 Mutación 3 del cliente por escrito: confirmar que `git diff --stat e728808d -- apps/desk/src` está vacío (CA-9); sin decisión de cliente sobre el marcador (design §9).
+- [x] 2.6 `packages/shared/src/marcadorMigracion.ts`: añadir al final `TITULO_MARCADOR_MIGRACION`, `TEXTO_REGLA_MIGRACION` (cuatro reglas de `packages/shared/src/migracionTickets.ts:18`) y `presentarMarcador` (S-1, S-12).
+- [x] 2.7 `apps/desk/server/db/historial.ts:3` (import de `esPasoDeMigracion, presentarMarcador`) y `:143` (rama con `eventoMigracion`), en sitio; al final, tras la 162, `eventoMigracion` (D-8, `eventName: 'AppTransition'`). `lineaTraspaso` se sigue llamando antes.
+- [x] 2.8 `apps/desk/server/db/conversacion.ts:1` (import), `:140` (`SELECT` con `transition_id`) y `:143` (`.filter((f) => !esPasoDeMigracion(f.transition_id))`), en sitio.
+- [x] 2.9 `apps/desk/server/db/equipos.ts:6` (import), `:274` (`SELECT` con `transition_id`) y `:278` (`(tr.rows as any[]).filter(...)`, sin sumar un segundo `as any[]`).
+- [x] 2.10 `apps/desk/server/db/traspaso.ts:2` (import de `esPasoDeMigracion` en vez de `ID_TRANSICION_MIGRACION`) y `:26` (`if (esPasoDeMigracion(fila.transition_id)) return []`), en sitio (S-9).
+- [x] 2.11 Ver el verde con la orden de 2.5, más CA-6: `apps/desk/server/migracionMarcadorLectores.test.ts:46-54` y `apps/desk/server/cierreMigracionEnCifras.test.ts:87` siguen verdes sin tocarlas.
+- [x] 2.12 Mutación 3 del cliente por escrito: confirmar que `git diff --stat e728808d -- apps/desk/src` está vacío (CA-9); sin decisión de cliente sobre el marcador (design §9).
 
 ### Barrido de citas (regla de mutación 4, design §8; sobre TODO el repositorio, archivo incluido)
-- [ ] 2.13 Un comando por fichero, y cada resultado se lee contra el fichero editado: `grep -rnoE "db/sla\.ts:[0-9]+(-[0-9]+)?" .`, `db/relojSla\.ts`, `esperasVencidas\.ts`, `historial\.ts`, `conversacion\.ts`, `equipos\.ts`, `traspaso\.ts`, `shared/src/index\.ts`, `migracionMarcadorLectores\.test\.ts` y `migracionTicketsAbiertos\.test\.ts` (mismo patrón).
-- [ ] 2.14 Segundo pase de abreviadas: en cada fichero que ya cita esos módulos, `grep -noE ':[0-9]+(-[0-9]+)?' <fichero>` y leer las que siguen a una cita completa en la misma línea física (p. ej. `openspec/config.yaml:6775`).
-- [ ] 2.15 Por cada cita que cae en una línea editada (sla.ts 2/88/93, relojSla.ts 3/40/43/45/77, esperasVencidas.ts 36, historial.ts 3/143, conversacion.ts 1/140/143, equipos.ts 6/274/278, traspaso.ts 2/26 y los bloques R1-R4): clasificar A, B o C. A se apunta a hoy; B lleva `e728808d` sobre su misma línea física, sin moverla; C se conserva con su revisión.
-- [ ] 2.16 NO editar `openspec/config.yaml` ni `docs/sdd/ENTRADA.md`: listar sus impactos (`openspec/config.yaml:6775`, `docs/sdd/ENTRADA.md:2089`, `:2094`) en `apply-progress.md` como traza de E-215, E-216 y E-217, para el informe.
-- [ ] 2.17 Detector tras el barrido: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD < /dev/null` verde; el nuevo `tasks.md` y `apply-progress.md` no llevan citas de rango que pasen del final de un fichero.
+- [x] 2.13 Un comando por fichero, y cada resultado se lee contra el fichero editado: `grep -rnoE "db/sla\.ts:[0-9]+(-[0-9]+)?" .`, `db/relojSla\.ts`, `esperasVencidas\.ts`, `historial\.ts`, `conversacion\.ts`, `equipos\.ts`, `traspaso\.ts`, `shared/src/index\.ts`, `migracionMarcadorLectores\.test\.ts` y `migracionTicketsAbiertos\.test\.ts` (mismo patrón).
+- [x] 2.14 Segundo pase de abreviadas: en cada fichero que ya cita esos módulos, `grep -noE ':[0-9]+(-[0-9]+)?' <fichero>` y leer las que siguen a una cita completa en la misma línea física (p. ej. `openspec/config.yaml:6775`).
+- [x] 2.15 Por cada cita que cae en una línea editada (sla.ts 2/88/93, relojSla.ts 3/40/43/45/77, esperasVencidas.ts 36, historial.ts 3/143, conversacion.ts 1/140/143, equipos.ts 6/274/278, traspaso.ts 2/26 y los bloques R1-R4): clasificar A, B o C. A se apunta a hoy; B lleva `e728808d` sobre su misma línea física, sin moverla; C se conserva con su revisión.
+- [x] 2.16 NO editar `openspec/config.yaml` ni `docs/sdd/ENTRADA.md`: listar sus impactos (`openspec/config.yaml:6775`, `docs/sdd/ENTRADA.md:2089`, `:2094`) en `apply-progress.md` como traza de E-215, E-216 y E-217, para el informe.
+- [x] 2.17 Detector tras el barrido: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD < /dev/null` verde; el nuevo `tasks.md` y `apply-progress.md` no llevan citas de rango que pasen del final de un fichero.
 
 ### Cierre del lote
-- [ ] 2.18 Lint sin avisos nuevos (`apps/desk/server/db/equipos.ts:278` conserva su único `as any[]`; sin `eslint-disable`).
-- [ ] 2.19 Cinco comprobaciones, la misma cadena de 1.15 (typecheck, lint con 165, detector, `npm test` con log entero y memoria libre al arrancar, `npm run build`); el bundle debe seguir siendo `index-F1jDYjEU.js` de 427,51 kB. Si cambia, el parte dice que el cliente también se despliega (D-1, §10).
-- [ ] 2.20 Medida del intento 2: `git diff --shortstat --no-renames <commit de L1>` + `wc -l` de lo nuevo sin trackear; si pasa de 800, parar y partir.
-- [ ] 2.21 Commit del código del lote (el orquestador cierra el intento tras 2.28); `git show --numstat` del commit: sólo ficheros de esta tanda.
+- [x] 2.18 Lint sin avisos nuevos (`apps/desk/server/db/equipos.ts:278` conserva su único `as any[]`; sin `eslint-disable`).
+- [x] 2.19 Cinco comprobaciones, la misma cadena de 1.15 (typecheck, lint con 165, detector, `npm test` con log entero y memoria libre al arrancar, `npm run build`); el bundle debe seguir siendo `index-F1jDYjEU.js` de 427,51 kB. Si cambia, el parte dice que el cliente también se despliega (D-1, §10).
+- [x] 2.20 Medida del intento 2: `git diff --shortstat --no-renames <commit de L1>` + `wc -l` de lo nuevo sin trackear; si pasa de 800, parar y partir.
+- [x] 2.21 Commit del código del lote (el orquestador cierra el intento tras 2.28); `git show --numstat` del commit: sólo ficheros de esta tanda.
 
 ### Mutaciones de L2 (con el lote commiteado; mismo protocolo que 1.18)
-- [ ] 2.22 M9: `apps/desk/server/db/historial.ts:143` sólo con `eventoTransicion(f, nombres)`; rojas P10 y R2. Restaurar y comprobar `file` y `git diff --numstat`.
-- [ ] 2.23 M10: `apps/desk/server/db/conversacion.ts:143` sin `.filter(...)`; rojas P11 y R2. Restaurar y comprobar.
-- [ ] 2.24 M11: `apps/desk/server/db/equipos.ts:278` sin `.filter(...)`; rojas P12 y R3. Restaurar y comprobar.
-- [ ] 2.25 M12: `apps/desk/server/db/traspaso.ts:26` sustituida por un comentario; roja `apps/desk/server/db/traspaso.test.ts:139-144`. Restaurar y comprobar.
-- [ ] 2.26 M13: líneas 2 y 26 de `apps/desk/server/db/traspaso.ts` a su texto de `e728808d` (`git show e728808d:apps/desk/server/db/traspaso.ts`); roja P13. Restaurar y comprobar.
-- [ ] 2.27 M14 (regla de mutación 2): ensuciar el fichero vigilado, `apps/desk/server/db/equipos.ts:278` con `f.transition_id !== 'migracion_f1f01_abiertos'`; P13 roja, R3 y P12 verdes. Restaurar y comprobar.
-- [ ] 2.28 `apply-progress.md` (L2, suma a la medida): hecho, rojos de 2.5, mutaciones con su salida, barrido con caso A/B/C por cita, cinco comprobaciones, bundle y medida; remedir tras escribirlo.
+- [x] 2.22 M9: `apps/desk/server/db/historial.ts:143` sólo con `eventoTransicion(f, nombres)`; rojas P10 y R2. Restaurar y comprobar `file` y `git diff --numstat`.
+- [x] 2.23 M10: `apps/desk/server/db/conversacion.ts:143` sin `.filter(...)`; rojas P11 y R2. Restaurar y comprobar.
+- [x] 2.24 M11: `apps/desk/server/db/equipos.ts:278` sin `.filter(...)`; rojas P12 y R3. Restaurar y comprobar.
+- [x] 2.25 M12: `apps/desk/server/db/traspaso.ts:26` sustituida por un comentario; roja `apps/desk/server/db/traspaso.test.ts:139-144`. Restaurar y comprobar.
+- [x] 2.26 M13: líneas 2 y 26 de `apps/desk/server/db/traspaso.ts` a su texto de `e728808d` (`git show e728808d:apps/desk/server/db/traspaso.ts`); roja P13. Restaurar y comprobar.
+- [x] 2.27 M14 (regla de mutación 2): ensuciar el fichero vigilado, `apps/desk/server/db/equipos.ts:278` con `f.transition_id !== 'migracion_f1f01_abiertos'`; P13 roja, R3 y P12 verdes. Restaurar y comprobar.
+- [x] 2.28 `apply-progress.md` (L2, suma a la medida): hecho, rojos de 2.5, mutaciones con su salida, barrido con caso A/B/C por cita, cinco comprobaciones, bundle y medida; remedir tras escribirlo.
 
 ## Tareas de persona (fuera del recuento)
 
