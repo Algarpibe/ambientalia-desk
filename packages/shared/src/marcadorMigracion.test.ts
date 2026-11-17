@@ -1,7 +1,7 @@
 // marcador-migracion-lectores (F1F-01), lote 1: la regla única de «qué aporta el marcador de la migración» (RQ-TC-84, RQ-TC-85).
 import { describe, it, expect } from 'vitest'
 import { ID_TRANSICION_MIGRACION } from './migracionTickets'
-import { entradaDelMarcador, resolverMarcador } from './marcadorMigracion'
+import { entradaDelMarcador, resolverMarcador, presentarMarcador, TITULO_MARCADOR_MIGRACION, TEXTO_REGLA_MIGRACION } from './marcadorMigracion'
 import type { HistorialTransition } from './types'
 
 const etapa = (de: string | null, hacia: string | null, cuando: string): HistorialTransition => ({
@@ -94,5 +94,46 @@ describe('resolverMarcador · D-5', () => {
     resolverMarcador(filas, etapas)
     expect(etapas).toHaveLength(1)
     expect(filas).toHaveLength(1)
+  })
+})
+
+describe('presentarMarcador · texto del historial (S-1, S-12)', () => {
+  const COMPLETO = { estado_previo: 'Pendiente', estado_destino: 'En Proceso', status_type_previo: 'Open', managed_by_app_previo: false, regla: 'pendiente-servicio-a-en-proceso', corte: '2026-12-01T05:00:00.000Z', ejecutado_por: 'Admin', closed_time_previo: '2026-11-30T15:00:00.000Z', closed_time_destino: '2026-11-30T15:00:00.000Z', cierre_origen: 'zoho' }
+
+  it('con los values completos: título propio y los cinco detalles, en orden y con etiqueta propia', () => {
+    expect(TITULO_MARCADOR_MIGRACION).toBe('Migración desde Zoho Desk')
+    expect(presentarMarcador(COMPLETO)).toEqual({
+      title: 'Migración desde Zoho Desk',
+      details: [
+        { label: 'Estado en Zoho', value: 'Pendiente' },
+        { label: 'Estado en Desk', value: 'En Proceso' },
+        { label: 'Regla aplicada', value: '"Pendiente" de servicio técnico pasa a "En Proceso"' },
+        { label: 'Corte de la migración', value: '2026-12-01T05:00:00.000Z' },
+        { label: 'Ejecutada por', value: 'Admin' },
+      ],
+    })
+  })
+
+  it('los textos de las cuatro reglas, y ninguna etiqueta es «Regla» a secas ni una clave de values', () => {
+    expect(TEXTO_REGLA_MIGRACION).toEqual({
+      identidad: 'El estado existe igual en Desk y se conserva',
+      'pendiente-servicio-a-en-proceso': '"Pendiente" de servicio técnico pasa a "En Proceso"',
+      'entregado-a-finalizado': '"Entregado" pasa a "Finalizado"',
+      'pendiente-soporte-se-conserva': '"Pendiente" de soporte remoto se conserva',
+    })
+    const etiquetas = presentarMarcador({ ...COMPLETO, regla: 'entregado-a-finalizado' }).details.map((d) => d.label)
+    expect(etiquetas).toEqual(['Estado en Zoho', 'Estado en Desk', 'Regla aplicada', 'Corte de la migración', 'Ejecutada por'])
+    for (const prohibida of ['Regla', 'regla', 'estado_previo', 'estado_destino', 'status_type_previo', 'managed_by_app_previo', 'closed_time_previo', 'closed_time_destino', 'cierre_origen']) expect(etiquetas).not.toContain(prohibida)
+    expect(presentarMarcador({ ...COMPLETO, regla: 'identidad' }).details[2]).toEqual({ label: 'Regla aplicada', value: 'El estado existe igual en Desk y se conserva' })
+    expect(presentarMarcador({ ...COMPLETO, regla: 'pendiente-soporte-se-conserva' }).details[2]).toEqual({ label: 'Regla aplicada', value: '"Pendiente" de soporte remoto se conserva' })
+  })
+
+  it('values nulo, vacío o que no es un objeto: sólo el título y ningún detalle, sin lanzar', () => {
+    for (const v of [null, undefined, {}, 'texto', [1]]) expect(presentarMarcador(v)).toEqual({ title: 'Migración desde Zoho Desk', details: [] })
+  })
+
+  it('omite los detalles vacíos o que no son texto y no inventa los que faltan; una regla desconocida no sale', () => {
+    expect(presentarMarcador({ estado_previo: 'Pendiente', estado_destino: '', regla: 'inventada', corte: null, ejecutado_por: 'Admin' }).details)
+      .toEqual([{ label: 'Estado en Zoho', value: 'Pendiente' }, { label: 'Ejecutada por', value: 'Admin' }])
   })
 })

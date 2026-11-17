@@ -1,6 +1,6 @@
 import { esPasoDeMigracion, llegadaQueCuenta } from './cierreEnCifras'
 import { normalizarSiTexto } from './normalizarEstado'
-import type { HistorialTransition } from './types'
+import type { HistorialTransition, HistoryDetail } from './types'; import type { ReglaEquivalencia } from './migracionTickets'
 
 /**
  * marcador-migracion-lectores (F1F-01): qué aporta el marcador de la migración a «desde cuándo está el ticket en su estado».
@@ -70,4 +70,34 @@ export function resolverMarcador<F extends FilaConMarcador>(
     sinteticas.push({ transitionName: null, fromStatus: entrada.de, toStatus: entrada.estado, area: null, performedBy: null, performedAt: entrada.desde })
   }
   return { filasApp: reales, etapasZoho: [...etapasZoho, ...sinteticas] }
+}
+
+export const TITULO_MARCADOR_MIGRACION = 'Migración desde Zoho Desk'
+
+/** Las cuatro reglas de `ReglaEquivalencia` (`migracionTickets.ts`) en español; el historial no enseña el id de la regla (S-1). */
+export const TEXTO_REGLA_MIGRACION: Readonly<Record<ReglaEquivalencia, string>> = {
+  identidad: 'El estado existe igual en Desk y se conserva',
+  'pendiente-servicio-a-en-proceso': '"Pendiente" de servicio técnico pasa a "En Proceso"',
+  'entregado-a-finalizado': '"Entregado" pasa a "Finalizado"',
+  'pendiente-soporte-se-conserva': '"Pendiente" de soporte remoto se conserva',
+}
+
+const textoDeRegla = (regla: unknown): string | null =>
+  typeof regla === 'string' && Object.prototype.hasOwnProperty.call(TEXTO_REGLA_MIGRACION, regla) ? TEXTO_REGLA_MIGRACION[regla as ReglaEquivalencia] : null
+
+/**
+ * Título y detalles del marcador para el historial (S-1, S-12). Las etiquetas son propias, nunca una clave de `values` (la
+ * etiqueta automática de `regla` daba «Regla»), y salen en este orden omitiendo lo que falte; no salen `status_type_previo`,
+ * `managed_by_app_previo`, `closed_time_*` ni `cierre_origen`. El corte se enseña como se guardó (ISO, UTC). Tolera `values`
+ * nulo, vacío o que no es un objeto: sólo el título, sin lanzar.
+ */
+export function presentarMarcador(values: unknown): { title: string; details: HistoryDetail[] } {
+  const v = esObjeto(values) ? values : {}
+  const pares: Array<[string, string | null]> = [
+    ['Estado en Zoho', texto(v.estado_previo)], ['Estado en Desk', texto(v.estado_destino)], ['Regla aplicada', textoDeRegla(v.regla)],
+    ['Corte de la migración', texto(v.corte)], ['Ejecutada por', texto(v.ejecutado_por)],
+  ]
+  const details: HistoryDetail[] = []
+  for (const [label, value] of pares) if (value !== null && value.trim() !== '') details.push({ label, value })
+  return { title: TITULO_MARCADOR_MIGRACION, details }
 }

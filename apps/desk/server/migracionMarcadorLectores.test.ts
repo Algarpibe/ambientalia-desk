@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { ID_TRANSICION_MIGRACION, NOMBRE_TRANSICION_MIGRACION, ACTOR_MIGRACION, etapasDesdeHistoria, instanteDeJornada } from '@ambientalia/shared'
+import { describe, it, expect, beforeEach } from 'vitest'; import { readdirSync, readFileSync } from 'node:fs'; import { join, relative, sep } from 'node:path'; import { fileURLToPath } from 'node:url'
+import { ID_TRANSICION_MIGRACION, NOMBRE_TRANSICION_MIGRACION, ACTOR_MIGRACION, etapasDesdeHistoria, instanteDeJornada, TITULO_MARCADOR_MIGRACION, FROM_STATUS_CREACION } from '@ambientalia/shared'
 import { db, instalarArnes } from './testing/appHarness'
 import { entradasActuales } from './db/sla'; import { secuenciaDelReloj, tiemposDelRelojPorTicket } from './db/relojSla'; import { ticketsEnEspera } from './db/esperasVencidas'
 import { leerEntradasIndicadores, tablaIndicadores } from './indicadores'
@@ -59,21 +59,21 @@ describe('lectores de ticket_transitions frente al marcador de la migración', (
     expect([...new Set(fila.indicadores.map((i) => i.reentrante))]).toEqual([null])
   })
 
-  it('apps/desk/server/db/historial.ts:137 y apps/desk/server/db/conversacion.ts:140 · lo enseñan como «Transición» con «—» de llegada y las claves de values en crudo', async () => {
+  it('apps/desk/server/db/historial.ts:137 y apps/desk/server/db/conversacion.ts:140 · el historial lo enseña con el título y los textos del presentador (TZ-26) y la conversación lo oculta (TZ-27)', async () => {
     const h = await getHistorialTicket(db, 'z1')
     const ev = h.eventos.find((x) => x.eventName === 'AppTransition')!
-    expect(ev.title).toBe(`Transición: ${NOMBRE_TRANSICION_MIGRACION}`)
-    expect(ev.details).toContainEqual({ label: 'Estado', value: 'En Proceso → —' })
-    // Se comporta raro: etiquetas con la clave en español pegada a un «previo» y un booleano en inglés (`etiquetaCampo`). Bandeja.
-    expect(ev.details?.map((d) => d.label)).toContain('Managed by app previo')
+    expect(ev.title).toBe(TITULO_MARCADOR_MIGRACION)
+    expect(ev.details).toContainEqual({ label: 'Estado en Zoho', value: 'En Proceso' })
+    // Ya no salen las claves de values en crudo con un «previo» pegado ni un booleano en inglés (S-1).
+    expect(ev.details?.map((d) => d.label)).not.toContain('Managed by app previo')
     const c = await getConversacionTicket(db, 'z1')
-    expect(c.mensajes.some((m) => m.content.includes('En Proceso → —') && m.content.includes('Regla: identidad'))).toBe(true)
+    expect(c.mensajes).toEqual([])
   })
 
-  it('apps/desk/server/db/equipos.ts:275 · la hoja de vida lo lista como una etapa sin estado de llegada y no falla', async () => {
+  it('apps/desk/server/db/equipos.ts:275 · la hoja de vida no lista el marcador como etapa, ni el de identidad (z1) ni el de destino relleno (z2) (HV-20)', async () => {
     const hv = await getEquipoHistorial(db, 'eq-1')
     const pasos = (hv?.cronologia ?? []).flatMap((i) => (i.clase === 'ticket' ? i.ticket.pasos.flatMap((p) => (p.clase === 'etapa' ? [p.etapa] : [])) : []))
-    expect(pasos.filter((p) => p.transitionName === NOMBRE_TRANSICION_MIGRACION).map((p) => p.toStatus).sort()).toEqual(['En Proceso', null])
+    expect(pasos.filter((p) => p.transitionName === NOMBRE_TRANSICION_MIGRACION).map((p) => p.toStatus).sort()).toEqual([])
   })
 })
 
@@ -183,5 +183,87 @@ describe('L1 · el marcador fecha con la fecha de Zoho', () => {
     await ticketL1('T-204', 5204, 'En Espera de Repuestos')
     await marcadorDe('T-204', 'En Espera de Repuestos', null, REGLA_IDENTIDAD)
     expect(await ticketsEnEspera(db)).toEqual([])
+  })
+})
+
+/**
+ * marcador-migracion-lectores (F1F-01), L2: el historial lo redacta con el presentador, la conversación y la hoja de vida lo ocultan y
+ * ningún lector fuera de los cuatro de D-12 conoce el id del marcador (RQ-TZ-26, RQ-TZ-27, RQ-HV-20, RQ-TZ-28).
+ */
+const ETIQUETAS_DEL_MARCADOR = ['Estado en Zoho', 'Estado en Desk', 'Regla aplicada', 'Corte de la migración', 'Ejecutada por']
+const habilitar = (ticketId: string, cuando: string) => db.query(
+  `INSERT INTO ticket_transitions (ticket_id, transition_id, transition_name, from_status, to_status, area, performed_by, performed_at)
+   VALUES ($1,'habilitar','Habilitar Servicio','OV asignada','Ingresado','Servicio Técnico','Ana',$2)`, [ticketId, cuando],
+)
+const creacionDe = (ticketId: string, cuando: string) => db.query(
+  `INSERT INTO ticket_transitions (ticket_id, transition_id, transition_name, from_status, to_status, area, performed_by, performed_at)
+   VALUES ($1,'crear','Crear ticket',$2,'OV asignada','Comercial','Ana',$3)`, [ticketId, FROM_STATUS_CREACION, cuando],
+)
+const etapasDeLaHoja = async (ticketId: string): Promise<string[]> => {
+  const hv = await getEquipoHistorial(db, 'eq-1')
+  const item = (hv?.cronologia ?? []).find((i) => i.clase === 'ticket' && i.ticket.id === ticketId)
+  return item && item.clase === 'ticket' ? item.ticket.pasos.flatMap((p) => (p.clase === 'etapa' ? [String(p.etapa.transitionName)] : [])) : []
+}
+
+describe('L2 · el marcador en el historial, la conversación y la hoja de vida', () => {
+  it('P10 · historial: el marcador sale con el título y los textos del presentador, sin «Transición:», con la regla en español y ninguna clave de values', async () => {
+    await ticketL1('T-201', 5201, 'En Proceso'); await ticketL1('T-202', 5202, 'En Proceso')
+    await marcadorDe('T-201', 'Pendiente', 'En Proceso', REGLA_PENDIENTE); await marcadorDe('T-202', 'En Proceso', null, REGLA_IDENTIDAD)
+    const a = (await getHistorialTicket(db, 'T-201')).eventos.filter((e) => e.actor === ACTOR_MIGRACION)
+    expect(a).toHaveLength(1)
+    expect(a[0].eventName).toBe('AppTransition')
+    expect(a[0].title).toBe(TITULO_MARCADOR_MIGRACION)
+    expect(a[0].details).toEqual([
+      { label: 'Estado en Zoho', value: 'Pendiente' }, { label: 'Estado en Desk', value: 'En Proceso' },
+      { label: 'Regla aplicada', value: '"Pendiente" de servicio técnico pasa a "En Proceso"' },
+      { label: 'Corte de la migración', value: '2026-12-01T05:00:00.000Z' }, { label: 'Ejecutada por', value: 'Admin' },
+    ])
+    const b = (await getHistorialTicket(db, 'T-202')).eventos.filter((e) => e.actor === ACTOR_MIGRACION)
+    expect(b.map((e) => e.title)).toEqual([TITULO_MARCADOR_MIGRACION])
+    expect(b[0].details).toContainEqual({ label: 'Regla aplicada', value: 'El estado existe igual en Desk y se conserva' })
+    for (const e of [...a, ...b]) {
+      expect(e.title.startsWith('Transición:')).toBe(false)
+      expect((e.details ?? []).map((d) => d.label).filter((l) => !ETIQUETAS_DEL_MARCADOR.includes(l))).toEqual([])
+    }
+  })
+
+  it('P11 · conversación: sale la transición real y no el marcador; la fila del marcador sigue en la base', async () => {
+    await ticketL1('T-201', 5201, 'En Proceso'); await ticketL1('T-202', 5202, 'Ingresado')
+    await marcadorDe('T-201', 'Pendiente', 'En Proceso', REGLA_PENDIENTE)
+    await marcadorDe('T-202', 'En Proceso', null, REGLA_IDENTIDAD); await habilitar('T-202', '2026-10-05T09:00:00Z')
+    expect((await getConversacionTicket(db, 'T-201')).mensajes).toEqual([])
+    const c = (await getConversacionTicket(db, 'T-202')).mensajes
+    expect(c).toHaveLength(1)
+    expect(c[0].content.startsWith('Habilitar Servicio:')).toBe(true)
+    const n = await db.query('SELECT count(*) AS n FROM ticket_transitions WHERE transition_id = $1', [ID_TRANSICION_MIGRACION])
+    expect(Number((n.rows[0] as { n: unknown }).n)).toBe(4) // z1 y z2 del beforeEach y los dos de esta prueba
+  })
+
+  it('P12 · hoja de vida: «Habilitar Servicio» sí y el marcador no; un ticket sin marcador conserva la creación y dos etapas, en orden (caracterización)', async () => {
+    await db.query("UPDATE tickets SET equipo_id = NULL WHERE id IN ('z1','z2')")
+    for (const [id, n] of [['T-211', 5211], ['T-212', 5212]] as const) { await ticketL1(id, n, 'Ingresado'); await db.query('UPDATE tickets SET equipo_id = $2 WHERE id = $1', [id, 'eq-1']) }
+    await marcadorDe('T-211', 'Pendiente', 'En Proceso', REGLA_PENDIENTE); await habilitar('T-211', '2026-10-05T09:00:00Z')
+    await creacionDe('T-212', '2026-10-02T09:00:00Z'); await habilitar('T-212', '2026-10-03T09:00:00Z')
+    await db.query(`INSERT INTO ticket_transitions (ticket_id, transition_id, transition_name, from_status, to_status, performed_at) VALUES ('T-212','aprobar','Aprobar','Ingresado','En Proceso','2026-10-04T09:00:00Z')`)
+    expect(await etapasDeLaHoja('T-211')).toEqual(['Habilitar Servicio'])
+    expect(await etapasDeLaHoja('T-212')).toEqual(['Ticket creado', 'Habilitar Servicio', 'Aprobar'])
+  })
+
+  it('P13 · RQ-TZ-28: sólo cuatro ficheros de producción nombran el id del marcador (límite: granularidad de fichero, D-12)', () => {
+    const raiz = fileURLToPath(new URL('../../../', import.meta.url))
+    const hallados: string[] = []
+    const recorre = (dir: string): void => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        if (e.name === 'node_modules' || e.name === 'dist') continue
+        const ruta = join(dir, e.name)
+        if (e.isDirectory()) recorre(ruta)
+        else if (/\.tsx?$/.test(e.name) && !e.name.endsWith('.test.ts') && /ID_TRANSICION_MIGRACION|['"`]migracion_f1f01_abiertos['"`]/.test(readFileSync(ruta, 'utf8'))) hallados.push(relative(raiz, ruta).split(sep).join('/'))
+      }
+    }
+    recorre(join(raiz, 'apps')); recorre(join(raiz, 'packages'))
+    expect(hallados.sort()).toEqual([
+      'apps/desk/server/db/cierresDeMigracion.ts', 'apps/desk/server/db/migracionTicketsAbiertos.ts',
+      'packages/shared/src/cierreEnCifras.ts', 'packages/shared/src/migracionTickets.ts',
+    ])
   })
 })

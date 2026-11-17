@@ -3,7 +3,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { fechaSolo } from '@ambientalia/zoho-sync/books/repo'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
 import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition, PasoHojaDeVida } from '@ambientalia/shared'
-import { etapasDesdeHistoria, ticketDeRemision, compuestoCanonico, patronSerial } from '@ambientalia/shared'
+import { etapasDesdeHistoria, esPasoDeMigracion, ticketDeRemision, compuestoCanonico, patronSerial } from '@ambientalia/shared'
 import { esCreacion, iso, json, porFechaDesc } from './ticketFuentes'
 import { adjuntosRemision, fotosPorRemision } from './remisionAdjuntos'
 
@@ -271,11 +271,11 @@ export async function getEquipoHistorial(db: Queryable, id: string): Promise<Omi
   if (ids.length) {
     const ph = ids.map((_, i) => `$${i + 1}`).join(',')
     const tr = await db.query(
-      `SELECT ticket_id, transition_name, from_status, to_status, area, performed_by, performed_at
+      `SELECT ticket_id, transition_id, transition_name, from_status, to_status, area, performed_by, performed_at
        FROM ticket_transitions WHERE ticket_id IN (${ph}) ORDER BY performed_at`,
       ids,
     )
-    for (const r of tr.rows as any[]) {
+    for (const r of (tr.rows as any[]).filter((f) => !esPasoDeMigracion(f.transition_id))) {
       const list = byTicket.get(r.ticket_id) ?? []
       // La foto de la creación NO es una transición, y sin este caso la hoja de vida enseñaba el
       // centinela tal cual: "Enviar · (creación) → OV asignada". Se reconoce con `esCreacion` —el
