@@ -31,38 +31,38 @@ Si la medida de un lote pasa de 800, se para y se parte (no se cierra el intento
 ## L1 · núcleo y relojes (intento 1)
 
 ### Rojo
-- [ ] 1.1 Crear `packages/shared/src/marcadorMigracion.test.ts` con las unitarias de `entradaDelMarcador`/`resolverMarcador`: las cuatro ramas de D-4 (nulo, `entregado-a-finalizado`, `pendiente-servicio-a-en-proceso`, regla desconocida = S-13), normalización de D-2, `null` sin fecha (S-6/S-11) y orden de la etapa sintética al final (D-5). Cubre RQ-TC-84/85.
-- [ ] 1.2 Reescribir en sitio R1: `apps/desk/server/migracionMarcadorLectores.test.ts:41-44` a `toEqual([])`, mismas 4 líneas (D-11); título sin cita desfasada. Escenario TC-84 «identidad» y S-13.
-- [ ] 1.3 Reescribir en sitio R4: `apps/desk/server/db/migracionTicketsAbiertos.test.ts:142-147` a `toEqual([])` y título nuevo, mismas 6 líneas. TC-84 «sin fecha de Zoho».
-- [ ] 1.4 Imports nuevos en las líneas 1, 2, 4 y 13 de `apps/desk/server/migracionMarcadorLectores.test.ts`, unidos con `;` (design §6).
-- [ ] 1.5 Añadir al final de `apps/desk/server/migracionMarcadorLectores.test.ts` un `describe` de L1 con el ayudante del marcador (values reales) y el de `TicketUpdated` de `ticket_history` (`packages/zoho-sync/src/db/schema.sql:244-253`, con `id` propio): P1, P2, P3 (TC-84), P4, P5, P6, P7 (TC-85), P8, P9 (TC-86).
-- [ ] 1.6 Ver el rojo con la orden exacta: `npx vitest run packages/shared/src/marcadorMigracion.test.ts apps/desk/server/migracionMarcadorLectores.test.ts apps/desk/server/db/migracionTicketsAbiertos.test.ts`; anotar qué prueba cae y por qué (importación, valor) para `apply-progress.md`.
+- [x] 1.1 Crear `packages/shared/src/marcadorMigracion.test.ts` con las unitarias de `entradaDelMarcador`/`resolverMarcador`: las cuatro ramas de D-4 (nulo, `entregado-a-finalizado`, `pendiente-servicio-a-en-proceso`, regla desconocida = S-13), normalización de D-2, `null` sin fecha (S-6/S-11) y orden de la etapa sintética al final (D-5). Cubre RQ-TC-84/85.
+- [x] 1.2 Reescribir en sitio R1: `apps/desk/server/migracionMarcadorLectores.test.ts:41-44` a `toEqual([])`, mismas 4 líneas (D-11); título sin cita desfasada. Escenario TC-84 «identidad» y S-13.
+- [x] 1.3 Reescribir en sitio R4: `apps/desk/server/db/migracionTicketsAbiertos.test.ts:142-147` a `toEqual([])` y título nuevo, mismas 6 líneas. TC-84 «sin fecha de Zoho».
+- [x] 1.4 Imports nuevos en las líneas 1, 2, 4 y 13 de `apps/desk/server/migracionMarcadorLectores.test.ts`, unidos con `;` (design §6).
+- [x] 1.5 Añadir al final de `apps/desk/server/migracionMarcadorLectores.test.ts` un `describe` de L1 con el ayudante del marcador (values reales) y el de `TicketUpdated` de `ticket_history` (`packages/zoho-sync/src/db/schema.sql:244-253`, con `id` propio): P1, P2, P3 (TC-84), P4, P5, P6, P7 (TC-85), P8, P9 (TC-86).
+- [x] 1.6 Ver el rojo con la orden exacta: `npx vitest run packages/shared/src/marcadorMigracion.test.ts apps/desk/server/migracionMarcadorLectores.test.ts apps/desk/server/db/migracionTicketsAbiertos.test.ts`; anotar qué prueba cae y por qué (importación, valor) para `apply-progress.md`.
 
 ### Verde
-- [ ] 1.7 Crear `packages/shared/src/marcadorMigracion.ts` (design §4): `FilaConMarcador`, `EntradaDelMarcador`, `entradaDelMarcador` (D-2, D-3, D-4, sólo con `esPasoDeMigracion`) y `resolverMarcador` (D-5). Sin DB ni reloj.
-- [ ] 1.8 `packages/shared/src/index.ts`: línea 57 NUEVA `export * from './marcadorMigracion'` tras la 56.
-- [ ] 1.9 `apps/desk/server/db/sla.ts:2` (import de `shared` más `import { json } from './ticketFuentes'`), `:88` (`SELECT` con `transition_id, from_status, values`) y `:93` (itera `conFechaDeZoho(...)`), en sitio.
-- [ ] 1.10 `apps/desk/server/db/sla.ts`: añadir al final, tras la 125, `conFechaDeZoho` (D-6, consulta `IN ($1…$n)` sólo si hay marcadores; molde `:107-108`).
-- [ ] 1.11 `apps/desk/server/db/relojSla.ts:3` (import), `:40` (`resolverMarcador` con `json(f.values)`, `null` si sin fecha), `:43` y `:45` (`resuelto.filasApp`, `resuelto.etapasZoho`), `:77` (`SELECT` con `transition_id, values`).
-- [ ] 1.12 `apps/desk/server/db/esperasVencidas.ts:36`: `SELECT` con `transition_id, values`.
-- [ ] 1.13 Ver el verde: la orden de 1.6 y `npx vitest run packages/shared apps/desk/server/db/sla` sin rojos; la suite que fijaba lo viejo se revisa por el log, no por memoria.
+- [x] 1.7 Crear `packages/shared/src/marcadorMigracion.ts` (design §4): `FilaConMarcador`, `EntradaDelMarcador`, `entradaDelMarcador` (D-2, D-3, D-4, sólo con `esPasoDeMigracion`) y `resolverMarcador` (D-5). Sin DB ni reloj.
+- [x] 1.8 `packages/shared/src/index.ts`: línea 57 NUEVA `export * from './marcadorMigracion'` tras la 56.
+- [x] 1.9 `apps/desk/server/db/sla.ts:2` (import de `shared` más `import { json } from './ticketFuentes'`), `:88` (`SELECT` con `transition_id, from_status, values`) y `:93` (itera `conFechaDeZoho(...)`), en sitio.
+- [x] 1.10 `apps/desk/server/db/sla.ts`: añadir al final, tras la 125, `conFechaDeZoho` (D-6, consulta `IN ($1…$n)` sólo si hay marcadores; molde `:107-108`).
+- [x] 1.11 `apps/desk/server/db/relojSla.ts:3` (import), `:40` (`resolverMarcador` con `json(f.values)`, `null` si sin fecha), `:43` y `:45` (`resuelto.filasApp`, `resuelto.etapasZoho`), `:77` (`SELECT` con `transition_id, values`).
+- [x] 1.12 `apps/desk/server/db/esperasVencidas.ts:36`: `SELECT` con `transition_id, values`.
+- [x] 1.13 Ver el verde: la orden de 1.6 y `npx vitest run packages/shared apps/desk/server/db/sla` sin rojos; la suite que fijaba lo viejo se revisa por el log, no por memoria.
 
 ### Cierre del lote
-- [ ] 1.14 Lint sin avisos nuevos: sin `any` nuevos, sin `eslint-disable` (`apps/desk/server/db/equipos.ts:278` no se toca en L1).
-- [ ] 1.15 Cinco comprobaciones en una cadena: `npm run typecheck && npm run lint -- --max-warnings 165 && node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD < /dev/null && npm test > <scratchpad>/npmtest-<hora>.log 2>&1 && npm run build` (memoria libre anotada al arrancar `npm test`; duración y salida por pasada; si no sale 0, nombrar prueba y fichero del log). Anotar el bundle: `index-F1jDYjEU.js`, 427,51 kB (D-1/§10).
-- [ ] 1.16 Medida del intento: `git diff --shortstat --no-renames e728808d` + `wc -l` de lo nuevo sin trackear; si pasa de 800, parar y partir.
-- [ ] 1.17 Commit del código del lote (convencional, sin atribución de IA). El intento lo cierra el orquestador con `gentle-ai sdd-attempt settle` DESPUÉS de 1.26, con la medida remedida.
+- [x] 1.14 Lint sin avisos nuevos: sin `any` nuevos, sin `eslint-disable` (`apps/desk/server/db/equipos.ts:278` no se toca en L1).
+- [x] 1.15 Cinco comprobaciones en una cadena: `npm run typecheck && npm run lint -- --max-warnings 165 && node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD < /dev/null && npm test > <scratchpad>/npmtest-<hora>.log 2>&1 && npm run build` (memoria libre anotada al arrancar `npm test`; duración y salida por pasada; si no sale 0, nombrar prueba y fichero del log). Anotar el bundle: `index-F1jDYjEU.js`, 427,51 kB (D-1/§10).
+- [x] 1.16 Medida del intento: `git diff --shortstat --no-renames e728808d` + `wc -l` de lo nuevo sin trackear; si pasa de 800, parar y partir.
+- [x] 1.17 Commit del código del lote (convencional, sin atribución de IA). El intento lo cierra el orquestador con `gentle-ai sdd-attempt settle` DESPUÉS de 1.26, con la medida remedida.
 
 ### Mutaciones de L1 (con el lote commiteado; `file <f>` antes; `perl -i -pe 's/\Qviejo\E/nuevo/ if $. == N' <f>`, nunca `sed -i`)
-- [ ] 1.18 M1: `apps/desk/server/db/sla.ts:93` vuelve a `r.rows`; deben ponerse rojas P1, R1 y R4. Restaurar con el perl inverso; `file` igual y `git diff --numstat -- <f>` vacío.
-- [ ] 1.19 M2: `apps/desk/server/db/sla.ts:88` sin `transition_id`; roja P1. Restaurar y comprobar igual.
-- [ ] 1.20 M3: `apps/desk/server/db/relojSla.ts:43` con `filasApp` en vez de `resuelto.filasApp`; rojas P4, P7 y P8. Restaurar y comprobar.
-- [ ] 1.21 M4: `apps/desk/server/db/relojSla.ts:45` con `etapasZoho` en vez de `resuelto.etapasZoho`; roja P5. Restaurar y comprobar.
-- [ ] 1.22 M5: `apps/desk/server/db/relojSla.ts:77` sin `transition_id`; roja P7. Restaurar y comprobar.
-- [ ] 1.23 M6: `apps/desk/server/db/esperasVencidas.ts:36` sin `transition_id`; roja P8. Restaurar y comprobar.
-- [ ] 1.24 M7: en `packages/shared/src/marcadorMigracion.ts`, «sin fecha → `null`» pasa a «se descarta»; roja P6 y su unitaria. Restaurar y comprobar (línea localizada con `grep -n` antes de mutar).
-- [ ] 1.25 M8: en el mismo fichero, la rama de D-3 usa la de D-2; roja P2 y su unitaria. Restaurar y comprobar.
-- [ ] 1.26 Escribir `openspec/changes/marcador-migracion-lectores/apply-progress.md` (L1): hecho, rojos vistos (1.6), mutaciones con su salida, cinco comprobaciones, bundle y medida; el fichero cuenta en la medida (se mide otra vez tras escribirlo).
+- [x] 1.18 M1: `apps/desk/server/db/sla.ts:93` vuelve a `r.rows`; deben ponerse rojas P1, R1 y R4. Restaurar con el perl inverso; `file` igual y `git diff --numstat -- <f>` vacío.
+- [x] 1.19 M2: `apps/desk/server/db/sla.ts:88` sin `transition_id`; roja P1. Restaurar y comprobar igual.
+- [x] 1.20 M3: `apps/desk/server/db/relojSla.ts:43` con `filasApp` en vez de `resuelto.filasApp`; rojas P4, P7 y P8. Restaurar y comprobar.
+- [x] 1.21 M4: `apps/desk/server/db/relojSla.ts:45` con `etapasZoho` en vez de `resuelto.etapasZoho`; roja P5. Restaurar y comprobar.
+- [x] 1.22 M5: `apps/desk/server/db/relojSla.ts:77` sin `transition_id`; roja P7. Restaurar y comprobar.
+- [x] 1.23 M6: `apps/desk/server/db/esperasVencidas.ts:36` sin `transition_id`; roja P8. Restaurar y comprobar.
+- [x] 1.24 M7: en `packages/shared/src/marcadorMigracion.ts`, «sin fecha → `null`» pasa a «se descarta»; roja P6 y su unitaria. Restaurar y comprobar (línea localizada con `grep -n` antes de mutar).
+- [x] 1.25 M8: en el mismo fichero, la rama de D-3 usa la de D-2; roja P2 y su unitaria. Restaurar y comprobar.
+- [x] 1.26 Escribir `openspec/changes/marcador-migracion-lectores/apply-progress.md` (L1): hecho, rojos vistos (1.6), mutaciones con su salida, cinco comprobaciones, bundle y medida; el fichero cuenta en la medida (se mide otra vez tras escribirlo).
 
 ## L2 · pantallas y reconocimiento (intento 2, parte del commit de L1)
 
