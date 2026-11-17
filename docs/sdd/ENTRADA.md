@@ -2070,30 +2070,30 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Dueño:** Gerencia. **Qué desbloquea:** la ejecución.
 **Estado:** **cerrada el 2026-10-14** por `decision/migracion-e207-e212` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`). Esperan: Servicio Técnico les crea la remisión el primer día con el botón existente. No se construye nada. *(Texto al abrirla: abierta · **Destino:** punto abierto con dueño (R-3).)*
 
-## E-213 · 2026-10-04 · hallazgo · **ABIERTA** — F1F-01: un «Entregado» migrado muestra la fecha de la migración como fecha de finalización en el informe de contrato
-**Qué:** el informe de contrato toma la primera fila con destino «Finalizado» (`apps/desk/server/db/informeContrato.ts:34`), y la fila marcador de la migración lo es. Comprobado por lectura, no por ejecución. No se corrige en este cambio.
+## E-213 · 2026-10-04 · hallazgo · ~~ABIERTA~~ **RESUELTA 17/10** — F1F-01: un «Entregado» migrado muestra la fecha de la migración como fecha de finalización en el informe de contrato
+**Qué:** el informe de contrato toma la primera fila con destino «Finalizado» (`apps/desk/server/db/informeContrato.ts:34` en `d717f57f`), y la fila marcador de la migración lo es. Comprobado por lectura, no por ejecución. No se corrige en este cambio.
 **Dueño:** Gerencia. **Qué desbloquea:** un informe de contrato correcto para esos tickets.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3). **Traza 17/11/2026 (supervisión):** resuelta el 17/10 por `5f3d0361` (`decision/h1-fechas-migrados`, RQ-TC-69); la bandeja no lo recogía. Medido por el analista sobre `d182230e`; detalle en `decision/marcador-migracion-en-pantallas` (3).
 
-## E-214 · 2026-10-04 · hallazgo · **ABIERTA** — F1F-01: el marcador de la migración cambia la lectura de la reentrada en los indicadores
-**Qué:** un ticket migrado sin otra historia pasa de reentrada vacía a «no» (`packages/shared/src/indicadores.ts:134`), porque el marcador cuenta como un paso más. No se corrige en este cambio.
+## E-214 · 2026-10-04 · hallazgo · ~~ABIERTA~~ **RESUELTA 17/10** — F1F-01: el marcador de la migración cambia la lectura de la reentrada en los indicadores
+**Qué:** un ticket migrado sin otra historia pasa de reentrada vacía a «no» (`packages/shared/src/indicadores.ts:134` en `d717f57f`), porque el marcador cuenta como un paso más. No se corrige en este cambio.
 **Dueño:** Gerencia. **Qué desbloquea:** indicadores sin cambio de lectura tras la migración.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3). **Traza 17/11/2026 (supervisión):** resuelta el 17/10 por `5f3d0361` (`decision/h1-fechas-migrados`, RQ-TC-69); la bandeja no lo recogía. Medido por el analista sobre `d182230e`; detalle en `decision/marcador-migracion-en-pantallas` (3).
 
 ## E-215 · 2026-10-04 · hallazgo · **ABIERTA** — F1F-01: el historial y la conversación enseñan el marcador con etiquetas en crudo
 **Qué:** el marcador aparece como una transición más, con sus valores etiquetados sin traducir («Status type previo», «Managed by app previo»; `apps/desk/server/db/ticketFuentes.ts:82`). Es visible para todo el personal.
 **Dueño:** Gerencia. **Qué desbloquea:** decidir entre etiquetas en español u ocultar el marcador.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3). **Traza 17/11/2026 (supervisión):** destino decidido por `decision/marcador-migracion-en-pantallas`: tanda F1F-01 `marcador-migracion-lectores` (`cierra: no`), antes del 12/12.
 
 ## E-216 · 2026-10-04 · hallazgo · **ABIERTA** — F1F-01: la hoja de vida del equipo lista el marcador como una etapa
 **Qué:** la hoja de vida recorre las transiciones del ticket (`apps/desk/server/db/equipos.ts:275`) y el marcador entra como una más.
 **Dueño:** Gerencia. **Qué desbloquea:** decidir si se deja como traza o se filtra.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3). **Traza 17/11/2026 (supervisión):** destino decidido por `decision/marcador-migracion-en-pantallas`: tanda F1F-01 `marcador-migracion-lectores` (`cierra: no`), antes del 12/12.
 
 ## E-217 · 2026-10-04 · hallazgo · **ABIERTA** — F1F-01: en las dos reglas que cambian el estado, el reloj de la alarma arranca el día de la migración
 **Qué:** el marcador de identidad lleva el destino vacío para no mover el reloj (D-6), pero en «Pendiente» → «En Proceso» y «Entregado» → «Finalizado» lleva el destino, y la alarma toma esa fila como entrada al estado (`apps/desk/server/db/sla.ts:88`).
 **Dueño:** Gerencia. **Qué desbloquea:** alarmas con la antigüedad correcta para esos tickets.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3). **Traza 17/11/2026 (supervisión):** destino decidido por `decision/marcador-migracion-en-pantallas`: tanda F1F-01 `marcador-migracion-lectores` (`cierra: no`), antes del 12/12.
 
 ## E-218 · 2026-10-04 · hallazgo · **CERRADA el 2026-10-14** — F1F-01: la averiguación de la hoja de Google no tiene constancia de hecha, y su plazo venció
 **Qué:** `decision/trabajo-del-30-09-sin-fila` adelantó a antes del 04/10 la averiguación de quién rellena la hoja de Google de remisiones y para qué (`decision/p14b-hoja-google`). No hay constancia de que se hiciera ni en esta bandeja, ni en los partes, ni en `openspec/config.yaml`, y ningún código lee hojas de Google. Por eso `migracion-tickets-abiertos` no construye el cotejo una a una del día del corte y lleva `cierra: no`.
