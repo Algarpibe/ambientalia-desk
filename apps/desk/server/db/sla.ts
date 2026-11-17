@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { ALARMAS_SLA, sqlEstadoNormalizado, SLA_HORAS_POR_ESTADO, flujoDelTicket, slaVencido, type AlarmaSla, type Estado } from '@ambientalia/shared'; import { listarCierres } from './calendarioCierres'
+import { ALARMAS_SLA, entradaDelMarcador, esPasoDeMigracion, etapasDesdeHistoria, sqlEstadoNormalizado, SLA_HORAS_POR_ESTADO, flujoDelTicket, slaVencido, type AlarmaSla, type Estado } from '@ambientalia/shared'; import { listarCierres } from './calendarioCierres'; import { json } from './ticketFuentes'
 
 export interface TicketConSlaVencido {
   id: string
@@ -85,12 +85,12 @@ export async function entradasActuales(
   const estadoDe = new Map(tickets.map((t) => [String(t.id), t.status]))
   const m = estados.map((_, i) => `$${i + 1}`).join(', ')
   const r = await db.query(
-    `SELECT id, ticket_id, to_status, performed_at FROM ticket_transitions
+    `SELECT id, ticket_id, transition_id, from_status, to_status, performed_at, values FROM ticket_transitions
       WHERE to_status IN (${m}) AND ticket_id IN (SELECT id FROM tickets WHERE ${sqlEstadoNormalizado('status')} IN (${m}))`,
     estados,
   )
   const mejor = new Map<string, { at: number; id: number }>()
-  for (const f of r.rows as Array<{ id: unknown; ticket_id: string; to_status: string; performed_at: unknown }>) {
+  for (const f of (await conFechaDeZoho(db, r.rows as Record<string, unknown>[])) as Array<{ id: unknown; ticket_id: string; to_status: string; performed_at: unknown }>) {
     const ticketId = String(f.ticket_id)
     if (estadoDe.get(ticketId) !== f.to_status) continue
     const at = new Date(f.performed_at as string | Date).getTime(), id = Number(f.id)
@@ -122,4 +122,25 @@ export function tieneOrdenVenta(
   asociacionVigente: boolean,
 ): boolean {
   return (fila.orden_venta ?? '') !== '' || (fila.salesorder_id ?? '') !== '' || asociacionVigente
+}
+
+/**
+ * Los marcadores de la migración, con `performed_at` = su fecha de Zoho (marcador-migracion-lectores, D-6). Sin marcadores devuelve
+ * las filas tal cual y no consulta; con ellos, UNA consulta a `ticket_history` de esos tickets (lista `IN`, molde de
+ * `conAsociacionVigente`). El marcador que no da entrada (identidad) o no tiene fecha se descarta: `entradaDelMarcador` es la regla.
+ */
+async function conFechaDeZoho(db: Queryable, filas: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
+  const ids = [...new Set(filas.filter((f) => esPasoDeMigracion(f.transition_id)).map((f) => String(f.ticket_id)))]
+  if (ids.length === 0) return filas
+  const m = ids.map((_, i) => `$${i + 1}`).join(', ')
+  const h = await db.query(`SELECT ticket_id, raw FROM ticket_history WHERE event_name = 'TicketUpdated' AND ticket_id IN (${m})`, ids)
+  const crudo = new Map<string, unknown[]>()
+  for (const r of h.rows as Array<{ ticket_id: string; raw: unknown }>) crudo.set(String(r.ticket_id), [...(crudo.get(String(r.ticket_id)) ?? []), json(r.raw)])
+  const salida: Record<string, unknown>[] = []
+  for (const f of filas) {
+    if (!esPasoDeMigracion(f.transition_id)) { salida.push(f); continue }
+    const e = entradaDelMarcador({ ...f, values: json(f.values) }, etapasDesdeHistoria(crudo.get(String(f.ticket_id)) ?? []))
+    if (e !== null && e.tipo === 'entrada' && e.desde !== null) salida.push({ ...f, performed_at: e.desde })
+  }
+  return salida
 }
