@@ -1,6 +1,6 @@
 # Delta de tickets-core — `marcador-migracion-lectores`
 
-Fuente: `decision/marcador-migracion-en-pantallas` (`openspec/config.yaml:6766-6784`) y `decision/h1-fechas-migrados`
+Fuente: `decision/marcador-migracion-en-pantallas` (`openspec/config.yaml:6766-6782`) y `decision/h1-fechas-migrados`
 (`openspec/config.yaml:4863-4881`). Sólo `ADDED`, a continuación de RQ-TC-83. **Precisan** RQ-TC-69 (`openspec/specs/tickets-core/spec.md:4148`)
 y RQ-TC-75 (`openspec/specs/tickets-core/spec.md:4424`), sin modificarlos. La regla vive en `packages/shared`, pura, y reconoce el
 marcador sólo con `esPasoDeMigracion`. La **fecha de Zoho** es la última entrada en Zoho a `estado_previo`, de `ticket_history`

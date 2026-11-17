@@ -1,6 +1,6 @@
 # Delta de hojas-vida — `marcador-migracion-lectores`
 
-Sólo `ADDED`, a continuación de RQ-HV-19. Fuente: `decision/marcador-migracion-en-pantallas` (`openspec/config.yaml:6766-6784`).
+Sólo `ADDED`, a continuación de RQ-HV-19. Fuente: `decision/marcador-migracion-en-pantallas` (`openspec/config.yaml:6766-6782`).
 
 ## ADDED Requirements
 

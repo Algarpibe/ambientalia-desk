@@ -1,6 +1,6 @@
 # Delta de trazas — `marcador-migracion-lectores`
 
-Fuente: `decision/marcador-migracion-en-pantallas` (`openspec/config.yaml:6766-6784`) y `decision/h1-fechas-migrados`
+Fuente: `decision/marcador-migracion-en-pantallas` (`openspec/config.yaml:6766-6782`) y `decision/h1-fechas-migrados`
 (`openspec/config.yaml:4863-4881`). Sólo `ADDED`, a continuación de RQ-TZ-25. El **marcador** es toda fila de
 `ticket_transitions` con `transition_id = 'migracion_f1f01_abiertos'` (`packages/shared/src/migracionTickets.ts:14`).
 
