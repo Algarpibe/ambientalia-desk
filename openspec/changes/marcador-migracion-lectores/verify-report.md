@@ -125,7 +125,7 @@ Cada una leída contra el fichero actual y contra lo que afirma la frase:
 El detector (comprobación 3) sale 0 con 13 abreviadas rotas informativas. Hipótesis: que sean las mismas 13 de la partida (lo dice `apply-progress.md`; no medí la partida).
 
 ### Regresión E-213 / E-214 y lectores (a)/(b)
-`apps/desk/server/db/informeContrato.ts`, `apps/desk/server/indicadores.ts`, `apps/desk/server/db/primerDerivado.ts`, `apps/desk/server/db/colaTaller.ts` y `apps/desk/server/db/fechasTicket.ts` no aparecen en el diff; `apps/desk/server/cierreMigracionEnCifras.test.ts:87` y las pruebas `:46` y `:54` de `apps/desk/server/migracionMarcadorLectores.test.ts` siguen verdes sin tocarlas (CA-6) ✅.
+`apps/desk/server/db/informeContrato.ts`, `apps/desk/server/indicadores.ts`, `apps/desk/server/db/primerDerivado.ts`, `apps/desk/server/db/colaTaller.ts` y `apps/desk/server/db/fechasTicket.ts` no aparecen en el diff; `apps/desk/server/cierreMigracionEnCifras.test.ts:87` y las pruebas `apps/desk/server/migracionMarcadorLectores.test.ts:46` y `apps/desk/server/migracionMarcadorLectores.test.ts:54` siguen verdes sin tocarlas (CA-6) ✅.
 
 ### Coherence (Design)
 | Decisión | ¿Seguida? | Notas |
