@@ -11,7 +11,7 @@ import { AREAS, CLAVE_DERIVACION, TRANSITIONS, type Transition } from './transit
  * relojes que el cliente percibe.
  *
  * SE DECLARA COMO DATO, igual que `ESTADOS_SIN_SALIDA` y por la misma razón: es una decisión de
- * negocio, no una propiedad que el grafo pueda contestar. De las 31 transiciones no se deduce que
+ * negocio, no una propiedad que el grafo pueda contestar. De las 40 transiciones de servicio no se deduce que
  * `Notificado` merezca 9 h y `Pendiente` ninguna.
  *
  * LA UNIDAD ES LA HORA HÁBIL, no el día ni la hora de reloj: jornada 08:00-17:00 en `ZONA_NEGOCIO`,

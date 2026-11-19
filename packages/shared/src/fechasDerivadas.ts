@@ -86,7 +86,7 @@ function esEtiquetaFechaDerivada(label: string): label is EtiquetaFechaDerivada 
   return label in FUENTE_DE_FECHA
 }
 
-/** Qué fuentes hay que leer para esta transición. Vacío para las 31 que no declaran ninguna (P-2). */
+/** Qué fuentes hay que leer para esta transición. Vacío para las 48 de los tres flujos que no declaran ninguna (P-2). */
 export function fuentesQueNecesita(t: Pick<Transition, 'fields'>): Set<FuenteDeFecha> {
   const fuentes = new Set<FuenteDeFecha>()
   for (const campo of t.fields) {

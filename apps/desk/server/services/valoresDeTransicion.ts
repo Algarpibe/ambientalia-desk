@@ -7,7 +7,7 @@ import { instanteUltimaTransicion } from '../db/fechasTicket'
 /**
  * F1A-07 · IV-2 — lee las fuentes que la transición necesita y devuelve los valores EFECTIVOS.
  *
- * `fuentesQueNecesita` vacío → CERO consultas (P-2, vale para las 31 transiciones que no declaran
+ * `fuentesQueNecesita` vacío → CERO consultas (P-2, vale para las 48 transiciones de los tres flujos que no declaran
  * ninguna de las tres fechas). La lectura no es guarda: no contesta nada por sí sola, sólo entrega el
  * dato a `valoresEfectivos` (regla 13, punto 1: la regla vive en `packages/shared`, esto sólo lee).
  */

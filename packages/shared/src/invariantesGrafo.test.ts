@@ -114,7 +114,7 @@ describe('invariantes del grafo de transiciones', () => {
    * botones — las aplica el servidor solo cuando n8n confirma o anula el documento.
    *
    * El discriminador de «no es botón» ya no puede ser `from`/`to` ausente: pasa a ser `fields`
-   * ausente, porque las 31 de `TRANSITIONS` siempre lo llevan. Ninguna de las dos mueve el ocho
+   * ausente, porque las 40 de `TRANSITIONS` siempre lo llevan. Ninguna de las dos mueve el ocho
    * del invariante 5: las dos siguen siendo de `Servicio Técnico` a secas.
    */
   it('5b · las dos sin botón declaran su par exacto y siguen fuera de TRANSITIONS', () => {
