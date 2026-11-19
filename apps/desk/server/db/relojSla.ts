@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
-  FROM_STATUS_CREACION, ESTADOS_TERMINALES_DEL_RELOJ, etapasDesdeHistoria, tiemposDelReloj, normalizarSiTexto,
+  FROM_STATUS_CREACION, ESTADOS_TERMINALES_DEL_RELOJ, etapasDesdeHistoria, tiemposDelReloj, normalizarSiTexto, resolverMarcador,
   type HistorialTransition, type PasoDelReloj, type TiemposDelReloj,
 } from '@ambientalia/shared'
 import { esCreacion, json } from './ticketFuentes'
@@ -37,12 +37,12 @@ export function secuenciaDelReloj(
   ticket: { status: unknown; createdAt: unknown },
   filasApp: readonly Fila[],
   etapasZoho: readonly HistorialTransition[],
-): PasoDelReloj[] | null {
+): PasoDelReloj[] | null { const resuelto = resolverMarcador(filasApp.map((f): Fila => ({ ...f, values: json(f.values) })), etapasZoho); if (resuelto === null) return null
   const foto = filasApp.find((f) => f.from_status === FROM_STATUS_CREACION)
   const entradas: Array<{ t: number; de: string | null; hacia: string | null }> = [
-    ...filasApp.filter((f) => !esCreacion(f)).sort((x, y) => Number(x.id) - Number(y.id))
+    ...resuelto.filasApp.filter((f) => !esCreacion(f)).sort((x, y) => Number(x.id) - Number(y.id))
       .map((f) => ({ t: instanteDe(f.performed_at), de: (f.from_status as string | null) ?? null, hacia: (f.to_status as string | null) ?? null })),
-    ...etapasZoho.map((e) => ({ t: instanteDe(e.performedAt), de: normalizarSiTexto(e.fromStatus) ?? null, hacia: normalizarSiTexto(e.toStatus) ?? null })),
+    ...resuelto.etapasZoho.map((e) => ({ t: instanteDe(e.performedAt), de: normalizarSiTexto(e.fromStatus) ?? null, hacia: normalizarSiTexto(e.toStatus) ?? null })),
   ].sort((x, y) => x.t - y.t) // el orden estable conserva el de `id` y deja a la app antes que a Zoho en un empate
   if (entradas.length === 0 && !foto) return null
   if (entradas.some((e) => Number.isNaN(e.t) || !e.hacia)) return null
@@ -74,7 +74,7 @@ export async function tiemposDelRelojPorTicket(
 
   const [transiciones, historia, cierres] = await Promise.all([
     db.query(
-      `SELECT id, ticket_id, from_status, to_status, performed_at FROM ticket_transitions
+      `SELECT id, ticket_id, transition_id, from_status, to_status, performed_at, values FROM ticket_transitions
        WHERE ticket_id IN (SELECT id FROM tickets WHERE status_type = 'Closed')`,
     ),
     db.query(

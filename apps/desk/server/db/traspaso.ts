@@ -1,5 +1,5 @@
 import type { HistoryEvent } from '@ambientalia/shared'
-import { areasSiguientes, catalogoDelTicket, CLAVE_DERIVACION, ID_TRANSICION_MIGRACION } from '@ambientalia/shared'
+import { areasSiguientes, catalogoDelTicket, CLAVE_DERIVACION, esPasoDeMigracion } from '@ambientalia/shared'
 import { esCreacion, iso, json } from './ticketFuentes'
 
 /**
@@ -23,7 +23,7 @@ export function lineaTraspaso(
 ): HistoryEvent[] {
   // El orden importa: la creación y el marcador de F1F-01 no son traspasos, y el marcador puede llevar destino.
   if (esCreacion(fila)) return []
-  if (fila.transition_id === ID_TRANSICION_MIGRACION) return []
+  if (esPasoDeMigracion(fila.transition_id)) return []
 
   const derivado = json(fila.values)[CLAVE_DERIVACION]
   const id = derivado == null ? '' : String(derivado).trim()

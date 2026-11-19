@@ -139,11 +139,11 @@ describe('frontera e idempotencia', () => {
 })
 
 describe('el resto del informe y los fallos', () => {
-  it('el marcador de identidad no mueve entradasActuales; el de «Pendiente» de servicio sí', async () => {
+  it('el marcador de identidad no mueve entradasActuales y el de «Pendiente» de servicio, sin historia de Zoho, queda sin fecha', async () => {
     await tk('t1', 4100, 'En Proceso'); await tk('t2', 4200, 'Pendiente', { cls: null })
     await aplicar(db, { aplicar: true })
     const m = await entradasActuales(db, [{ id: 't1', status: 'En Proceso' }, { id: 't2', status: 'En Proceso' }], ['En Proceso'])
-    expect([...m.keys()]).toEqual(['t2'])
+    expect([...m.keys()]).toEqual([])
   })
 
   it('sinRemisionVigente con y sin remisión de entrada, y sin crear ninguna', async () => {

@@ -33,7 +33,7 @@ export async function ticketsEnEspera(db: Queryable): Promise<EsperaEnCurso[]> {
 
   const [transiciones, historia] = await Promise.all([
     db.query(
-      `SELECT id, ticket_id, from_status, to_status, performed_at FROM ticket_transitions
+      `SELECT id, ticket_id, transition_id, from_status, to_status, performed_at, values FROM ticket_transitions
         WHERE ticket_id IN (SELECT id FROM tickets WHERE ${sqlEstadoNormalizado('status')} IN (${m}))`,
       estados,
     ),

@@ -1,4 +1,4 @@
-import type { Message } from '@ambientalia/shared'
+import { esPasoDeMigracion, type Message } from '@ambientalia/shared'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getConversations } from '@ambientalia/zoho-sync/db/repo'
 import { fmtTime, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
@@ -137,10 +137,10 @@ export async function getConversacionTicket(db: Queryable, ticketId: string): Pr
   }))
 
   const tr = await db.query(
-    'SELECT ticket_id, transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',
+    'SELECT ticket_id, transition_id, transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',
     [ticketId],
   )
-  const filasTr = tr.rows as Record<string, unknown>[]
+  const filasTr = (tr.rows as Record<string, unknown>[]).filter((f) => !esPasoDeMigracion(f.transition_id))
 
   // `datosTicket` son una o dos consultas más y solo las usa la entrada de creación. La mayoría de
   // los tickets vienen de Zoho y NO tienen fila de creación, así que pedirlas siempre era gastarlas

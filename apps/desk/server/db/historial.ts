@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientalia/shared'
-import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura, tipoEventoDeTransicion } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'; import { lineaTraspaso } from './traspaso'; import { eventosReasignacion } from './eventoReasignacion'
+import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura, tipoEventoDeTransicion, esPasoDeMigracion, presentarMarcador } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'; import { lineaTraspaso } from './traspaso'; import { eventosReasignacion } from './eventoReasignacion'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
 import {
   camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
@@ -140,7 +140,7 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
   const filasTr = tr.rows as Record<string, unknown>[]
   const nombres = await nombresDerivados(db, filasTr)
   const transiciones = filasTr.flatMap((f) =>
-    esCreacion(f) ? [eventoCreacion(f, ticket, cliente)] : [...lineaTraspaso(f, nombres, ticket), eventoTransicion(f, nombres)],
+    esCreacion(f) ? [eventoCreacion(f, ticket, cliente)] : [...lineaTraspaso(f, nombres, ticket), esPasoDeMigracion(f.transition_id) ? eventoMigracion(f) : eventoTransicion(f, nombres)],
   )
 
   // Consulta propia y no `listRemisionesByTicket`: aquélla filtra `anulada_at IS NULL` porque el
@@ -159,4 +159,12 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
   const sincronizarConZoho = planSyncZoho(ticketId, zoho.length > 0)
 
   return { eventos, sincronizarConZoho }
+}
+
+/** El marcador de la migración (F1F-01) con el texto del presentador y no con las claves de `values` en crudo (S-1, D-8). */
+function eventoMigracion(fila: Record<string, unknown>): HistoryEvent {
+  return {
+    eventName: 'AppTransition', tipoEvento: tipoEventoDeTransicion(typeof fila.transition_id === 'string' ? fila.transition_id : null),
+    time: iso(fila.performed_at), actor: (fila.performed_by as string) ?? 'App', ...presentarMarcador(json(fila.values)),
+  }
 }
