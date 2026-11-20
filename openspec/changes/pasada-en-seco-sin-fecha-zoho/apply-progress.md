@@ -58,7 +58,7 @@ Sobre el repositorio sin `node_modules`, `.git`, `dist` ni `.codegraph`, `grep -
 
 | Cita | Línea editada | Qué afirma | Caso |
 |---|---|---|---|
-| `docs/sdd/TRASPASO_2026-10-08.md:395`, `openspec/changes/archive/2026-10-11-migracion-una-sola-ejecucion/archive-report.md:36` y `:115`, y los cuatro del cambio `2026-10-11-rechazo-migracion-409` (`archive-report.md:119`, `proposal.md:120`, `tasks.md:81`) | `DEPLOY.md:663-693`, contiene la 673 | el procedimiento está en la §14 | A (sigue siendo cierto) |
+| `docs/sdd/TRASPASO_2026-10-08.md:395`, `openspec/changes/archive/2026-10-11-migracion-una-sola-ejecucion/archive-report.md:36` y `:115`, y los tres del cambio `2026-10-11-rechazo-migracion-409` (`archive-report.md:119`, `proposal.md:120`, `tasks.md:81`) | `DEPLOY.md:663-693`, contiene la 673 | el procedimiento está en la §14 | A (sigue siendo cierto) |
 | `openspec/changes/archive/2026-10-16-fecha-cierre-migracion/design.md:59` | `DEPLOY.md:673` | que esa línea cita `:22` y `:24` del ejecutor | A |
 | `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/verify-report.md:47` y `:48` | ejecutor `:66-67`, `:68-94`, `:67` | `opts.aplicar === true`; el seco pasa `db`, no `enTransaccion`; las escrituras están en ese bloque | A (la línea 67 sólo gana `ahora`) |
 | `openspec/changes/archive/2026-10-11-migracion-una-sola-ejecucion/design.md:5` y `proposal.md:27` | ejecutor `:63-95` | la función `migrarTicketsAbiertos` | A |
@@ -78,4 +78,7 @@ Resultado: **ninguna B ni C**; no hizo falta añadir «en `d2a735a4`» a ninguna
 `git diff --shortstat --no-renames 7f5ed851`: 9 ficheros, 369 inserciones, 15 borrados (384). Con este `apply-progress.md` y el `tasks.md` marcado, por debajo de 800.
 
 ## 7. Cinco comprobaciones y medida — las completa el orquestador
+
+Las corre el orquestador sobre el commit final del intento (1.26 y 1.27) y quedan, con la memoria libre al arrancar `npm test`, la
+duración, el bundle y la medida, en la evidencia del `settle` del registro y en el `archive-report.md` de este cambio.
 

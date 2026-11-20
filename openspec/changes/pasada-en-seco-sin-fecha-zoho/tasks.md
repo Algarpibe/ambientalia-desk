@@ -53,8 +53,8 @@ Chained PRs recommended: No
 - [x] 1.23 Regla 13 por escrito: `git diff --stat d2a735a4 -- apps/desk/src` vacío; `git diff --exit-code d2a735a4 -- .env.example packages/zoho-sync/src/db/schema.sql` sin salida.
 - [x] 1.24 Lint sin avisos nuevos: sin `any` nuevos ni `eslint-disable`.
 - [x] 1.25 Escribir `openspec/changes/pasada-en-seco-sin-fecha-zoho/apply-progress.md` completo (rojos de 1.5, verde, mutaciones con su salida, barrido, regla 13, cinco comprobaciones, bundle y medida) y commitearlo; el fichero cuenta en la medida.
-- [ ] 1.26 Cinco comprobaciones sobre el commit final, en cadena: `npm run typecheck && npm run lint -- --max-warnings 165 && node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD < /dev/null && npm test > <scratchpad>/npmtest-<hora>.log 2>&1 && npm run build`. Memoria libre anotada al arrancar `npm test`; duración y salida por pasada; si no sale 0, nombrar prueba y fichero del log. Lint contra 165. El bundle debe seguir siendo `index-F1jDYjEU.js`; si cambia, el parte dice que el cliente también se despliega.
-- [ ] 1.27 Medida del intento: `git diff --shortstat --no-renames <commit de partida del intento>` + `wc -l` de lo nuevo sin trackear; si pasa de 800, parar y partir.
+- [x] 1.26 Cinco comprobaciones sobre el commit final, en cadena: `npm run typecheck && npm run lint -- --max-warnings 165 && node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD < /dev/null && npm test > <scratchpad>/npmtest-<hora>.log 2>&1 && npm run build`. Memoria libre anotada al arrancar `npm test`; duración y salida por pasada; si no sale 0, nombrar prueba y fichero del log. Lint contra 165. El bundle debe seguir siendo `index-F1jDYjEU.js`; si cambia, el parte dice que el cliente también se despliega.
+- [x] 1.27 Medida del intento: `git diff --shortstat --no-renames <commit de partida del intento>` + `wc -l` de lo nuevo sin trackear; si pasa de 800, parar y partir.
 
 ## Tareas de persona — fuera del recuento, archivar NO las da por hechas
 
