@@ -11,7 +11,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
  * Guardián de `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql` (RQ-ZS-18). El script NO se ejecuta contra ninguna base real:
  * lo ejecuta una persona. Aquí se corre sobre pg-mem, por sentencias, con un fixture DERIVADO de `schema.sql` y calificado
  * `desk.`. El marcador lo escribe el EJECUTOR de verdad (`apps/desk/server/db/migracionTicketsAbiertos.ts`), con un
- * envoltorio que califica `tickets` y `ticket_transitions` con `desk.` (el ejecutor corre con el `search_path` de la app;
+ * envoltorio que califica `tickets`, `ticket_transitions` y `ticket_history` con `desk.` (el ejecutor corre con el `search_path` de la app;
  * el `.sql`, no). La atomicidad se comprueba por lectura estática, no por rollback real.
  */
 const DIR = path.dirname(fileURLToPath(import.meta.url))
@@ -31,8 +31,8 @@ const reversion = () => sentencias(leerScript(), true).slice(activas().length)
 
 function ddlDerivado(): string[] {
   const schema = readFileSync(RUTA_SCHEMA, 'utf8').replace(/\r\n/g, '\n')
-  const bloques = [...schema.matchAll(/CREATE TABLE IF NOT EXISTS (tickets|ticket_transitions) \(([\s\S]*?)\n\);/g)]
-  expect(bloques.map((b) => b[1]), 'el fixture deriva de DOS bloques de schema.sql').toEqual(['tickets', 'ticket_transitions'])
+  const bloques = [...schema.matchAll(/CREATE TABLE IF NOT EXISTS (tickets|ticket_transitions|ticket_history) \(([\s\S]*?)\n\);/g)]
+  expect(bloques.map((b) => b[1]), 'el fixture deriva de TRES bloques de schema.sql (ticket_history la lee el informe para sinFechaDeZoho)').toEqual(['tickets', 'ticket_transitions', 'ticket_history'])
   return ['CREATE SCHEMA desk', ...bloques.map((b) => `CREATE TABLE desk.${b[1]} (${b[2]}\n)`)]
 }
 
@@ -40,7 +40,7 @@ type Pool = { query: (s: string, p?: unknown[]) => Promise<{ rows: Array<Record<
 let pool: Pool
 let ejecutor: Queryable
 
-const califica = (sql: string) => sql.replace(/\b(FROM|INTO|UPDATE)\s+(tickets|ticket_transitions)\b/g, '$1 desk.$2')
+const califica = (sql: string) => sql.replace(/\b(FROM|INTO|UPDATE)\s+(tickets|ticket_transitions|ticket_history)\b/g, '$1 desk.$2')
 
 async function sql(lista: string[]): Promise<void> { for (const s of lista) await pool.query(s) }
 

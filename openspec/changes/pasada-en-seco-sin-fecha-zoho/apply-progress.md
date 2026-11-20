@@ -82,3 +82,16 @@ Resultado: **ninguna B ni C**; no hizo falta añadir «en `d2a735a4`» a ninguna
 Las corre el orquestador sobre el commit final del intento (1.26 y 1.27) y quedan, con la memoria libre al arrancar `npm test`, la
 duración, el bundle y la medida, en la evidencia del `settle` del registro y en el `archive-report.md` de este cambio.
 
+
+## 8. Corrección del orquestador tras la suite entera (dentro de este intento)
+
+La primera pasada de `npm test` sobre `21da9b73` salió 1: 8 rojas de 14 en `apps/desk/server/db/migracionTicketsF1F01.test.ts`, todas con
+`relation "ticket_history" does not exist`. Ese fichero monta su propio esquema en pg-mem derivando de `packages/zoho-sync/src/db/schema.sql`
+exactamente DOS tablas y su envoltorio sólo califica esas dos con `desk.`; el ejecutor ahora lee también la historia de Zoho. Es una guarda que
+fija el árbol, no un fallo de producción: allí la tabla existe (`packages/zoho-sync/src/db/schema.sql:244`) y la prueba contra PostgreSQL real
+(`apps/desk/server/db/migracionConcurrente.integration.test.ts:91`) monta el esquema entero con `migrate`. Se corrige EN SITIO, sin mover
+líneas: el comentario, la expresión de los bloques, la expectativa (de dos a tres bloques) y el envoltorio de `califica` ganan
+`ticket_history` en sus mismas líneas 14, 34, 35 y 43 (`git diff -U0`: cuatro hunks de una línea, CRLF conservado). Su única cita a esas
+líneas, `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/verify-report.md:155`, dice que el envoltorio antepone `desk.` a las
+sentencias del ejecutor, y sigue siendo cierto: caso A. Tras la corrección, el fichero da 14 de 14. La pasada fallida queda en la evidencia del
+`settle`. No la cazó el apply porque corrió sólo los seis ficheros previstos en `openspec/changes/pasada-en-seco-sin-fecha-zoho/tasks.md`.
