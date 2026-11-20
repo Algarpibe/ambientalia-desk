@@ -53,7 +53,7 @@ describe('seco', () => {
       const inf = await aplicar(espia, extra)
       expect(verbos(sqls)).not.toContain('BEGIN')
       expect(escrituras(sqls)).toEqual([])
-      expect(Object.keys(inf).sort()).toEqual(['abiertos', 'aplicado', 'aplicar', 'avisos', 'cierres', 'corte', 'migrables', 'negativa', 'numeracion', 'pendientes', 'porEstado', 'sinEquivalencia', 'sinRemisionVigente', 'trasElCorte', 'yaGobernados'])
+      expect(Object.keys(inf).sort()).toEqual(['abiertos', 'aplicado', 'aplicar', 'avisos', 'cierres', 'corte', 'migrables', 'negativa', 'numeracion', 'pendientes', 'porEstado', 'sinEquivalencia', 'sinFechaDeZoho', 'sinRemisionVigente', 'trasElCorte', 'yaGobernados'])
       expect(inf).toMatchObject({ aplicar: false, aplicado: false, abiertos: 2, migrables: 2, negativa: null, corte: '2026-12-01T05:00:00.000Z' })
     }
     expect(await foto()).toEqual(antes)

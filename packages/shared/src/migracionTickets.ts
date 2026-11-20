@@ -140,3 +140,16 @@ export function cierresDeMigracion(planes: readonly PlanTicket[]): CierresMigrac
   }
   return r
 }
+
+/**
+ * pasada-en-seco-sin-fecha-zoho (F1F-01), RQ-ZS-69 · la fila del marcador que escribiría `migrarTicketsAbiertos` para un plan `migrar`, reducida
+ * a lo que lee `entradaDelMarcador`. Vive aquí, junto al id, porque RQ-TZ-28 no deja nombrarlo fuera de sus cuatro ficheros. El bucle NO la usa
+ * (S-4): una prueba enfrenta las dos filas. Va al final del fichero para no desplazar ninguna línea citada.
+ */
+export function filaDelMarcadorDeMigracion(t: TicketParaMigrar, eq: Equivalencia, instante: Date) {
+  const cierre = cierreDeMigracion(eq, t.closedTime ?? null, instante)
+  return {
+    transition_id: ID_TRANSICION_MIGRACION, from_status: t.status, to_status: eq.destino === t.status ? null : eq.destino,
+    values: { regla: eq.regla, ...(cierre && { closed_time_destino: cierre.closedTime, cierre_origen: cierre.origen }) },
+  }
+}

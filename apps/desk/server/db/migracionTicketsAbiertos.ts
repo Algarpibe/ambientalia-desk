@@ -2,10 +2,10 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { APP_TICKET_NUMBER_BASE } from '@ambientalia/zoho-sync/db/migrate'
 import {
   ACTOR_MIGRACION, ID_TRANSICION_MIGRACION, NOMBRE_TRANSICION_MIGRACION, esperaRemisionDeEntrada, motivoSinRemisionVigente,
-  planDeTicket, resumenDeMigracion, cierreDeMigracion, cierresDeMigracion, normalizarEstado, type CierresMigracion, type PlanTicket, type ResumenMigracion,
+  planDeTicket, resumenDeMigracion, cierreDeMigracion, cierresDeMigracion, normalizarEstado, type CierresMigracion, type PlanTicket, type ResumenMigracion, sinFechaDeZohoDeMigracion, type SinFechaDeZoho,
 } from '@ambientalia/shared'
 import { enTransaccion } from './transaccion'
-import { vigenciaDeRemisiones } from './remisiones'
+import { vigenciaDeRemisiones } from './remisiones'; import { etapasDeZohoPorTicket } from './sla'
 
 /**
  * migracion-tickets-abiertos (F1F-01), `zoho-sync` RQ-ZS-17: el ejecutor de la migración de los tickets abiertos de Zoho.
@@ -22,7 +22,7 @@ export interface InformeMigracion extends Omit<ResumenMigracion, 'masAltoAMarcar
   negativa: { motivo: 'estados-sin-equivalencia'; estados: string[] } | null
   sinRemisionVigente: { numero: number; estado: string }[]
   numeracion: { masAltoAMarcar: number | null; base: number; arrastra: boolean }
-  avisos: string[]; cierres: CierresMigracion
+  avisos: string[]; cierres: CierresMigracion; sinFechaDeZoho: SinFechaDeZoho
 }
 
 const iso = (v: unknown): string | null => (v == null ? null : new Date(v as string | Date).toISOString())
@@ -38,7 +38,7 @@ async function leerPlanes(q: Queryable, corte: Date): Promise<PlanTicket[]> {
   }, corte))
 }
 
-async function prepararInforme(q: Queryable, corte: Date, aplicar: boolean): Promise<{ informe: InformeMigracion; aMigrar: PlanTicket[] }> {
+async function prepararInforme(q: Queryable, corte: Date, aplicar: boolean, ahora: Date): Promise<{ informe: InformeMigracion; aMigrar: PlanTicket[] }> {
   const planes = await leerPlanes(q, corte)
   const { masAltoAMarcar, ...resumen } = resumenDeMigracion(planes)
   const aMigrar = planes.filter((p) => p.accion === 'migrar')
@@ -55,7 +55,7 @@ async function prepararInforme(q: Queryable, corte: Date, aplicar: boolean): Pro
   const informe: InformeMigracion = {
     corte: corte.toISOString(), aplicar, aplicado: false,
     negativa: resumen.sinEquivalencia.length > 0 ? { motivo: 'estados-sin-equivalencia', estados: resumen.sinEquivalencia.map((s) => s.estado) } : null,
-    ...resumen, sinRemisionVigente, numeracion: { masAltoAMarcar, base: APP_TICKET_NUMBER_BASE, arrastra }, avisos, cierres: cierresDeMigracion(planes),
+    ...resumen, sinRemisionVigente, numeracion: { masAltoAMarcar, base: APP_TICKET_NUMBER_BASE, arrastra }, avisos, cierres: cierresDeMigracion(planes), sinFechaDeZoho: sinFechaDeZohoDeMigracion(planes, await etapasDeZohoPorTicket(q, aMigrar.map((p) => p.ticket.id)), ahora),
   }
   return { informe, aMigrar }
 }
@@ -64,9 +64,9 @@ export async function migrarTicketsAbiertos(
   db: Queryable, opts: { corte: Date; aplicar?: boolean; actor: string; ahora?: Date },
 ): Promise<InformeMigracion> {
   const aplicar = opts.aplicar === true, ahora = opts.ahora ?? new Date()
-  if (!aplicar) return (await prepararInforme(db, opts.corte, false)).informe
+  if (!aplicar) return (await prepararInforme(db, opts.corte, false, ahora)).informe
   return enTransaccion(db, async (q) => {
-    const { informe, aMigrar } = await prepararInforme(q, opts.corte, true)
+    const { informe, aMigrar } = await prepararInforme(q, opts.corte, true, ahora)
     if (informe.negativa) return informe // la negativa va ANTES del primer INSERT (diseño §7, guarda 4)
     for (const { ticket: t, equivalencia: eq } of aMigrar) {
       if (!eq) continue; const cierre = cierreDeMigracion(eq, t.closedTime ?? null, ahora)
