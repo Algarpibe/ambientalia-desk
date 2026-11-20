@@ -1,6 +1,6 @@
 import { esPasoDeMigracion, llegadaQueCuenta } from './cierreEnCifras'
 import { normalizarSiTexto } from './normalizarEstado'
-import type { HistorialTransition, HistoryDetail } from './types'; import type { ReglaEquivalencia } from './migracionTickets'
+import type { HistorialTransition, HistoryDetail } from './types'; import { filaDelMarcadorDeMigracion, type PlanTicket, type ReglaEquivalencia } from './migracionTickets'
 
 /**
  * marcador-migracion-lectores (F1F-01): qué aporta el marcador de la migración a «desde cuándo está el ticket en su estado».
@@ -100,4 +100,27 @@ export function presentarMarcador(values: unknown): { title: string; details: Hi
   const details: HistoryDetail[] = []
   for (const [label, value] of pares) if (value !== null && value.trim() !== '') details.push({ label, value })
   return { title: TITULO_MARCADOR_MIGRACION, details }
+}
+
+/**
+ * pasada-en-seco-sin-fecha-zoho (F1F-01), RQ-ZS-68 y RQ-ZS-69 · cuántos tickets a migrar dejaría S-11 sin fecha de Zoho, y cuáles, por regla.
+ * Existe para que la pregunta `s11-migrados-sin-fecha-de-zoho` se decida con el número delante: un marcador que cambia el estado sin fecha deja
+ * en `null` la secuencia entera del reloj (S-11, `resolverMarcador`, más arriba). Decide `entradaDelMarcador`, la ÚNICA noción de «entrada con
+ * fecha de Zoho»; no hay una segunda (p. ej. `closedTime` nulo; molde H5). Medir no es corregir: `resolverMarcador` no se toca. Una regla que
+ * cambia el estado figura aunque todos tengan fecha (`tickets: 0`); identidad y «Pendiente» de soporte no figuran. Va al final del fichero.
+ */
+export interface SinFechaDeZoho { tickets: number; porRegla: { regla: ReglaEquivalencia; tickets: number; numeros: number[] }[] }
+export function sinFechaDeZohoDeMigracion(
+  planes: readonly PlanTicket[], etapasPorTicket: ReadonlyMap<string, readonly HistorialTransition[]>, instante: Date,
+): SinFechaDeZoho {
+  const r: SinFechaDeZoho = { tickets: 0, porRegla: [] }
+  for (const { ticket: t, accion, equivalencia: eq } of planes) {
+    if (accion !== 'migrar' || !eq) continue
+    const e = entradaDelMarcador(filaDelMarcadorDeMigracion(t, eq, instante), etapasPorTicket.get(t.id) ?? [])
+    if (e === null || e.tipo === 'ninguna') continue
+    let g = r.porRegla.find((x) => x.regla === eq.regla)
+    if (!g) { g = { regla: eq.regla, tickets: 0, numeros: [] }; r.porRegla.push(g) }
+    if (e.desde === null) { g.tickets++; g.numeros.push(t.number); r.tickets++ }
+  }
+  return r
 }

@@ -132,15 +132,31 @@ export function tieneOrdenVenta(
 async function conFechaDeZoho(db: Queryable, filas: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
   const ids = [...new Set(filas.filter((f) => esPasoDeMigracion(f.transition_id)).map((f) => String(f.ticket_id)))]
   if (ids.length === 0) return filas
-  const m = ids.map((_, i) => `$${i + 1}`).join(', ')
-  const h = await db.query(`SELECT ticket_id, raw FROM ticket_history WHERE event_name = 'TicketUpdated' AND ticket_id IN (${m})`, ids)
-  const crudo = new Map<string, unknown[]>()
-  for (const r of h.rows as Array<{ ticket_id: string; raw: unknown }>) crudo.set(String(r.ticket_id), [...(crudo.get(String(r.ticket_id)) ?? []), json(r.raw)])
+  // La historia de Zoho se lee en UN solo sitio, `etapasDeZohoPorTicket` (al final de este fichero): la usa también el informe de
+  // la migración para contar, con esta misma lectura y `entradaDelMarcador`, los marcadores que S-11 dejaría sin fecha (RQ-ZS-69,
+  // pasada-en-seco-sin-fecha-zoho). No se copia aquí. Una consulta para todos los `ids`; sin marcadores no se llega hasta aquí.
+  const etapas = await etapasDeZohoPorTicket(db, ids)
   const salida: Record<string, unknown>[] = []
   for (const f of filas) {
     if (!esPasoDeMigracion(f.transition_id)) { salida.push(f); continue }
-    const e = entradaDelMarcador({ ...f, values: json(f.values) }, etapasDesdeHistoria(crudo.get(String(f.ticket_id)) ?? []))
+    const e = entradaDelMarcador({ ...f, values: json(f.values) }, etapas.get(String(f.ticket_id)) ?? [])
     if (e !== null && e.tipo === 'entrada' && e.desde !== null) salida.push({ ...f, performed_at: e.desde })
   }
   return salida
+}
+
+/**
+ * pasada-en-seco-sin-fecha-zoho (F1F-01), RQ-ZS-69 · LA lectura de la historia de Zoho por ticket: los `TicketUpdated` de `ids` en UNA consulta
+ * (lista `IN`), cada ticket por `etapasDesdeHistoria`. Sale de `conFechaDeZoho` sin copiarse; el informe de la migración no tiene consulta propia.
+ * Con `ids` vacío no consulta; un ticket sin historia no figura (el llamador pone `[]`). Va al final para no desplazar ninguna línea citada.
+ */
+export async function etapasDeZohoPorTicket(db: Queryable, ids: readonly string[]) {
+  const etapas = new Map<string, ReturnType<typeof etapasDesdeHistoria>>()
+  if (ids.length === 0) return etapas
+  const m = ids.map((_, i) => `$${i + 1}`).join(', ')
+  const h = await db.query(`SELECT ticket_id, raw FROM ticket_history WHERE event_name = 'TicketUpdated' AND ticket_id IN (${m})`, [...ids])
+  const crudo = new Map<string, unknown[]>()
+  for (const r of h.rows as Array<{ ticket_id: string; raw: unknown }>) crudo.set(String(r.ticket_id), [...(crudo.get(String(r.ticket_id)) ?? []), json(r.raw)])
+  for (const [id, eventos] of crudo) etapas.set(id, etapasDesdeHistoria(eventos))
+  return etapas
 }
