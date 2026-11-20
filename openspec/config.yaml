@@ -6780,3 +6780,38 @@ decisiones_de_gerencia_adenda_2:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-01 (cierra: no) — cambio `marcador-migracion-lectores`"
+  - clave: "decision/s11-migrados-sin-fecha-de-zoho"
+    fecha: "2026-11-19"
+    origen: "panel, apartado 06, qid `s11-migrados-sin-fecha-de-zoho`, 19/11/2026 18:35 (−05); aterrizada en el corte del 20/11/2026 por la sesión de supervisión"
+    pregunta: |
+      Algunos tickets que la mudanza del 12/12 traiga de Zoho están en «Pendiente», y la mudanza los pasa a «En Proceso». Para fechar ese cambio la aplicación busca en Zoho cuándo entró el ticket en su estado. Si Zoho no tiene esa fecha, hoy la aplicación deja el ticket sin reloj para siempre, aunque después se trabaje en él con normalidad, y si más tarde entra en una espera, no le salta la alarma de la espera. ¿Qué preferimos para esos tickets? Opción 1: dejarlo así. Opción 2: contar desde el primer paso real en la aplicación. Opción 3: usar la fecha de la mudanza como entrada en «En Proceso». (S-11 de `marcador-migracion-lectores`, `docs/sdd/Supuestos_semana_2026-11-19.md`.)
+    respuesta_textual: |
+      «Reloj de los migrados sin fecha de Zoho (S-11 de la lista del 19/11): opción 2. Un cambio de estado de la mudanza sin fecha en Zoho deja sin dato sólo el tramo anterior; el reloj y la alarma de esperas arrancan con la primera transición real hecha en la aplicación. No se usa la fecha de la mudanza: decision/h1-fechas-migrados y S-6 siguen como están. Condiciones: (1) esos tickets llevan marca de «reloj parcial» y quedan fuera de los promedios y del cumplimiento en Análisis; (2) antes de construir, el analista mide con una consulta de sólo lectura cuántos tickets abiertos en «Pendiente» no tienen en Zoho la fecha de entrada en su estado. Si son cero, no se construye y S-11 se cierra con la medida; si hay alguno, tanda corta antes del 12/12.» — Gerencia, 19/11/2026, panel.
+    consecuencias: |
+      (1) S-11 de `marcador-migracion-lectores` queda CORREGIDO por Gerencia hacia la opción 2 (deja de estar «para corregir» en la lista del 19/11; no espera al 26/11). S-6 y `decision/h1-fechas-migrados` no cambian.
+      (2) PRIMERO SE MIDE. Si la medida da 0, no se construye y S-11 se cierra con ella; si da ≥ 1, tanda corta `tanda: F1F-01`, `cierra: no`, antes del 12/12, con la marca «reloj parcial» y la exclusión de promedios y cumplimiento en Análisis (condición (1)).
+      (3) CONSECUENCIA SEÑALADA POR SUPERVISIÓN, MEDIDA: la herramienta de la medida ya existe. `pasada-en-seco-sin-fecha-zoho` (F1F-01, `cierra: no`, fusionada en `45e71e7b` el 20/11 08:15, propuesta escrita el 19/11 19:16, después de la respuesta) añade al informe de la pasada en seco el campo `sinFechaDeZoho`, por regla y con números de ticket (RQ-ZS-68 a 71; `DEPLOY.md` §14). Es de sólo lectura. Su propuesta da por hipótesis que la pregunta seguía sin medir: no conocía esta respuesta. Lo que falta es CORRERLA y registrar la cifra (tarea de persona: la pasada la lanza un administrador). Supuesto de Supervisión, reversible: la entrada de la regla de «Pendiente» en `porRegla` es la medida que pide la condición (2).
+      (4) CONSECUENCIA SEÑALADA, MEDIDA: el campo cuenta también la regla «Entregado» → «Finalizado» (S-10), que la respuesta no nombra; esa cifra NO decide esta tanda. Y `DEPLOY.md` dice que «vale el de la pasada en seco inmediatamente anterior a aplicar»: si la medida de antes del 12/12 da 0 y la del 12/12 da ≥ 1, la respuesta no dice qué pasa. Hipótesis, no medido: el número puede cambiar entre hoy y el 12/12.
+      (5) CONSECUENCIA SEÑALADA, OBSERVADA Y NO MEDIDA: excluir los «reloj parcial» del cumplimiento en Análisis puede separar la cifra de la aplicación de la de Zoho en la comparación semanal de F1F-05, que juzga el 95 % con la variante de Zoho (`decision/f1f05-variante-juzga-el-95`). Lo comprobaría la tanda, si se construye.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda_2 (decision/s11-migrados-sin-fecha-de-zoho) · docs/sdd/ENTRADA.md → E-293 (ruteada) · docs/sdd/Parte_2026-11-20.md"
+    engram: "decision/s11-migrados-sin-fecha-de-zoho — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-01 (cierra: no), condicionada a la medida: tanda corta antes del 12/12 sólo si hay ≥ 1 ticket"
+  - clave: "decision/s11-cierre-con-la-medida"
+    fecha: "2026-11-20"
+    origen: "conversación de Gerencia con el analista (Claude Code), 20/11/2026, tras la pasada en seco de ese día"
+    pregunta: |
+      ¿cerramos S-11 ya, con el 0 de hoy? Si el 12/12 sale algún ticket, la migración se aplica igual y la tanda corta va después. La otra salida es dejar S-11 abierto hasta el 12/12: no cuesta nada, pero queda un punto pendiente justo el día de la migración.
+    respuesta_textual: |
+      «si cerramos hoy» — Gerencia, 20/11/2026.
+    consecuencias: |
+      (1) S-11 de marcador-migracion-lectores queda CERRADO con la medida del 20/11. Fue la pasada en seco con corte 2026-11-20T23:59:00-05:00, sobre el servidor de main 45e71e7b: sinFechaDeZoho = { tickets: 0, porRegla: [] }, porque ningún abierto estaba en «Pendiente» ni en «Entregado». Dato del analista, no medido por Supervisión. No se construye la tanda corta.
+      (2) El 12/12 se mira la entrada «pendiente-servicio-a-en-proceso» de sinFechaDeZoho en la pasada en seco inmediatamente anterior a aplicar. Si da 1 o más, la migración se aplica igual, y después se hace la tanda corta (tanda F1F-01, cierra: no) con las condiciones de decision/s11-migrados-sin-fecha-de-zoho: marca «reloj parcial» y fuera de promedios y cumplimiento en Análisis.
+      (3) Por qué esa tanda puede ir después: el reloj no se guarda, se calcula al leer (apps/desk/server/db/relojSla.ts:40, apps/desk/server/db/sla.ts:93), así que el arreglo alcanza hacia atrás a esos tickets. Hipótesis, no medido: los avisos de espera de los días intermedios podrían perderse.
+      (4) La cifra de «entregado-a-finalizado» (S-10) no decide nada aquí.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda_2 (decision/s11-cierre-con-la-medida) · docs/sdd/ENTRADA.md → E-293 (cerrada) · docs/sdd/Parte_2026-11-20.md"
+    engram: "decision/s11-cierre-con-la-medida — la próxima sesión de construcción la carga; esta supervisión no carga Engram"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna hoy; tanda corta F1F-01 (cierra: no) después del 12/12 sólo si esa pasada da 1 o más en «pendiente-servicio-a-en-proceso»"
